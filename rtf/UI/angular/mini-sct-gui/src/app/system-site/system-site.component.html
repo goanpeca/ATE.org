@@ -1,0 +1,27 @@
+<div *ngIf="systemStatus.state !> mySystemState.error">
+    <h2>System Sites</h2>
+
+    {{ retrieveData(msg) }}
+    <div>
+        <table class="table">
+            <tr>
+                <th>Type</th>
+                <th>Site ID</th>
+                <th>State</th>
+            </tr>
+
+            <tr *ngFor='let site of _sites_control'>
+                <td> {{ site.type }} </td>
+                <td> {{ site.site_id }} </td>
+                <td> {{ site.state }} </td>
+            </tr>
+
+            <tr *ngFor='let site of _sites_test'>
+                <td> {{ site.type }} </td>
+                <td> {{ site.site_id }} </td>
+                <td> {{ site.state }} </td>
+            </tr>
+
+        </table>
+    </div>
+</div>

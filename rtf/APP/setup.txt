@@ -1,0 +1,2 @@
+install requirements
+python setup.py install

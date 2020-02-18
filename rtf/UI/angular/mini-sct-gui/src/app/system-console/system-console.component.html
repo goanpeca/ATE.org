@@ -1,0 +1,22 @@
+<h2>System Console</h2>
+<div>
+    {{retrieveData(msg)}}
+    <button
+        type="button"
+        (click)="clearConsole()">clear
+    </button>
+    <div class="scroll_dialog">
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Topic</th>
+                <th>Description</th>
+            </tr>
+            <tr *ngFor='let member of msgs.reverse()'>
+                <td>{{member.date}}</td>
+                <td>{{member.topic}}</td>
+                <td>{{member.description}}</td>
+            </tr>
+        </table>
+    </div>
+</div>

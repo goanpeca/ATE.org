@@ -1,0 +1,16 @@
+{
+    "broker_host": "10.9.1.6",
+    "broker_port": 1883,
+    "device_id": "YourNameHere",
+    "sites": ["0"],
+    "Handler": "HandlerNameHere",
+    "Environment": "EnvironmentHere",
+    "webui_host": "127.0.0.1",
+    "webui_port": "8081",
+    "jobsource": "filesystem",    
+    "jobformat": "xml.micronas",
+    "skip_jobdata_verification": false,
+    "filesystemdatasource.path" : ".",
+    "filesystemdatasource.jobpattern" : "le#jobname#.xml",
+    "enable_timeouts": true
+}

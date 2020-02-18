@@ -13,8 +13,14 @@ __pycache__/*
 .*.swp
 */.ipynb_checkpoints/*
 .DS_Store
-
+/APP/control_config_file.json
+/APP/master_config_file.json
+/APP/dist/
+/APP/APP.egg-info
+/APP/build/
+newenv
 # Project files
+.vscode/
 .ropeproject
 .project
 .pydevproject
@@ -31,9 +37,11 @@ tags
 # Unittest and coverage
 htmlcov/*
 .coverage
+.coverage.*
 .tox
 junit.xml
 coverage.xml
+cov.xml
 .pytest_cache/
 
 # Build and docs folder/files

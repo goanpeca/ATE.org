@@ -1,0 +1,22 @@
+.scroll_dialog {
+border: 8px solid gray;
+padding: 5px;
+font: 24px/36px sans-serif;
+width: auto;
+height: 500px;
+overflow-y: scroll;
+}
+
+ul {
+    padding: 5px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 80%;
+}
+
+th, td {
+    text-align: left;
+    padding:6px;
+}

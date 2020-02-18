@@ -1,0 +1,9 @@
+<h2>Debug Area</h2>
+<!--button class="controlButton" (click)="runTests()">Run Tests</!--button-->
+<div class="info text">
+    <label for="systemState">Change Webview</label>
+    <select #systemState name="systemState" id="systemState" (change)="setSystemState(systemState.value)">
+        <option *ngFor="let state of states" [value]="state.value">{{state.description}}</option>
+     </select>
+</div>
+

@@ -1,0 +1,70 @@
+/* You can add global styles to this file, and also import other style files */
+$micronasBlue : #0046AD;
+$white : #FFFFFF;
+$alertRed : #f44336;
+$green : #8CFFAD;
+$headerHeight : 100px;
+$grey: lightgrey;
+$warn: #FFF568;
+$black:black;
+
+.info {
+    background-color: $grey;
+    width: 410px;
+    padding: 5px;
+    margin: 5px;
+    border : 1px solid black;
+    label {
+        font-weight: bold;
+        width: 200px;
+        display: inline-block;
+    }
+    input {
+        background-color: $green;
+        display: inline-block;
+        width:200px;
+    }
+}
+
+.error {
+    padding: 20px;
+    background-color: $alertRed;
+    color: $white;
+    text-align: center;
+}
+
+.warn {
+    padding: 20px;
+    background-color: $warn;
+    color: black;
+    text-align: center;
+    -webkit-animation-name:blinkingText;
+    -webkit-animation-iteration-count:infinite;
+    -webkit-animation-duration: 1.2s;
+}
+
+@keyframes blinkingText{
+    0%{     color: #000;    }
+    49%{    color: #000; }
+    60%{    color: transparent; }
+    99%{    color:transparent;  }
+    100%{   color: #000;    }
+}
+
+header {
+    margin : 0px;
+    padding: 15px;
+
+    background : $micronasBlue;
+    text-align: left;
+    color : $white;
+    font-size: 3.5em;
+    vertical-align: middle;
+    * {
+        display: inline-block;
+    }
+    img {
+        float : right;
+        width : 300px;
+    }
+}
