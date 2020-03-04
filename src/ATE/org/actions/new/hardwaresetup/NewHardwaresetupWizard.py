@@ -154,12 +154,24 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
                      'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
                      'MultiSiteDIB' : self.MultiSiteDIB.text()
                      }
-        create_new_hardwaresetup(self.active_project_path, hwr_setup)
+        self.create_new_hardwaresetup(hwr_setup)
         self.parent.active_hw = hwr_setup['hardwaresetup_name']
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
+        
+    def list_existing_hardwaresetups(self):
+        '''
+        this method returns a list of existing hardware setups.
+        '''
+        self.active_project_db.execute("SELECT name FROM hardwaresetups")
+        return self.active_project_db.fetchall()
+        
+    def create_new_hardwaresetup(hwr_setup):
+        self.active_project_path
+        
+
 
 def create_new_hardwaresetup(project_path, hardwaresetup_data):
     '''
@@ -172,11 +184,13 @@ def create_new_hardwaresetup(project_path, hardwaresetup_data):
     if is_ATE_project(project_path):
         hardwaresetup_name = hardwaresetup_data['hardwaresetup_name'].replace('HWR', '')
 
-
-
         print("---> hwsetupname", hardwaresetup_name)
 
         hardwaresetup_root = dict_project_paths(project_path)['hwr_root']
+        
+        
+        
+        
         hardwaresetup_path =os.path.join(hardwaresetup_root, "%s.pickle" % hardwaresetup_name)
         pickle.dump(hardwaresetup_data, open(hardwaresetup_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
 

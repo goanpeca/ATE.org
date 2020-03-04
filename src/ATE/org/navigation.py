@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec  3 13:16:58 2019
+Created on Tue Mar  3 14:08:04 2020
 
 @author: hoeren
 """
@@ -8,29 +8,93 @@ Created on Tue Dec  3 13:16:58 2019
 import os
 import sqlite3
 import pickle
+import shutil
+from pathlib import Path as create_file
 
 
 class project_navigator(object):
+    '''
+    This class takes care of the project creation/navigation/evolution.
+    '''
     
     def __init__(self, project_directory):
+        self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
         self.project_directory = project_directory
-        if not os.path.exists(project_directory):
-            # maybe just create the damn thing ?
-            raise Exception("{project_directory} does not exist.")
-
         self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
-        if not os.path.exists(self.db_file):
-            self.create_new_database()
-        else:
-            self.con = sqlite3.connect(self.db_file)
-            self.cur = self.con.cursor()
-    
-    def create_new_project(self):
-        pass
-        
 
+        if not os.path.exists(project_directory):
+            self.create_project_structure()
+        else:
+            if not os.path.exists(self.db_file):
+                self.create_project_database()
+            else:
+                self.con = sqlite3.connect(self.db_file)
+                self.cur = self.con.cursor()
     
-    def create_new_database(self):
+    def create_project_structure(self):
+        '''
+        this method creates a new project (self.project_directroy must *not* 
+        exist yet, otherwhise an exception will be raised)
+        '''
+        # project root directory
+        os.makedirs(self.project_directory)
+        shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
+                        os.path.join(self.project_directory, '__main__.py'))
+        create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
+        shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
+                        os.path.join(self.project_directory, '.gitignore'))
+        # setup.py ???
+        # .pre-commit-config.yaml ???
+
+        # spyder
+        pspyd = os.path.join(self.project_directory, '.spyproject')
+        os.makedirs(pspyd)
+        os.makedirs(os.path.join(pspyd, 'config'))
+        shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
+                        os.path.join(pspyd, 'codestyle.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
+                        os.path.join(pspyd, 'encoding.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'vcs.ini'),
+                        os.path.join(pspyd, 'vcs.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
+                        os.path.join(pspyd, 'workspace.ini'))
+        pspydefd = os.path.join(pspyd, 'defaults')
+        os.makedirs(pspydefd)
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-codestyle-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-encoding-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-encoding-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-vcs-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
+        
+        # documentation 
+        os.makedirs(os.path.join(self.project_directory, 'doc'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
+        
+        # sources
+        psrcd = os.path.join(self.project_directory, 'src')
+        os.makedirs(psrcd)
+        create_file(os.path.join(psrcd, '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'patterns'))
+        create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'protocols'))
+        create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'states'))
+        create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
+        shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
+                        os.path.join(psrcd, 'states', 'init_hardware.py'))
+        os.makedirs(os.path.join(psrcd, 'tests'))
+        create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'programs'))
+        create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
+
+        # database
+        self.create_project_database()
+
+    def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
         '''
@@ -61,7 +125,7 @@ class project_navigator(object):
         self.cur.execute('''CREATE TABLE "flows" (
 	                           "name"	TEXT NOT NULL,
 	                           "base"	TEXT NOT NULL 
-                                  CHECK(base=='die' OR base=='product'),
+                                  CHECK(base=='PR' OR base=='FT'),
 	                           "target"	TEXT NOT NULL,
 	                           "type"	TEXT NOT NULL,
 
@@ -129,8 +193,8 @@ class project_navigator(object):
 
     def add_hardware(self, definition):
         '''
-        this method adds a hardware setup (defined in hw_data) and returns
-        the hw_nr for this.
+        this method adds a hardware setup (defined in 'definition') and returns
+        the name for this.
         '''
         existing_hw_nrs = self.get_hardware_names()
         if existing_hw_nrs == []:
@@ -140,7 +204,24 @@ class project_navigator(object):
         blob = pickle.dumps(definition, 4)
         insert_blob_query = '''INSERT INTO hardware(name, definition) VALUES (?, ?)'''
         self.cur.execute(insert_blob_query, (new_hw_nr, blob))
-        self.con.commit()        
+        self.con.commit()
+        
+        dir_name = "HW%d" % new_hw_nr
+
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'PR', '__init__.py')).touch()
+                    
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'PR', '__init__.py')).touch()
+
         return new_hw_nr
     
     def update_hardware(self, name, definition):
@@ -229,7 +310,7 @@ class project_navigator(object):
         if name not in existing_masksets:
             raise KeyError(f"maskset '{name}' doesn't exist")
         
-        get_blob_query = '''SELECT definition FROM maskset WHERE name = ?'''
+        get_blob_query = '''SELECT definition FROM masksets WHERE name = ?'''
         self.cur.execute(get_blob_query, (name,))
         return pickle.loads(self.cur.fetchone()[0])         
 
@@ -411,39 +492,167 @@ class project_navigator(object):
         raise NotImplementedError
     
     def add_device(self, name, package, definition):
-        pass
+        '''
+        this method will add device 'name' with 'package' and 'definition'
+        to the database. 
+        if 'name' already exists, a KeyError is raised
+        if 'package' doesn't exist, a KeyError is raised
+        '''
+        existing_devices = self.get_devices_names()
+        if name in existing_devices:
+            raise KeyError(f"device '{name}' already exists")
+
+        existing_packages = self.get_packages_names()
+        if package not in existing_packages:
+            raise KeyError(f"package '{package}' doesn't exist")
+
+        insert_query = '''INSERT INTO devices(name, package, definition) VALUES (?, ?, ?)'''
+        blob = pickle.dumps(definition, 4)
+        self.cur.execute(insert_query, (name, package, blob))
+        self.con.commit()
     
     def update_device(self, name, package, definition):
         self.update_device_package(name, package)
         self.update_device_definition(name, definition)
     
     def update_device_package(self, name, package):
-        pass
+        '''
+        this method will update the device package for 'name' to 'package'
+        '''
+        existing_devices = self.get_devices_names()
+        if name not in existing_devices:
+            raise KeyError(f"device '{name}' doesn't exist")
+            
+        existing_packages = self.get_packages_names()
+        if package not in existing_packages:
+            raise KeyError(f"package '{package}' doesn't exist")
+
+        update_query = '''UPDATE devices SET package = ? WHERE name = ?'''
+        self.cur.execute(update_query, (package, name))
+        self.con.commit()  
     
     def update_device_definition(self, name, definition):
-        pass
+        '''
+        this method will update the definition of device 'name' to 'definition'
+        '''
+        existing_devices = self.get_devices_names()
+        if name not in existing_devices:
+            raise KeyError(f"device '{name}' doesn't exist")
+        
+        blob = pickle.dumps(definition, 4)
+        update_query = '''UPDATE devices SET definition = ? WHERE name = ?'''
+        self.cur.execute(update_query, (blob, name))
+        self.con.commit()        
     
     def get_devices_names(self):
-        pass
+        '''
+        this method lists all available devices
+        '''
+        self.cur.execute("SELECT name FROM devices")
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
     
     def get_device_package(self, name):
-        pass
+        '''
+        this method will return the package of device 'name'
+        '''
+        existing_devices = self.get_devices_names()
+        if name not in existing_devices:
+            raise KeyError(f"device '{name}' doesn't exist")
+            
+        select_query = '''SELECT package FROM devices WHERE name = ?'''
+        self.cur.execute(select_query, (name,))
+        return self.cur.fetchone()[0]
     
     def get_device_definition(self, name):
+        '''
+        this method will return the definition of device 'name'
+        '''
+        existing_devices = self.get_devices_names()
+        if name not in existing_devices:
+            raise KeyError(f"device '{name}' doesn't exist")
+        
+        get_blob_query = '''SELECT definition FROM devices WHERE name = ?'''
+        self.cur.execute(get_blob_query, (name,))
+        return pickle.loads(self.cur.fetchone()[0])         
+    
+    def trace_device(self, name):
+        '''
+        this method returns a dictionary of affected objects when device
+        'name' is to be deleted.
+        '''
         pass
     
     def remove_device(self, name):
+        '''
+        this method will remove the package defined by 'name'
+        
+        --> we need something like 'trace_package(self, name)'
+            to understand what the implications are !!!
+        '''
+        raise NotImplementedError
+
+    def add_product(self, name, device, hardware):
+        pass
+    
+    def update_product(self, name):
+        pass
+    
+    def update_product_device(self, name, device):
+        pass
+    
+    def update_product_hardware(self, name, hardware):
+        pass
+    
+    # def update_product_flows(self, name, flows):
+    #     pass
+    
+    def get_products_names(self):
+        pass
+    
+    def get_product_device(self, name):
+        pass
+    
+    def get_product_hardware(self, name):
+        pass
+    
+    def remove_product(self, name):
+        pass
+
+
+
+    
+    def add_test(self, name):
+        pass
+    
+    def update_test(self, name):
+        pass
+    
+    def remove_test(self, name):
+        pass
+    
+    
+
+
+    def add_program(self, name):
+        pass
+    
+    def update_program(self, name):
+        pass
+    
+    def remove_program(self, name):
         pass
     
     
     
 if __name__ == '__main__':
-    project_directory = r'C:\Users\hoeren\Desktop\ATE.org\src\ATE\org\Templates'
-    pdb = project_db(project_directory)
+    project_test_directory = os.path.join(os.path.dirname(__file__), 'test')
+    navigator = project_navigator(project_test_directory)
 
-    brol = {1:1,"foo":"boe"}
-    pdb.update_hardware(1, brol)
+    navigator.add_hardware({1:1,"foo":"boe"})
 
-    for name in pdb.get_hardware_names():
+    for name in navigator.get_hardware_names():
         print(f"HWR#{name}")
-        print(pdb.get_hardware_definition(name))
+        print(navigator.get_hardware_definition(name))

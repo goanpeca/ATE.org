@@ -64,16 +64,13 @@
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Projects</string>
     </property>
-    <widget class="QMenu" name="file_new">
-     <property name="title">
-      <string>new</string>
-     </property>
-     <addaction name="action_new_project"/>
-    </widget>
-    <addaction name="file_new"/>
+    <addaction name="action_new_project_2"/>
     <addaction name="separator"/>
+    <addaction name="actionOpwn_Project"/>
+    <addaction name="actionClose_Project"/>
+    <addaction name="actionDelete_Project"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -491,6 +488,26 @@
   <action name="action_edit_hardwaresetup">
    <property name="text">
     <string>hardware setup</string>
+   </property>
+  </action>
+  <action name="actionOpwn_Project">
+   <property name="text">
+    <string>Open Project...</string>
+   </property>
+  </action>
+  <action name="actionClose_Project">
+   <property name="text">
+    <string>Close Project</string>
+   </property>
+  </action>
+  <action name="actionDelete_Project">
+   <property name="text">
+    <string>Delete Project</string>
+   </property>
+  </action>
+  <action name="action_new_project_2">
+   <property name="text">
+    <string>New Project...</string>
    </property>
   </action>
  </widget>

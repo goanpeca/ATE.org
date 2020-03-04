@@ -15,35 +15,24 @@ import importlib
 import os
 import re
 import shutil
-import sqlite3
 import sys
+
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import qdarkstyle
 import qtawesome as qta
-from ATE.org.listings import (
-    dict_ATE_projects,
-    dict_project_paths,
-    list_ATE_projects,
-    list_hardwaresetups,
-    list_MiniSCTs,
-    list_projects,
-    listings
-)
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
+from ATE.org.navigation import project_navigator
+from ATE.utils.finders import ATE_project_finder
+from SCT.utils.finders import SCT_finder
+from SpyderMockUp.utils.finders import Spyder_project_finder
 
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
+
+
 if not os.path.exists(workspace_path):
     os.mkdir(workspace_path)
-if show_workspace:
-    import subprocess
-    import platform
-    if platform.system() == "Windows":
-        os.startfile(workspace_path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", workspace_path])
-    else:
-        subprocess.Popen(["xdg-open", workspace_path])
 
 class screenCast(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -59,6 +48,7 @@ class screenCast(QtWidgets.QLabel):
             self.clicked.emit()
 
 class MainWindow(QtWidgets.QMainWindow):
+    
     def __init__(self):
         super().__init__()
 
@@ -81,44 +71,34 @@ class MainWindow(QtWidgets.QMainWindow):
         if not os.path.exists(self.workspace_path):
             os.makedirs(self.workspace_path)
 
-        self.tester_list = list_MiniSCTs()
+        self.tester_finder = SCT_finder()
+        self.tester_list = self.tester_finder.list_testers()
         self.active_tester = self.tester_list[0] # start with the first in the list
         print("active_tester =", self.active_tester)
 
-        self.ATE_projects = list_ATE_projects(workspace_path) + ['']
+        self.ALL_project_finder = Spyder_project_finder(workspace_path)
+        self.ATE_project_finder = ATE_project_finder(workspace_path)
+        self.ATE_projects = self.ATE_project_finder.list_ATE_projects()
         self.active_project = self.ATE_projects[0] # there is always something
         if self.active_project != '':
             self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-            self.project_info = listings(self.active_project_path)
+            self.navigator = project_navigator(self.active_project_path)
+            self.hw_list = self.navigator.get_hardware_names()
+            self.active_hw = self.hw_list[-1]
         else:
             self.active_project_path = None
-            self.project_info = None
-        print("active_project =", self.active_project)
-
-        if self.project_info != None:
-            self.hw_list = self.project_info.list_hardwaresetups()
-            if self.hw_list != []:
-                self.active_hw = self.hw_list[-1] # take the most recent hardware setup
-            else:
-                self.active_hw = ''
-        else:
+            self.navigator = None
+            self.hw_list = []
             self.active_hw = ''
+        print("active_project =", self.active_project)
         print("active_hw =", self.active_hw)
 
-
-        if self.project_info != None:
-            self.active_base = 'Product' # or 'Die'
-            pass
-        else:
-            self.active_base = ''
-
     # connect the File/New/Project menu
-        self.action_new_project.triggered.connect(self.new_project)
+        self.action_new_project_2.triggered.connect(self.new_project)
 
     # setup the project explorer
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.context_menu_manager)
-
 
     # setup the screencaster
         self.screencast = screenCast()
@@ -138,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         self.update_testers()
-        self.update_projects()
+        # self.update_projects()
         self.update_hardware()
 
         self.tree_update()
@@ -186,11 +166,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.project_combo.clear()
         toolbar.addWidget(self.project_combo)
 
-        project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
-        project_refresh.setStatusTip("Refresh the project list")
-        project_refresh.triggered.connect(self.update_projects)
-        project_refresh.setCheckable(False)
-        toolbar.addAction(project_refresh)
+        # project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
+        # project_refresh.setStatusTip("Refresh the project list")
+        # project_refresh.triggered.connect(self.update_projects)
+        # project_refresh.setCheckable(False)
+        # toolbar.addAction(project_refresh)
 
         hw_label = QtWidgets.QLabel("Hardware:")
         hw_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
@@ -356,50 +336,47 @@ class MainWindow(QtWidgets.QMainWindow):
             # delete_flow.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
 
-
-
-
     def update_testers(self):
-        tester_list = list_MiniSCTs()
+        new_tester_list = list(self.tester_finder.list_testers())
         old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
-        if set(tester_list) != set(old_tester_list):
+        if set(new_tester_list) != set(old_tester_list):
             self.tester_combo.blockSignals(True)
             self.tester_combo.clear()
-            self.tester_combo.addItems(tester_list)
-            if self.active_tester in tester_list:
+            self.tester_combo.addItems(new_tester_list)
+            if self.active_tester in new_tester_list:
                 self.tester_combo.setCurrentIndex(self.tester_list.index(self.active_tester))
             else:
                 self.tester_combo.setCurrentIndex(0)
             self.active_tester = self.tester_combo.currentText()
             self.tester_combo.blockSignals(False)
 
-    def update_projects(self):
-        print("update_projects")
-        all_projects = list_projects(self.workspace_path)
-        ATE_projects = list_ATE_projects(workspace_path)
-        old_projects = [self.project_combo.itemText(i) for i in range(self.project_combo.count())]
+    # def update_projects(self):
+        
+    #     all_projects = self.ALL_project_finder.list_Spyder_projects()
+    #     ATE_projects = self.ATE_project_finder.list_ATE_projects()
+    #     old_projects = [self.project_combo.itemText(i) for i in range(self.project_combo.count())]
 
-        if len(ATE_projects) == 0:
-            ATE_projects.append('')
-            all_projects.append('')
-            self.active_project = ''
+    #     if len(ATE_projects) == 0:
+    #         ATE_projects.append('')
+    #         all_projects.append('')
+    #         self.active_project = ''
 
-        if self.active_project not in ATE_projects:
-            self.active_project = ATE_projects[0]
+    #     if self.active_project not in ATE_projects:
+    #         self.active_project = ATE_projects[0]
 
-        if set(all_projects) != set(old_projects):
-            self.project_combo.blockSignals(True)
-            self.project_combo.clear()
-            for index, project in enumerate(all_projects):
-                self.project_combo.addItem(project)
-                if project not in ATE_projects:
-                    self.project_combo.model().item(index).setEnabled(False)
-                if project == self.active_project:
-                    self.project_combo.setCurrentIndex(index)
-            self.project_combo.blockSignals(False)
+    #     # if set(all_projects) != set(old_projects):
+    #     #     self.project_combo.blockSignals(True)
+    #     #     self.project_combo.clear()
+    #     #     for index, project in enumerate(all_projects):
+    #     #         self.project_combo.addItem(project)
+    #     #         if project not in ATE_projects:
+    #     #             self.project_combo.model().item(index).setEnabled(False)
+    #     #         if project == self.active_project:
+    #     #             self.project_combo.setCurrentIndex(index)
+    #     #     self.project_combo.blockSignals(False)
 
-        self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-        self.update_hardware()
+    #     self.active_project_path = os.path.join(self.workspace_path, self.active_project)
+    #     self.update_hardware()
 
     def update_hardware(self):
         '''
@@ -469,11 +446,12 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         this method will update the 'project explorer'
         '''
+        print("tree_update")
         if self.active_project != '':
             self.tree.setHeaderHidden(True)
             # self.project_info
 
-            projects = dict_ATE_projects(workspace_path)
+            projects = self.ATE_project_finder.dict_ATE_projects()
             previous_project = None
             for project_name in projects:
                 project = QtWidgets.QTreeWidgetItem(self.tree, previous_project)
@@ -503,7 +481,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 states = QtWidgets.QTreeWidgetItem(definitions)
                 states.setText(0, 'states')
                 states.setText(1, 'states')
-                states_root = dict_project_paths(self.active_project_path)['states_root']
+                states_root = {} #dict_project_paths(self.active_project_path)['states_root']
                 previous = None
                 for state_file in os.listdir(states_root):
                     if state_file.startswith('__'): continue
@@ -628,6 +606,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def new_project(self):
         from ATE.org.actions.new.project.NewProjectWizard import new_project_dialog
         new_project_dialog(self)
+
+
         self.update_projects()
 
     def clone_test(self):
