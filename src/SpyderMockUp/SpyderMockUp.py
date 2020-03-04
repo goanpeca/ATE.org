@@ -23,13 +23,10 @@ import qdarkstyle
 import qtawesome as qta
 
 from ATE.org.navigation import project_navigator
-from ATE.utils.finders import ATE_project_finder
 from SCT.utils.finders import SCT_finder
-from SpyderMockUp.utils.finders import Spyder_project_finder
 
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
-
 
 if not os.path.exists(workspace_path):
     os.mkdir(workspace_path)
@@ -76,10 +73,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.active_tester = self.tester_list[0] # start with the first in the list
         print("active_tester =", self.active_tester)
 
+        self.active_project = '';
+        self.active_project_path = None
+        
+        self.navigator = project_navigator(self.active_project_path)
+        self.hw_list = self.navigator.get_hardware_names()
+        self.active_hw = self.hw_list[-1]
+        
+
         self.ALL_project_finder = Spyder_project_finder(workspace_path)
         self.ATE_project_finder = ATE_project_finder(workspace_path)
         self.ATE_projects = self.ATE_project_finder.list_ATE_projects()
         self.active_project = self.ATE_projects[0] # there is always something
+
         if self.active_project != '':
             self.active_project_path = os.path.join(self.workspace_path, self.active_project)
             self.navigator = project_navigator(self.active_project_path)
@@ -156,15 +162,15 @@ class MainWindow(QtWidgets.QMainWindow):
         run_action.setCheckable(False)
         toolbar.addAction(run_action)
 
-        project_label = QtWidgets.QLabel("Project:")
-        project_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(project_label)
+        # project_label = QtWidgets.QLabel("Project:")
+        # project_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        # toolbar.addWidget(project_label)
 
-        self.project_combo = QtWidgets.QComboBox()
-        self.project_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        self.project_combo.currentTextChanged.connect(self.projectChanged)
-        self.project_combo.clear()
-        toolbar.addWidget(self.project_combo)
+        # self.project_combo = QtWidgets.QComboBox()
+        # self.project_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        # self.project_combo.currentTextChanged.connect(self.projectChanged)
+        # self.project_combo.clear()
+        # toolbar.addWidget(self.project_combo)
 
         # project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
         # project_refresh.setStatusTip("Refresh the project list")
@@ -608,7 +614,7 @@ class MainWindow(QtWidgets.QMainWindow):
         new_project_dialog(self)
 
 
-        self.update_projects()
+        # self.update_projects()
 
     def clone_test(self):
         print("clone_test")

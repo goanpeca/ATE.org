@@ -78,8 +78,12 @@ class NewProjectWizard(QtWidgets.QDialog):
         if self.parent.navigator is None:
             from ATE.org.navigation import project_navigator
             self.parent.navigator = project_navigator(self.parent.active_project_path)
+            
         else:
             self.parent.navigator(self.parent.active_project_path)
+            self.parent.
+
+
         self.accept()
 
     def CancelButtonPressed(self):

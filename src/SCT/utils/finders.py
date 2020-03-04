@@ -18,7 +18,8 @@ class SCT_finder(object):
     
     def dict_testers(self):
         temp = {"Tom's MiniSCT" : '10.32.48.52',
-                "Achim's MiniSCT" : '10.32.48.60'}
+                "Achim's MiniSCT" : '10.32.48.60',
+                "Sigi's MiniSCT" : '13.32.48.5'}
         return temp    
 
 

@@ -19,85 +19,99 @@ class project_navigator(object):
     
     def __init__(self, project_directory):
         self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
-        self.project_directory = project_directory
-        self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
-
-        if not os.path.exists(project_directory):
-            self.create_project_structure()
+        self.__call__(project_directory)
+            
+    def __call__(self, project_directory):
+        if not isinstance(project_directory, str):
+            self.project_directory = ''
         else:
-            if not os.path.exists(self.db_file):
-                self.create_project_database()
+            self.project_directory = project_directory
+            
+        if len(self.project_directory.split(os.path.sep)) >= 2:
+            self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
+    
+            if not os.path.exists(project_directory):
+                self.create_project_structure()
             else:
-                self.con = sqlite3.connect(self.db_file)
-                self.cur = self.con.cursor()
+                if not os.path.exists(self.db_file):
+                    self.create_project_database()
+                else:
+                    self.con = sqlite3.connect(self.db_file)
+                    self.cur = self.con.cursor()
+        else:
+            self.db_file = None
+            self.con = None
+            self.cur = None
     
     def create_project_structure(self):
         '''
         this method creates a new project (self.project_directroy must *not* 
         exist yet, otherwhise an exception will be raised)
         '''
-        # project root directory
-        os.makedirs(self.project_directory)
-        shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
-                        os.path.join(self.project_directory, '__main__.py'))
-        create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
-        shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
-                        os.path.join(self.project_directory, '.gitignore'))
-        # setup.py ???
-        # .pre-commit-config.yaml ???
-
-        # spyder
-        pspyd = os.path.join(self.project_directory, '.spyproject')
-        os.makedirs(pspyd)
-        os.makedirs(os.path.join(pspyd, 'config'))
-        shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
-                        os.path.join(pspyd, 'codestyle.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
-                        os.path.join(pspyd, 'encoding.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'vcs.ini'),
-                        os.path.join(pspyd, 'vcs.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
-                        os.path.join(pspyd, 'workspace.ini'))
-        pspydefd = os.path.join(pspyd, 'defaults')
-        os.makedirs(pspydefd)
-        shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
-                        os.path.join(pspydefd, 'defaults-codestyle-0.2.0.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'defaults-encoding-0.2.0.ini'),
-                        os.path.join(pspydefd, 'defaults-encoding-0.2.0.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'defaults-vcs-0.2.0.ini'),
-                        os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
-        shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
-                        os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
-        
-        # documentation 
-        os.makedirs(os.path.join(self.project_directory, 'doc'))
-        os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
-        os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
-        
-        # sources
-        psrcd = os.path.join(self.project_directory, 'src')
-        os.makedirs(psrcd)
-        create_file(os.path.join(psrcd, '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'patterns'))
-        create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'protocols'))
-        create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'states'))
-        create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
-        shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
-                        os.path.join(psrcd, 'states', 'init_hardware.py'))
-        os.makedirs(os.path.join(psrcd, 'tests'))
-        create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'programs'))
-        create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
-
-        # database
-        self.create_project_database()
+        if len(self.project_directory.split(os.path.sep)) >= 2:
+            # project root directory
+            os.makedirs(self.project_directory)
+            shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
+                            os.path.join(self.project_directory, '__main__.py'))
+            create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
+            shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
+                            os.path.join(self.project_directory, '.gitignore'))
+            # setup.py ???
+            # .pre-commit-config.yaml ???
+    
+            # spyder
+            pspyd = os.path.join(self.project_directory, '.spyproject')
+            os.makedirs(pspyd)
+            os.makedirs(os.path.join(pspyd, 'config'))
+            shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
+                            os.path.join(pspyd, 'codestyle.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
+                            os.path.join(pspyd, 'encoding.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'vcs.ini'),
+                            os.path.join(pspyd, 'vcs.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
+                            os.path.join(pspyd, 'workspace.ini'))
+            pspydefd = os.path.join(pspyd, 'defaults')
+            os.makedirs(pspydefd)
+            shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
+                            os.path.join(pspydefd, 'defaults-codestyle-0.2.0.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'defaults-encoding-0.2.0.ini'),
+                            os.path.join(pspydefd, 'defaults-encoding-0.2.0.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'defaults-vcs-0.2.0.ini'),
+                            os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
+            shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
+                            os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
+            
+            # documentation 
+            os.makedirs(os.path.join(self.project_directory, 'doc'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
+            
+            # sources
+            psrcd = os.path.join(self.project_directory, 'src')
+            os.makedirs(psrcd)
+            create_file(os.path.join(psrcd, '__init__.py')).touch()
+            os.makedirs(os.path.join(psrcd, 'patterns'))
+            create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
+            os.makedirs(os.path.join(psrcd, 'protocols'))
+            create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
+            os.makedirs(os.path.join(psrcd, 'states'))
+            create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
+            shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
+                            os.path.join(psrcd, 'states', 'init_hardware.py'))
+            os.makedirs(os.path.join(psrcd, 'tests'))
+            create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
+            os.makedirs(os.path.join(psrcd, 'programs'))
+            create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
+    
+            # database
+            self.create_project_database()
 
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
         '''
+        
         self.con = sqlite3.connect(self.db_file)
         self.cur = self.con.cursor()
         # devices
