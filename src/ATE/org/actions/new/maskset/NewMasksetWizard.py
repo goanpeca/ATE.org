@@ -4,13 +4,11 @@ Created on Nov 20, 2019
 @author: hoeren
 '''
 import os
-import pickle
 import re
 
-from ATE.org.listings import dict_project_paths, list_masksets
-from ATE.org.validation import is_ATE_project, is_valid_maskset_name
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from ATE.org.validation import is_valid_maskset_name
 
 class NewMasksetWizard(QtWidgets.QDialog):
 
@@ -25,8 +23,8 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         self.parent = parent
-        self.project_directory = os.path.join(self.parent.workspace_path, self.parent.active_project)
-        self.existing_masksets = list_masksets(self.project_directory)
+
+        self.existing_masksets = self.parent.project_info.get_masksets()
 
         from ATE.org.validation import valid_integer_regex
         rxi = QtCore.QRegExp(valid_integer_regex)
@@ -109,9 +107,8 @@ class NewMasksetWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(False)
 
     def OKButtonPressed(self):
-        maskset_data = {
-            'defines'             : 'maskset',
-            'maskset_name'        : self.MasksetName.text(),
+        name = self.MasksetName.text()
+        definition = {
             'number_of_bond_pads' : int(self.Bondpads.text()),
             'die_size_x'          : int(self.DieSizeX.text()),
             'die_size_y'          : int(self.DieSizeY.text()),
@@ -126,33 +123,12 @@ class NewMasksetWizard(QtWidgets.QDialog):
             #TODO: add the rotation (0, 90, 180, 270) to the ui
             }
 
-        create_new_maskset(self.parent.active_project_path, maskset_data)
+        self.parent.project_info.add_maskset(name, definition)
+        self.parent.tree_update()
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
-
-def create_new_maskset(project_path, maskset_data):
-    '''
-    given a project_path, a maskset_name (in maskset_data),
-    create the appropriate definition file for this new maskset.
-
-    maskset_data = {'defines' : 'maskset'
-                    'maskset_name' : str,
-                    'number_of_bond_pads' : int, # in μm
-                    'die_size_x' : int, # in μm
-                    'die_size_y' : int, # in μm
-                    'scribe_x' : int, # in μm
-                    'scribe_y' : int, # in μm
-                    'bond_pads' : dict{int'padNr' : tuple(str'Name', int'xcoord', int'ycoord', int'xsize', int'ysize')}, # in μm
-                    'rotation_to_flat' : int # = 0/90/180/270}
-    '''
-    if is_ATE_project(project_path):
-        maskset_root = dict_project_paths(project_path)['maskset_root']
-        maskset_name = maskset_data['maskset_name']
-        maskset_path = os.path.join(maskset_root, "%s.pickle" % maskset_name)
-        print(maskset_path)
-        pickle.dump(maskset_data, open(maskset_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
 
 def new_maskset_dialog(parent):
     newMasksetWizard = NewMasksetWizard(parent)

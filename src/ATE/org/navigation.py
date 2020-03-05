@@ -22,6 +22,9 @@ class project_navigator(object):
         self.__call__(project_directory)
             
     def __call__(self, project_directory):
+        
+        print(f"project_directory = {project_directory}")
+        
         if not isinstance(project_directory, str):
             self.project_directory = ''
         else:
@@ -32,16 +35,16 @@ class project_navigator(object):
     
             if not os.path.exists(project_directory):
                 self.create_project_structure()
-            else:
-                if not os.path.exists(self.db_file):
-                    self.create_project_database()
-                else:
-                    self.con = sqlite3.connect(self.db_file)
-                    self.cur = self.con.cursor()
+            if not os.path.exists(self.db_file):
+                self.create_project_database()
+            self.con = sqlite3.connect(self.db_file)
+            self.cur = self.con.cursor()
+            print("navigator")
         else:
             self.db_file = None
             self.con = None
             self.cur = None
+            print("no navigator")
     
     def create_project_structure(self):
         '''
@@ -62,7 +65,6 @@ class project_navigator(object):
             # spyder
             pspyd = os.path.join(self.project_directory, '.spyproject')
             os.makedirs(pspyd)
-            os.makedirs(os.path.join(pspyd, 'config'))
             shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
                             os.path.join(pspyd, 'codestyle.ini'))
             shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
@@ -71,6 +73,10 @@ class project_navigator(object):
                             os.path.join(pspyd, 'vcs.ini'))
             shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
                             os.path.join(pspyd, 'workspace.ini'))
+            create_file(os.path.join(pspyd, 'ATE.config')).touch()
+
+            os.makedirs(os.path.join(pspyd, 'config'))
+
             pspydefd = os.path.join(pspyd, 'defaults')
             os.makedirs(pspydefd)
             shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
@@ -81,11 +87,15 @@ class project_navigator(object):
                             os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
             shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
                             os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
-            
+                        
             # documentation 
             os.makedirs(os.path.join(self.project_directory, 'doc'))
             os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
             os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'export'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'pdf'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'ppt'))
+            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'xls'))
             
             # sources
             psrcd = os.path.join(self.project_directory, 'src')
@@ -104,9 +114,6 @@ class project_navigator(object):
             os.makedirs(os.path.join(psrcd, 'programs'))
             create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
     
-            # database
-            self.create_project_database()
-
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
@@ -146,9 +153,9 @@ class project_navigator(object):
  	                           PRIMARY KEY("name")
                             );''')
         self.con.commit()
-        # hardware
-        self.cur.execute('''CREATE TABLE "hardware" (
-	                           "name"	INTEGER NOT NULL,
+        # hardwares
+        self.cur.execute('''CREATE TABLE "hardwares" (
+	                           "name"	TEXT NOT NULL UNIQUE,
 	                           "definition"	BLOB NOT NULL,
 
 	                           PRIMARY KEY("name")
@@ -210,63 +217,68 @@ class project_navigator(object):
         this method adds a hardware setup (defined in 'definition') and returns
         the name for this.
         '''
-        existing_hw_nrs = self.get_hardware_names()
-        if existing_hw_nrs == []:
-            new_hw_nr = 1
-        else:
-            new_hw_nr = max(existing_hw_nrs)+1
+        new_hardware = self.get_next_hardware_name()
         blob = pickle.dumps(definition, 4)
-        insert_blob_query = '''INSERT INTO hardware(name, definition) VALUES (?, ?)'''
-        self.cur.execute(insert_blob_query, (new_hw_nr, blob))
+        query = '''INSERT INTO hardwares(name, definition) VALUES (?, ?)'''
+        self.cur.execute(query, (new_hardware, blob))
         self.con.commit()
-        
-        dir_name = "HW%d" % new_hw_nr
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', dir_name, 'PR', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR', '__init__.py')).touch()
                     
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', dir_name, 'PR', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'PR', '__init__.py')).touch()
 
-        return new_hw_nr
+        return new_hardware
     
     def update_hardware(self, name, definition):
         '''
         this method will update hardware 'name' with 'definition'
         if name doesn't exist, a KeyError will be thrown
         '''
-        existing_hardware = self.get_hardware_names()
+        existing_hardware = self.get_hardwares()
         if name not in existing_hardware:
             raise KeyError
         blob = pickle.dumps(definition, 4)
-        update_blob_query = '''UPDATE hardware SET definition = ? WHERE name = ?'''
+        update_blob_query = '''UPDATE hardwares SET definition = ? WHERE name = ?'''
         self.cur.execute(update_blob_query, (blob, name))
         self.con.commit()        
 
-    def get_hardware_names(self):
+    def get_hardwares(self):
         '''
         This method will return a list of all hardware names available
         '''
-        self.cur.execute("SELECT name FROM hardware")
+        self.cur.execute("SELECT name FROM hardwares")
         retval = []
         for row in self.cur.fetchall():
             retval.append(row[0])
         return retval
+    
+    def get_next_hardware_name(self):
+        '''
+        This method will determine the next available hardware name
+        '''
+        available_hardwares = self.get_hardwares()
+        if len(available_hardwares)==0:
+            return "HW1"
+        else:
+            available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
+            return "HW%d" % (max(available_hardwares_)+1)
                 
     def get_hardware_definition(self, name):
         '''
         this method retreives the hwr_data for hwr_nr.
         if hwr_nr doesn't exist, an empty dictionary is returned
         '''
-        get_blob_query = '''SELECT definition FROM hardware WHERE name = ?'''
+        get_blob_query = '''SELECT definition FROM hardwares WHERE name = ?'''
         self.cur.execute(get_blob_query, (name,))
         return pickle.loads(self.cur.fetchone()[0])        
 
@@ -286,10 +298,10 @@ class project_navigator(object):
         database, but prior it will check if 'name' already exists, if so
         it will trow a KeyError
         '''
-        existing_masksets = self.get_masksets_names()
+        existing_masksets = self.get_masksets()
         if name in existing_masksets:
             raise KeyError(f"{name} already exists")
-        insert_query = '''INSERT INTO maskset(name, definition) VALUES (?, ?)'''
+        insert_query = '''INSERT INTO masksets(name, definition) VALUES (?, ?)'''
         blob = pickle.dumps(definition, 4)
         self.cur.execute(insert_query, (name, blob))
         self.con.commit()        
@@ -298,7 +310,7 @@ class project_navigator(object):
         '''
         this method will update the definition of maskset 'name' to 'definition'
         '''
-        existing_masksets = self.get_masksets_names()
+        existing_masksets = self.get_masksets()
         if name not in existing_masksets:
             raise KeyError
         blob = pickle.dumps(definition, 4)
@@ -306,7 +318,7 @@ class project_navigator(object):
         self.cur.execute(update_blob_query, (blob, name))
         self.con.commit()        
 
-    def get_masksets_names(self):
+    def get_masksets(self):
         '''
         this method lists all available masksets
         '''
@@ -320,7 +332,7 @@ class project_navigator(object):
         '''
         this method will return the definition of maskset 'name'
         '''
-        existing_masksets = self.get_masksets_names()
+        existing_masksets = self.get_masksets()
         if name not in existing_masksets:
             raise KeyError(f"maskset '{name}' doesn't exist")
         
@@ -344,15 +356,15 @@ class project_navigator(object):
         KeyError will be raised. Also if 'name' already exists, a KeyError
         will be raised.
         '''
-        existing_dies = self.get_dies_names()
+        existing_dies = self.get_dies()
         if name in existing_dies:
             raise KeyError(f"{name} already exists")
 
-        existing_masksets = self.get_masksets_names()
+        existing_masksets = self.get_masksets()
         if maskset not in existing_masksets:
             raise KeyError(f"{maskset} doesn't exist")
 
-        existing_hardware = self.get_hardware_names()
+        existing_hardware = self.get_hardwares()
         if hardware not in existing_hardware:
             raise KeyError(f"{hardware} doesn't exist")
 
@@ -373,11 +385,11 @@ class project_navigator(object):
         if 'name' doesn't exist, a KeyError will be raised.
         if 'maskset' doesn't exist, a KeyError will be raised.
         '''
-        existing_dies = self.get_dies_names()
+        existing_dies = self.get_dies()
         if name not in existing_dies:
             raise KeyError(f"{name} already exists")
 
-        existing_masksets = self.get_masksets_names()
+        existing_masksets = self.get_masksets()
         if maskset not in existing_masksets:
             raise KeyError(f"{maskset} doesn't exist")
 
@@ -391,11 +403,11 @@ class project_navigator(object):
         if 'name' doesn't exist, a KeyError will be raised.
         if 'hardware' doesn't exist, a KeyError will be raised.
         '''
-        existing_dies = self.get_dies_names()
+        existing_dies = self.get_dies()
         if name not in existing_dies:
             raise KeyError(f"die'{name}' doesn't exist")
 
-        existing_hardware = self.get_hardware_names()
+        existing_hardware = self.get_hardwares()
         if hardware not in existing_hardware:
             raise KeyError(f"hardware '{hardware}' doesn't exist")
     
@@ -403,7 +415,7 @@ class project_navigator(object):
         self.cur.execute(update_query, (hardware, name))
         self.con.commit()        
     
-    def get_dies_names(self):
+    def get_dies(self):
         '''
         this method will return a list of existing dies.
         '''
@@ -418,7 +430,7 @@ class project_navigator(object):
         this method returns a tuple (maskset, hardware) for die 'name'
         if name doesn't exist, a KeyError will be raised.
         '''
-        existing_dies = self.get_dies_names()
+        existing_dies = self.get_dies()
         if name not in existing_dies:
             raise KeyError(f"die'{name}' doesn't exist")
         
@@ -454,7 +466,7 @@ class project_navigator(object):
         database, but prior it will check if 'name' already exists, if so
         it will trow a KeyError
         '''
-        existing_packages = self.get_packages_names()
+        existing_packages = self.get_packages()
         if name in existing_packages:
             raise KeyError(f"package '{name}' already exists")
         insert_query = '''INSERT INTO packages(name, definition) VALUES (?, ?)'''
@@ -466,7 +478,7 @@ class project_navigator(object):
         '''
         this method will update the definition of package 'name' to 'definition'
         '''
-        existing_packages = self.get_packages_names()
+        existing_packages = self.get_packages()
         if name not in existing_packages:
             raise KeyError
         blob = pickle.dumps(definition, 4)
@@ -474,7 +486,7 @@ class project_navigator(object):
         self.cur.execute(update_query, (blob, name))
         self.con.commit()        
     
-    def get_packages_names(self):
+    def get_packages(self):
         '''
         this method lists all available packages
         '''
@@ -488,7 +500,7 @@ class project_navigator(object):
         '''
         this method will return the definition of package 'name'
         '''
-        existing_packages = self.get_packages_names()
+        existing_packages = self.get_packages()
         if name not in existing_packages:
             raise KeyError(f"package '{name}' doesn't exist")
         
@@ -512,11 +524,11 @@ class project_navigator(object):
         if 'name' already exists, a KeyError is raised
         if 'package' doesn't exist, a KeyError is raised
         '''
-        existing_devices = self.get_devices_names()
+        existing_devices = self.get_devices()
         if name in existing_devices:
             raise KeyError(f"device '{name}' already exists")
 
-        existing_packages = self.get_packages_names()
+        existing_packages = self.get_packages()
         if package not in existing_packages:
             raise KeyError(f"package '{package}' doesn't exist")
 
@@ -533,11 +545,11 @@ class project_navigator(object):
         '''
         this method will update the device package for 'name' to 'package'
         '''
-        existing_devices = self.get_devices_names()
+        existing_devices = self.get_devices()
         if name not in existing_devices:
             raise KeyError(f"device '{name}' doesn't exist")
             
-        existing_packages = self.get_packages_names()
+        existing_packages = self.get_packages()
         if package not in existing_packages:
             raise KeyError(f"package '{package}' doesn't exist")
 
@@ -549,7 +561,7 @@ class project_navigator(object):
         '''
         this method will update the definition of device 'name' to 'definition'
         '''
-        existing_devices = self.get_devices_names()
+        existing_devices = self.get_devices()
         if name not in existing_devices:
             raise KeyError(f"device '{name}' doesn't exist")
         
@@ -558,7 +570,7 @@ class project_navigator(object):
         self.cur.execute(update_query, (blob, name))
         self.con.commit()        
     
-    def get_devices_names(self):
+    def get_devices(self):
         '''
         this method lists all available devices
         '''
@@ -572,7 +584,7 @@ class project_navigator(object):
         '''
         this method will return the package of device 'name'
         '''
-        existing_devices = self.get_devices_names()
+        existing_devices = self.get_devices()
         if name not in existing_devices:
             raise KeyError(f"device '{name}' doesn't exist")
             
@@ -584,7 +596,7 @@ class project_navigator(object):
         '''
         this method will return the definition of device 'name'
         '''
-        existing_devices = self.get_devices_names()
+        existing_devices = self.get_devices()
         if name not in existing_devices:
             raise KeyError(f"device '{name}' doesn't exist")
         
@@ -623,7 +635,7 @@ class project_navigator(object):
     # def update_product_flows(self, name, flows):
     #     pass
     
-    def get_products_names(self):
+    def get_products(self):
         pass
     
     def get_product_device(self, name):
@@ -642,6 +654,9 @@ class project_navigator(object):
         pass
     
     def update_test(self, name):
+        pass
+    
+    def get_tests(self):
         pass
     
     def remove_test(self, name):
@@ -667,6 +682,6 @@ if __name__ == '__main__':
 
     navigator.add_hardware({1:1,"foo":"boe"})
 
-    for name in navigator.get_hardware_names():
+    for name in navigator.get_hardwares():
         print(f"HWR#{name}")
         print(navigator.get_hardware_definition(name))

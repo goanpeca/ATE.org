@@ -68,10 +68,17 @@
     </property>
     <addaction name="action_new_project_2"/>
     <addaction name="separator"/>
-    <addaction name="actionOpwn_Project"/>
+    <addaction name="action_open_project"/>
     <addaction name="actionClose_Project"/>
     <addaction name="actionDelete_Project"/>
    </widget>
+   <widget class="QMenu" name="menuFile_2">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_quit"/>
+   </widget>
+   <addaction name="menuFile_2"/>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -490,7 +497,7 @@
     <string>hardware setup</string>
    </property>
   </action>
-  <action name="actionOpwn_Project">
+  <action name="action_open_project">
    <property name="text">
     <string>Open Project...</string>
    </property>
@@ -508,6 +515,11 @@
   <action name="action_new_project_2">
    <property name="text">
     <string>New Project...</string>
+   </property>
+  </action>
+  <action name="action_quit">
+   <property name="text">
+    <string>Quit</string>
    </property>
   </action>
  </widget>

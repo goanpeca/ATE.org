@@ -62,28 +62,19 @@ class NewProjectWizard(QtWidgets.QDialog):
         else:
             self.OKButton.setEnabled(False)
 
-    # def PressedEnter(self):
-    #     if self.Feedback.text() == "": # no feedback means that the name is ok
-    #         self.OKButtonPressed()
-    #     else:
-    #         self.CancelButtonPressed()
-
     def OKButtonPressed(self):
         project_name = self.ProjectName.text()
         #switch the parent to this new project
         self.parent.active_project = project_name
         self.parent.active_project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
         
-        print(f"self.parent.active_project_path = {self.parent.active_project_path}")
-        if self.parent.navigator is None:
+        if self.parent.project_info is None:
             from ATE.org.navigation import project_navigator
-            self.parent.navigator = project_navigator(self.parent.active_project_path)
+            self.parent.project_info = project_navigator(self.parent.active_project_path)
             
         else:
-            self.parent.navigator(self.parent.active_project_path)
-            self.parent.
-
-
+            self.parent.project_info(self.parent.active_project_path)
+        self.parent.tree_update()      
         self.accept()
 
     def CancelButtonPressed(self):

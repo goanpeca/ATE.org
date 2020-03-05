@@ -439,11 +439,11 @@ class project_navigator(object):
     
 if __name__ == '__main__':
     project_directory = r'C:\Users\hoeren\Desktop\ATE.org\src\ATE\org\Templates'
-    pdb = project_db(project_directory)
+    pdb = project_navigator(project_directory)
 
     brol = {1:1,"foo":"boe"}
     pdb.update_hardware(1, brol)
 
     for name in pdb.get_hardware_names():
-        print(f"HWR#{name}")
+        print(f"#{name}")
         print(pdb.get_hardware_definition(name))
