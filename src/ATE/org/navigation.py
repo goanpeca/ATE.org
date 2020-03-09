@@ -136,12 +136,13 @@ class project_navigator(object):
         # dies
         self.cur.execute('''CREATE TABLE "dies" (
 	                           "name"	TEXT NOT NULL UNIQUE,
+	                           "hardware"	TEXT NOT NULL,
 	                           "maskset"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+                               "customer"   TEXT NOT NULL,
 
 	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("maskset") REFERENCES "masksets"("name"),
-	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name")
+	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name"),
+	                           FOREIGN KEY("maskset") REFERENCES "masksets"("name")
                             );''')
         self.con.commit()
         # flows
@@ -193,7 +194,7 @@ class project_navigator(object):
         # programs  
         self.cur.execute('''CREATE TABLE "programs" (
 	                           "name"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+	                           "hardware"	TEXT NOT NULL,
 	                           "base"	TEXT NOT NULL 
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "relative_path"	TEXT NOT NULL,
@@ -204,7 +205,7 @@ class project_navigator(object):
         # tests  
         self.cur.execute('''CREATE TABLE "tests" (
 	                           "name"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+	                           "hardware"	TEXT NOT NULL,
 	                           "base"	TEXT NOT NULL 
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "test_numbers"	BLOB NOT NULL,
@@ -344,7 +345,7 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_die(self, name, maskset, hardware):
+    def add_die(self, name, hardware, maskset, customer):
         '''
         this method will add die 'name' with 'maskset' and 'hardware'
         to the database. if 'maskset' or 'hardware' doesn't exist, a
@@ -363,8 +364,8 @@ class project_navigator(object):
         if hardware not in existing_hardware:
             raise KeyError(f"{hardware} doesn't exist")
 
-        insert_query = '''INSERT INTO dies(name, maskset, hardware) VALUES (?, ?, ?)'''
-        self.cur.execute(insert_query, (name, maskset, hardware))
+        insert_query = '''INSERT INTO dies(name, hardware, maskset, customer) VALUES (?, ?, ?, ?)'''
+        self.cur.execute(insert_query, (name, hardware, maskset, customer))
         self.con.commit()        
     
     def update_die(self, name, maskset, hardware):

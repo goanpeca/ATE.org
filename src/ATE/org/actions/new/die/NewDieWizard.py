@@ -54,6 +54,22 @@ class NewDieWizard(QtWidgets.QDialog):
         self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
         self.WithHardware.blockSignals(False)
 
+        self.Type.blockSignals(True)
+        self.Type.clear()
+        self.Type.addItems(['ASSP', 'ASIC'])
+        self.Type.setCurrentIndex(0) # --> ASSP
+        self.Type.currentIndexChanged.connect(self.type_changed)
+        self.Type.blockSignals(False)
+        
+        self.CustomerLabel.setDisabled(True)
+        self.CustomerLabel.setHidden(True)
+        
+        self.Customer.blockSignals(True)
+        self.Customer.setText("")
+        self.Customer.setDisabled(True)
+        self.Customer.setHidden(True)
+        self.Customer.blockSignals(False)
+        
         self.Feedback.setText("No die name")
         self.Feedback.setStyleSheet('color: orange')
 
@@ -71,6 +87,29 @@ class NewDieWizard(QtWidgets.QDialog):
         '''
         self.parent.active_hw = self.WithHardware.currentText()
 
+    def type_changed(self):
+        '''
+        if the Type is 'ASIC' enable CustomerLabel and Customer
+        '''
+        if self.Type.currentText() == 'ASIC':
+            self.CustomerLabel.setDisabled(False)
+            self.CustomerLabel.setHidden(False)
+            
+            self.Customer.blockSignals(True)
+            self.Customer.setText("")
+            self.Customer.setDisabled(False)
+            self.Customer.setHidden(False)
+            self.Customer.blockSignals(False)
+        else:
+            self.CustomerLabel.setDisabled(True)
+            self.CustomerLabel.setHidden(True)
+            
+            self.Customer.blockSignals(True)
+            self.Customer.setText("")
+            self.Customer.setDisabled(True)
+            self.Customer.setHidden(True)
+            self.Customer.blockSignals(False)
+
     def verify(self):
         if self.NewDieName.text() in self.existing_dies:
             self.Feedback.setText("Die name already exists !")
@@ -80,11 +119,18 @@ class NewDieWizard(QtWidgets.QDialog):
                 self.Feedback.setText("No maskset selected")
                 self.OKButton.setEnabled(False)
             else:
-                self.Feedback.setText("")
-                self.OKButton.setEnabled(True)
+                if self.Type.currentText() == "ASIC":
+                    if self.Customer.text() == "":
+                        self.Feedback.setText("need a customer for ASIC")
+                        self.OKButton.setEnabled(False)
+                    else: # ASSP
+                        self.Feedback.setText("")
+                        self.OKButton.setEnabled(True)
+                else: # ASSP
+                    self.Feedback.setText("")
+                    self.OKButton.setEnabled(True)
 
         #TODO: and the hardware ?!?
-
 
     def CancelButtonPressed(self):
         self.accept()
@@ -93,8 +139,12 @@ class NewDieWizard(QtWidgets.QDialog):
         name = self.NewDieName.text()
         maskset = self.FromMaskset.currentText()
         hardware = self.WithHardware.currentText()
+        if self.Type.currentText() == 'ASIC':
+            customer = 'ASIC'
+        else: #ASSP
+            customer = self.Customer.text()
         
-        self.parent.project_info.add_die(name, maskset, hardware)
+        self.parent.project_info.add_die(name, hardware, maskset, customer)
         self.parent.tree_update()
         self.accept()
 

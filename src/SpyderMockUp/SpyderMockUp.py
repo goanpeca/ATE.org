@@ -298,6 +298,10 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'die':
             menu = QtWidgets.QMenu(self)
+            activate_die = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_die.triggered.connect
+            view_die = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_die.triggered.connect
             edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_die.triggered.connect
             delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -310,6 +314,8 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'package':
             menu = QtWidgets.QMenu(self)
+            view_package = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_package.triggered.connect
             edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_package.triggered.connect
             delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -347,9 +353,10 @@ class MainWindow(QtWidgets.QMainWindow):
             add_device.triggered.connect(self.new_device)
             menu.exec_(QtGui.QCursor.pos())
             #TODO: update the base filter to 'FT' if needed !
-
         elif self.node_type == 'device':
             menu = QtWidgets.QMenu(self)
+            view_device = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_device.triggered.connect
             edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_device.triggered.connect
             delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -362,6 +369,10 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'product':
             menu = QtWidgets.QMenu(self)
+            activate_product = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_product.triggered.connect
+            view_product = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_product.triggered.connect
             edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_product.triggered.connect
             delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -379,7 +390,14 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             # delete_flow.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
-
+        elif self.node_type == 'register map':
+            menu = QtWidgets.QMenu(self)
+            add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            # add_registermap.triggered.connect
+            import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+            # import_registermap.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+            
     def update_testers(self):
         new_tester_list = list(self.tester_finder.list_testers())
         old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
