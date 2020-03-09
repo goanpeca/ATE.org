@@ -47,9 +47,11 @@ class NewDieWizard(QtWidgets.QDialog):
 
         self.WithHardware.blockSignals(True)
         self.WithHardware.clear()
-        self.WithHardware.addItems(self.existing_hardwares)
-        self.WithHardware.setCurrentIndex(0) # this is the empty string
-        self.WithHardware.currentIndexChanged.connect(self.verify)
+        for index, hardware in enumerate(self.existing_hardwares):
+            self.WithHardware.addItem(hardware)
+            if hardware == self.parent.active_hw:
+                self.WithHardware.setCurrentIndex(index)
+        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
         self.WithHardware.blockSignals(False)
 
         self.Feedback.setText("No die name")
@@ -61,6 +63,13 @@ class NewDieWizard(QtWidgets.QDialog):
 
         self.verify()
         self.show()
+
+    def hardware_changed(self):
+        '''
+        if the selected hardware changes, make sure the active_hardware 
+        at the parent level is also changed.
+        '''
+        self.parent.active_hw = self.WithHardware.currentText()
 
     def verify(self):
         if self.NewDieName.text() in self.existing_dies:

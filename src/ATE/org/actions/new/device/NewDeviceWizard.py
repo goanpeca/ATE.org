@@ -27,26 +27,35 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.workspace_path = parent.workspace_path
-        self.active_project = parent.active_project
-        self.active_project_path = parent.active_project_path
+        self.parent = parent
 
-        self.existing_devices = list_devices(self.active_project_path)
+        self.existing_hardware = self.parent.project_info.get_hardwares()
+        self.Hardware.blockSignals(True)
+        self.Hardware.clear()
+        for index, hardware in enumerate(self.existing_hardware):
+            self.Hardware.addItem(hardware)
+            if hardware == self.parent.active_hw:
+                self.Hardware.setCurrentIndex(index)
+        self.Hardware.currentIndexChanged.connect(self.hardware_changed)
+        self.Hardware.blockSignals(False)        
+
+        self.existing_packages = self.parent.project_info.get_packages()
+        self.Package.blockSignals(True)
+        self.Package.clear()
+        self.Package.addItems([''] + self.existing_packages + ['Naked Die'])
+        self.Package.setCurrentIndex(0) # this is the empty string !
+        self.Package.currentIndexChanged.connect(self.verify)
+        self.Package.blockSignals(False)
+
+        self.existing_devices = self.parent.project_info.get_devices()
         self.DeviceName.setText("")
         rxDeviceName = QtCore.QRegExp(valid_device_name_regex)
         DeviceName_validator = QtGui.QRegExpValidator(rxDeviceName, self)
         self.DeviceName.setValidator(DeviceName_validator)
         self.DeviceName.textChanged.connect(self.verify)
 
-        self.existing_packages = list_packages(self.active_project_path)
-        self.Package.blockSignals(True)
-        self.Package.clear()
-        self.Package.addItems(['', 'None'] + self.existing_packages)
-        self.Package.setCurrentIndex(0) # this is the empty string !
-        self.Package.currentIndexChanged.connect(self.verify)
-        self.Package.blockSignals(False)
-
-        self.existing_dies = list_dies(self.active_project_path)
+        self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
+        print(f"get_dies_for_hardware = {self.existing_dies}")
         self.AvailableDies.blockSignals(True)
         self.AvailableDies.clear()
         self.AvailableDies.addItems(self.existing_dies)
@@ -85,6 +94,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.DiesInDevice.clearSelection()
         self.AvailableDies.clearSelection()
         self.DiesInDevice.blockSignals(False)
+        self.check_for_dual_die()
         self.verify()
 
     def remove_dies(self):
@@ -93,8 +103,25 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.DiesInDevice.clearSelection()
         self.AvailableDies.clearSelection()
         self.DiesInDevice.blockSignals(False)
+        self.check_for_dual_die()
         self.verify()
-
+        
+    def hardware_changed(self):
+        '''
+        if the selected hardware changes, make sure the active_hardware 
+        at the parent level is also changed, the dies in device list is cleared,
+        and the available dies is reloaded.
+        '''
+        self.parent.active_hw = self.Hardware.currentText()
+        self.DiesInDevice.clear()
+        self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
+        self.AvailableDies.blockSignals(True)
+        self.AvailableDies.clear()
+        self.AvailableDies.addItems(self.existing_dies)
+        self.AvailableDies.clearSelection()
+        self.AvailableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.AvailableDies.blockSignals(False)
+    
     def verify(self):
         feedback = ""
 
@@ -103,18 +130,27 @@ class NewDeviceWizard(QtWidgets.QDialog):
             feedback = "Invalid device name"
         elif device_name in self.existing_devices:
             feedback = "device already defined"
-        else:
+        else: # valid device name
             package_name = self.Package.currentText()
             if package_name == '':
                 feedback = "No package selected"
-            elif package_name == 'None':
+            elif package_name != 'Naked Die':
                 number_of_dies_in_device = self.DiesInDevice.count()
-                if number_of_dies_in_device != 1:
-                    feedback = "Naked die device needs exactly 1 die"
-            else:
+                if self.DualDie.checkState(): # dual die
+                    feedback = ''
+                else: # normal
+                    if number_of_dies_in_device == 0:
+                        feedback = 'need at least ONE die'
+                    else:
+                        feedback = ''
+            else: # Naked die
                 number_of_dies_in_device = self.DiesInDevice.count()
-                if number_of_dies_in_device < 1:
-                    feedback = "device needs minimal 1 die"
+                if number_of_dies_in_device == 0:
+                    feedback = "select the naked die"
+                elif number_of_dies_in_device > 1:
+                    feedback = "only one die allowed in 'Naked Die'"
+                else: # one selected
+                    feedback = ''
 
         self.Feedback.setText(feedback)
 
@@ -123,35 +159,41 @@ class NewDeviceWizard(QtWidgets.QDialog):
         else:
             self.OKButton.setEnabled(False)
 
+    def check_for_dual_die(self):
+        '''
+        this mentod will check if a configuration qualifies for 'DualDie',
+        if so, the radio will be enabled, if not disabled (and cleared)
+        '''
+        temp = []
+        for die in self.DiesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
+            temp.append(die.text())
+        if len(temp)==2:
+            if temp[0] == temp[1]:
+                self.DualDie.setEnabled(True)
+            else:
+                self.DualDie.setCheckState(QtCore.Qt.Unchecked)
+                self.DualDie.setEnabled(False)
+        else:
+            self.DualDie.setCheckState(QtCore.Qt.Unchecked)
+            self.DualDie.setEnabled(False)
+
     def CancelButtonPressed(self):
         self.accept()
 
     def OKButtonPressed(self):
-        device_data = {}
-        device_data['defines'] = 'device'
-        device_data['device_name'] = self.DeviceName.text()
-        device_data['package_name'] = self.Package.currentText()
-        device_data['dies_in_package'] = []
-        for die_obj in self.DiesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
-            device_data['dies_in_package'].append(die_obj.text())
-        create_new_device(self.parent.active_project_path, device_data)
+        name = self.DeviceName.text()
+        hardware = self.Hardware.currentText()
+        package = self.Package.currentText()
+        dies_in_package = []
+        for die in self.DiesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
+            dies_in_package.append(die.text())
+        definition = {'dies_in_package' : dies_in_package,
+                      'is_dual_die' : self.DualDie.checkState(),
+                      'pin_names' : {}}
+            
+        self.parent.project_info.add_device(name, hardware, package, definition)    
+        self.parent.tree_update()
         self.accept()
-
-def create_new_device(project_path, device_data):
-    '''
-    given a project_path, a device_name (in device_data),
-    create the appropriate definition file for this new device.
-
-        device_data = {'defines' : 'device'
-                       'device_name' : str
-                       'package' : str
-                       'dies_in_package' : list[die_names]}
-    '''
-    if is_ATE_project(project_path):
-        device_root = dict_project_paths(project_path)['device_root']
-        device_name = device_data['device_name']
-        device_path = os.path.join(device_root, "%s.pickle" % device_name)
-        pickle.dump(device_data, open(device_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
 
 def new_device_dialog(parent):
     newDeviceWizard = NewDeviceWizard(parent)

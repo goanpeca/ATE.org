@@ -27,10 +27,14 @@ class NewProductWizard(QtWidgets.QDialog):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         self.parent = parent
-        self.project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
 
-        self.existing_devices = [''] + list_devices(self.project_path)
-        self.existing_products = list_products(self.project_path)
+        self.existing_hardwares = self.parent.project_info.get_hardwares()
+        if len(self.existing_hardwares)==0:
+            self.existing_hardwares = ['']
+        print(f"self.parent.active_hw = {self.parent.active_hw}")
+        self.existing_devices = [''] + self.parent.project_info.get_devices_for_hardware(self.parent.active_hw)
+        print(f"existing_devices = {self.existing_devices}")
+        self.existing_products = self.parent.project_info.get_products_for_hardware(self.parent.active_hw)
 
         from ATE.org.validation import valid_product_name_regex
         rxProductName = QtCore.QRegExp(valid_product_name_regex)
@@ -39,10 +43,19 @@ class NewProductWizard(QtWidgets.QDialog):
         self.ProductName.setValidator(ProductName_validator)
         self.ProductName.textChanged.connect(self.verify)
 
+        self.WithHardware.blockSignals(True)
+        self.WithHardware.clear()
+        for index, hardware in enumerate(self.existing_hardwares):
+            self.WithHardware.addItem(hardware)
+            if hardware == self.parent.active_hw:
+                self.WithHardware.setCurrentIndex(index)
+        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
+        self.WithHardware.blockSignals(False)
+
         self.FromDevice.blockSignals(True)
         self.FromDevice.clear()
         self.FromDevice.addItems(self.existing_devices)
-        self.FromDevice.setCurrentIndex(0) # this is the empty string !
+        self.FromDevice.setCurrentIndex(0) # this is the empty string in the beginning of the list!
         self.FromDevice.currentIndexChanged.connect(self.verify)
         self.FromDevice.blockSignals(False)
 
@@ -56,15 +69,25 @@ class NewProductWizard(QtWidgets.QDialog):
         self.verify()
         self.show()
 
+    def hardware_changed(self):
+        '''
+        if the selected hardware changes, make sure the active_hardware 
+        at the parent level is also changed and that the new device list
+        (for the new hardware) is loaded.
+        '''
+        self.parent.active_hw = self.WithHardware.currentText()
+        self.existing_devices = [''] + self.parent.project_info.get_devices_for_hardware(self.parent.active_hw)
+        self.existing_products = self.parent.project_info.get_products_for_hardware(self.parent.active_hw)
+
     def verify(self):
         if self.ProductName.text() in self.existing_products:
             self.Feedback.setText("Product already exists !")
             self.OKButton.setEnabled(False)
         else:
             if self.FromDevice.currentText() == "":
-                self.Feedback.setText("No maskset selected")
+                self.Feedback.setText("No device selected")
                 self.OKButton.setEnabled(False)
-            else:
+            else: # device selected (hardware is always selected)
                 self.Feedback.setText("")
                 self.OKButton.setEnabled(True)
 
@@ -72,27 +95,13 @@ class NewProductWizard(QtWidgets.QDialog):
         self.accept()
 
     def OKButtonPressed(self):
-        product_data = {}
-        product_data['defines'] = 'product'
-        product_data['product_name'] = self.ProductName.text()
-        product_data['from_device'] = self.FromDevice.currentText()
-        create_new_product(self.parent.active_project_path, product_data)
+        name = self.ProductName.text()
+        device = self.FromDevice.currentText()
+        hardware = self.WithHardware.currentText()
+
+        self.parent.project_info.add_product(name, device, hardware)
+        self.parent.tree_update()
         self.accept()
-
-def create_new_product(project_path, product_data):
-    '''
-    given a project_path, a product_name (in product_data),
-    create the appropriate definition file for this new product.
-
-        product_data = {'defines' : 'product',
-                        'product_name' : str,
-                        'from_device' : str}
-    '''
-    if is_ATE_project(project_path):
-        product_root = dict_project_paths(project_path)['product_root']
-        product_name = product_data['product_name']
-        product_path = os.path.join(product_root, "%s.pickle" % product_name)
-        pickle.dump(product_data, open(product_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
 
 def new_product_dialog(parent):
     newProductWizard = NewProductWizard(parent)

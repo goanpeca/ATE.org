@@ -191,6 +191,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.base_combo.clear()
         toolbar.addWidget(self.base_combo)
 
+        self.target_label = QtWidgets.QLabel("Target:")
+        self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        toolbar.addWidget(self.target_label)
+        
+        self.target_combo = QtWidgets.QComboBox()
+        self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.target_combo.clear()
+        toolbar.addWidget(self.target_combo)
+
+
         info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
         info_action.setStatusTip("print current information")
         info_action.triggered.connect(self.printInfo)
@@ -296,7 +306,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'packages':
             menu = QtWidgets.QMenu(self)
             add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_package.triggered.connect
+            add_package.triggered.connect(self.new_package)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'package':
             menu = QtWidgets.QMenu(self)
@@ -320,14 +330,24 @@ class MainWindow(QtWidgets.QMainWindow):
             # delete_pattern.triggered.connect ...
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'protocols':
-            pass
+            menu = QtWidgets.QMenu(self)
+            new_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "New")      
+            # new_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())        
         elif self.node_type == 'protocol':
-            pass
+            menu = QtWidgets.QMenu(self)
+            edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+            # edit_protocol.triggered.connect ...
+            delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'devices':
             menu = QtWidgets.QMenu(self)
             add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_device.triggered.connect
+            add_device.triggered.connect(self.new_device)
             menu.exec_(QtGui.QCursor.pos())
+            #TODO: update the base filter to 'FT' if needed !
+
         elif self.node_type == 'device':
             menu = QtWidgets.QMenu(self)
             edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
@@ -338,7 +358,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'products':
             menu = QtWidgets.QMenu(self)
             add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_product.triggered.connect
+            add_product.triggered.connect(self.new_product)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'product':
             menu = QtWidgets.QMenu(self)
@@ -516,25 +536,36 @@ class MainWindow(QtWidgets.QMainWindow):
             definitions.setText(0, 'definitions')
             definitions.setText(1, 'definitions')
 
-            flows = QtWidgets.QTreeWidgetItem(definitions)
-            flows.setText(0, 'flows')
-            flows.setText(1, 'flows')
-            #TODO: show flows only when a Target is set in the filters
-
-            products = QtWidgets.QTreeWidgetItem(definitions, flows)
+            products = QtWidgets.QTreeWidgetItem(definitions, None)
             products.setText(0, 'products')
             products.setText(1, 'products')
-            #TODO: insert the right products from the database
+            previous = None
+            for product_name in self.project_info.get_products():
+                product = QtWidgets.QTreeWidgetItem(products, previous)
+                product.setText(0, product_name)
+                print(product_name)
+                product.setText(1, 'product')
+                previous = product
 
             devices = QtWidgets.QTreeWidgetItem(definitions, products)
             devices.setText(0, 'devices')
             devices.setText(1, 'devices')
-            #TODO: insert the right devices from the database
+            previous = None
+            for device_name in self.project_info.get_devices():
+                device = QtWidgets.QTreeWidgetItem(devices, previous)
+                device.setText(0, device_name)
+                device.setText(1, 'device')
+                previous = device
 
             packages = QtWidgets.QTreeWidgetItem(definitions, devices)
             packages.setText(0, 'packages')
             packages.setText(1, 'packages')
-            #TODO: insert the right packages from the database
+            previous = None
+            for name in self.project_info.get_packages():
+                package = QtWidgets.QTreeWidgetItem(packages, previous)
+                package.setText(0, name)
+                package.setText(1, 'package')
+                previous = package
 
             dies = QtWidgets.QTreeWidgetItem(definitions, packages)
             dies.setText(0, 'dies')
@@ -584,20 +615,27 @@ class MainWindow(QtWidgets.QMainWindow):
             patterns.setText(1, 'patterns')
             #TODO: insert the appropriate patterns from /sources/patterns, based on HWR and Base
                 
-        # sources/programs
-            programs = QtWidgets.QTreeWidgetItem(sources, patterns)
-            programs.setText(0, 'programs')
-            programs.setText(1, 'programs')
-            #TODO: insert the appropriate programs from /sources/programs, based on HWR and base
             
         # sources/states
-            states = QtWidgets.QTreeWidgetItem(sources, programs)
+            states = QtWidgets.QTreeWidgetItem(sources, patterns)
             states.setText(0, 'states')
             states.setText(1, 'states')
             # #TODO: cycle through the states and add the states
-        
+
+        # sources/flows
+            flows = QtWidgets.QTreeWidgetItem(sources, states)
+            flows.setText(0, 'flows')
+            flows.setText(1, 'flows')
+            #TODO: show flows only when a Target is set in the filters
+
+        # sources/flows/programs
+            programs = QtWidgets.QTreeWidgetItem(flows, None)
+            programs.setText(0, 'programs')
+            programs.setText(1, 'programs')
+            #TODO: insert the appropriate programs from /sources/programs, based on HWR and base
+
         # sources/tests
-            tests = QtWidgets.QTreeWidgetItem(sources, states)
+            tests = QtWidgets.QTreeWidgetItem(sources, flows)
             tests.setText(0, 'tests')
             tests.setText(1, 'tests')
             #TODO: insert the appropriate test names from /sources/tests, based on HWR and base (read: die- or product-based or probing/final test)

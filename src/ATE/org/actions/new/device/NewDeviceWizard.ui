@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>374</width>
-    <height>345</height>
+    <width>410</width>
+    <height>463</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>374</width>
-    <height>345</height>
+    <width>410</width>
+    <height>463</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>374</width>
-    <height>345</height>
+    <width>410</width>
+    <height>463</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -34,11 +34,23 @@
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>90</y>
+     <x>20</x>
+     <y>160</y>
      <width>351</width>
      <height>201</height>
     </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>351</width>
+     <height>201</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>351</width>
+     <height>201</height>
+    </size>
    </property>
    <property name="title">
     <string>Dies:</string>
@@ -116,37 +128,11 @@
     </property>
    </widget>
   </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>20</y>
-     <width>91</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Device Name:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="DeviceName">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>20</y>
-     <width>113</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QLabel" name="Feedback">
    <property name="geometry">
     <rect>
-     <x>16</x>
-     <y>300</y>
+     <x>10</x>
+     <y>380</y>
      <width>341</width>
      <height>20</height>
     </rect>
@@ -158,57 +144,135 @@
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
-  <widget class="QPushButton" name="OKButton">
+  <widget class="QCheckBox" name="DualDie">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>310</y>
-     <width>75</width>
-     <height>23</height>
+     <x>210</x>
+     <y>110</y>
+     <width>70</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>OK</string>
+    <string>DualDie</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="CancelButton">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>310</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Cancel</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="Package">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>60</y>
-     <width>111</width>
+     <x>30</x>
+     <y>20</y>
+     <width>207</width>
      <height>22</height>
     </rect>
    </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Device Name:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="DeviceName"/>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>60</y>
-     <width>91</width>
-     <height>20</height>
+     <width>121</width>
+     <height>22</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Package :</string>
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Package:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QComboBox" name="Package"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>110</y>
+     <width>128</width>
+     <height>22</height>
+    </rect>
    </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <widget class="QLabel" name="label_5">
+      <property name="text">
+       <string>Hardware:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QComboBox" name="Hardware"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>420</y>
+     <width>204</width>
+     <height>25</height>
+    </rect>
    </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_4">
+    <item>
+     <widget class="QPushButton" name="OKButton">
+      <property name="text">
+       <string>OK</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <widget class="QPushButton" name="CancelButton">
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

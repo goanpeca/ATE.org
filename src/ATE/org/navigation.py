@@ -124,10 +124,12 @@ class project_navigator(object):
         # devices
         self.cur.execute('''CREATE TABLE "devices" (
 	                           "name"	TEXT NOT NULL UNIQUE,
+	                           "hardware"	TEXT NOT NULL,
 	                           "package"	TEXT NOT NULL,
 	                           "definition"	BLOB NOT NULL,
 
-	                           PRIMARY KEY("name"),
+                               PRIMARY KEY("name"),
+	                           FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
 	                           FOREIGN KEY("package") REFERENCES "packages"("name")
                             );''')
         self.con.commit()
@@ -181,7 +183,7 @@ class project_navigator(object):
         self.cur.execute('''CREATE TABLE "products" (
 	                           "name"	TEXT NOT NULL UNIQUE,
 	                           "device"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+	                           "hardware"	TEXT NOT NULL,
 
 	                           PRIMARY KEY("name"),
 	                           FOREIGN KEY("device") REFERENCES "devices"("name"),
@@ -230,13 +232,6 @@ class project_navigator(object):
         os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR'))
         create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR', '__init__.py')).touch()
                     
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, 'PR', '__init__.py')).touch()
-
         return new_hardware
     
     def update_hardware(self, name, definition):
@@ -425,6 +420,18 @@ class project_navigator(object):
             retval.append(row[0])
         return retval
 
+    def get_dies_for_hardware(self, hardware_name):
+        '''
+        this method will return a list of all dies for hardware 'hardware_name'
+        '''
+        query = '''SELECT name FROM dies WHERE hardware = ?'''
+        
+        self.cur.execute(query, (hardware_name,))
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
+        
     def get_die(self, name):
         '''
         this method returns a tuple (maskset, hardware) for die 'name'
@@ -517,7 +524,7 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_device(self, name, package, definition):
+    def add_device(self, name, hardware, package, definition):
         '''
         this method will add device 'name' with 'package' and 'definition'
         to the database. 
@@ -532,9 +539,9 @@ class project_navigator(object):
         if package not in existing_packages:
             raise KeyError(f"package '{package}' doesn't exist")
 
-        insert_query = '''INSERT INTO devices(name, package, definition) VALUES (?, ?, ?)'''
+        insert_query = '''INSERT INTO devices(name, hardware, package, definition) VALUES (?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
-        self.cur.execute(insert_query, (name, package, blob))
+        self.cur.execute(insert_query, (name, hardware, package, blob))
         self.con.commit()
     
     def update_device(self, name, package, definition):
@@ -580,6 +587,18 @@ class project_navigator(object):
             retval.append(row[0])
         return retval
     
+    def get_devices_for_hardware(self, hardware_name):
+        '''
+        this method will return a list of devices for 'hardware_name' 
+        '''
+        query = '''SELECT name FROM devices WHERE hardware = ?'''
+        
+        self.cur.execute(query, (hardware_name,))
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
+        
     def get_device_package(self, name):
         '''
         this method will return the package of device 'name'
@@ -621,7 +640,17 @@ class project_navigator(object):
         raise NotImplementedError
 
     def add_product(self, name, device, hardware):
-        pass
+        '''
+        this method will insert product 'name' from 'device' and for 'hardware'
+        in the the database, but before it will check if 'name' already exists, if so
+        it will trow a KeyError
+        '''
+        existing_products = self.get_products()
+        if name in existing_products:
+            raise KeyError(f"package '{name}' already exists")
+        query = '''INSERT INTO products(name, device, hardware) VALUES (?, ?, ?)'''
+        self.cur.execute(query, (name, device, hardware))
+        self.con.commit()        
     
     def update_product(self, name):
         pass
@@ -636,7 +665,28 @@ class project_navigator(object):
     #     pass
     
     def get_products(self):
-        pass
+        '''
+        this method will return a list of all products
+        '''
+        query = '''SELECT name FROM products'''
+
+        self.cur.execute(query)
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
+    
+    def get_products_for_hardware(self, hardware_name):
+        '''
+        this method will return a list of products for 'hardware_name' 
+        '''
+        query = '''SELECT name FROM products WHERE hardware = ?'''
+        
+        self.cur.execute(query, (hardware_name,))
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
     
     def get_product_device(self, name):
         pass
