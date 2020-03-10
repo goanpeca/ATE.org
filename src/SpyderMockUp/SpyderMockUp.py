@@ -177,9 +177,13 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.addWidget(hw_label)
 
         self.hw_combo = QtWidgets.QComboBox()
+        self.hw_combo.blockSignals(True)
         self.hw_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         self.hw_combo.currentTextChanged.connect(self.hardwareChanged)
         self.hw_combo.clear()
+        self.hw_combo.setEnabled(False)
+        self.hw_combo.blockSignals(False)
+        
         toolbar.addWidget(self.hw_combo)
 
         base_label = QtWidgets.QLabel("Base:")
@@ -188,7 +192,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.base_combo = QtWidgets.QComboBox()
         self.base_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.base_combo.blockSignals(True)
         self.base_combo.clear()
+        self.base_combo.addItems(['', 'PR', 'FT'])
+        self.base_combo.setCurrentIndex(0)        
+        self.base_combo.currentIndexChanged.connect(self.baseChanged)
+        self.base_combo.setEnabled(False)
+        self.base_combo.blockSignals(False)
         toolbar.addWidget(self.base_combo)
 
         self.target_label = QtWidgets.QLabel("Target:")
@@ -196,8 +206,12 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.addWidget(self.target_label)
         
         self.target_combo = QtWidgets.QComboBox()
+        self.target_combo.blockSignals(True)
         self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.target_combo.currentIndexChanged.connect(self.targetChanged)
+        self.target_combo.setEnabled(False)
         self.target_combo.clear()
+        self.target_combo.blockSignals(False)
         toolbar.addWidget(self.target_combo)
 
 
@@ -225,6 +239,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
         #https://doc.qt.io/qt-5/qtreewidget-members.html
         #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
+        #https://cdn.materialdesignicons.com/4.9.95/
         index = self.tree.indexAt(point)
         if not index.isValid():
             print("what the fuck")
@@ -323,8 +338,8 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'patterns':
             menu = QtWidgets.QMenu(self)
-            new_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "New")
-            #new_pattern.triggered.connect ...
+            add_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_pattern.triggered.connect ...
             import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
             #import_pattern.triggered.connect ...
             menu.exec_(QtGui.QCursor.pos())
@@ -337,8 +352,8 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'protocols':
             menu = QtWidgets.QMenu(self)
-            new_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "New")      
-            # new_protocol.triggered.connect ...
+            add_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")      
+            # add_protocol.triggered.connect ...
             menu.exec_(QtGui.QCursor.pos())        
         elif self.node_type == 'protocol':
             menu = QtWidgets.QMenu(self)
@@ -390,13 +405,50 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             # delete_flow.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'register map':
+        elif self.node_type == 'registermaps':
             menu = QtWidgets.QMenu(self)
             add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_registermap.triggered.connect
+            #add_registermap.triggered.connect
             import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
             # import_registermap.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'registermap':
+            menu = QtWidgets.QMenu(self)
+            edit_registermap = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_registermap.triggered.connect
+            delete_registermap = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_registermap.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'states':
+            menu = QtWidgets.QMenu(self)
+            add_state = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_state.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'state':
+            menu = QtWidgets.QMenu(self)
+            view_state = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_state.triggered.connect
+            edit_state = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_state.triggered.connect
+            delete_state = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_state.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'tests':
+            menu = QtWidgets.QMenu(self)
+            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_test.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'test':
+            menu = QtWidgets.QMenu(self)
+            edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_test.triggered.connect
+            clone_test = menu.addAction(qta.icon('mdi.export-variant', color='orange'), "Clone")
+            # clone_test.triggered.connect
+            delete_test = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_test.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+
+            
             
     def update_testers(self):
         new_tester_list = list(self.tester_finder.list_testers())
@@ -473,16 +525,42 @@ class MainWindow(QtWidgets.QMainWindow):
     def testerChanged(self):
         self.active_tester = self.tester_combo.currentText()
 
-
-    def projectChanged(self):
-        self.active_project = self.project_combo.currentText()
-        self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-        print("active_project = '%s' (%s)" % (self.active_project, self.active_project_path))
-        self.update_hardware()
-
     def hardwareChanged(self):
         self.active_hw = self.hw_combo.currentText()
         print("active_hw = '%s'" % self.active_hw)
+
+    def baseChanged(self):
+        if self.base_combo.currentText() == '': # all targets
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems(['']+
+                                       self.project_info.get_dies_for_hardware(self.active_hw)+
+                                       self.project_info.get_products_for_hardware(self.active_hw))
+            self.target_combo.setCurrentIndex(0) # the empty string            
+            self.target_combo.blockSingals(False)
+        elif self.base_combo.currentText() == 'PR': # probing targets = dies
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems(['']+
+                                       self.project_info.get_dies_for_hardware(self.active_hw))
+            self.target_combo.setCurrentIndex(0) # the empty string            
+            self.target_combo.blockSignals(False)
+        else: # final test targets = products
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems(['']+
+                                       self.project_info.get_products_for_hardware(self.active_hw))
+            self.target_combo.setCurrentIndex(0) # the empty string            
+            self.target_combo.blockSignals(False)
+        self.tree_update()
+
+    def targetChanged(self):
+        available_dies = self.project_info.get_dies_for_hardware(self.hw_combo.currentText())
+        if self.target_combo.currentText() in available_dies: # probing --> PR
+            self.base_combo.setCurrentIndex(self.base_combo.findText('PR'))
+        else: # final test --> FT
+            self.base_combo.setCurrentIndex(self.base_combo.findText('FT'))
+        self.tree_update()
 
     def active_project_changed(self):
         self.active_project = self.comboBox.currentText()
@@ -504,6 +582,39 @@ class MainWindow(QtWidgets.QMainWindow):
                 #TODO: look in the directories
         return retval
 
+
+    def get_tree_state(self):
+        '''
+        this method will traverse the tree, and record the state (isExpanded)
+        for each item, and saves it.
+        
+        --> need to work model based !!!
+        '''
+        state = {}
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        while it.value():
+            itemIndex = self.tree.indexFromItem(it.value(), 0)
+            itemState = self.tree.isExpanded(it.value())
+            state.update({itemIndex: itemState})
+            it += 1
+        return state
+    
+    def set_tree_state(self, state):
+        '''
+        this method will apply the supplied state to the tree (setExpanded)
+        if a state can not be applied (item gone), it will be ignored.
+        
+        --> need to work model based !!!
+        '''
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        while it.value():
+            toExpand = [i for i in state if i == self.tree.indexFromItem(it.value(),0)]
+            shouldExpand = state.get(toExpand[0])
+            if shouldExpand == True:
+                if not self.tree.isItemExpanded(it.value()):
+                    self.tree.expandItem(it.value())
+            it += 1
+            
     def tree_update(self):
         '''
         this method will update the 'project explorer'
@@ -633,7 +744,6 @@ class MainWindow(QtWidgets.QMainWindow):
             patterns.setText(1, 'patterns')
             #TODO: insert the appropriate patterns from /sources/patterns, based on HWR and Base
                 
-            
         # sources/states
             states = QtWidgets.QTreeWidgetItem(sources, patterns)
             states.setText(0, 'states')
@@ -644,19 +754,32 @@ class MainWindow(QtWidgets.QMainWindow):
             flows = QtWidgets.QTreeWidgetItem(sources, states)
             flows.setText(0, 'flows')
             flows.setText(1, 'flows')
-            #TODO: show flows only when a Target is set in the filters
-
-        # sources/flows/programs
-            programs = QtWidgets.QTreeWidgetItem(flows, None)
-            programs.setText(0, 'programs')
-            programs.setText(1, 'programs')
-            #TODO: insert the appropriate programs from /sources/programs, based on HWR and base
+            if self.target_combo.currentText() == '': # gray out flows
+                flows.setDisabled(True)
+            else: # build the subtree with flow-types and programs
+                flows.setDisabled(False)
+                # production_flow = 
+                # qualification_flow = 
 
         # sources/tests
             tests = QtWidgets.QTreeWidgetItem(sources, flows)
             tests.setText(0, 'tests')
             tests.setText(1, 'tests')
-            #TODO: insert the appropriate test names from /sources/tests, based on HWR and base (read: die- or product-based or probing/final test)
+            if self.base_combo.currentText() == '': #gray out tests
+                tests.setDisabled(True)
+            else: # build the sub-tree with self.base_combo
+                tests.setDisabled(False)
+                test_list = self.project_info.get_tests(self.hw_combo.currentText(), 
+                                                        self.base_combo.currentText())
+                previous = None
+                for test_entry in test_list:
+                    test = QtWidgets.QTreeWidgetItem(tests, previous)
+                    test.setText(0, test_entry)
+                    test.setText(1, 'test')
+                    test.setText(2, test_list[test_entry])
+                    previous = test
+
+                
 
     def new_test(self):
         from ATE.org.actions.new.test.NewTestWizard import new_test_dialog
@@ -717,9 +840,32 @@ class MainWindow(QtWidgets.QMainWindow):
             self.active_project = os.path.split(self.active_project_path)[-1]            
             self.project_info = project_navigator(self.active_project_path)
             available_hardwares =  self.project_info.get_hardwares()
+            print(f"{available_hardwares}")
+            available_hardwares.sort()
+            print(f"{available_hardwares}")
             if len(available_hardwares)>0:
-                available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
-                self.active_hw = 'HW%s' % max(available_hardwares_)
+                self.active_hw = available_hardwares[-1]
+                
+                self.hw_combo.blockSignals(True)
+                self.hw_combo.clear()
+                self.hw_combo.addItems(available_hardwares)
+                self.hw_combo.setCurrentIndex(len(available_hardwares)-1)
+                self.hw_combo.setEnabled(True)
+                self.hw_combo.blockSignals(False)
+                
+                
+                self.base_combo.setCurrentIndex(0) # = nothing selected
+                self.base_combo.setEnabled(True)
+                
+                targets = [''] 
+                targets += self.project_info.get_dies_for_hardware(self.active_hw)
+                targets += self.project_info.get_products_for_hardware(self.active_hw)
+                self.target_combo.blockSignals(True)
+                self.target_combo.clear()
+                self.target_combo.addItems(targets)
+                self.target_combo.setCurrentIndex(0) # = nothing
+                self.target_combo.setEnabled(True)
+                self.target_combo.blockSignals(False)
             else:
                 self.active_hw = ''
             self.update_hardware()
@@ -929,10 +1075,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screencast.setPixmap(qta.icon('mdi.video', 'fa5s.ban', options=[{'color' : 'orange'},{'color' : 'red'}]).pixmap(16,16))
 
     def printInfo(self):
-        from ATE.org.listings import print_lists
-        print("-----")
-        print_lists(self.workspace_path, self.active_project_path)
-
+        print(self.get_tree_state())
 
     def placeholder(self, event):
         print(type(event))
