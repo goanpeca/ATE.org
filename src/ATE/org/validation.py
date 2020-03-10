@@ -18,17 +18,34 @@ valid_project_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_integer_regex = r"^\d*"
 
-def is_ATE_project(project_path):
-    ATE_file = os.path.join(project_path, '.spyder')
-    if os.path.exists(ATE_file) and os.path.isfile(ATE_file):
-        with open(ATE_file, 'r') as fd:
-            for line in fd:
-                if line.upper().startswith('TYPE'):
-                    if 'ATE' in line.upper():
-                        return True
-    return False
+def is_Spyder_project(project_directory):
+    '''
+    this function will return True if the project under 'project_directory' is
+    a standard Spyder project.
+    '''
+    if os.path.exists(os.path.join(project_directory, '.spyproject')):
+        return True
+    else:
+        return False
+    
+def is_ATE_project(project_directory):
+    '''
+    this method will return true if the project under 'project_directory' is
+    1) a spyder project
+    2) an ATE project
+    '''
+    if not is_Spyder_project(project_directory):
+        return False
+    
+    if os.path.exists(os.path.join(project_directory, '.spyproject', 'ATE.config')):
+        return True
+    else:
+        return False
 
 def is_valid_python_class_name(name):
+    '''
+    this method will return True if 'name' is a valid python class name
+    '''
     pattern = re.compile(valid_python_class_name_regex)
     if pattern.match(name):
         return True

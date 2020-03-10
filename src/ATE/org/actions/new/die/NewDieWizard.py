@@ -5,13 +5,11 @@ Created on Tue Nov 26 14:32:40 2019
 @author: hoeren
 """
 import os
-import pickle
 import re
 
-from ATE.org.listings import dict_project_paths, list_dies, list_masksets
-from ATE.org.validation import is_ATE_project, valid_die_name_regex
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from ATE.org.validation import valid_die_name_regex
 
 class NewDieWizard(QtWidgets.QDialog):
 
@@ -27,10 +25,12 @@ class NewDieWizard(QtWidgets.QDialog):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         self.parent = parent
-        self.project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
 
-        self.existing_masksets = [''] + list_masksets(self.project_path)
-        self.existing_dies = list_dies(self.project_path)
+        self.existing_masksets = [''] + self.parent.project_info.get_masksets()
+        self.existing_dies = self.parent.project_info.get_dies()
+        self.existing_hardwares = self.parent.project_info.get_hardwares()
+        if len(self.existing_hardwares)==0:
+            self.existing_hardwares = ['']
 
         rxDieName = QtCore.QRegExp(valid_die_name_regex)
         DieName_validator = QtGui.QRegExpValidator(rxDieName, self)
@@ -45,6 +45,31 @@ class NewDieWizard(QtWidgets.QDialog):
         self.FromMaskset.currentIndexChanged.connect(self.verify)
         self.FromMaskset.blockSignals(False)
 
+        self.WithHardware.blockSignals(True)
+        self.WithHardware.clear()
+        for index, hardware in enumerate(self.existing_hardwares):
+            self.WithHardware.addItem(hardware)
+            if hardware == self.parent.active_hw:
+                self.WithHardware.setCurrentIndex(index)
+        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
+        self.WithHardware.blockSignals(False)
+
+        self.Type.blockSignals(True)
+        self.Type.clear()
+        self.Type.addItems(['ASSP', 'ASIC'])
+        self.Type.setCurrentIndex(0) # --> ASSP
+        self.Type.currentIndexChanged.connect(self.type_changed)
+        self.Type.blockSignals(False)
+        
+        self.CustomerLabel.setDisabled(True)
+        self.CustomerLabel.setHidden(True)
+        
+        self.Customer.blockSignals(True)
+        self.Customer.setText("")
+        self.Customer.setDisabled(True)
+        self.Customer.setHidden(True)
+        self.Customer.blockSignals(False)
+        
         self.Feedback.setText("No die name")
         self.Feedback.setStyleSheet('color: orange')
 
@@ -55,6 +80,36 @@ class NewDieWizard(QtWidgets.QDialog):
         self.verify()
         self.show()
 
+    def hardware_changed(self):
+        '''
+        if the selected hardware changes, make sure the active_hardware 
+        at the parent level is also changed.
+        '''
+        self.parent.active_hw = self.WithHardware.currentText()
+
+    def type_changed(self):
+        '''
+        if the Type is 'ASIC' enable CustomerLabel and Customer
+        '''
+        if self.Type.currentText() == 'ASIC':
+            self.CustomerLabel.setDisabled(False)
+            self.CustomerLabel.setHidden(False)
+            
+            self.Customer.blockSignals(True)
+            self.Customer.setText("")
+            self.Customer.setDisabled(False)
+            self.Customer.setHidden(False)
+            self.Customer.blockSignals(False)
+        else:
+            self.CustomerLabel.setDisabled(True)
+            self.CustomerLabel.setHidden(True)
+            
+            self.Customer.blockSignals(True)
+            self.Customer.setText("")
+            self.Customer.setDisabled(True)
+            self.Customer.setHidden(True)
+            self.Customer.blockSignals(False)
+
     def verify(self):
         if self.NewDieName.text() in self.existing_dies:
             self.Feedback.setText("Die name already exists !")
@@ -64,34 +119,34 @@ class NewDieWizard(QtWidgets.QDialog):
                 self.Feedback.setText("No maskset selected")
                 self.OKButton.setEnabled(False)
             else:
-                self.Feedback.setText("")
-                self.OKButton.setEnabled(True)
+                if self.Type.currentText() == "ASIC":
+                    if self.Customer.text() == "":
+                        self.Feedback.setText("need a customer for ASIC")
+                        self.OKButton.setEnabled(False)
+                    else: # ASSP
+                        self.Feedback.setText("")
+                        self.OKButton.setEnabled(True)
+                else: # ASSP
+                    self.Feedback.setText("")
+                    self.OKButton.setEnabled(True)
+
+        #TODO: and the hardware ?!?
 
     def CancelButtonPressed(self):
         self.accept()
 
     def OKButtonPressed(self):
-        die_data = {}
-        die_data['defines'] = 'die'
-        die_data['die_name'] = self.NewDieName.text()
-        die_data['maskset_name'] = self.FromMaskset.currentText()
-        create_new_die(self.parent.active_project_path, die_data)
+        name = self.NewDieName.text()
+        maskset = self.FromMaskset.currentText()
+        hardware = self.WithHardware.currentText()
+        if self.Type.currentText() == 'ASIC':
+            customer = 'ASIC'
+        else: #ASSP
+            customer = self.Customer.text()
+        
+        self.parent.project_info.add_die(name, hardware, maskset, customer)
+        self.parent.tree_update()
         self.accept()
-
-def create_new_die(project_path, die_data):
-    '''
-    given a project_path, a die_name (in die_data),
-    create the appropriate definition file for this new die.
-
-    die_data = {'defines' : 'die'
-                'die_name' : str,
-                'maskset_name' : str}
-    '''
-    if is_ATE_project(project_path):
-        die_root = dict_project_paths(project_path)['die_root']
-        die_name = die_data['die_name']
-        die_path = os.path.join(die_root, "%s.pickle" % die_name)
-        pickle.dump(die_data, open(die_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
 
 def new_die_dialog(parent):
     newDieWizard = NewDieWizard(parent)

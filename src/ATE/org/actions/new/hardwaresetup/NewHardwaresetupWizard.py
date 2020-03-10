@@ -6,10 +6,9 @@ Created on Nov 18, 2019
 import os
 import re
 
-from ATE.org.listings import dict_project_paths, list_hardwaresetups, listings
-from ATE.org.validation import is_ATE_project, is_valid_pcb_name
 from PyQt5 import QtCore, QtWidgets, uic
 
+from ATE.org.validation import is_ATE_project, is_valid_pcb_name
 
 class NewHardwaresetupWizard(QtWidgets.QDialog):
 
@@ -24,25 +23,11 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.workspace_path = parent.workspace_path
-        self.active_project = parent.active_project
-        self.active_project_path = parent.active_project_path
-
-        self.listings = listings(self.active_project_path)
-        existing_hardwaresetups = self.listings.list_hardwaresetups()
-
-
-        # existing_hardwaresetups = list_hardwaresetups(self.active_project_path)
-        new_hardwaresetup_number = 1
-        for hardwaresetup in existing_hardwaresetups:
-            existing_hardwaresetup_number = int(hardwaresetup.replace('HWR', ''))
-            if existing_hardwaresetup_number >= new_hardwaresetup_number:
-                new_hardwaresetup_number+=1
-        new_hardwaresetup_name = "HWR%s" % new_hardwaresetup_number
+        new_hardware_name = self.parent.project_info.get_next_hardware_name()
 
         self.blockSignals(True)
 
-        self.HardwareSetup.setText(new_hardwaresetup_name)
+        self.HardwareSetup.setText(new_hardware_name)
         self.HardwareSetup.setEnabled(False)
 
         self.SingleSiteLoadboard.setText("")
@@ -145,41 +130,25 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
     def OKButtonPressed(self):
         #project_path, hardware_setup_version, hardware_data
 
-        hwr_setup = {'defines' : 'hardwaresetup',
-                     'hardwaresetup_name' : self.HardwareSetup.text(),
-                     'parallelism' : self.parallelism,
-                     'SingeSiteLoadboard' : self.SingleSiteLoadboard.text(),
-                     'ProbeCard' : self.ProbeCard.text(),
-                     'SingleSiteDIB' : self.SingleSiteDIB.text(),
-                     'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
-                     'MultiSiteDIB' : self.MultiSiteDIB.text()
-                     }
-        create_new_hardwaresetup(self.active_project_path, hwr_setup)
-        self.parent.active_hw = hwr_setup['hardwaresetup_name']
+        
+        definition = {'SingeSiteLoadboard' : self.SingleSiteLoadboard.text(),
+                      'SingleSiteDIB' : self.SingleSiteDIB.text(),
+                      'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
+                      'MultiSiteDIB' : self.MultiSiteDIB.text(),
+                      'ProbeCard' : self.ProbeCard.text(),
+                      'parallelism' : self.parallelism}
+        name = self.HardwareSetup.text()
+        new_name = self.parent.project_info.add_hardware(definition)
+        if name != new_name:
+            raise Exception(f"Woops, something wrong with the name !!! '{name}'<->'{new_name}'")
+        self.parent.active_hw = name
+        self.parent.update_hardware()
+        self.parent.tree_update()
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
-
-def create_new_hardwaresetup(project_path, hardwaresetup_data):
-    '''
-    given a project_path, a hardwaresetup_name (in hardwaresetup_data),
-    create the appropriate definition file for this new device.
-
-    ps: hardwaresetup_name is for example HWR1, it is kind of a version too ;-)
-    '''
-
-    if is_ATE_project(project_path):
-        hardwaresetup_name = hardwaresetup_data['hardwaresetup_name'].replace('HWR', '')
-
-
-
-        print("---> hwsetupname", hardwaresetup_name)
-
-        hardwaresetup_root = dict_project_paths(project_path)['hwr_root']
-        hardwaresetup_path =os.path.join(hardwaresetup_root, "%s.pickle" % hardwaresetup_name)
-        pickle.dump(hardwaresetup_data, open(hardwaresetup_path, 'wb'), protocol=4) # fixing the protocol guarantees compatibility
-
+        
 def new_hardwaresetup_dialog(parent):
     newHardwaresetupWizard = NewHardwaresetupWizard(parent)
     newHardwaresetupWizard.exec_()

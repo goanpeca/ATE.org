@@ -15,35 +15,22 @@ import importlib
 import os
 import re
 import shutil
-import sqlite3
 import sys
+
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import qdarkstyle
 import qtawesome as qta
-from ATE.org.listings import (
-    dict_ATE_projects,
-    dict_project_paths,
-    list_ATE_projects,
-    list_hardwaresetups,
-    list_MiniSCTs,
-    list_projects,
-    listings
-)
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
+from ATE.org.navigation import project_navigator
+from ATE.org.validation import is_ATE_project
+from SCT.utils.finders import SCT_finder
 
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
+
 if not os.path.exists(workspace_path):
     os.mkdir(workspace_path)
-if show_workspace:
-    import subprocess
-    import platform
-    if platform.system() == "Windows":
-        os.startfile(workspace_path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", workspace_path])
-    else:
-        subprocess.Popen(["xdg-open", workspace_path])
 
 class screenCast(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -59,8 +46,11 @@ class screenCast(QtWidgets.QLabel):
             self.clicked.emit()
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    
+    def __init__(self, app):
         super().__init__()
+
+        self.app = app
 
     # get the appropriate .ui file and load it.
         my_ui = __file__.replace('.py', '.ui')
@@ -81,44 +71,26 @@ class MainWindow(QtWidgets.QMainWindow):
         if not os.path.exists(self.workspace_path):
             os.makedirs(self.workspace_path)
 
-        self.tester_list = list_MiniSCTs()
+        self.tester_finder = SCT_finder()
+        self.tester_list = self.tester_finder.list_testers()
         self.active_tester = self.tester_list[0] # start with the first in the list
         print("active_tester =", self.active_tester)
 
-        self.ATE_projects = list_ATE_projects(workspace_path) + ['']
-        self.active_project = self.ATE_projects[0] # there is always something
-        if self.active_project != '':
-            self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-            self.project_info = listings(self.active_project_path)
-        else:
-            self.active_project_path = None
-            self.project_info = None
-        print("active_project =", self.active_project)
-
-        if self.project_info != None:
-            self.hw_list = self.project_info.list_hardwaresetups()
-            if self.hw_list != []:
-                self.active_hw = self.hw_list[-1] # take the most recent hardware setup
-            else:
-                self.active_hw = ''
-        else:
-            self.active_hw = ''
-        print("active_hw =", self.active_hw)
-
-
-        if self.project_info != None:
-            self.active_base = 'Product' # or 'Die'
-            pass
-        else:
-            self.active_base = ''
+        self.active_project = ''
+        self.active_project_path = ''
+        self.project_info = None # the project navigator
+        self.active_hw = ''
 
     # connect the File/New/Project menu
-        self.action_new_project.triggered.connect(self.new_project)
+        self.action_quit.triggered.connect(self.quit_event)
+        self.action_new_project_2.triggered.connect(self.new_project)
+        self.action_open_project.triggered.connect(self.open_project)
 
     # setup the project explorer
+        self.tree.clear()
+        self.tree.setHeaderHidden(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.context_menu_manager)
-
 
     # setup the screencaster
         self.screencast = screenCast()
@@ -138,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         self.update_testers()
-        self.update_projects()
+        # self.update_projects()
         self.update_hardware()
 
         self.tree_update()
@@ -146,8 +118,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_menu()
         self.show()
 
-    def closeEvent(self, event=None):
-        self.close()
+    def quit_event(self, status):
+        #TODO: implement correctly (not as below)
+        # if isinstance(status, int):
+        #     sys.exit(status)
+        # else:
+        #     sys.exit()
+        pass
+    
+    # def closeEvent(self, event=None):
+    #     self.close()
 
     def create_toolbar(self):
         '''
@@ -176,21 +156,21 @@ class MainWindow(QtWidgets.QMainWindow):
         run_action.setCheckable(False)
         toolbar.addAction(run_action)
 
-        project_label = QtWidgets.QLabel("Project:")
-        project_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(project_label)
+        # project_label = QtWidgets.QLabel("Project:")
+        # project_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        # toolbar.addWidget(project_label)
 
-        self.project_combo = QtWidgets.QComboBox()
-        self.project_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        self.project_combo.currentTextChanged.connect(self.projectChanged)
-        self.project_combo.clear()
-        toolbar.addWidget(self.project_combo)
+        # self.project_combo = QtWidgets.QComboBox()
+        # self.project_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        # self.project_combo.currentTextChanged.connect(self.projectChanged)
+        # self.project_combo.clear()
+        # toolbar.addWidget(self.project_combo)
 
-        project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
-        project_refresh.setStatusTip("Refresh the project list")
-        project_refresh.triggered.connect(self.update_projects)
-        project_refresh.setCheckable(False)
-        toolbar.addAction(project_refresh)
+        # project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
+        # project_refresh.setStatusTip("Refresh the project list")
+        # project_refresh.triggered.connect(self.update_projects)
+        # project_refresh.setCheckable(False)
+        # toolbar.addAction(project_refresh)
 
         hw_label = QtWidgets.QLabel("Hardware:")
         hw_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
@@ -210,6 +190,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.base_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         self.base_combo.clear()
         toolbar.addWidget(self.base_combo)
+
+        self.target_label = QtWidgets.QLabel("Target:")
+        self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        toolbar.addWidget(self.target_label)
+        
+        self.target_combo = QtWidgets.QComboBox()
+        self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.target_combo.clear()
+        toolbar.addWidget(self.target_combo)
+
 
         info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
         info_action.setStatusTip("print current information")
@@ -237,6 +227,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
         index = self.tree.indexAt(point)
         if not index.isValid():
+            print("what the fuck")
             return
         item = self.tree.itemAt(point)
         self.node_name = item.text(0)
@@ -280,16 +271,21 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'hardwaresetup':
             menu = QtWidgets.QMenu(self)
+            activate_hardwaresetup = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            #activate_hardwaresetup.triggered.connect
+            show_hardwaresetup = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
             edit_hardwaresetup = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             delete_hardwaresetup = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'masksets':
             menu = QtWidgets.QMenu(self)
             add_maskset = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_maskset.triggered.connect
+            add_maskset.triggered.connect(self.new_maskset)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'maskset':
             menu = QtWidgets.QMenu(self)
+            view_maskset = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_maskset.triggered.connect
             edit_maskset = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_maskset.triggered.connect
             delete_maskset = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -298,10 +294,14 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'dies':
             menu = QtWidgets.QMenu(self)
             add_die = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_die.triggered.connect
+            add_die.triggered.connect(self.new_die)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'die':
             menu = QtWidgets.QMenu(self)
+            activate_die = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_die.triggered.connect
+            view_die = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_die.triggered.connect
             edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_die.triggered.connect
             delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -310,22 +310,53 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'packages':
             menu = QtWidgets.QMenu(self)
             add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_package.triggered.connect
+            add_package.triggered.connect(self.new_package)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'package':
             menu = QtWidgets.QMenu(self)
+            view_package = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_package.triggered.connect
             edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_package.triggered.connect
             delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             # delete_package.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'patterns':
+            menu = QtWidgets.QMenu(self)
+            new_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "New")
+            #new_pattern.triggered.connect ...
+            import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+            #import_pattern.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'pattern':
+            menu = QtWidgets.QMenu(self)
+            edit_pattern = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+            # edit_pattern.triggered.connect ...
+            delete_pattern = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_pattern.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'protocols':
+            menu = QtWidgets.QMenu(self)
+            new_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "New")      
+            # new_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())        
+        elif self.node_type == 'protocol':
+            menu = QtWidgets.QMenu(self)
+            edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+            # edit_protocol.triggered.connect ...
+            delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'devices':
             menu = QtWidgets.QMenu(self)
             add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_device.triggered.connect
+            add_device.triggered.connect(self.new_device)
             menu.exec_(QtGui.QCursor.pos())
+            #TODO: update the base filter to 'FT' if needed !
         elif self.node_type == 'device':
             menu = QtWidgets.QMenu(self)
+            view_device = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_device.triggered.connect
             edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_device.triggered.connect
             delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -334,10 +365,14 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'products':
             menu = QtWidgets.QMenu(self)
             add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_product.triggered.connect
+            add_product.triggered.connect(self.new_product)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'product':
             menu = QtWidgets.QMenu(self)
+            activate_product = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_product.triggered.connect
+            view_product = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_product.triggered.connect
             edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_product.triggered.connect
             delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -355,58 +390,62 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             # delete_flow.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
-
-
-
-
+        elif self.node_type == 'register map':
+            menu = QtWidgets.QMenu(self)
+            add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            # add_registermap.triggered.connect
+            import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+            # import_registermap.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+            
     def update_testers(self):
-        tester_list = list_MiniSCTs()
+        new_tester_list = list(self.tester_finder.list_testers())
         old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
-        if set(tester_list) != set(old_tester_list):
+        if set(new_tester_list) != set(old_tester_list):
             self.tester_combo.blockSignals(True)
             self.tester_combo.clear()
-            self.tester_combo.addItems(tester_list)
-            if self.active_tester in tester_list:
+            self.tester_combo.addItems(new_tester_list)
+            if self.active_tester in new_tester_list:
                 self.tester_combo.setCurrentIndex(self.tester_list.index(self.active_tester))
             else:
                 self.tester_combo.setCurrentIndex(0)
             self.active_tester = self.tester_combo.currentText()
             self.tester_combo.blockSignals(False)
 
-    def update_projects(self):
-        print("update_projects")
-        all_projects = list_projects(self.workspace_path)
-        ATE_projects = list_ATE_projects(workspace_path)
-        old_projects = [self.project_combo.itemText(i) for i in range(self.project_combo.count())]
+    # def update_projects(self):
+        
+    #     all_projects = self.ALL_project_finder.list_Spyder_projects()
+    #     ATE_projects = self.ATE_project_finder.list_ATE_projects()
+    #     old_projects = [self.project_combo.itemText(i) for i in range(self.project_combo.count())]
 
-        if len(ATE_projects) == 0:
-            ATE_projects.append('')
-            all_projects.append('')
-            self.active_project = ''
+    #     if len(ATE_projects) == 0:
+    #         ATE_projects.append('')
+    #         all_projects.append('')
+    #         self.active_project = ''
 
-        if self.active_project not in ATE_projects:
-            self.active_project = ATE_projects[0]
+    #     if self.active_project not in ATE_projects:
+    #         self.active_project = ATE_projects[0]
 
-        if set(all_projects) != set(old_projects):
-            self.project_combo.blockSignals(True)
-            self.project_combo.clear()
-            for index, project in enumerate(all_projects):
-                self.project_combo.addItem(project)
-                if project not in ATE_projects:
-                    self.project_combo.model().item(index).setEnabled(False)
-                if project == self.active_project:
-                    self.project_combo.setCurrentIndex(index)
-            self.project_combo.blockSignals(False)
+    #     # if set(all_projects) != set(old_projects):
+    #     #     self.project_combo.blockSignals(True)
+    #     #     self.project_combo.clear()
+    #     #     for index, project in enumerate(all_projects):
+    #     #         self.project_combo.addItem(project)
+    #     #         if project not in ATE_projects:
+    #     #             self.project_combo.model().item(index).setEnabled(False)
+    #     #         if project == self.active_project:
+    #     #             self.project_combo.setCurrentIndex(index)
+    #     #     self.project_combo.blockSignals(False)
 
-        self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-        self.update_hardware()
+    #     self.active_project_path = os.path.join(self.workspace_path, self.active_project)
+    #     self.update_hardware()
 
     def update_hardware(self):
         '''
         This mentod will update the hardware list in the toolbar's combo box
         '''
         if self.active_project != '':
-            hw_list = self.project_info.list_hardwaresetups()
+            hw_list = self.project_info.get_hardwares()
             old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
 
             if len(hw_list) == 0:
@@ -420,7 +459,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.hw_combo.blockSignals(True)
                 self.hw_combo.clear()
                 for index, hw in enumerate(hw_list):
-                    self.hw_combo.addItem(hw)
+                    self.hw_combo.addItem(str(hw))
                     if hw == self.active_hw:
                         self.hw_combo.setCurrentIndex(index)
                 self.hw_combo.blockSignals(False)
@@ -469,120 +508,155 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         this method will update the 'project explorer'
         '''
-        if self.active_project != '':
+
+        if self.project_info != None:
+            self.tree.clear()
             self.tree.setHeaderHidden(True)
-            # self.project_info
 
-            projects = dict_ATE_projects(workspace_path)
-            previous_project = None
-            for project_name in projects:
-                project = QtWidgets.QTreeWidgetItem(self.tree, previous_project)
-                previous_project = project
-                project.setText(0, project_name)
-                project.setText(1, 'project')
-                project.setText(2, projects[project_name])
-                font = project.font(0)
-                font.setWeight(QtGui.QFont.Bold)
-                project.setFont(0, font)
-                project.setForeground(0, QtGui.QBrush(QtGui.QColor("#FFFF00")))
+            project = QtWidgets.QTreeWidgetItem(self.tree)
+            project.setText(0, self.active_project)
+            project.setText(1, 'project')
+            project.setText(2, 'project')
+            font = project.font(0)
+            font.setWeight(QtGui.QFont.Bold)
+            project.setFont(0, font)
+            project.setForeground(0, QtGui.QBrush(QtGui.QColor("#FFFF00")))
 
-                documentation = QtWidgets.QTreeWidgetItem(project)
-                documentation.setText(0, 'documentation')
-                documentation.setText(1, 'documentation')
-                doc_root = os.path.join(self.active_project_path, 'documentation')
-                #TODO: cycle the directory structure, and add the documents
+        # documentation
+            documentation = QtWidgets.QTreeWidgetItem(project)
+            documentation.setText(0, 'documentation')
+            documentation.setText(1, 'documentation')
+            doc_root = os.path.join(self.active_project_path, 'doc')
 
-                sources = QtWidgets.QTreeWidgetItem(project, documentation)
-                sources.setText(0, 'sources')
-                sources.setText(1, 'sources')
+            standards_documentation = QtWidgets.QTreeWidgetItem(documentation, None)
+            standards_documentation.setText(0, 'standards')
+            standards_documentation.setText(1, 'standards_dir')
+            
+            tmp = os.listdir(os.path.join(doc_root, 'standards'))
+            print(tmp)
+            std_docs = [f for f in tmp if os.path.isfile(os.path.join(doc_root, 'standards', f))]
+            previous = None
+            for doc_name in std_docs:
+                doc =  QtWidgets.QTreeWidgetItem(standards_documentation, previous)
+                doc.setText(0, doc_name)
+                doc.setText(1, 'standards_doc')
+                previous = doc
+            
+            #TODO: doc structure should follow the directory structure
+            
+        # sources
+            sources = QtWidgets.QTreeWidgetItem(project, documentation)
+            sources.setText(0, 'sources')
+            sources.setText(1, 'sources')
+            
+        # sources/definitions
+            definitions = QtWidgets.QTreeWidgetItem(sources)
+            definitions.setText(0, 'definitions')
+            definitions.setText(1, 'definitions')
 
-                definitions = QtWidgets.QTreeWidgetItem(sources)
-                definitions.setText(0, 'definitions')
-                definitions.setText(1, 'definitions')
+            products = QtWidgets.QTreeWidgetItem(definitions, None)
+            products.setText(0, 'products')
+            products.setText(1, 'products')
+            previous = None
+            for product_name in self.project_info.get_products():
+                product = QtWidgets.QTreeWidgetItem(products, previous)
+                product.setText(0, product_name)
+                print(product_name)
+                product.setText(1, 'product')
+                previous = product
 
-                states = QtWidgets.QTreeWidgetItem(definitions)
-                states.setText(0, 'states')
-                states.setText(1, 'states')
-                states_root = dict_project_paths(self.active_project_path)['states_root']
-                previous = None
-                for state_file in os.listdir(states_root):
-                    if state_file.startswith('__'): continue
-                    if not state_file.endswith('.py'): continue
-                    state = QtWidgets.QTreeWidgetItem(states, previous)
-                    state.setIcon(0, qta.icon('mdi.shoe-print', color='orange'))
-                    state.setText(0, state_file)
-                    state.setText(1, 'state')
-                    state.setText(2, os.path.join(states_root, state_file))
-                    previous = state
+            devices = QtWidgets.QTreeWidgetItem(definitions, products)
+            devices.setText(0, 'devices')
+            devices.setText(1, 'devices')
+            previous = None
+            for device_name in self.project_info.get_devices():
+                device = QtWidgets.QTreeWidgetItem(devices, previous)
+                device.setText(0, device_name)
+                device.setText(1, 'device')
+                previous = device
 
-                protocols = QtWidgets.QTreeWidgetItem(definitions, states)
-                protocols.setText(0, 'protocols')
-                protocols.setText(1, 'protocols')
-                #TODO: cycle through the directory and add the protocols
+            packages = QtWidgets.QTreeWidgetItem(definitions, devices)
+            packages.setText(0, 'packages')
+            packages.setText(1, 'packages')
+            previous = None
+            for name in self.project_info.get_packages():
+                package = QtWidgets.QTreeWidgetItem(packages, previous)
+                package.setText(0, name)
+                package.setText(1, 'package')
+                previous = package
 
-                registermap = QtWidgets.QTreeWidgetItem(definitions, protocols)
-                registermap.setText(0, 'register maps')
-                registermap.setText(1, 'registermaps')
-                #TODO: cycle through the directory and add the registermaps
+            dies = QtWidgets.QTreeWidgetItem(definitions, packages)
+            dies.setText(0, 'dies')
+            dies.setText(1, 'dies')
+            previous = None
+            for name in self.project_info.get_dies():
+                die = QtWidgets.QTreeWidgetItem(dies, previous)
+                die.setText(0, name)
+                die.setText(1, 'die')
+                previous = die
 
-                flows = QtWidgets.QTreeWidgetItem(definitions, registermap)
-                flows.setText(0, 'flows')
-                flows.setText(1, 'flows')
-                #TODO: insert the right flows from the database
+            masksets = QtWidgets.QTreeWidgetItem(definitions, dies)
+            masksets.setText(0, 'masksets')
+            masksets.setText(1, 'masksets')
+            previous = None
+            for name in self.project_info.get_masksets():
+                maskset = QtWidgets.QTreeWidgetItem(masksets, previous)
+                maskset.setText(0, name)
+                maskset.setText(1, 'maskset')
+                previous = maskset
 
-                products = QtWidgets.QTreeWidgetItem(definitions, flows)
-                products.setText(0, 'products')
-                products.setText(1, 'products')
-                #TODO: insert the right products from the database
+            hardwaresetups = QtWidgets.QTreeWidgetItem(definitions, masksets)
+            hardwaresetups.setText(0, 'hardwaresetups')
+            hardwaresetups.setText(1, 'hardwaresetups')
+            previous = None
+            for name in self.project_info.get_hardwares():
+                hardwaresetup = QtWidgets.QTreeWidgetItem(hardwaresetups, previous)
+                hardwaresetup.setText(0, str(name))
+                hardwaresetup.setText(1, 'hardwaresetup')
+                previous = hardwaresetup
 
-                devices = QtWidgets.QTreeWidgetItem(definitions, products)
-                devices.setText(0, 'devices')
-                devices.setText(1, 'devices')
-                #TODO: insert the right devices from the database
+        # sources/registermaps
+            registermaps = QtWidgets.QTreeWidgetItem(sources, definitions)
+            registermaps.setText(0, 'register maps')
+            registermaps.setText(1, 'registermaps')
+            #TODO: cycle through the directory and add the registermaps
 
-                packages = QtWidgets.QTreeWidgetItem(definitions, devices)
-                packages.setText(0, 'packages')
-                packages.setText(1, 'packages')
-                #TODO: insert the right packages from the database
+        # souces/protocols
+            protocols = QtWidgets.QTreeWidgetItem(sources, registermaps)
+            protocols.setText(0, 'protocols')
+            protocols.setText(1, 'protocols')
+            #TODO: cycle through the directory and add the protocols
 
-                dies = QtWidgets.QTreeWidgetItem(definitions, packages)
-                dies.setText(0, 'dies')
-                dies.setText(1, 'dies')
-                #TODO: inset the right dies from the database
+        # sources/patterns
+            patterns = QtWidgets.QTreeWidgetItem(sources, protocols)
+            patterns.setText(0, 'patterns')
+            patterns.setText(1, 'patterns')
+            #TODO: insert the appropriate patterns from /sources/patterns, based on HWR and Base
+                
+            
+        # sources/states
+            states = QtWidgets.QTreeWidgetItem(sources, patterns)
+            states.setText(0, 'states')
+            states.setText(1, 'states')
+            # #TODO: cycle through the states and add the states
 
-                masksets = QtWidgets.QTreeWidgetItem(definitions, dies)
-                masksets.setText(0, 'masksets')
-                masksets.setText(1, 'masksets')
-                #TODO: insert the right masksets from the database
+        # sources/flows
+            flows = QtWidgets.QTreeWidgetItem(sources, states)
+            flows.setText(0, 'flows')
+            flows.setText(1, 'flows')
+            #TODO: show flows only when a Target is set in the filters
 
-                hardwaresetups = QtWidgets.QTreeWidgetItem(definitions, masksets)
-                hardwaresetups.setText(0, 'hardwaresetups')
-                hardwaresetups.setText(1, 'hardwaresetups')
-                previous = None
-                for hwsetup in self.project_info.list_hardwaresetups():
-                    setup = QtWidgets.QTreeWidgetItem(hardwaresetups, previous)
-                    setup.setText(0, hwsetup)
-                    setup.setText(1, 'hardwaresetup')
-                    previous = setup
+        # sources/flows/programs
+            programs = QtWidgets.QTreeWidgetItem(flows, None)
+            programs.setText(0, 'programs')
+            programs.setText(1, 'programs')
+            #TODO: insert the appropriate programs from /sources/programs, based on HWR and base
 
-
-                #TODO: insert the right hardwaresetups from the database
-
-                tests = QtWidgets.QTreeWidgetItem(sources)
-                tests.setText(0, 'tests')
-                tests.setText(1, 'tests')
-                #TODO: insert the appropriate test names from /sources/tests, based on HWR and base (read: die- or product-based or probing/final test)
-
-                progs = QtWidgets.QTreeWidgetItem(sources, tests)
-                progs.setText(0, 'programs')
-                progs.setText(1, 'programs')
-                #TODO: insert the appropriate programs from /sources/programs, based on HWR and base
-
-                patterns = QtWidgets.QTreeWidgetItem(sources, progs)
-                patterns.setText(0, 'patterns')
-                patterns.setText(1, 'patterns')
-                #TODO: insert the appropriate patterns from /sources/patterns, based on HWR and Base
-
+        # sources/tests
+            tests = QtWidgets.QTreeWidgetItem(sources, flows)
+            tests.setText(0, 'tests')
+            tests.setText(1, 'tests')
+            #TODO: insert the appropriate test names from /sources/tests, based on HWR and base (read: die- or product-based or probing/final test)
 
     def new_test(self):
         from ATE.org.actions.new.test.NewTestWizard import new_test_dialog
@@ -628,7 +702,28 @@ class MainWindow(QtWidgets.QMainWindow):
     def new_project(self):
         from ATE.org.actions.new.project.NewProjectWizard import new_project_dialog
         new_project_dialog(self)
-        self.update_projects()
+
+    def open_project(self):
+        selected_directory = os.path.normpath(
+            str(QtWidgets.QFileDialog.getExistingDirectory(self, 
+                                                           "Select Directory",
+                                                           workspace_path,
+                                                           QtWidgets.QFileDialog.ShowDirsOnly
+                                                           | QtWidgets.QFileDialog.DontResolveSymlinks)
+                )
+            )
+        if is_ATE_project(selected_directory):         
+            self.active_project_path = selected_directory
+            self.active_project = os.path.split(self.active_project_path)[-1]            
+            self.project_info = project_navigator(self.active_project_path)
+            available_hardwares =  self.project_info.get_hardwares()
+            if len(available_hardwares)>0:
+                available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
+                self.active_hw = 'HW%s' % max(available_hardwares_)
+            else:
+                self.active_hw = ''
+            self.update_hardware()
+            self.tree_update()
 
     def clone_test(self):
         print("clone_test")
@@ -761,28 +856,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def display_masksets(self):
         print("display_masksets")
 
-    def display_hardwaresetups(self):
-        print("display_hardwaresetups")
-
-    def display_activeproject(self):
-        print("display_activeproject")
-
-    def display_allprojects(self):
-        print("display_allprojects")
-        from ATE.org.listings import list_projects
-        for project in list_projects(self.workspace_path):
-            print("   ", project)
-
-    def display_ateprojects(self):
-        print("display_ateprojects")
-        from ATE.org.listings import list_ATE_projects
-        for project in list_ATE_projects(self.workspace_path):
-            print("   ", project)
-
-    def display_workspace(self):
-        print("display_workspace = '%s'" % self.workspace_path)
-
-
 
 
     def delete_test(self):
@@ -871,7 +944,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    window = MainWindow(app)
     window.show()
     sys.exit(app.exec_())
