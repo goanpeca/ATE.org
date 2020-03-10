@@ -1,1 +1,81 @@
-@import "../../styles.scss"
+@import "../../styles.scss";
+.error {
+    padding: 20px;
+    background-color: $red;
+    color: $white;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.btn-close {
+    margin-left: 15px;
+    padding: 5px;
+    color: #0046AD;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+     :hover {
+        color: $black;
+    }
+}
+
+.warn {
+    padding: 20px;
+    background-color: $warn;
+    color: $black;
+    text-align: center;
+    animation-name: blinkingText;
+    animation-iteration-count: infinite;
+    animation-duration: 1.2s;
+}
+
+@keyframes blinkingText {
+    0% {
+        color: $black;
+    }
+    49% {
+        color: $black;
+    }
+    60% {
+        color: transparent;
+    }
+    99% {
+        color: transparent;
+    }
+    100% {
+        color: $black;
+    }
+}
+
+.blueDivider {
+    @include blueDivider;
+}
+
+.infobox {
+    padding: 15px;
+    padding-top: 0;
+    width: 500px;
+    height: 500px;
+    border-right: 3px solid $white;
+    border-radius: 4px;
+    overflow: auto;
+}
+
+.infobox-header {
+    color: $micronasBlue;
+    font-weight: bold;
+}
+
+input {
+    width: 20px;
+    margin-left: 10px;
+    margin-right: 20px;
+    background-color: $micronasBlue;
+    color: $white;
+    font-weight: bold;
+    font-size: 15px;
+    float: right;
+}

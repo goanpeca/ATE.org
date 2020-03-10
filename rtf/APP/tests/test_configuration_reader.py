@@ -3,38 +3,35 @@ import json
 from common.configuration_reader import ConfigReader
 
 
-CONFIG_FILE_PATH = "./Tests/config_file_test.json"
-CONFIG_FILE_PATH_USER = "./Tests/config_file_test_partial_user.json"
-CONFIG_FILE_PATH_BAD = "./Tests/config_file_test_bad.json"
+CONFIG_FILE_PATH = "./tests/config_file_test.json"
+CONFIG_FILE_PATH_USER = "./tests/config_file_test_partial_user.json"
+CONFIG_FILE_PATH_BAD = "./tests/config_file_test_bad.json"
 
 
 class TestConfigReader:
 
     def test_read_configuration_file_correct_config(self):
         configuration = ConfigReader(CONFIG_FILE_PATH)
-        assert (configuration.get_configuration() ==
-                {"broker_host": "10.9.1.6",
-                 "broker_port": 1883,
-                 "site_id": "0",
-                 "device_id": "device-id"})
+        assert (configuration.get_configuration() == {"broker_host": "10.9.1.6",
+                                                      "broker_port": 1883,
+                                                      "site_id": "0",
+                                                      "device_id": "device-id"})
 
     def test_read_configuration_file_correct_config_user(self):
         configuration = ConfigReader(CONFIG_FILE_PATH_USER)
-        assert (configuration.get_configuration() ==
-                {"device_id": "users_device",
-                 "site_id": "1",
-                 "previously_not_existing_key": "value"})
+        assert (configuration.get_configuration() == {"device_id": "users_device",
+                                                      "site_id": "1",
+                                                      "previously_not_existing_key": "value"})
 
     def test_read_configuration_file_with_user_dict(self):
         user_config_dict = {"broker_host": "127.0.0.1", "site_id": "2"}
 
         configuration = ConfigReader(CONFIG_FILE_PATH)
         assert (configuration.get_configuration_ex(
-            user_config_dict=user_config_dict) ==
-                {"broker_host": "127.0.0.1",
-                 "broker_port": 1883,
-                 "site_id": "2",
-                 "device_id": "device-id"})
+            user_config_dict=user_config_dict) == {"broker_host": "127.0.0.1",
+                                                   "broker_port": 1883,
+                                                   "site_id": "2",
+                                                   "device_id": "device-id"})
 
     def test_read_configuration_file_with_user_file(self):
         user_config_dict = {"broker_host": "127.0.0.1", "site_id": "2"}
@@ -42,12 +39,11 @@ class TestConfigReader:
         configuration = ConfigReader(CONFIG_FILE_PATH)
         assert (configuration.get_configuration_ex(
             user_config_file=CONFIG_FILE_PATH_USER,
-            user_config_dict=user_config_dict) ==
-                {"broker_host": "127.0.0.1",
-                 "broker_port": 1883,
-                 "site_id": "2",
-                 "device_id": "users_device",
-                 "previously_not_existing_key": "value"})
+            user_config_dict=user_config_dict) == {"broker_host": "127.0.0.1",
+                                                   "broker_port": 1883,
+                                                   "site_id": "2",
+                                                   "device_id": "users_device",
+                                                   "previously_not_existing_key": "value"})
 
     def test_read_configuration_file_wrong_path(self):
         configuration = ConfigReader("")

@@ -1,28 +1,110 @@
-<div *ngIf="systemStatus.state !> mySystemState.error">
-    <h2>System Control</h2>
-    <div class="info text">
-        <label for="lotNumber">Lot Number</label>
-        <input 
-               #lotNumber
-               type="text"
-               name="lotNumber"
-               id="lotNumber"
-               placeholder="Provide lot number here"
-               [attr.disabled]="systemStatus.state !== mySystemState.initialized?'true':null"
-               />
-        <button
-               type="button"
-               [attr.disabled]="systemStatus.state === mySystemState.initialized?null:'true'"
-               (click)="sendLotNumber(lotNumber.value)">Send Lot Number to Tester</button>
-    </div>
-    <div class="info text">
-        <button 
-         type="button"
-         [attr.disabled]="systemStatus.state === mySystemState.ready?null:'true'"
-         (click)="startDutTest()">Start DUT-Test</button>
-        <button
-         type="button"
-         [attr.disabled]="systemStatus.state === mySystemState.ready?null:'true'"
-         (click)="unLoadTestProgram()">Unload Test Program</button>
+<div *ngIf="systemStatus.state !> mySystemState.error" id="sysControl">
+    <hr>
+    <div class="row">
+        <div class="side">
+            <h2>System Control</h2>
+        </div>
+        <div class="main row">
+            <div class="card">
+                <div>
+                    <h3 class="infobox-header">Load New Lot</h3>
+                    <div class="input-container">
+                        <div class="toolTip">
+                            <input class="statusInput" id="tooltip" #lotNumber type="text" name="lotNumber" placeholder="Lot number here... :" [attr.disabled]="systemStatus.state !== mySystemState.initialized?'true':null" />
+                            <button class="btn-fixed" id="lotBtn" type="button" [attr.disabled]="systemStatus.state !== mySystemState.initialized?'true':null" (click)="sendLotNumber(lotNumber.value)">Send Lot Number to Tester</button>
+                            <span class="hoverText">Error message</span>
+                        </div>
+                        <pre>
+                      <span id="tooltipText"><strong>Tip:</strong> The lot number has a length of 9 and a scale of 3.<br>     For Example: <em>000805.000</em>.</span>
+                    </pre>
+                    </div>
+                </div>
+                <div>
+                    <p><button class="btn-fixed" type="button" [attr.disabled]="systemStatus.state === mySystemState.ready?null:'true'" (click)="unloadLotNumber()">Unload Lot</button></p>
+                </div>
+                <hr>
+                <div id="optionContent">
+                    <form action="">
+                        <h3 for="">Set Test Options:</h3>
+                        <ul>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Stop on Fail
+                                </label>
+                            </li>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Single Step
+                                </label>
+                            </li>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Stop at Test Number:<input type="text" id="numberInput" placeholder="108">
+                                </label>
+                            </li>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Trigger For Test Number:<input type="text" id="numberInput" placeholder="101">
+                                </label>
+                            </li>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Trigger On Failure
+                              </label>
+                            </li>
+                            <li>
+                                <label for="">
+                                  <input type="checkbox" name="" id="">
+                                  Trigger Site Specific
+                              </label>
+                            </li>
+                        </ul>
+                    </form>
+                </div>
+                <p><button class="btn-fixed" type="button" [attr.disabled]="systemStatus.state === mySystemState.ready?null:'true'" (click)="startDutTest()">Start DUT-Test</button></p>
+            </div>
+            <!--
+            <div> class="card">
+            <h3 class="infobox-header">Hardware Status
+                <div id="siteLabel"> Site Settings</div>
+            </h3>
+            <div class="input-container">
+                <span><strong for="site">Central:</strong></span>
+                <input class="input-field" type="text" placeholder="OK" name="siteA" disabled>
+            </div>
+            <hr>
+            <div class="input-container">
+                <span><strong for="site">Site A:</strong></span>
+                <input class="statusInput" type="text" placeholder="OK" name="siteA" disabled>
+                <app-toggled-button></app-toggled-button>
+            </div>
+            <hr>
+            <div class="input-container">
+                <span><strong for="site">Site B:</strong></span>
+                <input class="input-field statusInput" type="text" placeholder="OK" name="siteB" disabled>
+                <app-toggled-button></app-toggled-button>
+            </div>
+            <hr>
+            <div class="input-container">
+                <span><strong for="site">Site C:</strong></span>
+                <input class="input-field statusInput" id="statusFailure" type="text" placeholder="Hardware Failure" name="siteC" disabled>
+                <app-toggled-button></app-toggled-button>
+            </div>
+            <hr>
+            <div class="input-container">
+                <span><strong for="site">Site D:</strong></span>
+                <input class="input-field statusInput" type="text" placeholder="OK" name="siteD" disabled>
+                <app-toggled-button></app-toggled-button>
+            </div>
+            <hr>
+            <p><button id="btnMargin" class="btn-fixed" type="button" [attr.disabled]="systemStatus.state === mySystemState.ready?null:'true'" (click)="unLoadTestProgram()">Unload Test Program</button></p>
+          </div>
+            -->
+        </div>
     </div>
 </div>

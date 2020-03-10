@@ -1,0 +1,188 @@
+@import "../../styles.scss";
+.card {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    width: auto;
+    text-align: center;
+    font-family: arial;
+    height: auto;
+    overflow: auto;
+    margin: 15px;
+}
+
+.title {
+    color: grey;
+    font-size: 0.9rem;
+    padding: 10px;
+}
+
+.infobox-header {
+    color: $micronasBlue;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+input {
+    text-align: left;
+    margin: 15px 10px 15px 0;
+    padding: 15px;
+    background-color: $white;
+    @include solidBorder(4px, $grey);
+    border-radius: 15px;
+    width: 100%;
+    float: left;
+}
+
+input:invalid {
+    background: hsl(5, 30%, 80%)
+}
+
+input:valid {
+    border-color: $grey;
+}
+
+.input-container {
+    margin-top: auto;
+}
+
+.input-field {
+    width: 75%;
+}
+
+.btn-fixed {
+    border: none;
+    outline: 0;
+    display: inline-block;
+    padding: 16px;
+    color: $white;
+    background-color: $micronasBlue;
+    text-align: center;
+    width: 100%;
+    font-size: 1.1rem;
+    border-bottom: 1px solid $white;
+    margin: 18px 0 0 0;
+}
+
+span {
+    float: left;
+    margin: 35px 15px 0px 5px;
+    padding-left: 10px;
+}
+
+.statusInput {
+    width: 45%;
+    margin-left: 5px;
+}
+
+#lotBtn {
+    border-radius: 15px;
+    width: 50%;
+    margin-right: 3px;
+}
+
+#statusFailure {
+    background-color: $warn;
+}
+
+#siteLabel {
+    float: right;
+    margin-right: 50px;
+}
+
+.toolTip {
+    position: relative;
+    display: inline-block;
+}
+
+.toolTip .hoverText {
+    width: 120px;
+    visibility: hidden;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 20%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.toolTip .hoverText:after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: $darkGrey transparent transparent transparent;
+}
+
+.toolTip:hover .hoverText {
+    visibility: visible;
+    opacity: 1;
+}
+
+#tooltipText {
+    margin-left: 10px;
+    padding-bottom: 15px;
+    text-align: left;
+}
+
+em {
+    color: $micronasBlue;
+}
+
+
+/* Options */
+
+#optionContent {
+    display: block;
+    text-align: left;
+    margin-inline-start: 2px;
+    margin-inline-end: 2px;
+    padding-block-start: 0.35em;
+    padding-inline-start: 0.75em;
+    padding-inline-end: 0.75em;
+    padding-block-end: 0.625em;
+    min-inline-size: min-content;
+    input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        text-align: left !important;
+        float: none;
+    }
+    input[type="text"] {
+        width: 35%;
+        margin: 0px;
+        padding-left: 15px;
+        padding-top: 5px;
+        padding-bottom: 0px;
+        float: right;
+        border-radius: none;
+    }
+    ul {
+        display: block;
+        margin-block-start: 1em;
+        margin-block-end: 1em;
+        margin-inline-start: 0px;
+        margin-inline-end: 0px;
+        padding-inline-start: 40px;
+    }
+    li {
+        padding: 0px;
+    }
+    label {
+        font-size: 1.2em !important;
+    }
+}
+
+#btnMargin {
+    margin-top: 101px;
+}

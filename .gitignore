@@ -13,11 +13,11 @@ __pycache__/*
 .*.swp
 */.ipynb_checkpoints/*
 .DS_Store
-/APP/control_config_file.json
-/APP/master_config_file.json
-/APP/dist/
-/APP/APP.egg-info
-/APP/build/
+/RTF/APP/control_config_file.json
+/RTF/APP/master_config_file.json
+/RTF/APP/dist/
+/RTF/APP/APP.egg-info
+/RTF/APP/build/
 newenv
 # Project files
 .vscode/
@@ -38,11 +38,20 @@ tags
 htmlcov/*
 .coverage
 .coverage.*
+*.log
+/APP/control_config_file.json
+/APP/master_config_file.json
+/APP/dist/
+/APP/APP.egg-info
+/APP/build/
+.mypy_cache/
 .tox
 junit.xml
 coverage.xml
 cov.xml
 .pytest_cache/
+.hypothesis/
+.mypy_cache/
 
 # Build and docs folder/files
 build/*
@@ -56,3 +65,4 @@ MANIFEST
 
 # Per-project virtualenvs
 .venv*/
+RTF/UI/angular/mini-sct-gui/.angulardoc.json

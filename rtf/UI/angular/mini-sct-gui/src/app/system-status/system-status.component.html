@@ -1,34 +1,65 @@
-<h2>System Information</h2>
-<!-- connecting state -->
-<div *ngIf="systemStatus.state === mySystemState.connecting" class="warn">
-    Identifying Test System
-</div>
-
 <!-- error state -->
-<div class="error "*ngIf="systemStatus.state == mySystemState.error">
-    <p class="error_reason"> {{systemStatus.reason}} </p>
+<div *ngIf="visiable">
+    <div class="error" *ngIf="systemStatus.state == mySystemState.error">
+        <button class="btn-close" type="button" (click)="visiable = false">&times;</button>
+        <p class="error_reason"> {{systemStatus.reason}} </p>
+    </div>
 </div>
 
-<!-- system information -->
-<div *ngIf="systemStatus.state !> mySystemState.error">
-    <div class="info text">
-        <label for="systemName">System</label>
-        <input type="text" name="systemName" id="systemName" disabled value="{{systemStatus.device_id}}" />
+<!-- deviders -->
+<hr class="blueDivider">
+
+<!-- System Information -->
+<div class="row">
+    <div class="side">
+        <h2>System Information</h2>
     </div>
-    <div class="info text">
-        <label for="time">Time</label>
-        <input type="text" name="time" id="time" disabled value="{{systemStatus.time}}" />
-    </div>
-    <div class="info text">
-        <label for="environment">Environment</label>
-        <input type="text" name="environment" id="environment" disabled value="{{systemStatus.env}}" />
-    </div>
-    <div class="info text">
-        <label for="handler">Handler</label>
-        <input type="text" name="handler" id="handler" disabled value="{{systemStatus.handler}}" />
-    </div>
-    <div class="info text">
-        <label for="numOfSites">Number of Sites</label>
-        <input type="number" name="numOfSites" id="numOfSites" disabled value="{{systemStatus.sites.length}}" />
+    <div class="main">
+        <!-- connecting state -->
+        <div style="height:200px;" class="warn" *ngIf="systemStatus.state === mySystemState.connecting">
+            <h3>
+                <strong>Identifying Test System!</strong>
+            </h3>
+        </div>
+
+        <!-- system information -->
+        <div *ngIf="systemStatus.state !> mySystemState.error">
+            <div class="infobox" id="sysStatus">
+                <div class="infobox-header">
+                    <h3>System</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <strong>Name:</strong> {{systemStatus.deviceId}}
+                    <br>
+                    <strong>Number of Sites:</strong>
+                    <input type="button" name="numOfSites" id="numOfSites" disabled value="{{systemStatus.sites.length}}" />
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Time</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.time}}</p>
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Environment</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.env}}</p>
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Handler</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.handler}}</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

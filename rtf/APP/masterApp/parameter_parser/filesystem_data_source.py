@@ -1,5 +1,4 @@
 from common.logger import Logger
-from masterApp.parameter_parser import parser_factory
 import os
 import re
 

@@ -1,12 +1,19 @@
-import { TestBed, async } from '@angular/core/testing';
+import { TestBed, async, ComponentFixture } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { SystemStatusComponent } from './system-status/system-status.component';
 import { SystemControlComponent } from './system-control/system-control.component';
 import { DebugComponent } from './debug/debug.component';
 import { SystemConsoleComponent } from './system-console/system-console.component';
 import { SystemSiteComponent } from './system-site/system-site.component';
+import { HeaderComponent } from './pages/header/header.component';
+import { FooterComponent } from './pages/footer/footer.component';
+import { SystemState } from './system-status';
 
 describe('AppComponent', () => {
+
+  let component: AppComponent;
+  let fixture: ComponentFixture<AppComponent>;
+
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
@@ -15,27 +22,20 @@ describe('AppComponent', () => {
         SystemControlComponent,
         DebugComponent,
         SystemConsoleComponent,
-        SystemSiteComponent
+        SystemSiteComponent,
+        HeaderComponent,
+        FooterComponent
       ]
     }).compileComponents();
   }));
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it(`should have as title 'MiniSCT'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('MiniSCT');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AppComponent);
+    component = fixture.componentInstance;
     fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('header').textContent.trim()).toBe('MiniSCT');
+  });
+
+  it('should create the app', () => {
+    expect(component).toBeTruthy();
   });
 });

@@ -7,6 +7,8 @@ SITE = 0
 DEVICEID = "sct01"
 
 SITES = [0, 1, 2]
+
+
 class Msg:
     def __init__(self):
         self.topic = ""
@@ -14,6 +16,7 @@ class Msg:
 
     def decode(self, dummy):
         return self.payload
+
 
 class TestApplication:
 

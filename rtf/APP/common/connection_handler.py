@@ -31,7 +31,6 @@ class ConnectionHandler:
 
     def decode_message(self, message):
         try:
-            #payload_js = message.decode('utf-8')
             payload = json.loads(message.payload)
             return payload
         except json.JSONDecodeError as error:
@@ -40,10 +39,10 @@ class ConnectionHandler:
         return None
 
     def set_last_will(self, topic, msg):
-        self.mqtt_client.will_set(topic, payload=msg, retain=True)
+        self.mqtt_client.will_set(topic, msg, 0, False)
 
     def subscribe(self, topic):
         self.mqtt_client.subscribe(topic)
 
     def publish(self, topic, payload=None, qos=0, retain=False):
-        self.mqtt_client.publish(topic, payload, qos=qos, retain=retain)
+        self.mqtt_client.publish(topic, payload, qos, retain)

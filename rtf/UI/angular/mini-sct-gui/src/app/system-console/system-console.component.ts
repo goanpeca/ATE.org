@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, PipeTransform, Pipe } from '@angular/core';
-import {formatDate } from '@angular/common'
+import {formatDate } from '@angular/common';
 
 @Component({
   selector: 'app-system-dialog',
@@ -8,61 +8,58 @@ import {formatDate } from '@angular/common'
 })
 
 @Pipe({
-  name: "retrieveData",
+  name: 'retrieveData',
   pure: true
 })
 export class SystemConsoleComponent implements OnInit, PipeTransform {
   transform(value: JSON, args?: any): any {
-    return this.retrieveData(value)
+    return this.retrieveData(value);
   }
 
   retrieveData(message) {
-    if (!message) return
+    if (!message) { return; }
 
-    const jsonMessage = JSON.parse(message.payload)
+    const jsonMessage = JSON.parse(message.payload);
 
-    const _state: string = jsonMessage.state
-    const _topic: string = message.topic
-    const mType: string = jsonMessage.type
+    const _STATE: string = jsonMessage.state;
+    const _TOPIC: string = message.topic;
+    const mType: string = jsonMessage.type;
 
-    if (!_state || !_topic || !mType) {
-      return
+    if (!_STATE || !_TOPIC || !mType) {
+      return;
     }
 
-    let _data: ConsoleData;
-    if (mType == MessageTypes.Status) {
-      const _description: string = mType + ":      " + _state
-      _data = this.generateMessage(_state, _description, _topic)
-    }
-    else if (jsonMessage.type == MessageTypes.Cmd) {
-      const _description: string = mType + ":     " + jsonMessage.command
-      _data = this.generateMessage(_state, _description, _topic)
-    }
-    else if (jsonMessage.type == MessageTypes.Testresult) {
-      const _description: string = mType + ":     " + jsonMessage.testdata
-      _data = this.generateMessage(_state, _description, _topic)
-    }
-    else { return }
+    let data: ConsoleData;
+    if (mType === MessageTypes.Status) {
+      const description: string = mType + ':      ' + _STATE;
+      data = this.generateMessage(_STATE, description, _TOPIC);
+    } else if (jsonMessage.type === MessageTypes.Cmd) {
+      const description: string = mType + ':     ' + jsonMessage.command;
+      data = this.generateMessage(_STATE, description, _TOPIC);
+    } else if (jsonMessage.type === MessageTypes.Testresult) {
+      const description: string = mType + ':     ' + jsonMessage.testdata;
+      data = this.generateMessage(_STATE, description, _TOPIC);
+    } else { return; }
 
-    this.msgs.push(_data)
+    this.msgs.push(data);
   }
 
   generateMessage(state: string, description: string, topic: string): ConsoleData {
-      let _data: ConsoleData = {
+      const DATA: ConsoleData = {
         date: formatDate(Date.now(), 'medium', 'en-US'),
-        topic: topic,
-        description: description
-      }
+        topic,
+        description
+      };
 
-      return _data
+      return DATA;
   }
 
   clearConsole() {
-    this.msgs.length = 0
+    this.msgs.length = 0;
   }
 
-  msgs: ConsoleData[] = []
-  @Input() msg: JSON
+  @Input() msg: JSON;
+  msgs: ConsoleData[] = [];
 
 
   constructor() {}
@@ -72,13 +69,13 @@ export class SystemConsoleComponent implements OnInit, PipeTransform {
 }
 
 export interface ConsoleData {
-  date: string
-  topic: string
-  description: string
+  date: string;
+  topic: string;
+  description: string;
 }
 
 export enum MessageTypes {
-  Cmd = "cmd",
-  Status = "status",
-  Testresult = "testresult"
+  Cmd = 'cmd',
+  Status = 'status',
+  Testresult = 'testresult'
 }

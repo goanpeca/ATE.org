@@ -2,15 +2,17 @@
 
 # External imports
 from aiohttp import web
-from transitions import Machine
-import argparse
+from transitions.extensions import HierarchicalMachine as Machine
 import asyncio
-import json
 import mimetypes
 import sys
-import logging
-import platform
 import os
+
+import base64
+import io
+from ATE.data.STDF.records import records_from_file
+from typing import Callable, List, Optional
+
 
 # Internal imports
 from common.logger import Logger
@@ -18,6 +20,7 @@ from masterApp.master_connection_handler import MasterConnectionHandler
 from masterApp.master_webservice import webservice_setup_app
 from masterApp.parameter_parser import parser_factory
 from masterApp.sequence_container import SequenceContainer
+from masterApp.stdf_aggregator import StdfTestResultAggregator
 
 INTERFACE_VERSION = 1
 
@@ -55,6 +58,7 @@ def assert_valid_system_mimetypes_config():
               + ' Please fix your systems mimetypes configuration.')
         sys.exit(1)
 
+
 CONTROL_STATE_UNKNOWN = "unknown"
 CONTROL_STATE_LOADING = "loading"
 CONTROL_STATE_BUSY = "busy"
@@ -66,99 +70,258 @@ TEST_STATE_TESTING = "testing"
 TEST_STATE_CRASH = "crash"
 TEST_STATE_TERMINATED = "terminated"
 
+STARTUP_TIMEOUT = 300
+LOAD_TIMEOUT = 180
+UNLOAD_TIMEOUT = 60
+TEST_TIMEOUT = 30
+RESET_TIMEOUT = 20
 
-class MasterApplication:
 
-    states = [
-    'startup',
-    'connecting',
-    'initialized',
-    'loading',
-    'ready',
-    'testing',
-    'finished',
-    'unloading',
-    'error']
+class TestingSiteMachine(Machine):
+    states = ['inprogress', 'waiting_for_resource', 'waiting_for_testresult', 'waiting_for_idle', 'completed']
 
+    def __init__(self, model):
+        super().__init__(model=model, states=self.states, initial='inprogress', send_event=True)
+
+        self.add_transition('resource_requested',       'inprogress',                               'waiting_for_resource',     before='set_requested_resource')        # noqa: E241
+        self.add_transition('resource_ready',           'waiting_for_resource',                     'inprogress',               before='clear_requested_resource')      # noqa: E241
+
+        self.add_transition('testresult_received',      ['inprogress', 'waiting_for_resource'],     'waiting_for_idle',         before='set_testresult')                # noqa: E241
+        self.add_transition('status_idle',              ['inprogress', 'waiting_for_resource'],     'waiting_for_testresult')                                           # noqa: E241
+
+        self.add_transition('testresult_received',      'waiting_for_testresult',                   'completed',                before='set_testresult')                # noqa: E241
+        self.add_transition('status_idle',              'waiting_for_idle',                         'completed')                                                        # noqa: E241
+
+        self.add_transition('reset',                    'completed',                                'inprogress',               before='clear_testresult')              # noqa: E241
+
+
+class TestingSiteModel:
+    site_id: str
+    resource_request: Optional[dict]
+    testresult: Optional[dict]
+
+    def __init__(self, site_id: str):
+        self.site_id = site_id
+        self.resource_request = None
+        self.testresult = None
+
+    def set_requested_resource(self, event):
+        self.resource_request = event.kwargs['resource_request']
+
+    def clear_requested_resource(self, event):
+        self.resource_request = None
+
+    def set_testresult(self, event):
+        self.testresult = event.kwargs['testresult']
+
+    def clear_testresult(self, event):
+        self.testresult = None
+
+
+class MultiSiteTestingMachine(Machine):
+
+    def __init__(self, model=None):
+        states = ['inprogress', 'waiting_for_resource', 'completed']
+        super().__init__(model=model, states=states, initial='inprogress'),
+
+        self.add_transition('all_sites_waiting_for_resource',       'inprogress',              'waiting_for_resource')      # noqa: E241
+        self.add_transition('resource_config_applied',              'waiting_for_resource',    'inprogress')                # noqa: E241
+        self.add_transition('all_sites_completed',                  'inprogress',              'completed')                 # noqa: E241
+
+
+class MultiSiteTestingModel:
+    def __init__(self, site_ids: List[str], parent_model=None):
+        self._site_models = {site_id: TestingSiteModel(site_id) for site_id in site_ids}
+        self._site_machines = {site_id: TestingSiteMachine(self._site_models[site_id]) for site_id in site_ids}
+        self._parent_model = parent_model if parent_model is not None else self
+
+    def handle_reset(self):
+        for site in self._site_models.values():
+            if site.is_completed():
+                site.reset()
+
+    def handle_resource_request(self, site_id: str, resource_request: dict):
+        self._site_models[site_id].resource_requested(resource_request=resource_request)
+
+        for site in self._site_models.values():
+            if site.resource_request is not None and site.resource_request != resource_request:
+                raise RuntimeError(f'mismatch in resource request from site "{site_id}": previous request of site "{site.site_id}" differs')
+
+        if any(site.is_inprogress() for site in self._site_models.values()):
+            return  # at least one site is still busy
+
+        self.all_sites_waiting_for_resource()
+        self._parent_model.apply_resource_config(resource_request, lambda: self._on_resource_config_applied())  # Callable[[dict, Callable], None]
+
+    def _on_resource_config_applied(self):
+        self.resource_config_applied()
+        for site in self._site_models.values():
+            site.resource_ready()
+
+    def handle_testresult(self, site_id: str, testresult: dict):
+        self._site_models[site_id].testresult_received(testresult=testresult)
+        self._check_for_completed()
+
+    def handle_status_idle(self, site_id: str):
+        self._site_models[site_id].status_idle()
+        self._check_for_completed()
+
+    def _check_for_completed(self):
+        if all(site.is_completed() for site in self._site_models.values()):
+            self.all_sites_completed()
+            self._parent_model.all_sitetests_complete()
+
+
+class MasterApplication(MultiSiteTestingModel):
+
+    states = ['startup',
+              'connecting',
+              'initialized',
+              'loading',
+              'ready',
+              {'name': 'testing', 'children': MultiSiteTestingMachine()},  # , 'remap': {'completed': 'ready'}
+              'finished',
+              'unloading',
+              'error',
+              'softerror']
+
+    # multipe space code style "error" will be ignored for a better presentation of the possible state machine transitions
     transitions = [
-        {'source': 'startup',       'dest': 'connecting',   'trigger': "startup_done"},
-        {'source': 'startup',       'dest': 'error',        'trigger': 'configuration_error'},
-        {'source': 'connecting',    'dest': 'initialized',  'trigger': 'all_sites_detected',          'after': "on_allsitesdetected"},
-        {'source': 'connecting',    'dest': 'error',        'trigger': 'bad_interface_version'},
+        {'source': 'startup',           'dest': 'connecting',  'trigger': "startup_done",                'after': "on_startup_done"},               # noqa: E241
+        {'source': 'connecting',        'dest': 'initialized', 'trigger': 'all_sites_detected',          'after': "on_allsitesdetected"},           # noqa: E241
+        {'source': 'connecting',        'dest': 'error',       'trigger': 'bad_interface_version'},                                                 # noqa: E241
 
-        {'source': 'initialized',   'dest': 'loading',      'trigger': 'load_command',                'after': 'on_loadcommand_issued'},
-        {'source': 'loading',       'dest': 'ready',        'trigger': 'all_siteloads_complete'},
+        {'source': 'initialized',       'dest': 'loading',     'trigger': 'load_command',                'after': 'on_loadcommand_issued'},         # noqa: E241
+        {'source': 'loading',           'dest': 'ready',       'trigger': 'all_siteloads_complete',      'after': 'on_allsiteloads_complete'},      # noqa: E241
 
-        {'source': 'ready',         'dest': 'testing',      'trigger': 'next',                      'after': 'on_next_command_issued'},
-        {'source': 'testing',       'dest': 'testing',      'trigger': 'testapp_testresult_received', 'after': 'on_site_test_result_received'},
-        {'source': 'ready',         'dest': 'unloading',    'trigger': 'unload',                    'after': 'on_unload_command_issued'},
-        {'source': 'testing',       'dest': 'ready',        'trigger': 'all_sitetests_complete',      'after': "on_allsitetestscomplete"},
-        {'source': 'unloading',     'dest': 'initialized',  'trigger': 'all_siteunloads_complete',    'after': "on_allsiteunloadscomplete"},
+        {'source': 'ready',             'dest': 'testing',     'trigger': 'next',                        'after': 'on_next_command_issued'},        # noqa: E241
+        {'source': 'ready',             'dest': 'unloading',   'trigger': 'unload',                      'after': 'on_unload_command_issued'},      # noqa: E241
+        {'source': 'testing_completed', 'dest': 'ready',       'trigger': 'all_sitetests_complete',      'after': "on_allsitetestscomplete"},       # noqa: E241
+        {'source': 'unloading',         'dest': 'initialized', 'trigger': 'all_siteunloads_complete',    'after': "on_allsiteunloadscomplete"},     # noqa: E241
 
-        {'source': '*',             'dest': 'error',        'trigger': 'testapp_disconnected',       'after': 'on_disconnect_error'},
-        {'source': '*',             'dest': 'error',        'trigger': 'timeout',                   'after': 'on_timeout'},
-        {'source': '*',             'dest': 'error',        'trigger': 'on_error',                  'after': 'on_error_occured'}
+        {'source': '*',                 'dest': 'softerror',   'trigger': 'testapp_disconnected',        'after': 'on_disconnect_error'},           # noqa: E241
+        {'source': '*',                 'dest': 'softerror',   'trigger': 'timeout',                     'after': 'on_timeout'},                    # noqa: E241
+        {'source': '*',                 'dest': 'softerror',   'trigger': 'on_error',                    'after': 'on_error_occured'},              # noqa: E241
+        {'source': 'softerror',         'dest': 'connecting',  'trigger': 'reset',                       'after': 'on_reset_received'}              # noqa: E241
     ]
 
     """ MasterApplication """
 
     def __init__(self, configuration):
-        self.fsm = Machine(model = self, states = MasterApplication.states, transitions = MasterApplication.transitions, initial = "startup", after_state_change='publish_state')
+        super().__init__(configuration['sites'])
+        self.fsm = Machine(model=self,
+                           states=MasterApplication.states,
+                           transitions=MasterApplication.transitions,
+                           initial="startup",
+                           after_state_change='publish_state')
         self.configuration = configuration
-        self.configuredSites = configuration['sites']
-        self.siteStates = [*map(lambda x: (x, CONTROL_STATE_UNKNOWN), self.configuredSites)]
-        
-        self.receivedSiteTestResults = {}  # key: site_id, value: [testresult topic payload dicts]
-        self.device_id = configuration['device_id']
-        self.env = None
         self.log = Logger.get_logger()
-        self.create_handler( configuration["broker_host"], configuration["broker_port"])
-        self.enableTimeouts = configuration.get("enable_timeouts", False)
-        self.errorMessage = ""
-        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites,  lambda: self.all_sites_detected(), lambda site, state: self.on_unexpected_control_state(site, state))
-        self.pendingTransisionsTest = SequenceContainer([TEST_STATE_IDLE], self.configuredSites,  lambda: self.all_siteloads_complete(), lambda site, state: self.on_unexpected_control_state(site, state))
+        self.init(configuration)
 
-        # Sanity check for bad configurations:
-        if len(self.configuredSites) == 0:
-            self.configuration_error({'reason': 'No sites configured'})
-        
+        self.receivedSiteTestResults = {}  # key: site_id, value: [testresult topic payload dicts]
+        self.loaded_jobname = ""
+        self.loaded_lot_number = ""
+    def init(self, configuration: dict):
+        self.__get_configuration(configuration)
+        self.create_handler(self.broker_host, self.broker_port)
+
+        self.receivedSiteTestResults = {}  # key: site_id, value: [testresult topic payload dicts]
+
+        self.error_message = ''
+
+        self.siteStates = {site_id: CONTROL_STATE_UNKNOWN for site_id in self.configuredSites}
+        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites, lambda: self.all_sites_detected(),
+                                                           lambda site, state: self.on_unexpected_control_state(site, state))
+        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_IDLE], self.configuredSites, lambda: self.all_siteloads_complete(),
+                                                        lambda site, state: self.on_unexpected_testapp_state(site, state))
         self.timeoutHandle = None
-        self.arm_timeout(300, lambda: self.timeout("Not all sites connected."))
+        self.arm_timeout(STARTUP_TIMEOUT, lambda: self.timeout("Not all sites connected."))
 
+    def __get_configuration(self, configuration: dict):
+        try:
+            self.configuredSites = configuration['sites']
+            # Sanity check for bad configurations:
+            if len(self.configuredSites) == 0:
+                self.log.error(f"no sites assigned")
+                sys.exit()
+
+            self.device_id = configuration['device_id']
+            self.broker_host = configuration['broker_host']
+            self.broker_port = configuration['broker_port']
+            self.enableTimeouts = configuration['enable_timeouts']
+            self.env = configuration['environment']
+        except KeyError as e:
+            self.log.error(f"invalid configuration: {e}")
+            sys.exit()
+
+    @property
+    def external_state(self):
+        return 'testing' if self.is_testing(allow_substates=True) else self.state
 
     def disarm_timeout(self):
         if self.enableTimeouts:
-            if not self.timeoutHandle == None:
+            if self.timeoutHandle is not None:
                 self.timeoutHandle.cancel()
                 self.timeoutHandle = None
 
-    def arm_timeout(self, timeout_in_seconds: float, callback: callable):
+    def arm_timeout(self, timeout_in_seconds: float, callback: Callable):
         if self.enableTimeouts:
             self.disarm_timeout()
             self.timeoutHandle = asyncio.get_event_loop().call_later(timeout_in_seconds, callback)
 
+    def repost_state_if_connecting(self):
+        if self.state == "connecting":
+            self.publish_state()
+            asyncio.get_event_loop().call_later(1, lambda: self.repost_state_if_connecting())
+
+    def on_startup_done(self):
+        self.repost_state_if_connecting()
+
     def on_timeout(self, message):
-        self.errorMessage = message
+        self.error_message = message
         self.log.error(message)
 
-    def on_disconnect_error(self, siteId, data):
-        self.log.error(f"Entered state error due to disconnect of site {siteId}")
+    def on_disconnect_error(self, site_id, data):
+        self.log.error(f"Entered state error due to disconnect of site {site_id}")
 
-    def on_unexpected_control_state(self, siteId, state):
-        self.log.warning(f"Site {siteId} reported state {state}. This state is ignored during startup.")
+    def on_unexpected_control_state(self, site_id, state):
+        self.log.warning(f"Site {site_id} reported state {state}. This state is ignored during startup.")
+        self.error_message = f'Site {site_id} reported state {state}'
+
+    def on_unexpected_testapp_state(self, site_id, state):
+        self.log.warning(f"TestApp for site {site_id} reported state {state}. This state is ignored during startup.")
+        self.error_message = f'TestApp for site {site_id} reported state {state}'
 
     def on_error_occured(self, message):
         self.log.error(f"Entered state error, reason: {message}")
+        self.error_message = message
 
     def on_allsitesdetected(self):
+        # Trap any controls that misbehave and move out of the idle state.
+        # In this case we want to move to error as well
+        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites, lambda: None,
+                                                           lambda site, state: self.on_error(f"Bad statetransition of control {site} during sync to {state}"))
+
+        self.error_message = ''
         self.disarm_timeout()
 
-    def publish_state(self, siteId = None, paramData = None):
+    def publish_state(self, site_id=None, param_data=None):
         self.log.info("Master state is " + self.state)
-        self.connectionHandler.publish_state(self.state)
+        self.connectionHandler.publish_state(self.external_state)
 
-    def on_loadcommand_issued(self, paramData: dict):
-        jobname = paramData['lot_number']
+    def on_loadcommand_issued(self, param_data: dict):
+        jobname = param_data['lot_number']
+        self.loaded_jobname = str(jobname)
+
+        # TODO: HACK for quick testing/development: allow to specify the
+        # testappzip mock variant with the lot number, and use hardcoded variant by default,
+        # so we dont have to modify the XML for now
+        thetestzipname = 'sleepmock'  # use trivial zip mock implementation by default
+        if isinstance(jobname, str) and '|' in jobname:
+            jobname, thetestzipname = jobname.split('|')
+
+        self.loaded_lot_number = str(jobname)
+
         jobformat = self.configuration.get('jobformat')
         parser = parser_factory.CreateParser(jobformat)
         source = parser_factory.CreateDataSource(jobname,
@@ -176,81 +339,132 @@ class MasterApplication:
             if not source.verify_data(param_data):
                 # TODO: report error: file was loaded but contains invalid data (currently only logged)
                 return
-                
+
             data = source.get_test_information(param_data)
 
-        self.arm_timeout(180, lambda: self.timeout("not all sites loaded the testprogram"))
-        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_LOADING, CONTROL_STATE_BUSY], self.configuredSites,  lambda: None, lambda site, state: self.on_error(f"Bad statetransition of control {site} during load to {state}"))
-        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_IDLE], self.configuredSites,  lambda: self.all_siteloads_complete(), lambda site, state: self.on_error(f"Bad statetransition of testapp {site} during load to {state}"))
+        self.arm_timeout(LOAD_TIMEOUT, lambda: self.timeout("not all sites loaded the testprogram"))
+        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_LOADING, CONTROL_STATE_BUSY], self.configuredSites, lambda: None,
+                                                           lambda site, state: self.on_error(f"Bad statetransition of control {site} during load to {state}"))
+        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_IDLE], self.configuredSites, lambda: self.all_siteloads_complete(),
+                                                        lambda site, state: self.on_error(f"Bad statetransition of testapp {site} during load to {state}"))
+        self.error_message = ''
         testapp_params = {
             'testapp_script_path': './testApp/thetest_application.py',                  # required
-            'testapp_script_args': ['--verbose'],                                       # optional
+            'testapp_script_args': ['--verbose', '--thetestzip_name', thetestzipname],
             'cwd': os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'),     # optional
             'XML': data                                                                 # optional/unused for now
         }
         self.connectionHandler.send_load_test_to_all_sites(testapp_params)
 
-    def on_allsiteloads_complete(self, siteId: str, paramData: dict):
+    def on_allsiteloads_complete(self, paramData=None):
+        self.error_message = ''
         self.disarm_timeout()
 
+        self._stdf_aggregator = StdfTestResultAggregator()
+        self._stdf_aggregator.init(self.device_id + ".Master", self.loaded_lot_number, self.loaded_jobname)
+
     def on_next_command_issued(self, paramData: dict):
-        self.sitesWithCompleteTests = []
         self.receivedSiteTestResults = {}
-        self.arm_timeout(30, lambda: self.timeout("not all sites completed the active test"))
-        self.pendingTransitionsTest = SequenceContainer( [TEST_STATE_TESTING, TEST_STATE_IDLE], self.configuredSites, lambda: self.all_sitetests_complete(), lambda site, state: self.on_error(f"Bad statetransition of control during test"))
+        self.arm_timeout(TEST_TIMEOUT, lambda: self.timeout("not all sites completed the active test"))
+        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_TESTING, TEST_STATE_IDLE], self.configuredSites, lambda: None,
+                                                        lambda site, state: self.on_error(f"Bad statetransition of control during test"))
+        self.error_message = ''
         self.connectionHandler.send_next_to_all_sites()
 
-    def on_unload_command_issued(self, paramData: dict):
-        self.arm_timeout(60, lambda: self.timeout("not all sites unloaded the testprogram"))
-        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites,  lambda: self.all_siteunloads_complete(), lambda site, state: self.on_error(f"Bad statetransition of control {site} during unload to {state}"))
-        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_TERMINATED], self.configuredSites,  lambda: None, lambda site, state: None)
+    def on_unload_command_issued(self, param_data: dict):
+        self.arm_timeout(UNLOAD_TIMEOUT, lambda: self.timeout("not all sites unloaded the testprogram"))
+        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites, lambda: self.all_siteunloads_complete(),
+                                                           lambda site, state: self.on_error(f"Bad statetransition of control {site} during unload to {state}"))
+        self.pendingTransitionsTest = SequenceContainer([TEST_STATE_TERMINATED], self.configuredSites, lambda: None, lambda site, state: None)
+        self.error_message = ''
         self.connectionHandler.send_terminate_to_all_sites()
+
+    def on_reset_received(self, param_data: dict):
+        self.arm_timeout(RESET_TIMEOUT, lambda: self.timeout("not all sites unloaded the testprogram"))
+        self.pendingTransitionsControl = SequenceContainer([CONTROL_STATE_IDLE], self.configuredSites, lambda: self.all_sites_detected(),
+                                                           lambda site, state: self.on_unexpected_control_state(site, state))
+        self.error_message = ''
+        self.connectionHandler.send_reset_to_all_sites()
 
     def on_allsiteunloadscomplete(self):
         self.disarm_timeout()
 
+        self._stdf_aggregator.finalize()
+        self._stdf_aggregator.write_to_file('temp_final_stdf_file_on_unload.stdf')
+        self._stdf_aggregator = None
+
+    def _collect_testresults_from_completed_sites(self):
+        # TODO: all sorts of error handling (but how do we handle sites from which we cannot process test results, whatever the reason may be)?
+        for site_num, (site_id, site) in enumerate(self._site_models.items()):
+            if site.is_completed():
+                try:
+                    testdata = site.testresult['testdata']
+                    ispass = site.testresult['pass'] == 1
+                    stdf_blob = base64.b64decode(testdata)
+                    records = self._stdf_aggregator.parse_parttest_stdf_blob(stdf_blob)
+                    self._stdf_aggregator.add_parttest_records(records, ispass, site_num)  # TODO: this sucks: we need an integer for site number, the id is not guaranteed to be an integer! need other way of configurable lookup for remapping
+                except Exception:
+                    self.log.exception("exception while processing test results from site %s", site_id)
+                    raise
+        self._stdf_aggregator.write_to_file('temp_stdf_file_after_last_duttest_complete.stdf')
+
     def on_allsitetestscomplete(self):
         self.disarm_timeout()
+        self._collect_testresults_from_completed_sites()
+        self.handle_reset()
 
-    def on_site_test_result_received(self, siteId: str, paramData: dict):
+    def on_site_test_result_received(self, site_id: str, param_data: dict):
         # simply store testresult so it can be forwarded to UI on the next tick
-        self.receivedSiteTestResults.setdefault(siteId, []).append(paramData)
+        self.receivedSiteTestResults.setdefault(site_id, []).append(param_data)
 
     def create_handler(self, host, port):
-        self.connectionHandler = MasterConnectionHandler(host,
-                                                          port,
-                                                          self.configuredSites,
-                                                          self.device_id,
-                                                          self)
+        self.connectionHandler = MasterConnectionHandler(host, port, self.configuredSites, self.device_id, self)
 
     def on_control_status_changed(self, siteid: str, status_msg: dict):
+        print(f'control app status packet: {status_msg}')
         newstatus = status_msg['state']
 
         if(status_msg['interface_version'] != INTERFACE_VERSION):
             self.bad_interface_version({'reason': f'Bad interfaceversion on site {siteid}'})
 
-        if int(siteid) < len(self.siteStates):
-            self.siteStates[int(siteid)] = (int(siteid), newstatus)
-        self.pendingTransitionsControl.trigger_transition(siteid, newstatus)
+        if(self.siteStates[siteid] != newstatus):
+            self.siteStates[siteid] = newstatus
+            self.pendingTransitionsControl.trigger_transition(siteid, newstatus)
 
     def on_testapp_status_changed(self, siteid: str, status_msg: dict):
+        print(f'test app status packet: {status_msg}')
         newstatus = status_msg['state']
+        if self.is_testing(allow_substates=True) and newstatus == TEST_STATE_IDLE:
+            self.handle_status_idle(siteid)
 
         self.pendingTransitionsTest.trigger_transition(siteid, newstatus)
 
     def on_testapp_testresult_changed(self, siteid: str, status_msg: dict):
-        try:
-            self.testapp_testresult_received(siteid, status_msg)
-        except:
+        if self.is_testing(allow_substates=True):
+            self.handle_testresult(siteid, status_msg)
+            self.on_site_test_result_received(siteid, status_msg)
+        else:
             self.on_error(f"received unexpected testresult from site {siteid}")
+
+    def on_testapp_resource_changed(self, siteid: str, resource_request_msg: dict):
+        self.handle_resource_request(siteid, resource_request_msg)
+
+    def apply_resource_config(self, resource_request: dict, on_resource_config_applied_callback: Callable):
+        resource_id = resource_request['resource_id']
+        config = resource_request['config']
+        self.connectionHandler.publish_resource_config(resource_id, config)
+        # simulate async callback after resource has been configured (always successful currently)
+        # TODO: we probably need to check again if we are still in valid state. an error may occurred by now. also resource configuration may fail.
+        asyncio.get_event_loop().call_later(0.1, on_resource_config_applied_callback)
 
     def dispatch_command(self, json_data):
         cmd = json_data.get('command')
         try:
             {
-                'load' : lambda paramData: self.load_command(paramData),
-                'next' : lambda paramData: self.next(paramData),
-                'unload' : lambda paramData: self.unload(paramData)
+                'load': lambda param_data: self.load_command(param_data),
+                'next': lambda param_data: self.next(param_data),
+                'unload': lambda param_data: self.unload(param_data),
+                'reset': lambda param_data: self.reset(param_data)
             }[cmd](json_data)
         except Exception as e:
             self.log.error(f'Failed to execute command {cmd}: {e}')
@@ -264,45 +478,64 @@ class MasterApplication:
         app['mqtt_handler'] = None
         await self.connectionHandler.stop()
 
-    async def _master_background_task(self, app):
-
-        def is_mqtt_connected():
-            return (self.connectionHandler is not None
-                    and self.connectionHandler.connected_flag)
-
-        def get_alive_sites():
-            if self.connectionHandler is None:
-                return
-            return filter( (lambda x: x not in [CONTROL_STATE_UNKNOWN, CONTROL_STATE_CRASH]), self.siteStates)
-
-        def all_sites_alive():
-            aliveSites = list(get_alive_sites())
-            for siteid in self.sites:
-                if siteid not in aliveSites:
-                    return False
-
-            return True
-
-        def all_sites_loaded():
-            return self.state == "initialized"
-
+    # HACK: parse testdata json to be sent to frontend: this is a quick hack to show the raw STDF data in frontend for now
+    #       * we should not pass this data as base64 for performance reasons
+    #       * the code for processing and eventually merging/aggregating stdf data from all sites should be in its own module/file
+    def _try_convert_stdf_data_in_testresult_payload_to_dict_for_json(self, testresult_payload: dict):
         try:
-            counter = 0
-            oldstate = 'unknown'
+            testdata = testresult_payload['testdata']
+            stdf_blob = base64.b64decode(testdata)
+
+            # iterate records here and return record as dict (with readable record type as key and fields-dict as value)
+            with io.BytesIO(stdf_blob) as stream:
+                return [[record.id, record.to_dict()]
+                        for _, _, _, record in records_from_file(stream, unpack=True)]
+
+        except Exception:
+            self.log.exception(f'Error while converting stdf data in testresult (this is ignored for now, no stdf data will be generated for frontend)')
+        return None
+
+    # example usage of exacting data from the stdf data reported from a dut test
+    def _try_extract_bin_from_testresults_stdf(self, testresult_payload: dict):
+        try:
+            testdata = testresult_payload['testdata']
+            stdf_blob = base64.b64decode(testdata)
+
+            with io.BytesIO(stdf_blob) as stream:
+                prr_records = [record for _, _, _, record in records_from_file(
+                    stream, unpack=True, of_interest=['PRR'])]
+                if len(prr_records) != 1:
+                    raise ValueError(f'stdf data in testresults does not contain exactly one PRR record (found: {len(prr_records)})')
+                return prr_records[0].get_value('HARD_BIN')
+        except Exception:
+            self.log.exception(f'Error while extracting info from stdf data in testresult (this is ignored for now, no stdf data will be generated for frontend)')
+        return None
+
+    def _try_add_stdf_data_to_testresults_for_frontend(self):
+        for _, testresult_payloads in self.receivedSiteTestResults.items():
+            for testresult_payload in testresult_payloads:
+                stdf_data = self._try_convert_stdf_data_in_testresult_payload_to_dict_for_json(testresult_payload)
+                if stdf_data is not None:
+                    testresult_payload['stdf'] = stdf_data
+                bin_from_stdf = self._try_extract_bin_from_testresults_stdf(testresult_payload)
+                if bin_from_stdf is not None:
+                    testresult_payload['bin'] = bin_from_stdf
+
+    async def _master_background_task(self, app):
+        try:
             while True:
                 # push state change via ui/websocket
-                oldstate = self.state
                 ws_comm_handler = app['ws_comm_handler']
                 if ws_comm_handler is not None:
-                    await ws_comm_handler.send_status_to_all(self.state)
+                    await ws_comm_handler.send_status_to_all(self.external_state, self.error_message)
 
                 if len(self.receivedSiteTestResults) != 0:
+                    self._try_add_stdf_data_to_testresults_for_frontend()
                     ws_comm_handler = app['ws_comm_handler']
                     if ws_comm_handler is not None:
                         await ws_comm_handler.send_testresults_to_all(
                             self.receivedSiteTestResults)
                     self.receivedSiteTestResults = {}
-
 
                 await asyncio.sleep(1)
 
@@ -323,9 +556,16 @@ class MasterApplication:
         app = web.Application()
         app['master_app'] = self
 
-        webservice_setup_app(app)
+        # initialize static file path from config (relative paths are interpreted
+        # relative to the current working directory).
+        # TODO: the default value of the static file path (here and config template) should
+        #       not be based on the development folder structure and simply be './mini-sct-gui'.
+        webui_static_path = self.configuration.get('webui_static_path', './../UI/angular/mini-sct-gui/dist/mini-sct-gui')
+        static_file_path = os.path.realpath(webui_static_path)
+
+        webservice_setup_app(app, static_file_path)
         app.cleanup_ctx.append(self._mqtt_loop_ctx)
-        app.cleanup_ctx.append(self._master_background_task_ctx)        
+        app.cleanup_ctx.append(self._master_background_task_ctx)
 
         host = self.configuration.get('webui_host', "localhost")
         port = self.configuration.get('webui_port', 8081)

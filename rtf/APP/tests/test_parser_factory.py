@@ -1,4 +1,3 @@
-import pytest
 from masterApp.parameter_parser import parser_factory
 from masterApp.parameter_parser.xml_parameter_parser import XmlParameterParser
 from masterApp.parameter_parser.filesystem_data_source import FileSystemDataSource

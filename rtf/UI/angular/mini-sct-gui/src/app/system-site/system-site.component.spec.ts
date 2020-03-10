@@ -17,32 +17,32 @@ describe('SystemSiteComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(SystemSiteComponent);
     component = fixture.componentInstance;
-    component.systemStatus.state = SystemState.initialized
+    component.systemStatus.state = SystemState.initialized;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create site component', () => {
     expect(component).toBeTruthy();
   });
 
   it('should table show up', () => {
-    const doc = fixture.debugElement.nativeElement
-    expect(doc.querySelector('.table')).toBeDefined()
+    const doc = fixture.debugElement.nativeElement;
+    expect(doc.querySelector('.table')).toBeDefined();
   });
 
   it('should have elements', () => {
-    const doc = fixture.debugElement.nativeElement
-    expect(doc.querySelector('.table')).toBeDefined()
+    const doc = fixture.debugElement.nativeElement;
+    expect(doc.querySelector('.table')).toBeDefined();
 
-    expect(fixture.nativeElement.querySelectorAll("th")[0]
+    expect(fixture.nativeElement.querySelectorAll('th')[0]
                                 .textContent.trim())
-                                .toBe("Type")
-    expect(fixture.nativeElement.querySelectorAll("th")[1]
+                                .toBe('Type');
+    expect(fixture.nativeElement.querySelectorAll('th')[1]
                                 .textContent.trim())
-                                .toBe("Site ID")
-    expect(fixture.nativeElement.querySelectorAll("th")[2]
+                                .toBe('Site ID');
+    expect(fixture.nativeElement.querySelectorAll('th')[2]
                                 .textContent.trim())
-                                .toBe("State")
-  })
+                                .toBe('State');
+  });
 
 });

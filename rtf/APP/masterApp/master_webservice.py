@@ -9,11 +9,6 @@ import aiomqtt
 from paho.mqtt.client import MQTTMessage
 from common.logger import Logger
 
-# url to the compiled angular project containing the index.html
-# file and the javascript files
-static_file_url = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               '../../UI/angular/mini-sct-gui/dist/mini-sct-gui')
-
 
 class MqttWsProxy:
     def __init__(self, ws, broker_host, broker_port):
@@ -28,12 +23,12 @@ class MqttWsProxy:
     def start_task(self):
         if self._task is not None:
             raise RuntimeError('task already started')
-        self._task = asyncio.create_task(self._run_task())
+        self._task_stop_event = asyncio.Event()
+        self._task = asyncio.create_task(self._run_task(self._task_stop_event))
 
-    async def stop_task(self):
+    def stop_task(self):
         if self._task is not None:
-            self._task.cancel()
-            await self._task
+            self._task_stop_event.set()
 
     def sub(self, topic):
         self._subs.append(topic)
@@ -53,15 +48,11 @@ class MqttWsProxy:
 
     def _message_payload_to_json_value(self, payload):
         # only forward payloads that can be encoded as utf-8 without errors
-        try:
-            if isinstance(payload, bytes):
-                return payload.decode('utf-8')
-            elif isinstance(payload, str):
-                return payload
-            raise ValueError(type(payload).__name__)
-        except Exception:
-            self._log.exception("unexpected mqtt message payload")
-        return None
+        if isinstance(payload, bytes):
+            return payload.decode('utf-8')
+        elif isinstance(payload, str):
+            return payload
+        raise ValueError(type(payload).__name__)
 
     def _create_onmessage_message_for_ws(self, message: MQTTMessage):
         return {
@@ -74,7 +65,7 @@ class MqttWsProxy:
             }
         }
 
-    async def _run_task(self):
+    async def _run_task(self, stop_event: asyncio.Event):
         def on_connect(client, userdata, flags, rc):
             self._log.debug("MqttWsProxy connected!")
             self._send_initial_subs(client)
@@ -85,9 +76,14 @@ class MqttWsProxy:
 
         def on_message(client, userdata, message):
             self._log.debug("MqttWsProxy message: %s %s", message.topic, message.payload)
-            ws_msg = self._create_onmessage_message_for_ws(message)
-            if ws_msg is not None:
-                asyncio.create_task(self._ws.send_json(ws_msg))
+
+            try:
+                ws_msg = self._create_onmessage_message_for_ws(message)
+            except Exception:
+                self._log.warning("MqttWsProxy ignoring unsupported mqtt message payload (possibly binary): %s %s", message.topic, message.payload)
+                return
+
+            asyncio.create_task(self._ws.send_json(ws_msg))
 
         def on_disconnect(client, userdata, rc):
             self._log.debug("MqttWsProxy disconnected!")
@@ -104,15 +100,12 @@ class MqttWsProxy:
         self._client = c
 
         try:
-            # TODO: maybe use an async generator here (yield) like aiohttp does for cleanup context?
-            dummy_event_to_sleep_until_task_is_canceled = asyncio.Event()
-            await dummy_event_to_sleep_until_task_is_canceled.wait()
-        except asyncio.CancelledError:
-            pass
+            await stop_event.wait()
         finally:
             self._client = None
-            c.disconnect()
-            await c.loop_stop()  # TODO: this is apparently interrupted by CancelledError again when a websocket is closed by the browser for some reason, how can we cleanup properly?
+
+        c.disconnect()
+        await c.loop_stop()
 
         self._log.debug("MqttWsProxy task end")
 
@@ -125,7 +118,7 @@ class WebsocketCommunicationHandler:
 
     def get_current_master_state(self):
         master_app = self._app['master_app']
-        return master_app.state
+        return master_app.external_state
 
     def get_broker_from_master_config(self):
         master_app = self._app['master_app']
@@ -139,8 +132,9 @@ class WebsocketCommunicationHandler:
         for ws in set(self._websockets):
             await ws.send_json(data)
 
-    async def send_status_to_all(self, state):
-        status_message = self._create_status_message(state)
+    async def send_status_to_all(self, state, description):
+        status_message = self._create_status_message(state, description)
+        print(status_message)
         await self.send_message_to_all(status_message)
 
     async def send_testresults_to_all(self, siteidtoarrayoftestresultsdicts):
@@ -150,7 +144,7 @@ class WebsocketCommunicationHandler:
         }
         await self.send_message_to_all(testresults_message)
 
-    def _create_status_message(self, state):
+    def _create_status_message(self, state, error_message):
         return {
             'type': 'status',
             'payload': {
@@ -158,8 +152,8 @@ class WebsocketCommunicationHandler:
                 'systemTime': time.strftime("%b %d %Y %H:%M:%S"),
                 'sites': self._app['master_app'].configuredSites,
                 'state': state,
+                'error_message': error_message,
                 'env': self._app['master_app'].env,
-                #'handler': self._app['master_app'].connection_handler,
             }
         }
 
@@ -174,7 +168,8 @@ class WebsocketCommunicationHandler:
 
         # send initial status message
         await ws.send_json(self._create_status_message(
-            self.get_current_master_state()))
+            self.get_current_master_state(),
+            "no error"))
 
         self._websockets.add(ws)
         mqttproxy = None
@@ -215,7 +210,7 @@ class WebsocketCommunicationHandler:
                     self._log.error('ws connection closed with exception: %s', ws.exception())
         finally:
             if mqttproxy is not None:
-                await mqttproxy.stop_task()
+                mqttproxy.stop_task()
             self._websockets.discard(ws)
 
         self._log.debug('websocket connection closed.')
@@ -229,19 +224,21 @@ class WebsocketCommunicationHandler:
 
 
 async def index_handler(request):
-    return web.FileResponse(f'{static_file_url}/index.html')
+    static_file_path = request.app['static_file_path']
+    return web.FileResponse(os.path.join(static_file_path, 'index.html'))
 
 
 async def webservice_init(app):
+    static_file_path = app['static_file_path']
     ws_comm_handler = WebsocketCommunicationHandler(app)
     app.add_routes([web.get('/', index_handler),
-                   web.get('/ws', ws_comm_handler.receive)])
+                    web.get('/ws', ws_comm_handler.receive)])
     # From the aiohttp documentation it is known to use
     # add_static only when developing things
     # normally static content should be processed by
     # webservers like (nginx or apache)
     # In the case of MiniSCT it is okay to use add_static
-    app.router.add_static('/', path=static_file_url, name='static')
+    app.router.add_static('/', path=static_file_path, name='static')
     app['ws_comm_handler'] = ws_comm_handler
 
 
@@ -252,6 +249,9 @@ async def webservice_cleanup(app):
         app['ws_comm_handler'] = None
 
 
-def webservice_setup_app(app):
+def webservice_setup_app(app, static_file_path):
+    if not os.path.isdir(static_file_path):
+        raise ValueError(f'static_file_path is not an existing directory: {static_file_path}')
+    app['static_file_path'] = static_file_path
     app.on_startup.append(webservice_init)
     app.on_cleanup.append(webservice_cleanup)

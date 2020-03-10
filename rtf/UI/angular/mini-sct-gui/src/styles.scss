@@ -1,70 +1,205 @@
-/* You can add global styles to this file, and also import other style files */
-$micronasBlue : #0046AD;
-$white : #FFFFFF;
-$alertRed : #f44336;
-$green : #8CFFAD;
-$headerHeight : 100px;
-$grey: lightgrey;
-$warn: #FFF568;
-$black:black;
+/*
+======================================================
+=          Reset default Browser CSS Styles          =
+======================================================
+*/
 
-.info {
-    background-color: $grey;
-    width: 410px;
-    padding: 5px;
-    margin: 5px;
-    border : 1px solid black;
-    label {
-        font-weight: bold;
-        width: 200px;
-        display: inline-block;
+
+/* Remove default margin and padding for all */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+     :before,
+     :after {
+        box-sizing: inherit;
     }
-    input {
-        background-color: $green;
-        display: inline-block;
-        width:200px;
+     :focus {
+        outline: none;
     }
 }
 
-.error {
-    padding: 20px;
-    background-color: $alertRed;
-    color: $white;
-    text-align: center;
-}
 
-.warn {
-    padding: 20px;
-    background-color: $warn;
-    color: black;
-    text-align: center;
-    -webkit-animation-name:blinkingText;
-    -webkit-animation-iteration-count:infinite;
-    -webkit-animation-duration: 1.2s;
-}
+/* set body defaults */
 
-@keyframes blinkingText{
-    0%{     color: #000;    }
-    49%{    color: #000; }
-    60%{    color: transparent; }
-    99%{    color:transparent;  }
-    100%{   color: #000;    }
-}
-
-header {
-    margin : 0px;
-    padding: 15px;
-
-    background : $micronasBlue;
-    text-align: left;
-    color : $white;
-    font-size: 3.5em;
-    vertical-align: middle;
-    * {
-        display: inline-block;
+$fontFamily: Arial,
+Helvetica,
+sans-serif;
+$lineHeight: 1.5;
+body {
+    min-height: 100vh;
+    scroll-behavior: smooth;
+    text-rendering: optimizeSpeed;
+    display: block;
+    line-height: $lineHeight;
+    font-family: $fontFamily;
+    /* reset html5 display-role for old browsers */
+    footer,
+    header,
+    menu,
+    nav,
+    main,
+    section,
+    article,
+    aside,
+    details,
+    figcaption,
+    figure,
+    hgroup {
+        display: block;
     }
+    a {
+        text-decoration: none;
+    }
+    /* remove list styles on ul and ol */
+    ul,
+    ol {
+        list-style: none;
+        list-style-type: none;
+    }
+    /* set default image style */
     img {
-        float : right;
-        width : 300px;
+        max-width: 100%;
+        display: block;
+    }
+    /* inherit fonts */
+    input,
+    button,
+    textarea,
+    select {
+        font: inherit;
+    }
+}
+
+
+/*
+======================================================
+=       END OF Reset default Browser CSS Styles       =
+=======================================================
+*/
+
+
+/* set default value for colors*/
+
+$micronasBlue: #0046AD;
+$skyBlue: #008ADC;
+$hoverBlue: #C1CFFF;
+$grey: #AAAABC;
+$darkGrey: #767687;
+$black:#454555;
+$white: #FFFFFF;
+$whiteSmoke: whitesmoke;
+$beige: #F9F8FF;
+$red: #DF4758;
+$warn: #FFBC58;
+$colorFooter: #F0F4F5;
+$borderColor: #74AEAC;
+$green: ("darkGreen": #008A65, "hellGreen": #6CFBCE, "middleGreen": #1FC198, "btnGreen": #01A860);
+// @debug map-get($green, "darkGreen");
+
+/* Mixin border-borded */
+
+@mixin solidBorder($width, $color) {
+    border: $width solid $color;
+}
+
+@mixin blueDivider {
+    margin-bottom: 0;
+    padding-bottom: 5px;
+    background-color: #0046AD;
+}
+
+
+/* divider */
+
+hr {
+    @include solidBorder(5px, $whiteSmoke);
+    margin: 10px;
+    clear: both;
+}
+
+
+/*common style from Grid View content */
+
+.row {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    height: auto;
+}
+
+
+/*left column */
+
+.side {
+    -ms-flex: 10%;
+    flex: 10%;
+    background-color: $beige;
+    padding: 20px;
+}
+
+
+/* Main column */
+
+.main {
+    -ms-flex: 70%;
+    /* IE10 */
+    flex: 70%;
+    background-color: white;
+    padding: 20px;
+}
+
+
+/* Table */
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 20px;
+    td,
+    th {
+        @include solidBorder(1px, $white);
+        text-align: left;
+        padding: 5px;
+    }
+    th {
+        text-align: center;
+    }
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+}
+
+
+/* select */
+
+label {
+    font-size: 1rem;
+    padding: 10px;
+}
+
+select {
+    @include solidBorder(1px, $micronasBlue);
+    border-radius: 15px;
+    margin-top: 30px;
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 5px;
+    color: white;
+    background-color: $micronasBlue;
+}
+
+option {
+    font-weight: bold;
+    padding: 13px;
+    border-bottom: 2px solid $white;
+}
+
+@media screen and (max-width: 700px) {
+    .row {
+        flex-direction: column;
     }
 }

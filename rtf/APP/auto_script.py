@@ -7,6 +7,7 @@ from enum import Enum
 
 MASTER_CONFIG_FILENAME = "master_config_file.json"
 CONTROL_CONFIG_FILENAME = "control_config_file.json"
+HANDLER_CONFIG_FILENAME = "handler_config_file.json"
 
 
 class Configs(Enum):
@@ -28,17 +29,18 @@ def read_template_config(filename):
     return _conf
 
 
-def create_master_config_file(sites, master_id,
+def create_master_config_file(sites, device_id,
                               host=None,
                               port=None,
                               webui_host=None,
                               webui_port=None):
     config = {"broker_host": Configs.host.value if host is None else host,
               "broker_port": Configs.port.value if port is None else port,
-              "device_id": master_id,
+              "device_id": device_id,
               "sites": sites,
               "webui_host": Configs.webui_host.value if webui_host is None else webui_host,
               "webui_port": Configs.webui_port.value if webui_port is None else webui_port,
+              "webui_static_path": "./../UI/angular/mini-sct-gui/dist/mini-sct-gui",
               "Handler": "HTO92-20F",
               "Environment": "F1",
               "jobsource": "filesystem",
@@ -48,24 +50,46 @@ def create_master_config_file(sites, master_id,
               "filesystemdatasource.jobpattern": "le306426001.xml"
               }
 
-    dump_to_file(True, config)
+    dump_to_file("master", config)
 
 
-def create_control_config_file(num, master_id, host=None, port=None):
-    config = {"broker_host": Configs.host.value,
-              "broker_port": Configs.port.value,
-              "device_id": master_id,
-              "site_id": num
+def create_control_config_file(site_id, device_id, host=None, port=None):
+    config = {"broker_host": Configs.host.value if host is None else host,
+              "broker_port": Configs.port.value if port is None else port,
+              "device_id": device_id,
+              "site_id": site_id
               }
 
-    dump_to_file(False, config)
+    dump_to_file("control", config)
 
 
-def dump_to_file(is_master, config):
-    if is_master:
+def create_handler_config_file(device_id, host=None, port=None):
+    config = {"broker_host": Configs.host.value if host is None else host,
+              "broker_port": Configs.port.value if port is None else port,
+              "device_id": device_id
+              }
+
+    dump_to_file("handler", config)
+
+
+def create_handler_config_file(device_id, host=None, port=None):
+    config = {"broker_host": Configs.host.value if host is None else host,
+              "broker_port": Configs.port.value if port is None else port,
+              "device_id": device_id
+              }
+
+    dump_to_file("handler", config)
+
+
+def dump_to_file(target, config):
+    if target == "master":
         file_name = MASTER_CONFIG_FILENAME
-    else:
+    elif target == "control":
         file_name = CONTROL_CONFIG_FILENAME
+    elif target == "handler":
+        file_name = HANDLER_CONFIG_FILENAME
+    else:
+        return
 
     json_c = json.dumps(config, indent=4)
 
@@ -76,7 +100,7 @@ def dump_to_file(is_master, config):
 def file_parser():
     parser = argparse.ArgumentParser(prog="auto-script.py", usage="%(prog)s [app typ: 'master', 'control'] [master id]")
     parser.add_argument('typ', help='application typ')
-    parser.add_argument('mid', help='master id')
+    parser.add_argument('dev_id', help='device id')
     parser.add_argument('-conf', help='define if only the config file must to be generated', action='count', default=0)
     parser.add_argument('-host', help='host ip')
     parser.add_argument('-port', help='host port', type=int)
@@ -103,7 +127,7 @@ def start_apps():
     args = file_parser()
     num_apps = args.num_apps
     app_typ = args.typ
-    master_id = args.mid
+    device_id = args.dev_id
     pid_list = []
     run = True
 
@@ -111,7 +135,7 @@ def start_apps():
     if app_typ == 'master':
         # generate list of site ids
         sites = [str(x) for x in range(num_apps)]
-        create_master_config_file(sites, master_id, host=args.host, port=args.port,
+        create_master_config_file(sites, device_id, host=args.host, port=args.port,
                                   webui_host=args.web_host, webui_port=args.web_port)
         # TODO: only one master is supported for now
         if not args.conf:
@@ -129,13 +153,22 @@ def start_apps():
 
     elif app_typ == 'control':
         for id in range(num_apps):
-            create_control_config_file(str(id), master_id, host=args.host, port=args.port)
+            create_control_config_file(str(id), device_id, host=args.host, port=args.port)
             if not args.conf:
                 control = subprocess.Popen("py launch_control.py --f control_config_file.json")
                 pid_list.append(control)
                 time.sleep(2)
             else:
                 run = False
+
+    elif app_typ == 'handler':
+        create_handler_config_file(device_id, host=args.host, port=args.port)
+        if not args.conf:
+            handler = subprocess.Popen("py launch_handler.py --f handler_config_file.json")
+            pid_list.append(handler)
+            time.sleep(2)
+        else:
+            run = False
 
     while run:
         input("press enter to terminate")

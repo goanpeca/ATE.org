@@ -1,26 +1,27 @@
 from masterApp.transition_sequence import TransitionSequence
-from typing import List
+from typing import List, Callable
 
-IdList = List[int]
 
 class SequenceContainer:
-    def __init__(self, seq: list, ids: IdList, on_complete: callable, on_error: callable):
-        self.sequences = dict(map(lambda x: (x , TransitionSequence(seq[:])), ids))
+    def __init__(self, seq: List[str], site_ids: List[str], on_complete: Callable, on_error: Callable):
+        self.sequences = {site_id: TransitionSequence(seq[:]) for site_id in site_ids}
         print(self.sequences)
         self.on_complete = on_complete
         self.on_error = on_error
-        
+        self.done = False
 
-    def trigger_transition(self, id: int, transition: str) -> bool:
-        seq = self.sequences.get(id)
+    def trigger_transition(self, site_id: str, transition: str) -> bool:
+        seq = self.sequences.get(site_id)
         if seq is None:
-            self.on_error(id, transition)
+            self.on_error(site_id, transition)
             return False
         if not seq.trigger_transition(transition):
-            self.on_error(id, transition)
+            self.on_error(site_id, transition)
             return False
-        
+
         if all(x.finished() for x in self.sequences.values()):
-            self.on_complete()
+            if self.done is False:
+                self.on_complete()
+                self.done = True
 
         return True

@@ -19,7 +19,7 @@ describe('DebugComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create debug component', () => {
     expect(component).toBeTruthy();
   });
 });

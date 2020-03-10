@@ -7,6 +7,8 @@ import { SystemControlComponent } from './system-control/system-control.componen
 import { DebugComponent } from './debug/debug.component';
 import { SystemConsoleComponent } from './system-console/system-console.component';
 import { SystemSiteComponent } from './system-site/system-site.component';
+import { HeaderComponent } from './pages/header/header.component';
+import { FooterComponent } from './pages/footer/footer.component';
 
 @NgModule({
   declarations: [
@@ -16,6 +18,8 @@ import { SystemSiteComponent } from './system-site/system-site.component';
     DebugComponent,
     SystemConsoleComponent,
     SystemSiteComponent,
+    HeaderComponent,
+    FooterComponent,
   ],
   imports: [
     BrowserModule

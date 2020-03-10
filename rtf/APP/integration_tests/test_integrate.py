@@ -1,14 +1,15 @@
 import pytest
-from multiprocessing import Process
+import multiprocessing as mp
 from launch_master import launch_master
 from launch_control import launch_control
+from launch_testapp import launch_testapp
 import time
 import asyncio
 import aiohttp
 import json
 from util_timeout_ex import timeout_ex as timeout
 import concurrent
-from typing import Optional, List
+from typing import Optional, List, Callable, Tuple, Union
 import logging
 import sys
 import socket
@@ -19,6 +20,8 @@ from contextlib import asynccontextmanager
 import re
 import itertools
 import os
+from hashlib import blake2b
+from abc import ABC, abstractmethod
 
 # pytestmark = pytest.mark.skip(reason='integration tests temporaroöy disabled for ci run')
 
@@ -28,17 +31,34 @@ LOGGER = logging.getLogger(__name__)
 # LOGGER.setLevel(logging.DEBUG)
 
 
+def generate_default_device_id():
+    # goal: we don't want something fully random for debugging purposes,
+    # but we want to avoid collissions when running multiple instances concurrently.
+    # this hashes the file location, assuming concurrent runs will always use
+    # different git repos.
+    h = blake2b(digest_size=7)
+    h.update(os.path.realpath(__file__).encode('utf-8'))
+    loc_hash = h.hexdigest()
+    return f'test_integrate_{socket.gethostname()}_{getpass.getuser()}_{loc_hash}'
+
+
 # an env var van be used to configure a few things of the test env
 # TODO: add a better way to configure the test environment (dedicated json file?)
 ENVVAR_PREFIX = 'ATE_INTEGRATION_TESTENV_'
 
-DEVICE_ID = os.getenv(ENVVAR_PREFIX + 'DEVICE_ID',
-                      f'test_integrate_{socket.gethostname()}_{getpass.getuser()}')
-WEBUI_PORT = os.getenv(ENVVAR_PREFIX + 'WEBUI_PORT', '8088')
+DEVICE_ID = os.getenv(ENVVAR_PREFIX + 'DEVICE_ID', generate_default_device_id())
+
+PIPELINE_ID = os.getenv("PIPELINE_ID", "1")
+WEBPRT = str((int(PIPELINE_ID) % 4) + 8080)
+WEBUI_PORT = os.getenv(ENVVAR_PREFIX + 'WEBUI_PORT', WEBPRT)
 BROKER_HOST = os.getenv(ENVVAR_PREFIX + 'BROKER_HOST', '127.0.0.1')
 BROKER_PORT = int(os.getenv(ENVVAR_PREFIX + 'BROKER_PORT', '1883'))
 
 JOB_LOT_NUMBER = '306426001'  # load ./tests/le306426001.xml
+
+# Note: The identifier after the pipe is a hack use a mocked the testzip (example1 currently passes, example2 currently fails, example3 uses resource synchronization)
+# TODO: currently this is done to increase code coverage and inlcude STDF processing at all. but there are no assertions of the generated data yet (as they only affect websocket messages for now)
+TESTZIPMOCKS = ['example1', 'example3']
 
 
 # TODO: Implement a graceful shutdown for subprocesses (linux can simply use SIGTERM, a portable soluation for windows is a pita)
@@ -79,9 +99,22 @@ def run_control(device_id, site_id, broker_host, broker_port):
                    user_config_dict=config)
 
 
+# executed in own process with multiprocessing, no references to testenv state
+def run_testapp(device_id, site_id, broker_host, broker_port, thetestzipname):
+    launch_testapp([
+        'thetest_application.py',
+        '--device_id', device_id,
+        '--site_id', site_id,
+        '--broker_host', broker_host,
+        '--broker_port', str(broker_port),
+        '--verbose',
+        '--thetestzip_name', thetestzipname
+    ])
+
+
 class ProcessManagerItem:
     proc_name: str
-    process: Process
+    process: mp.Process
     site_id: Optional[str]
     sites: Optional[List[str]]
 
@@ -101,13 +134,17 @@ class ProcessManager:
 
     def __init__(self):
         self.processes = {}
+        # important: use 'spawn' (default on windows) also on linux, because 'fork' does not work properly with asyncio.
+        # details unknown, but asyncio will complain about loop already running in pytest when 'fork' is used to create
+        # a process. this is apparently an open issue in python: https://bugs.python.org/issue22087
+        self.mp_ctx = mp.get_context('spawn')
 
     def shutdown(self):
         self.kill_processes(*self.processes.keys())
 
     def start_master(self, proc_name, device_id, sites):
         self._assert_unused_name(proc_name)
-        p = Process(target=run_master,
+        p = self.mp_ctx.Process(target=run_master,
                     args=(device_id, sites, BROKER_HOST, BROKER_PORT,
                           WEBUI_PORT))
         self._add_process(proc_name, p)
@@ -117,8 +154,18 @@ class ProcessManager:
 
     def start_control(self, proc_name, device_id, site_id):
         self._assert_unused_name(proc_name)
-        p = Process(target=run_control,
+        p = self.mp_ctx.Process(target=run_control,
                     args=(device_id, site_id, BROKER_HOST, BROKER_PORT))
+        self._add_process(proc_name, p)
+        p.start()
+        assert p.is_alive()
+        return ProcessManagerItem(proc_name, p, site_id=site_id)
+
+    def start_testapp(self, proc_name, device_id, site_id, thetestzipname):
+        self._assert_unused_name(proc_name)
+        p = self.mp_ctx.Process(target=run_testapp,
+                    args=(device_id, site_id, BROKER_HOST, BROKER_PORT,
+                          thetestzipname))
         self._add_process(proc_name, p)
         p.start()
         assert p.is_alive()
@@ -127,7 +174,7 @@ class ProcessManager:
     def kill_process(self, proc_name: str):
         return self.kill_processes(proc_name)
 
-    def kill_processes(self, *proc_names: [str]):
+    def kill_processes(self, *proc_names: str):
         if not proc_names:
             return
 
@@ -149,7 +196,7 @@ class ProcessManager:
         if proc_name in self.processes:
             raise ValueError(f'process with name {proc_name} already exists')
 
-    def _add_process(self, proc_name: str, p: Process):
+    def _add_process(self, proc_name: str, p: mp.Process):
         self.processes[proc_name] = p
 
     def __enter__(self):
@@ -158,7 +205,7 @@ class ProcessManager:
     def __exit__(self, type, value, traceback):
         self.shutdown()
 
-    def _kill_and_join_process(self, p: Process):
+    def _kill_and_join_process(self, p: mp.Process):
         if p.exitcode is not None:
             return p.exitcode
         p.terminate()
@@ -213,6 +260,11 @@ def create_controls(process_manager, sites):
     return controls
 
 
+def create_standalone_testapp(process_manager, site_id, thetestzipname):
+    return process_manager.start_testapp(f"testapp.{site_id}", DEVICE_ID,
+                                         site_id, thetestzipname)
+
+
 def create_sites(process_manager, sites):
     master = create_master(process_manager, sites)
     controls = create_controls(process_manager, sites)
@@ -264,7 +316,7 @@ def test_create_and_kill_sites(sites, process_manager):
     for next_to_kill in range(len(sites)):
         assert [c.site_id for c in controls if c.is_process_active()] == sites[next_to_kill:]
         assert process_manager.kill_process(controls[next_to_kill].proc_name)
-        assert [c.site_id for c in controls if c.is_process_active()] == sites[next_to_kill+1:]
+        assert [c.site_id for c in controls if c.is_process_active()] == sites[next_to_kill + 1:]
         time.sleep(1)
 
     # kill master
@@ -353,7 +405,8 @@ def remove_adjacent_dups(iterable):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sites", [['0'], ['0', '1']])
-async def test_load_run_unload(sites, process_manager, ws_connection):
+@pytest.mark.parametrize("testzipmockname", TESTZIPMOCKS)
+async def test_load_run_unload(sites, testzipmockname, process_manager, ws_connection):
     master, controls = create_sites(process_manager, sites)
 
     # allow webservice to start up before attempting to connect ws
@@ -368,7 +421,7 @@ async def test_load_run_unload(sites, process_manager, ws_connection):
         assert not (set(seen_states) - set(['connecting', 'initialized']))
 
         # STEP 2: load load
-        await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': JOB_LOT_NUMBER})
+        await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': f'{JOB_LOT_NUMBER}|{testzipmockname}'})
         seen_states = await expect_message_with_state(ws, 'ready', 5.0)
         # TODO: this assertion is commented out, because we don't see 'loading' reliably as well.
         #       the reason is that state changes are only propagated every 1ms (and only if the main loop is unblocked)
@@ -377,6 +430,9 @@ async def test_load_run_unload(sites, process_manager, ws_connection):
 
         # STEP 3: run test
         await ws.send_json({'type': 'cmd', 'command': 'next'})
+        # TODO: If 'tests' are finished too fast, we also don't seetesting (same as the problem with 'loading' above)
+        #       Currently these tests rely on the fact that testing takes longer. This needs to be fixed.
+        # TODO: Add an issue that short state changes are properly sent to the frontend (needs fix in master background task loop)
         await expect_message_with_state(ws, 'testing', 5.0)
         await expect_message_with_state(ws, 'ready', 10.0)
         # TODO: assert message with type=testresult is received. not sure if received before or after ready status message.
@@ -427,6 +483,17 @@ def create_mqtt_client():
     return client, connected, message_queue
 
 
+class MqttSession:
+    def __init__(self, client, message_queue):
+        self._client = client
+        self.message_queue = message_queue
+
+    def publish(self, topic, payload=None, qos=0, retain=False):
+        if isinstance(payload, dict):
+            payload = json.dumps(payload)
+        return self._client.publish(topic, payload, qos, retain)
+
+
 # topic: string or tuple, see parameter of paho.mqtt.client.Client.subribe
 # timeout (in seconds) is important, or this will block like forever.
 # apparently paho mqtt does not use a reasonable connection timeout.
@@ -436,9 +503,6 @@ def create_mqtt_client():
 async def mqtt_connection(host, port, topic=None, timeout=5):
     client, connected, message_queue = create_mqtt_client()
 
-    # def _publish(topic, payload=None, qos=0, retain=False):
-    #     return client.publish(topic, payload, qos, retain)
-
     if client.loop_start():
         raise RuntimeError('loop_start failed')
 
@@ -447,7 +511,7 @@ async def mqtt_connection(host, port, topic=None, timeout=5):
         await asyncio.wait_for(connected.wait(), timeout=timeout)
         if topic is not None:
             client.subscribe(topic)
-        yield message_queue  # , _publish
+        yield MqttSession(client, message_queue)
     finally:
         await client.loop_stop()
 
@@ -483,12 +547,12 @@ async def test_delete_retained_messages():
 
     await util_delete_retained_messages(BROKER_HOST, BROKER_PORT, topic)
 
-    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as message_queue:
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
         # expect a non-retained message on the status topic
         with pytest.raises(asyncio.TimeoutError) as excinfo:
             async with timeout(5, "no-retained-message-received"):
                 while True:
-                    msg = await message_queue.get()
+                    msg = await mqtt.message_queue.get()
                     assert not msg.retain
             assert "no-retained-message-received" in str(excinfo.value)
 
@@ -497,26 +561,40 @@ async def test_delete_retained_messages():
 async def test_master_publishes_on_status_topic_after_start(process_manager):
     topic = (f'ate/{DEVICE_ID}/Master/status', 2)
 
-    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as message_queue:
-        master = process_manager.start_master("master", DEVICE_ID, ['0'])
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
+        _ = process_manager.start_master("master", DEVICE_ID, ['0'])
 
         # expect a non-retained message on the status topic
         async with timeout(5, "expecting non-retained message on status topic"):
             while True:
-                msg = await message_queue.get()
+                msg = await mqtt.message_queue.get()
                 if not msg.retain:
                     break
 
 
-class MqttStatusMessage():
-    def __init__(self, device_id, component, site_id, state, topic, payload: dict, retain):
+class MqttBaseMessage(ABC):
+    def __init__(self, topic: str, payload: dict, retain: bool):
+        self.topic = topic
+        self.payload = payload
+        self.retain = retain
+
+    @classmethod
+    @abstractmethod
+    def from_mqtt_message(cls, message: mqtt.MQTTMessage):
+        pass
+
+    @classmethod
+    def is_topic_match(cls, topic):
+        return False
+
+
+class MqttStatusMessage(MqttBaseMessage):
+    def __init__(self, device_id, component, site_id, state, topic: str, payload: dict, retain: bool):
+        super().__init__(topic, payload, retain)
         self.device_id = device_id
         self.component = component
         self.site_id = site_id
         self.state = state
-        self.topic = topic
-        self.payload = payload
-        self.retain = retain
 
     @classmethod
     def from_mqtt_message(cls, message: mqtt.MQTTMessage):
@@ -557,16 +635,14 @@ class MqttStatusMessage():
         return f'<MqttStatusMessage(state="{self.state}")>'
 
 
-class MqttTestresultMessage:
+class MqttTestresultMessage(MqttBaseMessage):
     def __init__(self, device_id, site_id, ispass, testdata, topic, payload: dict, retain):
+        super().__init__(topic, payload, retain)
         self.device_id = device_id
         self.component = 'TestApp'
         self.site_id = site_id
         self.ispass = ispass
         self.testdata = testdata
-        self.topic = topic
-        self.payload = payload
-        self.retain = retain
 
     @classmethod
     def from_mqtt_message(cls, message: mqtt.MQTTMessage):
@@ -600,6 +676,50 @@ class MqttTestresultMessage:
 
     def __repr__(self):
         return f'<MqttTestresultMessage(site_id="{self.site_id}")>'
+
+
+class MqttResourceRequestMessage(MqttBaseMessage):
+    def __init__(self, device_id, site_id, resource_id: str, config: dict, topic: str, payload: dict, retain: bool):
+        super().__init__(topic, payload, retain)
+        self.device_id = device_id
+        self.component = 'TestApp'
+        self.site_id = site_id
+        self.resource_id = resource_id
+        self.config = config
+
+    @classmethod
+    def from_mqtt_message(cls, message: mqtt.MQTTMessage):
+        device_id, topic_resource_id, site_id = cls.try_parse_topic_parts(message.topic)
+        assert device_id is not None
+        assert site_id is not None
+        payload_resource_id, config, json_payload = cls.parse_testresult_payload(message.payload)
+        assert topic_resource_id == payload_resource_id
+        return MqttResourceRequestMessage(device_id, site_id, payload_resource_id, config,
+                                          message.topic, json_payload, message.retain)
+
+    @staticmethod
+    def parse_testresult_payload(payload):
+        json_payload = json.loads(payload)
+        assert 'type' in json_payload
+        assert json_payload['type'] == 'resource-config-request'
+        assert 'resource_id' in json_payload
+        assert 'config' in json_payload
+        return json_payload['resource_id'], json_payload['config'], json_payload
+
+    @staticmethod
+    def try_parse_topic_parts(topic) -> Union[Tuple[str, str, str], Tuple[None, None, None]]:
+        pattern = rf'ate/(.+?)/TestApp/resource/(.+?)/site(.+)$'
+        m = re.match(pattern, topic)
+        if m:
+            return (m.group(1), m.group(2), m.group(3))
+        return (None, None, None)
+
+    @classmethod
+    def is_topic_match(cls, topic):
+        return cls.try_parse_topic_parts(topic)[0] is not None
+
+    def __repr__(self):
+        return f'<MqttResourceRequestMessage(resource_id="{self.resource_id}, site_id="{self.site_id}")>'
 
 
 class MqttMessageBuffer:
@@ -658,7 +778,7 @@ class FilteredMqttMessageBuffer(MqttMessageBuffer):
         return message
 
     def _convert_message(self, message: mqtt.MQTTMessage):
-        converters = [MqttStatusMessage, MqttTestresultMessage]
+        converters = [MqttStatusMessage, MqttTestresultMessage, MqttResourceRequestMessage]
         for converter in converters:
             if converter.is_topic_match(message.topic):
                 return converter.from_mqtt_message(message)
@@ -670,8 +790,8 @@ class FilteredMqttMessageBuffer(MqttMessageBuffer):
 async def test_master_states_after_start_and_kill(sites, process_manager):
     topic = [(f'ate/{DEVICE_ID}/Master/status', 2)]
 
-    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as message_queue:
-        buffer = FilteredMqttMessageBuffer(message_queue, skip_retained=True)
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
 
         # start master and make sure it publishes 'connecting' (and only that)
         master = process_manager.start_master("master", DEVICE_ID, sites)
@@ -704,8 +824,8 @@ async def test_master_states_after_start_and_kill(sites, process_manager):
 async def test_master_publishes_connecting_and_crash_states_slow(sites, process_manager):
     topic = [(f'ate/{DEVICE_ID}/Master/status', 2)]
 
-    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as message_queue:
-        buffer = FilteredMqttMessageBuffer(message_queue)
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue)
 
         # before starting the master we expect to receive only retained retained messages
         initial_messages = await buffer.read_all_for(3)
@@ -726,7 +846,10 @@ async def test_master_publishes_connecting_and_crash_states_slow(sites, process_
         assert seen_states_after_kill == ['crash'] or seen_states_after_kill == ['connecting', 'crash']
 
 
-async def read_messages_until_master_state(buffer: MqttMessageBuffer, expected_state, timeout_secs, valid_state_sequence=None):
+async def read_messages_until_state(
+        buffer: MqttMessageBuffer,
+        status_message_filter: Callable[[MqttStatusMessage], bool],
+        expected_state, timeout_secs, valid_state_sequence=None):
 
     # fail fast if we see an invalid state, but allow optional states at the front.
     # note that this mainly exists to ignore repeated messages with the initial state.
@@ -744,7 +867,7 @@ async def read_messages_until_master_state(buffer: MqttMessageBuffer, expected_s
     async with timeout(timeout_secs, f'waiting for state: "{expected_state}"'):
         async for msg in buffer.read():
             messages.append(msg)
-            if not isinstance(msg, MqttStatusMessage) or msg.component != 'Master':
+            if not isinstance(msg, MqttStatusMessage) or not status_message_filter(msg):
                 continue
             check_valid_state(msg.state)
             if msg.state == expected_state:
@@ -752,27 +875,63 @@ async def read_messages_until_master_state(buffer: MqttMessageBuffer, expected_s
     return messages
 
 
+async def read_messages_until_master_state(buffer: MqttMessageBuffer, expected_state, timeout_secs, valid_state_sequence=None):
+    return await read_messages_until_state(
+        buffer, lambda msg: msg.component == 'Master',
+        expected_state, timeout_secs, valid_state_sequence)
+
+
+async def read_messages_until_control_state(buffer: MqttMessageBuffer, site_id, expected_state, timeout_secs, valid_state_sequence=None):
+    return await read_messages_until_state(
+        buffer, lambda msg: msg.component == 'Control' and msg.site_id == site_id,
+        expected_state, timeout_secs, valid_state_sequence)
+
+
+async def read_messages_until_testapp_state(buffer: MqttMessageBuffer, site_id, expected_state, timeout_secs, valid_state_sequence=None):
+    return await read_messages_until_state(
+        buffer, lambda msg: msg.component == 'TestApp' and msg.site_id == site_id,
+        expected_state, timeout_secs, valid_state_sequence)
+
+
+async def read_messages_until_whatever(
+        buffer: MqttMessageBuffer,
+        timeout_secs: float,
+        *predicates: Callable[[MqttBaseMessage], bool]) -> List[Union[MqttBaseMessage, mqtt.MQTTMessage]]:
+
+    unmatched_predicates = list(predicates)
+
+    messages = []
+    async with timeout(timeout_secs, f'waiting for message until {len(unmatched_predicates)} predicates are satisifed'):
+        async for msg in buffer.read():
+            messages.append(msg)
+            unmatched_predicates = [pred for pred in unmatched_predicates if isinstance(msg, MqttBaseMessage) and not pred(msg)]
+            if not unmatched_predicates:
+                break
+    return messages
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sites", [['0'], ['0', '1']])
-async def test_master_states_during_load_and_unload(sites, process_manager, ws_connection):
+@pytest.mark.parametrize("testzipmockname", TESTZIPMOCKS)
+async def test_master_states_during_load_and_unload(sites, testzipmockname, process_manager, ws_connection):
     topic = [(f'ate/{DEVICE_ID}/Master/status', 2),
              (f'ate/{DEVICE_ID}/TestApp/testresult/#', 2)]
 
-    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as message_queue:
-        buffer = FilteredMqttMessageBuffer(message_queue, skip_retained=True)
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
 
         # STEP 1a: Create master, wait for 'connecting'
         master = create_master(process_manager, sites)
         await read_messages_until_master_state(buffer, 'connecting', 5.0, ['connecting'])
 
         # STEP 1b: create controls, wait for initialized (all controls connected)
-        controls = create_controls(process_manager, sites)
+        _ = create_controls(process_manager, sites)
         await read_messages_until_master_state(buffer, 'initialized', 5.0, ['connecting', 'initialized'])
 
         async with ws_connection() as ws:
 
             # STEP 2: load load
-            await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': JOB_LOT_NUMBER})
+            await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': f'{JOB_LOT_NUMBER}|{testzipmockname}'})
             await read_messages_until_master_state(buffer, 'ready', 5.0, ['initialized', 'loading', 'ready'])
 
             # STEP 3: run test
@@ -802,8 +961,8 @@ async def test_master_states_during_load_and_unload(sites, process_manager, ws_c
 
             # TODO: commented out, because master does not handle this case correctly right now and makes the test fail (which we dont want right now)
             # # STEP 5: kill controls
-            #process_manager.kill_processes(*(c.proc_name for c in controls))
-            #await read_messages_until_master_state(buffer, 'connecting', 5.0, ['initialized', 'connecting'])
+            # process_manager.kill_processes(*(c.proc_name for c in controls))
+            # await read_messages_until_master_state(buffer, 'connecting', 5.0, ['initialized', 'connecting'])
 
             # STEP 5: kill master
             process_manager.kill_processes(master.proc_name)
@@ -820,3 +979,224 @@ async def test_master_states_during_load_and_unload(sites, process_manager, ws_c
             'unloading', 'initialized',
             # 'connecting',  # STEP 5 commented out
             'crash']
+
+
+@pytest.mark.asyncio
+async def test_standalone_testapp_start_and_terminate(process_manager, ws_connection):
+    subscriptions = [(f'ate/{DEVICE_ID}/TestApp/status/+', 2)]
+    site_id = '0'
+
+    # Note: The test app is usually only started by the control.
+    #       In order to test the testapp independently we start the testapp
+    #       manually, which should be close to what the control does, but it's
+    #       not exactly the same.
+
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, subscriptions) as mqtt:
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
+
+        # STEP 1: create testapp, wait for 'idle' status
+        testapp = create_standalone_testapp(process_manager, site_id, 'sleepmock')
+        await read_messages_until_testapp_state(buffer, site_id, 'idle', 5.0, ['idle'])
+
+        # STEP 2: send terminate command
+        mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', {'type': 'cmd', 'command': 'terminate', 'sites': [site_id]})
+        await read_messages_until_testapp_state(buffer, site_id, 'terminated', 5.0, ['idle', 'terminated'])
+
+        # STEP 3: check that testapp process is actually gone
+        async with timeout(5, "waiting for testapp process to exit"):
+            while testapp.is_process_active():
+                await asyncio.sleep(0.25)
+
+        # Final assertion of the overall state sequence
+        all_seen_master_states = remove_adjacent_dups(
+            [msg.state for msg in buffer.messages
+             if isinstance(msg, MqttStatusMessage)])
+        assert all_seen_master_states == ['idle', 'terminated']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('num_dut_tests_to_run', [1, 5])
+@pytest.mark.parametrize('thetestzipname', ['sleepmock', 'example1'])
+async def test_standalone_testapp_run_duttests(num_dut_tests_to_run, thetestzipname, process_manager, ws_connection):
+    subscriptions = [
+        (f'ate/{DEVICE_ID}/TestApp/status/+', 2),
+        (f'ate/{DEVICE_ID}/TestApp/testresult/+', 2)]
+    site_id = '0'
+
+    # Note: The test app is usually only started by the control.
+    #       In order to test the testapp independently we start the testapp
+    #       manually, which should be close to what the control does, but it's
+    #       not exactly the same.
+
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, subscriptions) as mqtt:
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
+
+        # STEP 1: create testapp, wait for 'idle' status
+        testapp = create_standalone_testapp(process_manager, site_id, thetestzipname)
+        await read_messages_until_testapp_state(buffer, site_id, 'idle', 5.0, ['idle'])
+
+        # STEP 2: run n duttests
+        for _ in range(num_dut_tests_to_run):
+            mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', {'type': 'cmd', 'command': 'next', 'sites': [site_id]})
+            msgs_while_testing = await read_messages_until_testapp_state(buffer, site_id, 'testing', 5.0, ['idle', 'testing'])
+            msgs_while_testing += await read_messages_until_testapp_state(buffer, site_id, 'idle', 5.0, ['testing', 'idle'])
+
+            # collect messages a bit longer, since we cannot guarantee to see the message on testresult
+            # topic before one on the status topic (or can we??)
+            async with timeout(5, suppress_exc=True):
+                while True:
+                    testresult_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttTestresultMessage)]
+                    if testresult_msgs:
+                        break
+                    msgs_while_testing.append(await buffer.read_one())
+            assert len(testresult_msgs) == 1
+
+        # STEP 3: send terminate command
+        mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', {'type': 'cmd', 'command': 'terminate', 'sites': [site_id]})
+        await read_messages_until_testapp_state(buffer, site_id, 'terminated', 5.0, ['idle', 'terminated'])
+
+        # STEP 4: check that testapp process is actually gone
+        async with timeout(5, "waiting for testapp process to exit"):
+            while testapp.is_process_active():
+                await asyncio.sleep(0.25)
+
+        # Final assertion of the overall state sequence
+        all_seen_testapp_states = remove_adjacent_dups(
+            [msg.state for msg in buffer.messages
+             if isinstance(msg, MqttStatusMessage)])
+        expected_testapp_states = ['idle'] + num_dut_tests_to_run * ['testing', 'idle'] + ['terminated']
+        assert all_seen_testapp_states == expected_testapp_states
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('num_dut_tests_to_run', [1, 5])
+async def test_standalone_testapp_resource_request(num_dut_tests_to_run, process_manager, ws_connection):
+    subscriptions = [
+        (f'ate/{DEVICE_ID}/TestApp/status/+', 2),
+        (f'ate/{DEVICE_ID}/TestApp/testresult/+', 2),
+        (f'ate/{DEVICE_ID}/TestApp/resource/#', 2)]
+    site_id = '0'
+    thetestzipname = 'example3'
+    resource_id = 'myresourceid'
+    expected_config = {'param': 'value'}
+
+    # Note: The test app is usually only started by the control.
+    #       In order to test the testapp independently we start the testapp
+    #       manually, which should be close to what the control does, but it's
+    #       not exactly the same.
+
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, subscriptions) as mqtt:
+
+        def _publish_resource_config(resource_id, config):
+            mqtt.publish(f'ate/{DEVICE_ID}/Master/resource/{resource_id}', {
+                'type': 'resource-config',
+                'resource_id': resource_id,
+                'config': config
+            })
+
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
+
+        # STEP 1: create testapp, wait for 'idle' status
+        testapp = create_standalone_testapp(process_manager, site_id, thetestzipname)
+        await read_messages_until_testapp_state(buffer, site_id, 'idle', 5.0, ['idle'])
+
+        # STEP 2: run duttest, which requests a single resource config
+        for _ in range(num_dut_tests_to_run):
+            mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', {'type': 'cmd', 'command': 'next', 'sites': [site_id]})
+
+            # the duttests will execute until a single resource is required
+            msgs_while_testing = await read_messages_until_whatever(
+                buffer,
+                5.0,
+                lambda msg: isinstance(msg, MqttStatusMessage) and msg.component == 'TestApp' and msg.site_id == site_id and msg.state == 'testing',
+                lambda msg: isinstance(msg, MqttResourceRequestMessage))
+
+            resource_request_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttResourceRequestMessage)]
+            assert len(resource_request_msgs) == 1
+            assert resource_request_msgs[0].site_id == site_id
+            assert resource_request_msgs[0].resource_id == resource_id
+            assert resource_request_msgs[0].config == expected_config
+
+            # echo back the requested config exactly as it is
+            _publish_resource_config(resource_request_msgs[0].resource_id, resource_request_msgs[0].config)
+
+            # tests will continue until another resource config request (with the default config, currently an empty config dict)
+            msgs_while_testing += await read_messages_until_whatever(
+                buffer,
+                5.0,
+                lambda msg: isinstance(msg, MqttResourceRequestMessage))
+            resource_request_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttResourceRequestMessage)]
+            assert len(resource_request_msgs) == 2
+            assert resource_request_msgs[1].site_id == site_id
+            assert resource_request_msgs[1].resource_id == resource_id
+            assert resource_request_msgs[1].config == {}
+
+            # again, simply echo back the request to indicate success
+            _publish_resource_config(resource_request_msgs[1].resource_id, resource_request_msgs[1].config)
+
+            # now the test must run until completion and there must be one test result
+            msgs_while_testing += await read_messages_until_whatever(
+                buffer,
+                5.0,
+                lambda msg: isinstance(msg, MqttStatusMessage) and msg.component == 'TestApp' and msg.site_id == site_id and msg.state == 'idle',
+                lambda msg: isinstance(msg, MqttTestresultMessage))
+
+            test_result_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttTestresultMessage)]
+            assert len(test_result_msgs) == 1
+            assert test_result_msgs[0].site_id == site_id
+            assert test_result_msgs[0].ispass
+
+        # STEP 3: send terminate command
+        mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', {'type': 'cmd', 'command': 'terminate', 'sites': [site_id]})
+        await read_messages_until_testapp_state(buffer, site_id, 'terminated', 5.0, ['idle', 'terminated'])
+
+        # STEP 4: check that testapp process is actually gone
+        async with timeout(5, "waiting for testapp process to exit"):
+            while testapp.is_process_active():
+                await asyncio.sleep(0.25)
+
+        # Final assertion of the overall state sequence
+        all_seen_testapp_states = remove_adjacent_dups(
+            [msg.state for msg in buffer.messages
+             if isinstance(msg, MqttStatusMessage)])
+        expected_testapp_states = ['idle'] + num_dut_tests_to_run * ['testing', 'idle'] + ['terminated']
+        assert all_seen_testapp_states == expected_testapp_states
+
+# This test does not test the way the feature is intended. ToDo: Check ATE-82 against actual requiremens.
+# @pytest.mark.asyncio
+# @pytest.mark.parametrize("sites", [['0'], ['0', '1']])
+# @pytest.mark.parametrize("testzipmockname", TESTZIPMOCKS)
+# async def test_master_reset_if_error_occured(sites, testzipmockname, process_manager, ws_connection):
+#     topic = [(f'ate/{DEVICE_ID}/Master/status', 2),
+#              (f'ate/{DEVICE_ID}/TestApp/testresult/#', 2)]
+
+#     async with mqtt_connection(BROKER_HOST, BROKER_PORT, topic) as mqtt:
+#         buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
+
+#         # Create master, wait for 'connecting'
+#         _ = create_master(process_manager, sites)
+#         await read_messages_until_master_state(buffer, 'connecting', 5.0, ['connecting'])
+
+#         # create controls, wait for initialized (all controls connected)
+#         control = create_controls(process_manager, sites)
+#         await read_messages_until_master_state(buffer, 'initialized', 5.0, ['connecting', 'initialized'])
+
+#         async with ws_connection() as ws:
+
+#             # load
+#             await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': f'{JOB_LOT_NUMBER}|{testzipmockname}'})
+#             await read_messages_until_master_state(buffer, 'ready', 5.0, ['initialized', 'loading', 'ready'])
+
+#             # kill control: since we can't provoke crash of testapp from here we just kill the controlapp
+#             process_manager.kill_processes(*(c.proc_name for c in control))
+#             await read_messages_until_master_state(buffer, 'softerror', 5.0, ['initialized', 'softerror'])
+
+#             await asyncio.sleep(0.5)
+
+#             # reset command from websocket
+#             await ws.send_json({'type': 'cmd', 'command': 'reset'})
+#             await read_messages_until_master_state(buffer, 'connecting', 5.0, ['softerror', 'connecting'])
+
+#             # recreate control
+#             control = create_controls(process_manager, sites)
+#             await read_messages_until_master_state(buffer, 'initialized', 5.0, ['connecting', 'initialized'])

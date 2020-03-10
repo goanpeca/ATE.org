@@ -5,6 +5,7 @@ import sys
 from transitions import Machine
 import json
 from common.logger import Logger
+import shlex
 
 DEAD = 0
 ALIVE = 1
@@ -18,38 +19,47 @@ class ControlAppMachine:
         self._conhandler = conhandler
         self._task = None
 
-        states = ['idle', 'loading', 'busy', 'error']
+        states = ['idle', 'loading', 'busy', 'error', 'resetting']
 
+        # multipe space code style "error" will be ignored for a better presentation of the possible state machine transitions
         transitions = [
-            {'trigger': 'load',            'source': 'idle',        'dest': 'loading',    'before': 'before_load'},
-            {'trigger': 'testapp_active',  'source': 'loading',     'dest': 'busy',       'before': 'testapp_before_active'},
-            {'trigger': 'testapp_exit',    'source': 'busy',        'dest': 'idle',       'before': 'testapp_before_exit'},
-            {'trigger': 'error',           'source': '*',           'dest': 'error',      'before': 'before_error'},
-            {'trigger': 'reset',           'source': 'error',       'dest': 'idle',       'before': 'before_reset'},
-            {'trigger': 'reset',           'source': 'idle',        'dest': 'idle'},
+            {'source': 'idle',      'dest': 'loading',   'trigger': 'load',                   'before': 'before_load'},            # noqa: E241
+            {'source': 'loading',   'dest': 'busy',      'trigger': 'testapp_active',         'before': 'testapp_before_active'},  # noqa: E241
+            {'source': 'busy',      'dest': 'idle',      'trigger': 'testapp_exit'},                                               # noqa: E241
+            {'source': 'busy',      'dest': 'resetting', 'trigger': 'reset',                  'after': 'testapp_before_exit'},     # noqa: E241
+            {'source': 'resetting', 'dest': 'idle',      'trigger': 'to_idle'},                                                    # noqa: E241
+            {'source': 'idle',      'dest': 'idle',      'trigger': 'reset'},                                                      # noqa: E241
         ]
 
         self.machine = Machine(model=self, states=states, transitions=transitions, initial='idle', after_state_change=self.publish_current_state)
 
-    def publish_current_state(self, whatever=None):
+    def publish_current_state(self, info):
         print('publish_current_state: ', self.state)
         self._conhandler.publish_state(self.state)
+
+    def on_master_state_changed(self, info):
+        self.publish_current_state(info)
 
     async def _run_testapp_task(self, testapp_params: dict):
         proc = None
         error_info = None
         try:
-            # TODO: windows only: we should explicitly load the correct
+            # TODO: as a simple workaround we assume 'python' in current PATH
+            #       is the correct interpreter with the current virtual env.
+            #       instead of using the shell we should explicitly load the correct
             #       virtualenv (or the same as ours). also check deamon
             #       flag for process.
-            proc = await asyncio.create_subprocess_exec(
-                'py', testapp_params['testapp_script_path'],
+            args = ['python', testapp_params['testapp_script_path'],
                 '--device_id', self._conhandler.device_id,
                 '--site_id', self._conhandler.site_id,
                 '--broker_host', self._conhandler.broker_host,
                 '--broker_port', str(self._conhandler.broker_port),
                 '--parent-pid', str(os.getpid()),  # TODO: this should be configurable in future: it will make the testapp kill itself if this parent process dies
-                *testapp_params.get('testapp_script_args', []),
+                # '--ptvsd-enable-attach',  # uncomment this to enable attaching the remote debugger
+                # '--ptvsd-wait-for-attach',  # uncomment this to enable attaching the remote debugger AND waiting for an remote debugger to be attached before initialization
+                *testapp_params.get('testapp_script_args', [])]
+            proc = await asyncio.create_subprocess_shell(
+                shlex.join(args),
                 cwd=testapp_params.get('cwd'))
             self.testapp_active(proc.pid)
             await proc.wait()
@@ -67,12 +77,15 @@ class ControlAppMachine:
                     proc.terminate()  # TODO: is kill better for linux? (on windows there is only terminate)
             except Exception:
                 pass  # we only cleanup on best effort
+        except Exception:
+            print('EXCEPTION in _run_testapp_task: ', sys.exc_info())
+            raise
         finally:
             self._task = None
 
         # only transition to error if we are not yet in error (avoid recursion from trigger)
-        if self.state != 'error':
-            self.error(error_info)
+        # if self.state != 'error':
+        #     self.error(error_info)
 
     def before_load(self, testapp_params: dict):
         print('load', str(testapp_params))
@@ -82,7 +95,8 @@ class ControlAppMachine:
         print('testapp_active: ', pid)
 
     def testapp_before_exit(self, returncode):
-        print('testapp_exit: ', returncode)
+        # dummy transition
+        self.to_idle(returncode)
 
     def before_error(self, info):
         print('error: ', info)
@@ -90,7 +104,7 @@ class ControlAppMachine:
         if self._task is not None:
             self._task.cancel()
 
-    def before_reset(self):
+    def before_reset(self, info):
         print('reset')
 
 
@@ -130,7 +144,7 @@ class ControlConnectionHandler:
         self.mqtt.publish(self._generate_base_topic_status(),
                           self.mqtt.create_message(
                               self._generate_status_message(ALIVE, state, statedict)),
-                          retain=True)
+                          retain=False)
 
     def __load_test_program(self, cmd_payload: dict):
         testapp_params = cmd_payload["testapp_params"]
@@ -142,7 +156,7 @@ class ControlConnectionHandler:
 
     def __reset_after_error(self, cmd_payload):
         try:
-            self._statemachine.reset()
+            self._statemachine.reset(None)
         except Exception as e:
             self._statemachine.error(str(e))
         return True
@@ -155,7 +169,7 @@ class ControlConnectionHandler:
             sites = data['sites']
 
             if self.site_id not in sites:
-                self.log.warning(f'ignoring TestApp cmd for other sites {sites} (current site_id is {self._topic_factory.site_id})')
+                self.log.warning(f'ignoring TestApp cmd for other sites {sites} (current site_id is {self.site_id})')
                 return
 
             to_exec_command = self.commands.get(cmd)
@@ -176,9 +190,13 @@ class ControlConnectionHandler:
         self.log.info("mqtt connected")
 
         self.mqtt.subscribe(self._generate_base_topic_cmd())
-        self._statemachine.publish_current_state()
+        self.mqtt.subscribe(self._generate_base_topic_status_master())
+        self._statemachine.publish_current_state(None)
 
     def _on_message_handler(self, client, userdata, message):
+        if "Master" in message.topic:
+            self._statemachine.on_master_state_changed(message)
+            return
         if "status" in message.topic:
             self.on_status_message(message)
         elif "cmd" in message.topic:
@@ -201,8 +219,11 @@ class ControlConnectionHandler:
             message.update(statedict)
         return message
 
-    def _generate_base_topic_status(self):
+    def _generate_base_topic_status(self) -> str:
         return "ate/" + self.device_id + "/Control/status/site" + self.site_id
 
-    def _generate_base_topic_cmd(self):
+    def _generate_base_topic_cmd(self) -> str:
         return "ate/" + self.device_id + "/Control/cmd"
+
+    def _generate_base_topic_status_master(self) -> str:
+        return "ate/" + self.device_id + "/Master/status"

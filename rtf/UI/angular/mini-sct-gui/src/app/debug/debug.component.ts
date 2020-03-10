@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status'
+import { SystemStatus, SystemState } from '../system-status';
 
 @Component({
   selector: 'app-debug',
@@ -10,42 +10,41 @@ export class DebugComponent implements OnInit {
 
   mySystemState = SystemState;
 
-  states : any = [
+  states: any = [
     {
-      "description": "Connecting",
-      "value": this.mySystemState.connecting
+      description: 'Connecting',
+      value: this.mySystemState.connecting
     },
     {
-      "description" : "Tester initialized",
-      "value": this.mySystemState.initialized
+      description : 'Tester initialized',
+      value: this.mySystemState.initialized
     },
     {
-      "description" : "Loading Test Program",
-      "value" : this.mySystemState.loading
+      description : 'Loading Test Program',
+      value : this.mySystemState.loading
     },
     {
-      "description" : "Ready for DUT Test",
-      "value" : this.mySystemState.ready
+      description : 'Ready for DUT Test',
+      value : this.mySystemState.ready
     },
     {
-      "description" : "Test Execution",
-      "value" : this.mySystemState.testing
+      description : 'Test Execution',
+      value : this.mySystemState.testing
     },
     {
-      "description" : "Unloading Test Program",
-      "value" : this.mySystemState.unloading
+      description : 'Unloading Test Program',
+      value : this.mySystemState.unloading
     },
     {
-      "description": "Error",
-      "value": this.mySystemState.error
+      description: 'Error',
+      value: this.mySystemState.error
     }
-  ]
+  ];
 
-  @Output() systemStateEvent: EventEmitter<SystemState> = new EventEmitter<SystemState>()
+  @Output() systemStateEvent: EventEmitter<SystemState> = new EventEmitter<SystemState>();
 
-  setSystemState(state : SystemState)
-  {
-    this.systemStateEvent.emit(state)
+  setSystemState(state: SystemState) {
+    this.systemStateEvent.emit(state);
   }
 
   constructor() { }

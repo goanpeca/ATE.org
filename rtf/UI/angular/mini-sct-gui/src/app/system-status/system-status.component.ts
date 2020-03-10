@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status'
+import { SystemStatus, SystemState } from '../system-status';
 
 @Component({
   selector: 'app-system-status',
@@ -8,9 +8,11 @@ import { SystemStatus, SystemState } from '../system-status'
 })
 export class SystemStatusComponent implements OnInit {
 
-  @Input() systemStatus : SystemStatus = new SystemStatus()
-  
-  private mySystemState = SystemState
+  @Input() systemStatus: SystemStatus = new SystemStatus();
+
+  protected mySystemState = SystemState;
+  // property for error information
+  visiable = true;
 
   constructor() { }
 

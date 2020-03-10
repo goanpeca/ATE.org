@@ -9,15 +9,19 @@ import concurrent.futures
 import logging
 import os
 import threading
+from typing import Optional
+from testApp import thetestzip_mock
+import queue
 
 FRAMEWORK_VERSION = 1
 
 logger = logging.getLogger(__name__)
 
+RESOURCE_CONFIG_REQUEST_TIMEOUT = 30  # TODO: reduce, it's temporarily large for manual mqtt messaging
 
-# TODO: this is win32 only. implement linux/POSIX variant
+
 # source: https://stackoverflow.com/a/23587108
-def start_parent_process_death_watchdog(parent_pid):
+def start_parent_process_death_watchdog_win32(parent_pid):
     from ctypes import WinDLL
     from ctypes.wintypes import DWORD, BOOL, HANDLE
     # Magic value from http://msdn.microsoft.com/en-us/library/ms684880.aspx
@@ -41,6 +45,27 @@ def start_parent_process_death_watchdog(parent_pid):
     t.start()
 
 
+# def start_parent_process_death_watchdog_linux(parent_pid):
+
+#     def _threadproc(parent_pid):
+#         try:
+#             # unix behavior of os.waitpid: "If pid is less than -1, status is requested for any process in the process group -pid (the absolute value of pid)"
+#             # TODO: does not work, os.waitpid can probably not be used, because 'any process' in the progress group includes this one !?
+#             # os.waitpid(-parent_pid, 0)
+#             while True:
+#                 print('getppid: ', os.getppid())
+#                 print('getpgrp: ', os.getpgrp())
+#                 print(f'getpgid({parent_pid}): ', os.getpgid(parent_pid))
+#                 time.sleep(1)
+#         finally:
+#             os._exit(1)
+
+#     t = threading.Thread(target=_threadproc,
+#                          args=(parent_pid,),
+#                          daemon=True)
+#     t.start()
+
+
 class TheTestAppStatusAlive(Enum):
     DEAD = 0      # error/crash
     ALIVE = 1
@@ -49,13 +74,14 @@ class TheTestAppStatusAlive(Enum):
 
 
 class TheTestAppParameters:
-    __slots__ = ["broker_host", "broker_port", "device_id", "site_id"]
+    __slots__ = ["broker_host", "broker_port", "device_id", "site_id", "thetestzip_name"]
 
     def __init__(self):
         self.broker_host = "10.9.1.6"
         self.broker_port = 1883
         self.device_id = "pebkac_device"
         self.site_id = "0"
+        self.thetestzip_name = "sleepmock"
 
     def to_json(self):
         return {key: getattr(self, key, None) for key in self.__slots__}
@@ -92,6 +118,11 @@ class TopicFactory:
     def master_status_topic(self):
         return f'ate/{self._device_id}/Master/status'
 
+    def master_resource_topic(self, resource_id: Optional[str] = None):
+        if resource_id is None:
+            resource_id = '+'
+        return f'ate/{self._device_id}/Master/resource/{resource_id}'
+
     def control_status_topic(self):
         return f'ate/{self._device_id}/ControlApp/status/site{self._site_id}'
 
@@ -103,6 +134,12 @@ class TopicFactory:
 
     def test_result_topic(self):
         return f'ate/{self._device_id}/TestApp/testresult/site{self._site_id}'
+
+    def test_stdf_topic(self):
+        return f'ate/{self._device_id}/TestApp/stdf/site{self._site_id}'
+
+    def test_resource_topic(self, resource_id: str):
+        return f'ate/{self._device_id}/TestApp/resource/{resource_id}/site{self._site_id}'
 
     def test_status_payload(self, alive: TheTestAppStatusAlive):
         return {
@@ -117,6 +154,13 @@ class TopicFactory:
             "type": "testresult",
             "pass": 1 if ispass else 0,
             "testdata": testdata  # any json serializable thing for now
+        }
+
+    def test_resource_payload(self, resource_id: str, config: dict) -> dict:
+        return {
+            "type": "resource-config-request",
+            "resource_id": resource_id,
+            "config": config
         }
 
     @property
@@ -136,12 +180,12 @@ class TheTestAppMachine:
         states = ['starting', 'idle', 'testing', 'selftesting', 'terminated', 'error']
 
         transitions = [
-            {'trigger': 'startup_done',    'source': 'starting',                  'dest': 'idle',             'before': 'on_startup_done'},
-            {'trigger': 'cmd_init',        'source': 'idle',                      'dest': 'selftesting',      'before': 'on_cmd_init'},
-            {'trigger': 'cmd_next',        'source': 'idle',                      'dest': 'testing',          'before': 'on_cmd_next'},
-            {'trigger': 'cmd_terminate',   'source': 'idle',                      'dest': 'terminated',       'before': 'on_cmd_terminate'},
-            {'trigger': 'cmd_done',        'source': ['testing', 'selftesting'],  'dest': 'idle',             'before': 'on_cmd_done'},
-            {'trigger': 'fail',            'source': '*',                         'dest': 'error',            'before': 'on_fail'},
+            {'trigger': 'startup_done', 'source': 'starting', 'dest': 'idle', 'before': 'on_startup_done'},
+            {'trigger': 'cmd_init', 'source': 'idle', 'dest': 'selftesting', 'before': 'on_cmd_init'},
+            {'trigger': 'cmd_next', 'source': 'idle', 'dest': 'testing', 'before': 'on_cmd_next'},
+            {'trigger': 'cmd_terminate', 'source': 'idle', 'dest': 'terminated', 'before': 'on_cmd_terminate'},
+            {'trigger': 'cmd_done', 'source': ['testing', 'selftesting'], 'dest': 'idle', 'before': 'on_cmd_done'},
+            {'trigger': 'fail', 'source': '*', 'dest': 'error', 'before': 'on_fail'},
         ]
 
         self.machine = Machine(model=self, states=states, transitions=transitions, initial='starting', after_state_change=self.after_state_change)
@@ -187,6 +231,7 @@ class TheTestAppMachine:
 class TheTestAppMqttClient:
     _client: mqtt.Client
     _topic_factory: TopicFactory
+    _resource_msg_queue: queue.Queue
 
     def __init__(self, broker_host, broker_port, topic_factory: TopicFactory, submit_callback):
         self._topic_factory = topic_factory
@@ -199,6 +244,9 @@ class TheTestAppMqttClient:
         self.on_disconnect = None     # on_disconnect()     (only called after successful disconnect())
         self.on_message = None        # on_message(message: mqtt.MQTTMessageInfo)
         self.on_command = None        # on_command(cmd:string, payload: dict)
+
+        # queue to process resource messages anywhere (without callbacks)
+        self._resource_msg_queue = queue.Queue()
 
     def loop_forever(self):
         self._client.loop_forever()
@@ -216,7 +264,7 @@ class TheTestAppMqttClient:
             topic=self._topic_factory.test_status_topic(),
             payload=json.dumps(payload),
             qos=2,
-            retain=alive != TheTestAppStatusAlive.ALIVE)
+            retain=False)
 
     def publish_result(self, ispass: bool, testdata: object) -> mqtt.MQTTMessageInfo:
         return self._client.publish(
@@ -225,6 +273,20 @@ class TheTestAppMqttClient:
                 self._topic_factory.test_result_payload(ispass, testdata)),
             qos=2,
             retain=False)
+
+    def publish_stdf_part(self, blob: bytes) -> mqtt.MQTTMessageInfo:
+        return self._client.publish(
+            topic=self._topic_factory.test_stdf_topic(),
+            payload=blob,
+            qos=2,
+            retain=False)
+
+    def publish_resource_request(self, resource_id: str, config: dict) -> mqtt.MQTTMessageInfo:
+        return self._client.publish(
+            topic=self._topic_factory.test_resource_topic(resource_id),
+            payload=json.dumps(self._topic_factory.test_resource_payload(resource_id, config)),
+            qos=2,
+            retain=False),
 
     def _create_mqtt_client(self, topic_factory: TopicFactory) -> mqtt.Client:
         mqttc = mqtt.Client(client_id=topic_factory.mqtt_client_id)
@@ -235,6 +297,8 @@ class TheTestAppMqttClient:
 
         mqttc.message_callback_add(self._topic_factory.test_cmd_topic(),
                                    self._on_message_cmd_callback)
+        mqttc.message_callback_add(self._topic_factory.master_resource_topic(),
+                                   self._on_message_resource_callback)
 
         payload = self._topic_factory.test_status_payload(TheTestAppStatusAlive.DEAD)
         payload.update({'state': 'crash'})
@@ -242,7 +306,7 @@ class TheTestAppMqttClient:
             topic=topic_factory.test_status_topic(),
             payload=json.dumps(payload),
             qos=2,
-            retain=True)
+            retain=False)
 
         return mqttc
 
@@ -254,8 +318,12 @@ class TheTestAppMqttClient:
         logger.info("mqtt connected")
 
         self._client.subscribe([
-                (self._topic_factory.test_cmd_topic(), 2)
-            ])
+            (self._topic_factory.test_cmd_topic(), 2),
+            # subscribe to all resources of master, since we currently
+            # don't know in advance which resources a loaded test is
+            # interested in
+            (self._topic_factory.master_resource_topic(resource_id=None), 2)
+        ])
 
         self._submit_callback(self.on_connect)
 
@@ -289,20 +357,71 @@ class TheTestAppMqttClient:
 
         self._submit_callback(self.on_command, cmd, data)
 
+    def _on_message_resource_callback(self, client, userdata, message: mqtt.MQTTMessage):
+        logger.info(f'mqtt message for topic {message.topic}')
+
+        resource_id = message.topic.rpartition('/')[2]
+        if not resource_id:
+            logger.warning(f'ignoring unexpected Master resource message without resource_id')
+            return
+
+        # {
+        #   "type": "resource-config",
+        #   "resource_id": "myresourceid",
+        #   "config": {}
+        # }
+        data = json.loads(message.payload.decode('utf-8'))
+        assert data['type'] == 'resource-config'
+        assert data['resource_id'] == resource_id
+        assert isinstance(data['config'], dict)
+        self._resource_msg_queue.put(data)
+
+    def wait_for_resource_with_config(self, resource_id: str, config: dict, timeout=None):
+        end_time = time.time() + timeout if timeout is not None else None
+        adjusted_timeout = timeout
+        try:
+            while True:
+                data = self._resource_msg_queue.get(block=True, timeout=adjusted_timeout)
+                # TODO: we probably want a way to indicate an error, such as a resource does not even exist (which we should check earlier, but there should be a way to avoid waiting for the timeout)
+                if data['resource_id'] == resource_id and data['config'] == config:
+                    return data
+                if end_time is not None:
+                    # only timeout=None means "wait forever", <= 0 will not block
+                    adjusted_timeout = end_time - time.time()
+        except queue.Empty:
+            raise TimeoutError(f'timeout while waiting for resource "{resource_id}" with config: {config}')
+
+
+class TheTestZip_Callbacks(thetestzip_mock.TheTestZip_CallbackInterface):
+    def __init__(self, mqtt: TheTestAppMqttClient):
+        self._mqtt = mqtt
+        super().__init__()
+
+    def publish_stdf_part(self, stdf_blob: bytes):
+        self._mqtt.publish_stdf_part(stdf_blob)
+
+    def request_resource_config(self, resource_id: str, config: dict):
+        logger.info('requesting resource "%s" with config: %s', resource_id, config)
+        self._mqtt.publish_resource_request(resource_id, config)
+        _ = self._mqtt.wait_for_resource_with_config(resource_id, config, timeout=RESOURCE_CONFIG_REQUEST_TIMEOUT)  # TODO: what timeout should we use? how to handle timeout at all? should it abort the whole dut test or just the individual test that uses the resource? probably the former because the environment is not in a sane state?
+        return "additionalinfofromresourceorwhatever"
+
 
 class TheTestAppApplication:
-    _statemachine: TheTestAppMachine
-    _mqtt: TheTestAppMqttClient
+    _statemachine: Optional[TheTestAppMachine]
+    _mqtt: Optional[TheTestAppMqttClient]
+    _thetestzip_instance: Optional[thetestzip_mock.TheTestZip_InstanceInterface]
 
     def __init__(self, params: TheTestAppParameters = None):
         self.params = params if params is not None else TheTestAppParameters()
         self._statemachine = None
         self._mqtt = None
         self._disconnected = False
+        self._thetestzip_instance = None
 
     @staticmethod
     def init_from_command_line(argv):
-        parser = argparse.ArgumentParser(prog=argv[0])
+        parser = argparse.ArgumentParser(prog=argv[0], formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         TheTestAppParameters.add_argparse_arguments(parser)
         parser.add_argument('config_file', metavar='config-file', nargs='?')
@@ -310,26 +429,41 @@ class TheTestAppApplication:
                             help="increase output verbosity",
                             action="store_true")
         parser.add_argument('--parent-pid')
+        parser.add_argument('--ptvsd-host', nargs='?', default='0.0.0.0', type=str,
+                            help="remote debugger list ip address")
+        parser.add_argument('--ptvsd-port', nargs='?', default=5678, type=int,
+                            help="remote debugger list port")
+        parser.add_argument('--ptvsd-enable-attach', action="store_true",
+                            help="enable remote debugger attach")
+        parser.add_argument('--ptvsd-wait-for-attach', action="store_true",
+                            help="wait for remote debugger attach before start (implies --ptvsd-enable-attach)")
         args = parser.parse_args(argv[1:])
 
         if args.verbose:
             logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG)
 
+        if args.ptvsd_enable_attach or args.ptvsd_wait_for_attach:
+            import ptvsd
+            ptvsd.enable_attach(address=(args.ptvsd_host, args.ptvsd_port))
+            if args.ptvsd_wait_for_attach:
+                ptvsd.wait_for_attach()
+
         # kill this process when the parent dies
         # this is mostly a temporary solution to get rid of
         # zombie processes when the control app dies
         if args.parent_pid is not None:
-            logger.warning('PARENT PROCESS WATCHDOG enabled for pid %s',
-                           args.parent_pid)
-            start_parent_process_death_watchdog(int(args.parent_pid))
+            if sys.platform == 'win32':
+                logger.warning('PARENT PROCESS WATCHDOG enabled for pid %s', args.parent_pid)
+                start_parent_process_death_watchdog_win32(int(args.parent_pid))
+            else:
+                logger.warning('PARENT PROCESS WATCHDOG should be enabled for pid %s, but this is not yet implemented for non-win32 hosts (currently unclear if required or not)', args.parent_pid)
 
         params = TheTestAppParameters()
         # note: values specified on command line always override values loaded
         #       from config file, no matter where the config_file option is
         if args.config_file is not None:
             params.update_from_file(args.config_file)
-
 
         params.update_from_parsed_argparse_args(args)
 
@@ -357,6 +491,7 @@ class TheTestAppApplication:
                     cb(*args, **kwargs)
                 except Exception as e:
                     if self._statemachine is not None:
+                        logger.exception('exception in mqtt callback')
                         self._statemachine.fail(str(e))
                     else:
                         raise
@@ -398,6 +533,7 @@ class TheTestAppApplication:
         # TODO: subsequent connects are currently not really handled here and
         #       and unexpected disconnects should probably be an error (?)
         if self._statemachine.is_starting():
+            self._thetestzip_init()
             self._statemachine.startup_done()
         else:
             # TODO: else is here to avoid publishing the initial idle state
@@ -420,9 +556,11 @@ class TheTestAppApplication:
         elif cmd == 'next':
             self._statemachine.cmd_next()
             self._execute_cmd_next(payload.get('mock_result', True),
-                                   payload.get('mock_duration_secs', 2.5))
+                                   payload.get('mock_duration_secs', 2.5),
+                                   payload.get('job_data'))
             self._statemachine.cmd_done()
         elif cmd == 'terminate':
+            self._thetestzip_teardown()
             self._statemachine.cmd_terminate()
             self._execute_cmd_terminate()
         else:
@@ -442,15 +580,18 @@ class TheTestAppApplication:
         if not selftest_result:
             self._mqtt.publish_status(TheTestAppStatusAlive.INITFAIL)
 
-    def _execute_cmd_next(self, mock_result: bool, mock_duration_secs: int):
+    def _execute_cmd_next(self, mock_result: bool, mock_duration_secs: int, job_data: Optional[dict]):
         logger.debug('COMMAND: next')
 
-        logger.info('executing next test...')
-        time.sleep(mock_duration_secs)
-        test_result = mock_result
-        logger.info(f'test completed: {test_result}')
+        # TODO: remove this block later. for now er TEMPORAILRY create job_data (for backward compatibility until master has it implemented)
+        if job_data is None:
+            job_data = {}
+        job_data.setdefault('mock_result', mock_result)
+        job_data.setdefault('mock_duration_secs', mock_duration_secs)
 
-        self._mqtt.publish_result(test_result, "<insert STDF data here>")
+        test_result, testdata = self._thetestzip_instance.execute_dut_tests(job_data)
+
+        self._mqtt.publish_result(test_result, testdata)
 
     def _execute_cmd_terminate(self):
         logger.debug('COMMAND: terminate')
@@ -462,6 +603,26 @@ class TheTestAppApplication:
         # logger.info('shutdown status published!')
         # logger.info('disconnecting and shutting down...')
         # self._mqtt.disconnect()  # loop_forever() will return after this call
+
+    def _thetestzip_init(self):
+        if self._thetestzip_instance is not None:
+            raise ValueError('_thetestzip_instance already initialized')
+
+        # TODO: use job related info here (e.g. from Master/job topic or passed in some other way with the loadTest command)
+        thetestzip_name = self.params.thetestzip_name
+        logger.info('initializing thetestzip %s', thetestzip_name)
+
+        self._thetestzip_instance = thetestzip_mock.create_thetestzipmock_instance(thetestzip_name, TheTestZip_Callbacks(self._mqtt))
+        self._thetestzip_instance.setup()
+
+    def _thetestzip_teardown(self):
+        if self._thetestzip_instance is None:
+            raise ValueError('_thetestzip_instance not initialized')
+
+        logger.info('unloading thetestzip')
+
+        self._thetestzip_instance.teardown()
+        self._thetestzip_instance = None
 
 
 def main():
