@@ -147,6 +147,7 @@ class ControlConnectionHandler:
                           retain=False)
 
     def __load_test_program(self, cmd_payload: dict):
+        print("Load Testprogram")
         testapp_params = cmd_payload["testapp_params"]
         try:
             self._statemachine.load(testapp_params)

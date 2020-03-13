@@ -2,6 +2,7 @@ from common.connection_handler import ConnectionHandler
 from common.logger import Logger
 import json
 import re
+from typing import Optional
 
 TOPIC_COMMAND = "Master/cmd"
 TOPIC_TESTSTATUS = "TestApp/status"
@@ -45,6 +46,12 @@ class MasterConnectionHandler:
                           self._generate_status_message(ALIVE, state, statedict)),
                           False)
 
+    def publish_usersettings(self, usersettings: dict):
+        self.mqtt.publish(self._generate_topic_usersettings(),
+                          self.mqtt.create_message(
+                              self._generate_usersettings_message(usersettings)),
+                          retain=False)
+
     def publish_resource_config(self, resource_id: str, config: dict):
         self.mqtt.publish(self._generate_resource_config_topic(resource_id),
                           self.mqtt.create_message(
@@ -59,15 +66,18 @@ class MasterConnectionHandler:
             'testapp_params': testapp_params,
             'sites': self.sites,
         }
+        self.log.info("Send LoadLot to sites...")
         self.mqtt.publish(topic, json.dumps(params), 0, False)
 
-    def send_next_to_all_sites(self):
+    def send_next_to_all_sites(self, job_data: Optional[dict] = None):
         topic = f'ate/{self.device_id}/TestApp/cmd'
         params = {
             'type': 'cmd',
             'command': 'next',
             'sites': self.sites,
         }
+        if job_data is not None:
+            params['job_data'] = job_data
         self.mqtt.publish(topic, json.dumps(params), 0, False)
 
     def send_terminate_to_all_sites(self):
@@ -152,6 +162,16 @@ class MasterConnectionHandler:
 
     def _generate_resource_config_topic(self, resource_id: str):
         return "ate/" + str(self.device_id) + "/Master/resource/" + resource_id
+
+    def _generate_usersettings_message(self, usersettings: dict):
+        message = {
+            "type": "usersettings",
+        }
+        message.update(usersettings)
+        return message
+
+    def _generate_topic_usersettings(self):
+        return "ate/" + str(self.device_id) + "/Master/usersettings"
 
     def __generate_sub_topic(self, topic):
         return "ate/" + str(self.device_id) + "/" + topic + "/#"

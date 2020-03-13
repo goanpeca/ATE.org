@@ -225,13 +225,30 @@ class project_navigator(object):
         self.cur.execute(query, (new_hardware, blob))
         self.con.commit()
 
+        os.makedirs(os.path.join(self.project_directory, 'src', 'patterns', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'patterns', new_hardware, '__init__.py')).touch()        
+
+        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, '__init__.py')).touch()        
+
+        os.makedirs(os.path.join(self.project_directory, 'src', 'protocols', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'protocols', new_hardware, '__init__.py')).touch()        
+
+        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware))
+        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, '__init__.py')).touch()        
+        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'PR', '__init__.py')).touch()
+
+
         os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware))
         create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, '__init__.py')).touch()
         os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT'))
         create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT', '__init__.py')).touch()
         os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR'))
         create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR', '__init__.py')).touch()
-                    
+        
         return new_hardware
     
     def update_hardware(self, name, definition):
@@ -698,7 +715,9 @@ class project_navigator(object):
         pass
 
 
-
+        
+        
+        
     
     def add_test(self, name):
         pass
@@ -706,8 +725,20 @@ class project_navigator(object):
     def update_test(self, name):
         pass
     
-    def get_tests(self):
-        pass
+    def get_tests(self, hardware, base):
+        '''
+        given hardware and base, this method will return a dictionary
+        of tests, and as value the absolute path to the tests.
+        '''
+        retval = {}
+        tests_directory = os.path.join(self.project_directory, 'src', 'tests', hardware, base)
+        potential_tests = os.listdir(tests_directory)
+        for potential_test in potential_tests:
+            if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY
+                if not '_' in potential_test.upper().replace('.PY', ''): # name doesn't contain an underscore
+                    if not '.' in potential_test.upper().replace('.PY', ''): # name doesn't contain dot(s)
+                        retval['.'.join(potential_test.split('.')[0:-1])] = os.path.join(tests_directory, potential_test)
+        return retval
     
     def remove_test(self, name):
         pass
@@ -722,6 +753,13 @@ class project_navigator(object):
         pass
     
     def remove_program(self, name):
+        pass
+
+
+
+
+
+    def get_states(self, hardware):
         pass
     
     

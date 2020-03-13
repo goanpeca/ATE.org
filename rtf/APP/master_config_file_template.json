@@ -13,5 +13,6 @@
     "skip_jobdata_verification": false,
     "filesystemdatasource.path" : ".",
     "filesystemdatasource.jobpattern" : "le#jobname#.xml",
-    "enable_timeouts": true
+    "enable_timeouts": true,
+    "user_settings_filepath": "master_user_settings.json"
 }

@@ -589,6 +589,9 @@ class TheTestAppApplication:
         job_data.setdefault('mock_result', mock_result)
         job_data.setdefault('mock_duration_secs', mock_duration_secs)
 
+        job_data['testzipmock.current_site_id'] = self.params.site_id
+        job_data.setdefault('testzipmock.custom_sequence', [{'result_ispass': True}, {'result_ispass': False}, {'result_ispass': True}])
+
         test_result, testdata = self._thetestzip_instance.execute_dut_tests(job_data)
 
         self._mqtt.publish_result(test_result, testdata)

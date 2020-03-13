@@ -15,6 +15,7 @@ __pycache__/*
 .DS_Store
 /RTF/APP/control_config_file.json
 /RTF/APP/master_config_file.json
+/RTF/APP/master_user_settings.json
 /RTF/APP/dist/
 /RTF/APP/APP.egg-info
 /RTF/APP/build/
