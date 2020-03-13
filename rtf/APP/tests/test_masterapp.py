@@ -32,6 +32,17 @@ class TestApplication:
             with pytest.raises(KeyError):
                 _ = master_application.MasterApplication(cfg)
 
+    def trigger_test_resource_change(self, app: master_application.MasterApplication, site: str, request_default_config: bool):
+        custom_config = {
+            'resource_id': 'unittest-dummy-resource-id',
+            'config': {
+                'dummy-param': 'dummy-value'
+            }
+        }
+        default_config: dict = {}
+
+        app.on_testapp_resource_changed(site, default_config if request_default_config else custom_config)
+
     def test_masterapp_correct_number_of_sites_triggers_initialized(self):
         cfg = self.default_configuration()
         app = master_application.MasterApplication(cfg)
@@ -183,3 +194,201 @@ class TestApplication:
         cmd = {'command': 'reset'}
         app.reset(cmd)
         assert(app.state == "connecting")
+
+    def _common_setup_for_testing_with_resource_synchronization(self, app, mocker):
+        app.startup_done()
+        app.all_sites_detected()
+        cmd = {'command': 'load', 'lot_number': 4711}
+        app.load_command(cmd)
+        app.all_siteloads_complete()
+
+        app.next(None)
+        assert(app.external_state == "testing")
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_state_change(app, "0", "testing")
+        self.trigger_test_state_change(app, "1", "testing")
+
+        assert(app.state == "testing_inprogress")
+
+        mocker.patch.object(app, 'apply_resource_config')
+
+    def _trigger_resource_config_applied_callback(self, app):
+        # when all active sites are waiting for the resource, app.apply_resource_config must be called,
+        # which in turn calls the passed callback in (second argument) when the resource is actually configured.
+        app.apply_resource_config.assert_called_once()
+        callback = app.apply_resource_config.call_args[0][1]
+        callback()  # currently we could directly call app._on_resource_config_applied() instead
+
+    def test_masterapp_testing_both_sites_request_resources(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        # both sites request a non-default resource config and continue testing afterwards (using that resource)
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        # both sites are now finished with the resource and request the default config
+        mocker.patch.object(app, 'apply_resource_config')
+
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        # now both sites continue testing until they are done
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "ready")
+
+    def test_masterapp_testing_first_site_completes_before_other_site_requests_resource(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "ready")
+
+    def test_masterapp_testing_first_site_requests_resource_before_other_site_completes(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_waiting_for_resource")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "ready")
+
+    def test_masterapp_testing_site_completes_while_waiting_for_resource(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "ready")
+
+    def test_masterapp_testing_site_completes_while_waiting_for_resource_other_order(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_waiting_for_resource")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "testing_waiting_for_resource")
+
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "testing_inprogress")
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_inprogress")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "ready")
+
+    def test_masterapp_testing_all_sites_complete_while_waiting_for_resource(self, mocker):
+        cfg = self.default_configuration()
+        app = master_application.MasterApplication(cfg)
+
+        self._common_setup_for_testing_with_resource_synchronization(app, mocker)
+
+        self.trigger_test_resource_change(app, "0", request_default_config=False)
+        assert(app.state == "testing_inprogress")
+
+        app.apply_resource_config.assert_not_called()
+
+        self.trigger_test_resource_change(app, "1", request_default_config=False)
+        assert(app.state == "testing_waiting_for_resource")
+
+        self.trigger_test_result_change(app, "1")
+        assert(app.state == "testing_waiting_for_resource")
+        self.trigger_test_state_change(app, "1", "idle")
+        assert(app.state == "testing_waiting_for_resource")
+
+        self.trigger_test_result_change(app, "0")
+        assert(app.state == "testing_waiting_for_resource")
+        self.trigger_test_state_change(app, "0", "idle")
+        assert(app.state == "ready")
+
+        # TODO: the callback should probably be canceled eventually, for now we just check that it doesn't cause an error
+        self._trigger_resource_config_applied_callback(app)
+        assert(app.state == "ready")

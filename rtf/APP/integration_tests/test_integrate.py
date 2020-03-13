@@ -79,7 +79,8 @@ def run_master(device_id, sites, broker_host, broker_port, webui_port):
         'webui_port': webui_port,
         "skip_jobdata_verification": True,  # TODO: verification should eventually be enabled, but currently the lot number in the xml is invalid
         "filesystemdatasource.path": "./tests",
-        "filesystemdatasource.jobpattern": "le#jobname#.xml"
+        "filesystemdatasource.jobpattern": "le#jobname#.xml",
+        "user_settings_filepath": None  # explicitly disable persistent user settings, so we don't create or use config files
     }
     launch_master(log_file_name=f'{device_id}_master_log.log',
                   config_file_path='master_config_file_template.json',
@@ -934,6 +935,8 @@ async def test_master_states_during_load_and_unload(sites, testzipmockname, proc
             await ws.send_json({'type': 'cmd', 'command': 'load', 'lot_number': f'{JOB_LOT_NUMBER}|{testzipmockname}'})
             await read_messages_until_master_state(buffer, 'ready', 5.0, ['initialized', 'loading', 'ready'])
 
+            await asyncio.sleep(0.5)
+
             # STEP 3: run test
             await ws.send_json({'type': 'cmd', 'command': 'next'})
             msgs_while_testing = await read_messages_until_master_state(buffer, 'testing', 5.0, ['ready', 'testing'])
@@ -1200,3 +1203,75 @@ async def test_standalone_testapp_resource_request(num_dut_tests_to_run, process
 #             # recreate control
 #             control = create_controls(process_manager, sites)
 #             await read_messages_until_master_state(buffer, 'initialized', 5.0, ['connecting', 'initialized'])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('stop_on_fail_enabled', [True, False, None])  # None included for default (True)
+async def test_standalone_testapp_stop_on_fail_setting(stop_on_fail_enabled, process_manager, ws_connection):
+    subscriptions = [
+        (f'ate/{DEVICE_ID}/TestApp/status/+', 2),
+        (f'ate/{DEVICE_ID}/TestApp/testresult/+', 2),
+        (f'ate/{DEVICE_ID}/TestApp/resource/#', 2)]
+    site_id = '0'
+    thetestzipname = 'example4'
+    resource_id = 'myresourceid'
+    expected_config = {'param': 'value'}
+
+    # The following code will test if the user setting "duttest.stop_on_fail" is properly respected,
+    # by using a test sequence with tests A, B, and C, where A passes, B fails and C will request a single resource.
+    # * if "duttest.stop_on_fail" is enabled (default), the duttest will complete on its own.
+    # * if "duttest.stop_on_fail" is disabled, test C will be executed.
+    # Note that this test will not respond to the resource request, because we only want to test the option for now.
+    # A full intergation test should check generated test results (most probably STDF records) and verify all tests
+    # are executed and reported correctly.
+
+    async with mqtt_connection(BROKER_HOST, BROKER_PORT, subscriptions) as mqtt:
+
+        buffer = FilteredMqttMessageBuffer(mqtt.message_queue, skip_retained=True)
+
+        # STEP 1: create testapp, wait for 'idle' status
+        _ = create_standalone_testapp(process_manager, site_id, thetestzipname)
+        await read_messages_until_testapp_state(buffer, site_id, 'idle', 5.0, ['idle'])
+
+        # STEP 2: run duttest
+        next_cmd_payload = {'type': 'cmd', 'command': 'next', 'sites': [site_id]}
+        if stop_on_fail_enabled is not None:
+            next_cmd_payload.update({'job_data': {'duttest.stop_on_fail': stop_on_fail_enabled}})
+        mqtt.publish(f'ate/{DEVICE_ID}/TestApp/cmd', next_cmd_payload)
+
+        # CASE 2.1: with stop-on-fail enabled the duttests will execute and return test results immedately
+        if stop_on_fail_enabled is not False:
+            msgs_while_testing = await read_messages_until_whatever(
+                buffer, 5.0,
+                lambda msg: isinstance(msg, MqttStatusMessage) and msg.component == 'TestApp' and msg.site_id == site_id and msg.state == 'testing')
+
+            msgs_while_testing += await read_messages_until_whatever(
+                buffer, 5.0,
+                lambda msg: isinstance(msg, MqttStatusMessage) and msg.component == 'TestApp' and msg.site_id == site_id and msg.state == 'idle',
+                lambda msg: isinstance(msg, MqttTestresultMessage))
+
+            test_result_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttTestresultMessage)]
+            assert len(test_result_msgs) == 1
+            assert test_result_msgs[0].site_id == site_id
+            assert not test_result_msgs[0].ispass
+
+            resource_request_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttResourceRequestMessage)]
+            assert not resource_request_msgs
+
+        # CASE 2.2: with stop-on-fail disabled tests cannot complete because the resource request will block until timeout
+        else:
+            msgs_while_testing = await read_messages_until_whatever(
+                buffer, 5.0,
+                lambda msg: isinstance(msg, MqttStatusMessage) and msg.component == 'TestApp' and msg.site_id == site_id and msg.state == 'testing',
+                lambda msg: isinstance(msg, MqttResourceRequestMessage))
+
+            resource_request_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttResourceRequestMessage)]
+            assert len(resource_request_msgs) == 1
+            assert resource_request_msgs[0].site_id == site_id
+            assert resource_request_msgs[0].resource_id == resource_id
+            assert resource_request_msgs[0].config == expected_config
+
+            test_result_msgs = [msg for msg in msgs_while_testing if isinstance(msg, MqttTestresultMessage)]
+            assert not test_result_msgs
+
+        # no cleanup required

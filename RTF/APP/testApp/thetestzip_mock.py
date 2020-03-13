@@ -36,6 +36,17 @@ class TheTestZip_InstanceInterface(ABC):
         pass
 
 
+class TheTestZip_TestFunc_ContextInterface(ABC):
+    @abstractmethod
+    def resource_context(self, resource_id: str, config: dict):
+        pass
+
+    @property
+    @abstractmethod
+    def job_param(self):
+        pass
+
+
 class TheTestZip_Mock_Null(TheTestZip_InstanceInterface):
     def execute_dut_tests(self, job_param: dict):
         return False, "<insert STDF data here>"
@@ -220,12 +231,12 @@ class TheTestZip_StdfProtocol:
 # this means test are always executed, always have a valid result, there are no alarms etc.
 # eventually we need to support the various cases of the STDF fields TEST_FLG, PARM_FLG etc and should probably allow individual tests to return the final PTR record (??)
 
-def duttest_func_testnameA(resource_context) -> Tuple[bool, float]:
+def duttest_func_testnameA(testfunc_context) -> Tuple[bool, float]:
     time.sleep(1.0)
     return True, 1.0
 
 
-def duttest_func_testnameB(resource_context) -> Tuple[bool, float]:
+def duttest_func_testnameB(testfunc_context) -> Tuple[bool, float]:
     # uncomment to allow attaching a debugger manually when this test is
     # note that ptvsd.enable_attach() must be called first, but this has to be done from the main thead on linux
     # see '--ptvsd-enable-attach' command line option option in thetest_application host app
@@ -236,16 +247,16 @@ def duttest_func_testnameB(resource_context) -> Tuple[bool, float]:
     return False, 2.0
 
 
-def duttest_func_testnameC(resource_context) -> Tuple[bool, float]:
+def duttest_func_testnameC(testfunc_context) -> Tuple[bool, float]:
     time.sleep(1.0)
     return True, 3.0
 
 
-def duttest_func_testnameD(resource_context) -> Tuple[bool, float]:
+def duttest_func_testnameD(testfunc_context) -> Tuple[bool, float]:
 
     time.sleep(0.5)
 
-    with resource_context("myresourceid", {'param': 'value'}):
+    with testfunc_context.resource_context("myresourceid", {'param': 'value'}):
         time.sleep(0.25)
 
     time.sleep(0.25)
@@ -253,18 +264,28 @@ def duttest_func_testnameD(resource_context) -> Tuple[bool, float]:
     return True, 4.0
 
 
+# trivial sequence (passing)
 duttest_sequence_example1 = [
     {'test_num': 1, 'testname': 'TESTNAME_A', 'testfunc': duttest_func_testnameA},
     {'test_num': 2, 'testname': 'TESTNAME_C', 'testfunc': duttest_func_testnameC},
 ]
 
+# trivial sequence (failing, because first test fails)
 duttest_sequence_example2 = [
-    {'test_num': 1, 'testname': 'TESTNAME_A', 'testfunc': duttest_func_testnameA},
-    {'test_num': 2, 'testname': 'TESTNAME_B', 'testfunc': duttest_func_testnameB},
+    {'test_num': 1, 'testname': 'TESTNAME_B', 'testfunc': duttest_func_testnameB},
+    {'test_num': 2, 'testname': 'TESTNAME_C', 'testfunc': duttest_func_testnameC},
 ]
 
+# trivial sequence with resource synchronization
 duttest_sequence_example3 = [
     {'test_num': 1, 'testname': 'TESTNAME_D', 'testfunc': duttest_func_testnameD},
+]
+
+# sequence with resource synchro after fail (different behavior depending on "stop-on-fail" option: resource synchro iff stop-on-fail is disabled)
+duttest_sequence_example4 = [
+    {'test_num': 1, 'testname': 'TESTNAME_A', 'testfunc': duttest_func_testnameA},
+    {'test_num': 2, 'testname': 'TESTNAME_B', 'testfunc': duttest_func_testnameB},
+    {'test_num': 3, 'testname': 'TESTNAME_D', 'testfunc': duttest_func_testnameD},
 ]
 
 
@@ -278,6 +299,65 @@ class TheTestZip_Mock_SimpleStdfRecord(TheTestZip_InstanceInterface):
         testdata = base64.b64encode(serialized_bytes).decode('utf-8')
 
         return True, testdata
+
+
+class TheTestZip_TestFunc_ExampleContext(TheTestZip_TestFunc_ContextInterface):
+    def __init__(self, resource_context, job_param):
+        self._resource_context = resource_context
+        self._job_param = job_param
+        super().__init__()
+
+    def resource_context(self, resource_id: str, config: dict):
+        return self._resource_context(resource_id, config)
+
+    def job_param(self):
+        return self._job_param
+
+
+def _generate_custom_sequence_entry(param_entry, implicit_test_num: int, current_site_id: str):
+    test_num = param_entry.get('test_num', implicit_test_num)
+    testname = param_entry.get('testname', f'duttest_mock_{test_num}')
+    request_resource = param_entry.get('request_resource')
+    if request_resource is not None:
+        resource_id = param_entry.get('resource_id', 'myresourceid')
+        resource_config = param_entry.get('config', {'param': 'value'})
+
+    result_ispass = param_entry['result_ispass']  # result is required
+    result_value = param_entry.get('result_value', float(test_num))
+    duration_secs = param_entry.get('duration_secs', 0.5)
+
+    # allow to specify different result and duration for individual sites sites
+    site_overrides = param_entry.get('site_overrides', {}).get(current_site_id, {})
+    result_ispass = site_overrides.get('result_ispass', result_ispass)
+    result_value = site_overrides.get('result_value', duration_secs)
+    duration_secs = site_overrides.get('duration_secs', duration_secs)
+
+    def _duttest_func(testfunc_context) -> Tuple[bool, float]:
+        if request_resource is not None:
+            with testfunc_context.resource_context(resource_id, resource_config):
+                time.sleep(duration_secs)
+        else:
+            time.sleep(duration_secs)
+
+        return result_ispass, result_value
+
+    return {
+        'test_num': test_num,
+        'testname': testname,
+        'testfunc': _duttest_func
+    }
+
+
+def _generate_custom_sequence(job_param: dict):
+    current_site_id = job_param['testzipmock.current_site_id']
+
+    sequence: List[dict] = []
+    params = job_param['testzipmock.custom_sequence']
+    for param_entry in params:
+        entry = _generate_custom_sequence_entry(param_entry, 1 + len(sequence), current_site_id)
+        sequence.append(entry)
+
+    return sequence
 
 
 class TheTestZip_Mock_Example(TheTestZip_InstanceInterface):
@@ -297,11 +377,10 @@ class TheTestZip_Mock_Example(TheTestZip_InstanceInterface):
             self.protocol.serialize_records(self.protocol.get_prolog()))
 
     def execute_dut_tests(self, job_param: dict):
-
         logger.info('starting dut tests...')
 
         self.protocol.begin_part_test()
-        result_overall_pass, result_bin = self._execute_dut_test_sequence()
+        result_overall_pass, result_bin = self._execute_dut_test_sequence(self.sequence, job_param)
         part_test_records = self.protocol.end_part_test(result_bin)
 
         logger.info('dut tests completed')
@@ -341,31 +420,50 @@ class TheTestZip_Mock_Example(TheTestZip_InstanceInterface):
         # TODO: do we need nested configs, i.e. restore the previously active config? if yes this needs to be implemented
         self.callback_interface.request_resource_config(resource_id, {})
 
-    def _execute_dut_test_sequence(self) -> Tuple[bool, int]:
+    def _execute_dut_test_sequence(self, sequence, job_param: dict) -> Tuple[bool, int]:
+        stop_on_fail = job_param.get('duttest.stop_on_fail', True)
+
         # Note: hbin and sbin make no difference for now: these will
         # eventually be remapped by other software components anyways
+        # for now we simply use the test_num of the first failing test as final bin (or 0 if all pass)
         GOOD_BIN = 0
-        FAIL_BIN = 1
-        WTF_BIN = 2
-        result_bin = GOOD_BIN
+        WTF_BIN = 65535
+        assert all(entry['test_num'] != GOOD_BIN for entry in sequence)
 
+        result_bin = None
         entry = None
-        for entry in self.sequence:
-            logger.info('excuting dut test: (%s) %s', entry['test_num'], entry['testname'])
-            result_ispass, result_value = entry['testfunc'](self._resource_context)
+        for entry in sequence:
+            testname = entry['testname']
 
-            self.protocol.add_part_test_record(entry['test_num'], entry['testname'],
+            logger.info('excuting dut test: (%s) %s', entry['test_num'], testname)
+            result_ispass, result_value = entry['testfunc'](TheTestZip_TestFunc_ExampleContext(self._resource_context, job_param))
+
+            self.protocol.add_part_test_record(entry['test_num'], testname,
                                                result_ispass, result_value)
-
             if not result_ispass:
-                # we only run tests until we have a fail, which in turn means we know the final bin.
-                # TODO: should we add records for the non-executed tests after a fail?
-                result_bin = FAIL_BIN
-                break
+                if result_bin is None:
+                    result_bin = entry['test_num']
+
+                # unless stop_on_fail is explicitly deactivated, we stop testing as soon as a test fails
+                if stop_on_fail:
+                    # TODO: should we add records for the non-executed tests here?
+                    break
+
         if entry is None:  # never executed any tests
             result_bin = WTF_BIN
+        elif result_bin is None:  # at least one test executed and none failed
+            result_bin = GOOD_BIN
 
         return result_bin == GOOD_BIN, result_bin
+
+
+class TheTestZip_Mock_ExampleCustomSequence(TheTestZip_Mock_Example):
+    def __init__(self, callback_interface: TheTestZip_CallbackInterface):
+        super().__init__([], callback_interface)
+
+    def execute_dut_tests(self, job_param: dict):
+        self.sequence = _generate_custom_sequence(job_param)
+        return super().execute_dut_tests(job_param)
 
 
 def create_thetestzipmock_instance(thetestzip_name: str, callback_interface: TheTestZip_CallbackInterface) -> TheTestZip_InstanceInterface:
@@ -381,5 +479,9 @@ def create_thetestzipmock_instance(thetestzip_name: str, callback_interface: The
         return TheTestZip_Mock_Example(duttest_sequence_example2, callback_interface)
     elif thetestzip_name == "example3":
         return TheTestZip_Mock_Example(duttest_sequence_example3, callback_interface)
+    elif thetestzip_name == "example4":
+        return TheTestZip_Mock_Example(duttest_sequence_example4, callback_interface)
+    elif thetestzip_name == "custom":
+        return TheTestZip_Mock_ExampleCustomSequence(callback_interface)
     else:
         raise RuntimeError(f'invalid testzip name "{thetestzip_name}", bye bye')

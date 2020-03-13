@@ -20,7 +20,9 @@ from masterApp.master_connection_handler import MasterConnectionHandler
 from masterApp.master_webservice import webservice_setup_app
 from masterApp.parameter_parser import parser_factory
 from masterApp.sequence_container import SequenceContainer
+from masterApp.user_settings import UserSettings
 from masterApp.stdf_aggregator import StdfTestResultAggregator
+from masterApp.user_settings import UserSettings
 
 INTERFACE_VERSION = 1
 
@@ -76,7 +78,6 @@ UNLOAD_TIMEOUT = 60
 TEST_TIMEOUT = 30
 RESET_TIMEOUT = 20
 
-
 class TestingSiteMachine(Machine):
     states = ['inprogress', 'waiting_for_resource', 'waiting_for_testresult', 'waiting_for_idle', 'completed']
 
@@ -126,7 +127,7 @@ class MultiSiteTestingMachine(Machine):
 
         self.add_transition('all_sites_waiting_for_resource',       'inprogress',              'waiting_for_resource')      # noqa: E241
         self.add_transition('resource_config_applied',              'waiting_for_resource',    'inprogress')                # noqa: E241
-        self.add_transition('all_sites_completed',                  'inprogress',              'completed')                 # noqa: E241
+        self.add_transition('all_sites_completed',                  '*',                       'completed')                 # noqa: E241
 
 
 class MultiSiteTestingModel:
@@ -147,29 +148,53 @@ class MultiSiteTestingModel:
             if site.resource_request is not None and site.resource_request != resource_request:
                 raise RuntimeError(f'mismatch in resource request from site "{site_id}": previous request of site "{site.site_id}" differs')
 
-        if any(site.is_inprogress() for site in self._site_models.values()):
-            return  # at least one site is still busy
-
-        self.all_sites_waiting_for_resource()
-        self._parent_model.apply_resource_config(resource_request, lambda: self._on_resource_config_applied())  # Callable[[dict, Callable], None]
+        self._check_for_all_remaing_sites_waiting_for_resource()
 
     def _on_resource_config_applied(self):
+        if not self.is_waiting_for_resource():
+            return  # ignore late callback if we already left the state
+
         self.resource_config_applied()
         for site in self._site_models.values():
-            site.resource_ready()
+            if site.is_waiting_for_resource():
+                site.resource_ready()
 
     def handle_testresult(self, site_id: str, testresult: dict):
         self._site_models[site_id].testresult_received(testresult=testresult)
-        self._check_for_completed()
+        if not self._check_for_all_sites_completed():
+            self._check_for_all_remaing_sites_waiting_for_resource()
 
     def handle_status_idle(self, site_id: str):
         self._site_models[site_id].status_idle()
-        self._check_for_completed()
+        if not self._check_for_all_sites_completed():
+            self._check_for_all_remaing_sites_waiting_for_resource()
 
-    def _check_for_completed(self):
+    def _check_for_all_sites_completed(self):
         if all(site.is_completed() for site in self._site_models.values()):
             self.all_sites_completed()
             self._parent_model.all_sitetests_complete()
+            return True
+        return False
+
+    def _check_for_all_remaing_sites_waiting_for_resource(self):
+        if self.is_waiting_for_resource():
+            return  # already transitioned to state
+
+        if any(site.is_inprogress() for site in self._site_models.values()):
+            return  # at least one site is still busy
+
+        sites_waiting = [site for site in self._site_models.values() if site.is_waiting_for_resource()]
+        if not sites_waiting:
+            return  # no site is waiting for resource
+
+        self.all_sites_waiting_for_resource()
+        resource_request = sites_waiting[0].resource_request  # all sites have same request
+        self._parent_model.apply_resource_config(resource_request, lambda: self._on_resource_config_applied())  # Callable[[dict, Callable], None]
+
+    def is_waiting_for_resource(self):
+        # HACK: referencing the parent state by name sucks, but apparently we do not get
+        # a monkey patched self.waiting_for_resource() to check if we are in 'our' nested state
+        return self.state == 'testing_waiting_for_resource'
 
 
 class MasterApplication(MultiSiteTestingModel):
@@ -192,7 +217,15 @@ class MasterApplication(MultiSiteTestingModel):
         {'source': 'connecting',        'dest': 'error',       'trigger': 'bad_interface_version'},                                                 # noqa: E241
 
         {'source': 'initialized',       'dest': 'loading',     'trigger': 'load_command',                'after': 'on_loadcommand_issued'},         # noqa: E241
-        {'source': 'loading',           'dest': 'ready',       'trigger': 'all_siteloads_complete',      'after': 'on_allsiteloads_complete'},      # noqa: E241
+        {'source': 'loading',           'dest': 'ready',       'trigger': 'all_siteloads_complete',      'after': 'on_allsiteloads_complete'},     # noqa: E241
+
+        # TODO: properly limit source states to valid states where usersettings are allowed to be modified
+        #       ATE-104 says it should not be possible while testing in case of stop-on-fail, but this constraint may not be required here and could be done in UI)
+        {'source': ['initialized', 'ready'], 'dest': '=', 'trigger': 'usersettings_command',       'after': 'on_usersettings_command_issued'},  # noqa: E241
+
+        # TODO: properly limit source states to valid states where usersettings are allowed to be modified
+        #       ATE-104 says it should not be possible while testing in case of stop-on-fail, but this constraint may not be required here and could be done in UI)
+        {'source': ['initialized', 'ready'], 'dest': '=', 'trigger': 'usersettings_command',       'after': 'on_usersettings_command_issued'},  # noqa: E241
 
         {'source': 'ready',             'dest': 'testing',     'trigger': 'next',                        'after': 'on_next_command_issued'},        # noqa: E241
         {'source': 'ready',             'dest': 'unloading',   'trigger': 'unload',                      'after': 'on_unload_command_issued'},      # noqa: E241
@@ -234,6 +267,8 @@ class MasterApplication(MultiSiteTestingModel):
                                                            lambda site, state: self.on_unexpected_control_state(site, state))
         self.pendingTransitionsTest = SequenceContainer([TEST_STATE_IDLE], self.configuredSites, lambda: self.all_siteloads_complete(),
                                                         lambda site, state: self.on_unexpected_testapp_state(site, state))
+        self.init_user_settings()
+
         self.timeoutHandle = None
         self.arm_timeout(STARTUP_TIMEOUT, lambda: self.timeout("Not all sites connected."))
 
@@ -253,6 +288,43 @@ class MasterApplication(MultiSiteTestingModel):
         except KeyError as e:
             self.log.error(f"invalid configuration: {e}")
             sys.exit()
+
+    @property
+    def user_settings_filepath(self):
+        return self.configuration.get("user_settings_filepath")
+
+    @property
+    def persistent_user_settings_enabled(self):
+        return self.user_settings_filepath is not None
+
+    def init_user_settings(self):
+        if self.persistent_user_settings_enabled:
+            try:
+                user_settings = UserSettings.load_from_file(self.user_settings_filepath)
+            except FileNotFoundError:
+                user_settings = UserSettings.get_defaults()
+
+            # always update file with hardcoded defaults (and create it if it does not exist)
+            UserSettings.save_to_file(self.user_settings_filepath, user_settings, add_defaults=True)
+        else:
+            user_settings = UserSettings.get_defaults()
+
+        self.user_settings = user_settings
+
+    def modify_user_settings(self, modified_settings):
+        self.user_settings.update(modified_settings)
+        self.publish_usersettings()
+        if self.persistent_user_settings_enabled:
+            UserSettings.save_to_file(self.user_settings_filepath, self.user_settings, add_defaults=True)
+
+    def on_usersettings_command_issued(self, param_data: dict):
+        settings = param_data['settings']
+        self.modify_user_settings(settings)
+
+    def publish_usersettings(self):
+        self.log.info("Master usersettings are: " + str(self.user_settings))
+        self.connectionHandler.publish_usersettings(self.user_settings)
+        # TODO: notify UI of changes/initial settings. Should we send individual messages to all connected websockets or should we rely on mqtt proxy usages (UI just has to subscribe to Master/usersettings topic)?
 
     @property
     def external_state(self):
@@ -276,6 +348,7 @@ class MasterApplication(MultiSiteTestingModel):
 
     def on_startup_done(self):
         self.repost_state_if_connecting()
+        self.publish_usersettings()
 
     def on_timeout(self, message):
         self.error_message = message
@@ -367,9 +440,12 @@ class MasterApplication(MultiSiteTestingModel):
         self.receivedSiteTestResults = {}
         self.arm_timeout(TEST_TIMEOUT, lambda: self.timeout("not all sites completed the active test"))
         self.pendingTransitionsTest = SequenceContainer([TEST_STATE_TESTING, TEST_STATE_IDLE], self.configuredSites, lambda: None,
-                                                        lambda site, state: self.on_error(f"Bad statetransition of control during test"))
+                                                        lambda site, state: self.on_error(f"Bad statetransition of testapp during test"))
         self.error_message = ''
-        self.connectionHandler.send_next_to_all_sites()
+        job_data = {
+            'duttest.stop_on_fail': self.user_settings['duttest.stop_on_fail'],
+        }
+        self.connectionHandler.send_next_to_all_sites(job_data)
 
     def on_unload_command_issued(self, param_data: dict):
         self.arm_timeout(UNLOAD_TIMEOUT, lambda: self.timeout("not all sites unloaded the testprogram"))
@@ -452,10 +528,14 @@ class MasterApplication(MultiSiteTestingModel):
     def apply_resource_config(self, resource_request: dict, on_resource_config_applied_callback: Callable):
         resource_id = resource_request['resource_id']
         config = resource_request['config']
-        self.connectionHandler.publish_resource_config(resource_id, config)
+
         # simulate async callback after resource has been configured (always successful currently)
         # TODO: we probably need to check again if we are still in valid state. an error may occurred by now. also resource configuration may fail.
-        asyncio.get_event_loop().call_later(0.1, on_resource_config_applied_callback)
+        def _delayed_callback_after_resource_config_has_actually_been_applied():
+            self.connectionHandler.publish_resource_config(resource_id, config)
+            on_resource_config_applied_callback()
+
+        asyncio.get_event_loop().call_later(0.1, _delayed_callback_after_resource_config_has_actually_been_applied)
 
     def dispatch_command(self, json_data):
         cmd = json_data.get('command')
@@ -464,7 +544,8 @@ class MasterApplication(MultiSiteTestingModel):
                 'load': lambda param_data: self.load_command(param_data),
                 'next': lambda param_data: self.next(param_data),
                 'unload': lambda param_data: self.unload(param_data),
-                'reset': lambda param_data: self.reset(param_data)
+                'reset': lambda param_data: self.reset(param_data),
+                'usersettings': lambda param_data: self.usersettings_command(param_data)
             }[cmd](json_data)
         except Exception as e:
             self.log.error(f'Failed to execute command {cmd}: {e}')
