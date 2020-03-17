@@ -103,19 +103,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # setup the toolbar
         self.toolbar = self.create_toolbar() # sets active_tester, active_project, hwr (and base if necessary)
-
-
-
         self.update_toolbar()
-
-
         self.update_testers()
-        # self.update_projects()
-        self.update_hardware()
 
-        self.tree_update()
-        #self.update_project_list()
-        self.update_menu()
         self.show()
 
     def quit_event(self, status):
@@ -155,22 +145,6 @@ class MainWindow(QtWidgets.QMainWindow):
         run_action.triggered.connect(self.onRun)
         run_action.setCheckable(False)
         toolbar.addAction(run_action)
-
-        # project_label = QtWidgets.QLabel("Project:")
-        # project_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        # toolbar.addWidget(project_label)
-
-        # self.project_combo = QtWidgets.QComboBox()
-        # self.project_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        # self.project_combo.currentTextChanged.connect(self.projectChanged)
-        # self.project_combo.clear()
-        # toolbar.addWidget(self.project_combo)
-
-        # project_refresh = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Projects", self)
-        # project_refresh.setStatusTip("Refresh the project list")
-        # project_refresh.triggered.connect(self.update_projects)
-        # project_refresh.setCheckable(False)
-        # toolbar.addAction(project_refresh)
 
         hw_label = QtWidgets.QLabel("Hardware:")
         hw_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
@@ -229,219 +203,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return toolbar
 
-    def update_toolbar(self):
-        '''
-        This method will update the toolbar.
-        '''
-        pass
-
-    def context_menu_manager(self, point):
-        #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
-        #https://doc.qt.io/qt-5/qtreewidget-members.html
-        #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
-        #https://cdn.materialdesignicons.com/4.9.95/
-        index = self.tree.indexAt(point)
-        if not index.isValid():
-            print("what the fuck")
-            return
-        item = self.tree.itemAt(point)
-        self.node_name = item.text(0)
-        self.node_type = item.text(1)
-        self.node_data = item.text(2)
-
-        print("name = '%s' type = '%s', data = '%s'" % (self.node_name, self.node_type, self.node_data))
-
-        if self.node_type == 'project':
-            menu = QtWidgets.QMenu(self)
-            audit = menu.addAction(qta.icon("mdi.incognito", color='orange') ,"audit")
-            audit.triggered.connect(self.placeholder)
-            pack = menu.addAction(qta.icon("mdi.gift-outline", color='orange'), "pack")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'docs_root' :
-            menu = QtWidgets.QMenu(self)
-            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
-            new_folder.triggered.connect(self.new_folder)
-            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
-            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'docs':
-            menu = QtWidgets.QMenu(self)
-            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
-            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
-            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
-            menu.addSeparator()
-            delete_folder = menu.addAction(qta.icon("mdi.folder-remove-outline", color='orange'), "Delete Folder")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'doc':
-            menu = QtWidgets.QMenu(self)
-            open_file = menu.addAction(qta.icon("mdi.file-edit-outline", color='orange'), "Open")
-            rename_file = menu.addAction(qta.icon("mdi.lead-pencil", color='orange'), "Rename")
-            menu.addSeparator()
-            delete_file = menu.addAction(qta.icon("mdi.eraser", color='orange'), "Delete")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'hardwaresetups':
-            menu = QtWidgets.QMenu(self)
-            new_hardwaresetup = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            new_hardwaresetup.triggered.connect(self.new_hardwaresetup)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'hardwaresetup':
-            menu = QtWidgets.QMenu(self)
-            activate_hardwaresetup = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
-            #activate_hardwaresetup.triggered.connect
-            show_hardwaresetup = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            edit_hardwaresetup = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            delete_hardwaresetup = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'masksets':
-            menu = QtWidgets.QMenu(self)
-            add_maskset = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_maskset.triggered.connect(self.new_maskset)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'maskset':
-            menu = QtWidgets.QMenu(self)
-            view_maskset = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_maskset.triggered.connect
-            edit_maskset = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_maskset.triggered.connect
-            delete_maskset = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_maskset.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'dies':
-            menu = QtWidgets.QMenu(self)
-            add_die = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_die.triggered.connect(self.new_die)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'die':
-            menu = QtWidgets.QMenu(self)
-            edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_die.triggered.connect
-            delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_die.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'packages':
-            menu = QtWidgets.QMenu(self)
-            add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_package.triggered.connect(self.new_package)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'package':
-            menu = QtWidgets.QMenu(self)
-            edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_package.triggered.connect
-            delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_package.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'patterns':
-            menu = QtWidgets.QMenu(self)
-            add_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_pattern.triggered.connect ...
-            import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
-            #import_pattern.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'pattern':
-            menu = QtWidgets.QMenu(self)
-            edit_pattern = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
-            # edit_pattern.triggered.connect ...
-            delete_pattern = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_pattern.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'protocols':
-            menu = QtWidgets.QMenu(self)
-            add_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")      
-            # add_protocol.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())        
-        elif self.node_type == 'protocol':
-            menu = QtWidgets.QMenu(self)
-            edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
-            # edit_protocol.triggered.connect ...
-            delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_protocol.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'devices':
-            menu = QtWidgets.QMenu(self)
-            add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_device.triggered.connect(self.new_device)
-            menu.exec_(QtGui.QCursor.pos())
-            #TODO: update the base filter to 'FT' if needed !
-
-        elif self.node_type == 'device':
-            menu = QtWidgets.QMenu(self)
-            edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_device.triggered.connect
-            delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_device.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'products':
-            menu = QtWidgets.QMenu(self)
-            add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_product.triggered.connect(self.new_product)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'product':
-            menu = QtWidgets.QMenu(self)
-            edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_product.triggered.connect
-            delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_product.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'flows':
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_flow.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'flow':
-            menu = QtWidgets.QMenu(self)
-            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_flow.triggered.connect
-            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_flow.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'registermaps':
-            menu = QtWidgets.QMenu(self)
-            add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_registermap.triggered.connect
-            import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
-            # import_registermap.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'registermap':
-            menu = QtWidgets.QMenu(self)
-            edit_registermap = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_registermap.triggered.connect
-            delete_registermap = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_registermap.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'states':
-            menu = QtWidgets.QMenu(self)
-            add_state = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_state.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'state':
-            menu = QtWidgets.QMenu(self)
-            view_state = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_state.triggered.connect
-            edit_state = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_state.triggered.connect
-            delete_state = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_state.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'tests':
-            menu = QtWidgets.QMenu(self)
-            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_test.triggered.connect
-            clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'test':
-            menu = QtWidgets.QMenu(self)
-            edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_test.triggered.connect
-            clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
-            # clone_to_test.triggered.connect
-            trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
-            # trace_test.triggered.connect
-            delete_test = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_test.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-
-            
-            
     def update_testers(self):
         new_tester_list = list(self.tester_finder.list_testers())
         old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
@@ -484,130 +245,131 @@ class MainWindow(QtWidgets.QMainWindow):
     #     self.active_project_path = os.path.join(self.workspace_path, self.active_project)
     #     self.update_hardware()
 
-    def update_hardware(self):
-        '''
-        This mentod will update the hardware list in the toolbar's combo box
-        '''
-        if self.active_project != '':
-            hw_list = self.project_info.get_hardwares()
-            old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
-
-            if len(hw_list) == 0:
-                hw_list.append('')
-                self.active_hw = ''
-
-            if self.active_hw not in hw_list:
-                self.active_hw = hw_list[0]
-
-            if set(hw_list) != set(old_hw_list):
-                self.hw_combo.blockSignals(True)
-                self.hw_combo.clear()
-                for index, hw in enumerate(hw_list):
-                    self.hw_combo.addItem(str(hw))
-                    if hw == self.active_hw:
-                        self.hw_combo.setCurrentIndex(index)
-                self.hw_combo.blockSignals(False)
-
     def update_menu(self):
         if self.active_project == None: # no active project
             self.active_project_path = None
         else: # we have an active project
             self.active_project_path = os.path.join(self.workspace_path, self.active_project)
 
-    def testerChanged(self):
-        self.active_tester = self.tester_combo.currentText()
-
-    def hardwareChanged(self):
-        self.active_hw = self.hw_combo.currentText()
-        print("active_hw = '%s'" % self.active_hw)
-
-    def baseChanged(self):
-        if self.base_combo.currentText() == '': # all targets
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.addItems(['']+
-                                       self.project_info.get_dies_for_hardware(self.active_hw)+
-                                       self.project_info.get_products_for_hardware(self.active_hw))
-            self.target_combo.setCurrentIndex(0) # the empty string            
-            self.target_combo.blockSignals(False)
-        elif self.base_combo.currentText() == 'PR': # probing targets = dies
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.addItems(['']+
-                                       self.project_info.get_dies_for_hardware(self.active_hw))
-            self.target_combo.setCurrentIndex(0) # the empty string            
-            self.target_combo.blockSignals(False)
-        else: # final test targets = products
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.addItems(['']+
-                                       self.project_info.get_products_for_hardware(self.active_hw))
-            self.target_combo.setCurrentIndex(0) # the empty string            
-            self.target_combo.blockSignals(False)
-        self.tree_update()
-
-    def targetChanged(self):
-        available_dies = self.project_info.get_dies_for_hardware(self.hw_combo.currentText())
-        if self.target_combo.currentText() in available_dies: # probing --> PR
-            self.base_combo.setCurrentIndex(self.base_combo.findText('PR'))
-        else: # final test --> FT
-            self.base_combo.setCurrentIndex(self.base_combo.findText('FT'))
-        self.tree_update()
-
-    def active_project_changed(self):
-        self.active_project = self.comboBox.currentText()
-        self.active_project_path = os.path.join(self.workspace_path, self.active_project)
-        self.setWindowTitle("Spyder MockUp (%s)" % self.active_project_path)
-
-    def workspace_setup(self):
-        self.workspace_path = workspace_path
-        if not os.path.exists(self.workspace_path):
-            os.makedirs(self.workspace_path)
-        for project in self.list_projects_in_workspace():
-            print(project)
-
-    def list_projects_in_workspace(self):
-        retval = []
-        for possible_project_dir in os.listdir(self.workspace_path):
-            if os.path.isdir(possible_project_dir):
-                retval.append(possible_project_dir)
-                #TODO: look in the directories
-        return retval
-
-
-    def get_tree_state(self):
+    def update_hardware(self):
         '''
-        this method will traverse the tree, and record the state (isExpanded)
-        for each item, and saves it.
-        
-        --> need to work model based !!!
+        This mentod will update the hardware list in the toolbar's combo box
         '''
-        state = {}
-        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
-        while it.value():
-            itemIndex = self.tree.indexFromItem(it.value(), 0)
-            itemState = self.tree.isExpanded(it.value())
-            state.update({itemIndex: itemState})
-            it += 1
-        return state
-    
-    def set_tree_state(self, state):
-        '''
-        this method will apply the supplied state to the tree (setExpanded)
-        if a state can not be applied (item gone), it will be ignored.
-        
-        --> need to work model based !!!
-        '''
-        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
-        while it.value():
-            toExpand = [i for i in state if i == self.tree.indexFromItem(it.value(),0)]
-            shouldExpand = state.get(toExpand[0])
-            if shouldExpand == True:
-                if not self.tree.isItemExpanded(it.value()):
-                    self.tree.expandItem(it.value())
-            it += 1
+        if self.project_info == None:
+            self.hw_combo.blockSignals(True)
+            self.hw_combo.clear()
+            self.hw_combo.setEnabled(False)
+            self.hw_combo.blockSignals(False)
+        else:            
+            saved_hw = self.hw_combo.currentText()
+            if saved_hw == '':
+                saved_hw = self.project_info.get_latest_hardware_name()
             
-    def tree_update(self):
+            print(f"saved_hw = {saved_hw}")
+            self.hw_combo.blockSignals(True)
+            self.hw_combo.clear()
+            new_hw_list = self.project_info.get_hardwares()
+            self.hw_combo.addItems(new_hw_list)
+            index = self.hw_combo.findText(saved_hw)
+            if index >= 0: # saved hw found in new list
+                self.hw_combo.setCurrentIndex(index)
+            else: # saved hw not found in new list
+                self.hw_combo.setCurrentIndex(0) # the empty string
+            if len(new_hw_list) > 1:
+                self.hw_combo.setEnabled(True)
+            else: # only one element in list (must be the empty string)
+                self.hw_combo.setEnabled(False)
+            self.hw_combo.blockSignals(False)
+        
+        
+        
+        
+        
+        # if self.active_project != '':
+        #     hw_list = self.project_info.get_hardwares()
+        #     old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
+
+        #     if len(hw_list) == 0:
+        #         hw_list.append('')
+        #         self.active_hw = ''
+
+        #     if self.active_hw not in hw_list:
+        #         self.active_hw = hw_list[0]
+
+        #     if set(hw_list) != set(old_hw_list):
+        #         self.hw_combo.blockSignals(True)
+        #         self.hw_combo.clear()
+        #         for index, hw in enumerate(hw_list):
+        #             self.hw_combo.addItem(str(hw))
+        #             if hw == self.active_hw:
+        #                 self.hw_combo.setCurrentIndex(index)
+        #         self.hw_combo.blockSignals(False)
+
+    def update_base(self):
+        if self.project_info == None:
+            self.base_combo.blockSignals(True)
+            self.base_combo.setEnabled(False)
+            self.base_combo.setCurrentIndex(0) #empty string
+            self.base_combo.blockSignals(False)
+        else:            
+            if self.hw_combo.isEnabled():
+                self.base_combo.setEnabled(True)
+                if self.base_combo.currentText() == 'FT':
+                    self.target_label.setText('Product:')
+                elif self.base_combo.currentText() == 'PR':
+                    self.target_label.setText('Die:')
+                else:
+                    self.target_label.setText('Target:')
+            else:
+                self.base_combo.setEnabled(False)
+        
+    def update_target(self):
+        if self.project_info == None:
+            self.target_label.setText('Targets:')
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.setEnabled(False)            
+        else:
+            saved_target = self.target_combo.currentText()
+            if self.base_combo.isEnabled():
+                
+                
+                
+                
+                if self.target_label.text() == 'FT':
+                    targets = [''] 
+                    targets += self.project_info.get_products_for_hardware(self.active_hw)
+                elif self.target_label.text() == 'PR':
+                    targets = [''] 
+                    targets += self.project_info.get_dies_for_hardware(self.active_hw)
+                else: 
+                    targets = [''] 
+                    targets += self.project_info.get_dies_for_hardware(self.active_hw)
+                    targets += self.project_info.get_products_for_hardware(self.active_hw)
+                self.target_combo.blockSignals(True)
+                self.target_combo.clear()
+                self.target_combo.addItems(targets)
+                if saved_target in targets:
+                    self.target_combo.setCurrentIndex(self.target_combo.findText(saved_target))
+                else:
+                    self.target_combo.setCurrentIndex(0)
+                self.target_combo.setEnabled(True)
+                self.target_combo.blockSignals(False)
+            else:
+                self.target_combo.blockSignals(True)
+                self.target_combo.clear()
+                self.target_combo.setEnabled(False)
+                self.target_combo.blockSignals(False)
+        
+    def update_toolbar(self):
+        '''
+        This method will update the toolbar.
+        '''
+        self.update_hardware()
+        self.update_base()
+        self.update_target()
+
+    def update_tree(self):
         '''
         this method will update the 'project explorer'
         '''
@@ -883,8 +645,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 tests.setDisabled(True)
             else: # build the sub-tree with self.base_combo
                 tests.setDisabled(False)
-                test_list = self.project_info.get_tests(self.hw_combo.currentText(), 
-                                                        self.base_combo.currentText())
+                test_list = self.project_info.get_tests_from_db(self.hw_combo.currentText(), 
+                                                                self.base_combo.currentText())
                 previous = None
                 for test_entry in test_list:
                     test = QtWidgets.QTreeWidgetItem(tests, previous)
@@ -893,11 +655,302 @@ class MainWindow(QtWidgets.QMainWindow):
                     test.setText(2, test_list[test_entry])
                     previous = test
 
-                
+
+    def context_menu_manager(self, point):
+        #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
+        #https://doc.qt.io/qt-5/qtreewidget-members.html
+        #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
+        #https://cdn.materialdesignicons.com/4.9.95/
+        index = self.tree.indexAt(point)
+        if not index.isValid():
+            print("what the fuck")
+            return
+        item = self.tree.itemAt(point)
+        self.node_name = item.text(0)
+        self.node_type = item.text(1)
+        self.node_data = item.text(2)
+
+        print("name = '%s' type = '%s', data = '%s'" % (self.node_name, self.node_type, self.node_data))
+
+        if self.node_type == 'project':
+            menu = QtWidgets.QMenu(self)
+            audit = menu.addAction(qta.icon("mdi.incognito", color='orange') ,"audit")
+            audit.triggered.connect(self.placeholder)
+            pack = menu.addAction(qta.icon("mdi.gift-outline", color='orange'), "pack")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'docs_root' :
+            menu = QtWidgets.QMenu(self)
+            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
+            new_folder.triggered.connect(self.new_folder)
+            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
+            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'docs':
+            menu = QtWidgets.QMenu(self)
+            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
+            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
+            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
+            menu.addSeparator()
+            delete_folder = menu.addAction(qta.icon("mdi.folder-remove-outline", color='orange'), "Delete Folder")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'doc':
+            menu = QtWidgets.QMenu(self)
+            open_file = menu.addAction(qta.icon("mdi.file-edit-outline", color='orange'), "Open")
+            rename_file = menu.addAction(qta.icon("mdi.lead-pencil", color='orange'), "Rename")
+            menu.addSeparator()
+            delete_file = menu.addAction(qta.icon("mdi.eraser", color='orange'), "Delete")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'hardwaresetups':
+            menu = QtWidgets.QMenu(self)
+            new_hardwaresetup = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            new_hardwaresetup.triggered.connect(self.new_hardwaresetup)
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'hardwaresetup':
+            menu = QtWidgets.QMenu(self)
+            activate_hardwaresetup = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            #activate_hardwaresetup.triggered.connect
+            show_hardwaresetup = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            edit_hardwaresetup = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            delete_hardwaresetup = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'masksets':
+            menu = QtWidgets.QMenu(self)
+            add_maskset = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_maskset.triggered.connect(self.new_maskset)
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'maskset':
+            menu = QtWidgets.QMenu(self)
+            view_maskset = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_maskset.triggered.connect
+            edit_maskset = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_maskset.triggered.connect
+            delete_maskset = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_maskset.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'dies':
+            menu = QtWidgets.QMenu(self)
+            add_die = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_die.triggered.connect(self.new_die)
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'die':
+            menu = QtWidgets.QMenu(self)
+            activate_die = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_die.triggered.connect
+            view_die = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_die.triggered.connect
+            edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_die.triggered.connect
+            delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_die.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'packages':
+            menu = QtWidgets.QMenu(self)
+            add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_package.triggered.connect(self.new_package)
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'package':
+            menu = QtWidgets.QMenu(self)
+            view_package = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_package.triggered.connect
+            edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_package.triggered.connect
+            delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_package.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'patterns':
+            menu = QtWidgets.QMenu(self)
+            add_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_pattern.triggered.connect ...
+            import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+            #import_pattern.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'pattern':
+            menu = QtWidgets.QMenu(self)
+            edit_pattern = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+            # edit_pattern.triggered.connect ...
+            delete_pattern = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_pattern.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'protocols':
+            menu = QtWidgets.QMenu(self)
+            add_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")      
+            # add_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())        
+        elif self.node_type == 'protocol':
+            menu = QtWidgets.QMenu(self)
+            edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+            # edit_protocol.triggered.connect ...
+            delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_protocol.triggered.connect ...
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'devices':
+            menu = QtWidgets.QMenu(self)
+            add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_device.triggered.connect(self.new_device)
+            menu.exec_(QtGui.QCursor.pos())
+            #TODO: update the base filter to 'FT' if needed !
+        elif self.node_type == 'device':
+            menu = QtWidgets.QMenu(self)
+            view_device = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_device.triggered.connect
+            edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_device.triggered.connect
+            delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_device.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'products':
+            menu = QtWidgets.QMenu(self)
+            add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_product.triggered.connect(self.new_product)
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'product':
+            menu = QtWidgets.QMenu(self)
+            activate_product = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+            # activate_product.triggered.connect
+            view_product = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_product.triggered.connect
+            edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_product.triggered.connect
+            delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_product.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'flows':
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            # add_flow.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'flow':
+            menu = QtWidgets.QMenu(self)
+            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_flow.triggered.connect
+            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_flow.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'registermaps':
+            menu = QtWidgets.QMenu(self)
+            add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_registermap.triggered.connect
+            import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+            # import_registermap.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'registermap':
+            menu = QtWidgets.QMenu(self)
+            edit_registermap = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_registermap.triggered.connect
+            delete_registermap = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_registermap.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'states':
+            menu = QtWidgets.QMenu(self)
+            add_state = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            #add_state.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'state':
+            menu = QtWidgets.QMenu(self)
+            view_state = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            # view_state.triggered.connect
+            edit_state = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            # edit_state.triggered.connect
+            delete_state = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_state.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'tests':
+            menu = QtWidgets.QMenu(self)
+            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_test.triggered.connect(self.new_test)
+            clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'test':
+            menu = QtWidgets.QMenu(self)
+            edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            edit_test.triggered.connect(self.edit_test)
+            clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
+            # clone_to_test.triggered.connect
+            trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
+            # trace_test.triggered.connect
+            delete_test = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            # delete_test.triggered.connect
+            menu.exec_(QtGui.QCursor.pos())
+
+            
+            
+
+    def testerChanged(self):
+        self.active_tester = self.tester_combo.currentText()
+
+    def hardwareChanged(self):
+        self.active_hw = self.hw_combo.currentText()
+        self.update_base()
+        self.update_target()
+        self.update_tree()
+
+    def baseChanged(self):
+        self.update_target()
+        self.update_tree()
+
+    def targetChanged(self):
+        self.update_tree()
+
+    def active_project_changed(self):
+        self.active_project = self.comboBox.currentText()
+        self.active_project_path = os.path.join(self.workspace_path, self.active_project)
+        self.setWindowTitle("Spyder MockUp (%s)" % self.active_project_path)
+
+    def workspace_setup(self):
+        self.workspace_path = workspace_path
+        if not os.path.exists(self.workspace_path):
+            os.makedirs(self.workspace_path)
+        for project in self.list_projects_in_workspace():
+            print(project)
+
+    # def list_projects_in_workspace(self):
+    #     retval = []
+    #     for possible_project_dir in os.listdir(self.workspace_path):
+    #         if os.path.isdir(possible_project_dir):
+    #             retval.append(possible_project_dir)
+    #             #TODO: look in the directories
+    #     return retval
+
+
+    def get_tree_state(self):
+        '''
+        this method will traverse the tree, and record the state (isExpanded)
+        for each item, and saves it.
+        
+        --> need to work model based !!!
+        '''
+        state = {}
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        while it.value():
+            itemIndex = self.tree.indexFromItem(it.value(), 0)
+            itemState = self.tree.isExpanded(it.value())
+            state.update({itemIndex: itemState})
+            it += 1
+        return state
+    
+    def set_tree_state(self, state):
+        '''
+        this method will apply the supplied state to the tree (setExpanded)
+        if a state can not be applied (item gone), it will be ignored.
+        
+        --> need to work model based !!!
+        '''
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        while it.value():
+            toExpand = [i for i in state if i == self.tree.indexFromItem(it.value(),0)]
+            shouldExpand = state.get(toExpand[0])
+            if shouldExpand == True:
+                if not self.tree.isItemExpanded(it.value()):
+                    self.tree.expandItem(it.value())
+            it += 1
+
+
+
 
     def new_test(self):
-        from ATE.org.actions.new.test.NewTestWizard import new_test_dialog
+        from ATE.org.actions.new.test.NewTestWizard import new_test_dialog     
         new_test_dialog(self)
+        self.update_tree()
 
     def new_testprogram(self):
         print("new_testprogram")
@@ -953,37 +1006,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.active_project_path = selected_directory
             self.active_project = os.path.split(self.active_project_path)[-1]            
             self.project_info = project_navigator(self.active_project_path)
-            available_hardwares =  self.project_info.get_hardwares()
-            print(f"{available_hardwares}")
-            available_hardwares.sort()
-            print(f"{available_hardwares}")
-            if len(available_hardwares)>0:
-                self.active_hw = available_hardwares[-1]
-                
-                self.hw_combo.blockSignals(True)
-                self.hw_combo.clear()
-                self.hw_combo.addItems(available_hardwares)
-                self.hw_combo.setCurrentIndex(len(available_hardwares)-1)
-                self.hw_combo.setEnabled(True)
-                self.hw_combo.blockSignals(False)
-                
-                
-                self.base_combo.setCurrentIndex(0) # = nothing selected
-                self.base_combo.setEnabled(True)
-                
-                targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hw)
-                targets += self.project_info.get_products_for_hardware(self.active_hw)
-                self.target_combo.blockSignals(True)
-                self.target_combo.clear()
-                self.target_combo.addItems(targets)
-                self.target_combo.setCurrentIndex(0) # = nothing
-                self.target_combo.setEnabled(True)
-                self.target_combo.blockSignals(False)
-            else:
-                self.active_hw = ''
-            self.update_hardware()
-            self.tree_update()
+            
+            latest_hardware = self.project_info.get_latest_hardware_name()
+            print(f"latest_hardware = {latest_hardware}")
+            self.hw_combo.setCurrentText(latest_hardware)
+            self.base_combo.setCurrentIndex(0) # empty string
+            self.target_combo.setCurrentIndex(0) # empty string
+            
+            self.update_toolbar()
+            self.update_tree()
 
     def clone_test(self):
         print("clone_test")

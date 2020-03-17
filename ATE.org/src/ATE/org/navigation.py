@@ -207,7 +207,7 @@ class project_navigator(object):
 	                           "hardware"	INTEGER NOT NULL,
 	                           "base"	TEXT NOT NULL 
                                   CHECK(base=='PR' OR base=='FT'),
-	                           "test_numbers"	BLOB NOT NULL,
+	                           "definition"	BLOB NOT NULL,
 	                           "relative_path"	TEXT NOT NULL,
 
  	                           PRIMARY KEY("name")
@@ -285,6 +285,18 @@ class project_navigator(object):
             available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
             return "HW%d" % (max(available_hardwares_)+1)
                 
+    def get_latest_hardware_name(self):
+        '''
+        This method will determine the latest hardware name and return it
+        '''
+        available_hardwares = self.get_hardwares()
+        if len(available_hardwares)==0:
+            return ""
+        else:
+            print(f"available_hardwares = {available_hardwares}")
+            available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
+            return "HW%d" % (max(available_hardwares_))
+        
     def get_hardware_definition(self, name):
         '''
         this method retreives the hwr_data for hwr_nr.
@@ -719,16 +731,28 @@ class project_navigator(object):
         
         
     
-    def add_test(self, name):
-        pass
-    
+    def add_test(self, name, hardware, base, definition):
+        '''
+        given the name, hardware, base and test_numbers for a test, 
+        create the test based on the supplied info and add the info to 
+        the database.
+        '''
+        from ATE.org.coding import test_generator
+        
+        relative_path = test_generator(self.project_directory, name, hardware, base, definition)
+        query = '''INSERT INTO tests(name, hardware, base, definition, relative_path) VALUES (?, ?, ?, ?, ?)'''
+        blob = pickle.dumps(definition, 4)
+        self.cur.execute(query, (name, hardware, base, blob, relative_path))
+        self.con.commit() 
+
     def update_test(self, name):
         pass
     
-    def get_tests(self, hardware, base):
+    def get_tests_from_files(self, hardware, base):
         '''
         given hardware and base, this method will return a dictionary
         of tests, and as value the absolute path to the tests.
+        by searching the directory structure.
         '''
         retval = {}
         tests_directory = os.path.join(self.project_directory, 'src', 'tests', hardware, base)
@@ -736,13 +760,28 @@ class project_navigator(object):
         for potential_test in potential_tests:
             if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY
                 if not '_' in potential_test.upper().replace('.PY', ''): # name doesn't contain an underscore
-                    if not '.' in potential_test.upper().replace('.PY', ''): # name doesn't contain dot(s)
+                    if not '.' in potential_test.upper().replace('.PY', ''): # name doesn't contain extra dot(s)
                         retval['.'.join(potential_test.split('.')[0:-1])] = os.path.join(tests_directory, potential_test)
+        return retval
+    
+    def get_tests_from_db(self, hardware, base):
+        '''
+        given hardware and base, this method will return a dictionary
+        of tests, and as value the absolute path to the tests.
+        by querying the database.
+        '''
+        query = '''SELECT name, relative_path FROM tests WHERE hardware = ? AND base = ?'''
+        self.cur.execute(query, (hardware, base))
+        retval = {}
+        for row in self.cur.fetchall():
+            retval[row[0]]=row[1]
         return retval
     
     def remove_test(self, name):
         pass
     
+    def trace_test(self, hardware, base, name):
+        pass
     
 
 
