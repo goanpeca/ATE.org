@@ -12,55 +12,56 @@ import {formatDate } from '@angular/common';
   pure: true
 })
 export class SystemConsoleComponent implements OnInit, PipeTransform {
-  transform(value: JSON, args?: any): any {
-    return this.retrieveData(value);
+  msgs: ConsoleData[] = [];
+  @Input() msg: JSON;
+  // tslint:disable-next-line: no-any
+  transform(value: JSON, args?: any) {
+    this.retrieveData(value);
   }
 
   retrieveData(message) {
+    // abort
     if (!message) { return; }
 
-    const jsonMessage = JSON.parse(message.payload);
+    const JSON_MESSAGE = JSON.parse(message.payload);
 
-    const _STATE: string = jsonMessage.state;
-    const _TOPIC: string = message.topic;
-    const mType: string = jsonMessage.type;
+    const STATE: string = JSON_MESSAGE.state;
+    const TOPIC: string = message.topic;
+    const TYPE: string = JSON_MESSAGE.type;
 
-    if (!_STATE || !_TOPIC || !mType) {
+    if (!STATE || !TOPIC || !TYPE) {
       return;
     }
 
     let data: ConsoleData;
-    if (mType === MessageTypes.Status) {
-      const description: string = mType + ':      ' + _STATE;
-      data = this.generateMessage(_STATE, description, _TOPIC);
-    } else if (jsonMessage.type === MessageTypes.Cmd) {
-      const description: string = mType + ':     ' + jsonMessage.command;
-      data = this.generateMessage(_STATE, description, _TOPIC);
-    } else if (jsonMessage.type === MessageTypes.Testresult) {
-      const description: string = mType + ':     ' + jsonMessage.testdata;
-      data = this.generateMessage(_STATE, description, _TOPIC);
-    } else { return; }
 
+    if (TYPE === MessageTypes.Status) {
+      const description: string = TYPE + ':      ' + STATE;
+      data = this.generateMessage(STATE, description, TOPIC);
+    } else if (JSON_MESSAGE.type === MessageTypes.Cmd) {
+      const description: string = TYPE + ':     ' + JSON_MESSAGE.command;
+      data = this.generateMessage(STATE, description, TOPIC);
+    } else if (JSON_MESSAGE.type === MessageTypes.Testresult) {
+      const description: string = TYPE + ':     ' + JSON_MESSAGE.testdata;
+      data = this.generateMessage(STATE, description, TOPIC);
+    } else { return; }
     this.msgs.push(data);
   }
 
   generateMessage(state: string, description: string, topic: string): ConsoleData {
-      const DATA: ConsoleData = {
-        date: formatDate(Date.now(), 'medium', 'en-US'),
-        topic,
-        description
-      };
 
-      return DATA;
+    const DATA: ConsoleData = {
+      date: formatDate(Date.now(), 'medium', 'en-US'),
+      topic,
+      description
+    };
+
+    return DATA;
   }
 
   clearConsole() {
     this.msgs.length = 0;
   }
-
-  @Input() msg: JSON;
-  msgs: ConsoleData[] = [];
-
 
   constructor() {}
 

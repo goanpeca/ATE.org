@@ -8,7 +8,7 @@ import { SystemStatus } from './system-status';
 })
 
 export class AppComponent {
-constructor() {
+  constructor() {
 
 
     const _SELF = this;
@@ -21,11 +21,11 @@ constructor() {
     };
 
     this.webSocket.onerror = (e) => {
-        console.log( 'WebSocket connection caused error. type: ' + e.type );
+      console.log( 'WebSocket connection caused error. type: ' + e.type );
     };
 
     this.webSocket.onclose = (e) => {
-        console.log( 'WebSocket connection has been closed' );
+      console.log( 'WebSocket connection has been closed' );
     };
 
     this.webSocket.onmessage = (e) => {
@@ -41,11 +41,11 @@ constructor() {
           _SELF.onMqttProxyMessage(jsonMessage.payload);
         }
       } else if ( e.data instanceof ArrayBuffer ) {
-            console.log( 'WebSocket connection received ArrayBuffer' );
+        console.log( 'WebSocket connection received ArrayBuffer' );
       } else if ( e.data instanceof Blob ) {
-            console.log('WebSocket connection received Blob' );
+        console.log('WebSocket connection received Blob' );
       } else {
-            console.log( 'WebSocket connection something else: ' + e.data );
+        console.log( 'WebSocket connection something else: ' + e.data );
       }
 
       console.log('Session id is: ' + _SELF.getSessionId());
@@ -95,8 +95,8 @@ constructor() {
   getSessionId() {
     const result = localStorage.getItem('sctSessionId');
     if ( result === null ) {
-        localStorage.clear();
-        localStorage.setItem('sctSessionId', '0' );
+      localStorage.clear();
+      localStorage.setItem('sctSessionId', '0' );
     }
     return localStorage.getItem('sctSessionId');
   }

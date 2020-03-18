@@ -11,59 +11,59 @@ export enum SystemState {
 
 export class SystemStatus {
 
-    deviceId: string;
-    env: string;
-    handler: string;
-    time: string;
-    sites: string[];
-    program: string;
-    log: string;
-    state: SystemState;
-    reason: string;
+  deviceId: string;
+  env: string;
+  handler: string;
+  time: string;
+  sites: string[];
+  program: string;
+  log: string;
+  state: SystemState;
+  reason: string;
 
-    constructor() {
-        this.deviceId = 'invalid';
-        this.env = 'invalid';
-        this.handler = 'invalid';
-        this.time = 'invalid',
-        this.sites = [],
-        this.program = 'connecting',
-        this.log = 'connecting',
-        this.state = SystemState.connecting;
-        this.reason = 'invalid error';
+  constructor() {
+    this.deviceId = 'invalid';
+    this.env = 'invalid';
+    this.handler = 'invalid';
+    this.time = 'invalid',
+      this.sites = [],
+      this.program = 'connecting',
+      this.log = 'connecting',
+      this.state = SystemState.connecting;
+    this.reason = 'invalid error';
+  }
+
+  update(json) {
+    if (json.deviceId) {
+      this.deviceId = json.deviceId;
     }
 
-    update(json) {
-        if (json.deviceId) {
-            this.deviceId = json.deviceId;
-        }
+    if (json.env) {
+      this.env = json.env;
+    }
 
-        if (json.env) {
-            this.env = json.env;
-        }
+    if (json.handler) {
+      this.handler = json.handler;
+    }
 
-        if (json.handler) {
-            this.handler = json.handler;
-        }
+    if (json.systemTime) {
+      this.time = json.systemTime;
+    }
 
-        if (json.systemTime) {
-            this.time = json.systemTime;
-        }
+    if (json.sites) {
+      this.sites = json.sites;
+    }
 
-        if (json.sites) {
-            this.sites = json.sites;
-        }
+    if (json.program ) {
+      this.program  = json.program;
+    }
 
-        if (json.program ) {
-            this.program  = json.program;
-        }
+    if (json.log) {
+      this.log = json.log;
+    }
 
-        if (json.log) {
-            this.log = json.log;
-        }
-
-        if (json.state) {
-            this.state = json.state;
-        }
-   }
+    if (json.state) {
+      this.state = json.state;
+    }
+  }
 }

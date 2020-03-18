@@ -13,21 +13,24 @@ import { SystemStatus, SystemState } from '../system-status';
 })
 export class SystemSiteComponent implements OnInit, PipeTransform {
 
-  constructor() { }
+  constructor() {
+    this.systemStatus = new SystemStatus();
+  }
 
   @Input() msg: JSON;
   @Input() sites: string[];
-  @Input() systemStatus: SystemStatus = new SystemStatus();
+  @Input() systemStatus: SystemStatus;
   mySystemState = SystemState;
 
-  _sites_control: Site[] = [];
-  _sites_test: Site[] = [];
+  sitesControl: Site[] = [];
+  siteTest: Site[] = [];
 
+  _SITES = {
+    Control: this.sitesControl,
+    TestApp: this.siteTest
+  };
 
-  _sites_ = { Control: this._sites_control,
-              TestApp: this._sites_test
-            };
-  transform(value: JSON, args?: any): any {
+  transform(value: JSON, args) {
     return this.retrieveData(value);
   }
 
@@ -46,32 +49,32 @@ export class SystemSiteComponent implements OnInit, PipeTransform {
 
   getMessageinfos(topic: string, payload) {
     const source = '';
-    const topic_split: string[] = topic.split('/');
-    const site: string = topic_split[topic_split.length - 1];
+    const topicSplit: string[] = topic.split('/');
+    const site: string = topicSplit[topicSplit.length - 1];
 
     // we ignore master status, it will be handled somewehere else
     if (topic.includes('Master')) { return; }
 
     if (topic.includes('site')) {
-      const site_num = site.replace(/^\D+/g, '');
-      const _type = topic_split[2];
-      if (this.sites.find(x => x === site_num)) {
-          let _site: Site;
-          _site = {
-            type: topic_split[2],
-            site_id: site_num,
-            state: payload.state
-          };
+      const siteNum = site.replace(/^\D+/g, '');
+      const type = topicSplit[2];
+      if (this.sites.find(x => x === siteNum)) {
+        let site1: Site;
+        site1 = {
+          type: topicSplit[2],
+          siteId: siteNum,
+          state: payload.state
+        };
 
-          let _s: Site[] = this._sites_[_type];
-          const num = _s.findIndex(x => x.site_id === site_num);
-          if (num !== -1) {
-            this._sites_[_type][num] = _site;
-            return;
-          }
-
-          this._sites_[_type].push(_site);
+        const SITE_LIST: Site[] = this._SITES[type];
+        const num = SITE_LIST.findIndex(x => x.siteId === siteNum);
+        if (num !== -1) {
+          this._SITES[type][num] = site1;
+          return;
         }
+
+        this._SITES[type].push(site1);
+      }
     }
 
     return source;
@@ -84,12 +87,10 @@ export enum SourceApp {
   Master = 'master',
   Control = 'control',
   Test = 'test',
-
 }
-
 
 export interface Site {
   type: string;
-  site_id: string;
+  siteId: string;
   state: string;
 }

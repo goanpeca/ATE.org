@@ -83,7 +83,7 @@ class NewPackageWizard(QtWidgets.QDialog):
                      }
         
         self.parent.project_info.add_package(name, definition)
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
     def CancelButtonPressed(self):

@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+/*[[[cog
+import getpass
+from ATE.utils.DT import DT
+
+now = DT()
+user = getpass.getuser()
+test_description = "should come from outside ..."
+
+
+print("'''")
+print(f"Created on {now}\n@author: {user}")
+print(f"\nDescription:\n------------\n{test_description}")
+print("'''")
+
+ 
+]]]*/
+
+
+//[[[end]]]
