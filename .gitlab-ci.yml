@@ -16,6 +16,7 @@ stages:
 
 before_script:
   - $venvPath = ".venv"
+  - $qtvenvPath = ".qtvenv"
   - >
     function Write-PythonPath {
         $pythonPath = $(Get-Command python | % source)
@@ -49,12 +50,22 @@ before_script:
         cd RTF/APP
         pip install -e .
     }
+  - >
+    function Install-QtPythonRequirements {
+        param($VenvPath)
+       
+        py -m pip install -U pip setuptools wheel
+        cd ATE.org
+        pip install -e .
+        pip install -r requirements.txt
+    }
   - >       
     function Install-AngularRequirementsAndBuild {
         param($VenvPath)
 
         cd RTF\UI\angular\mini-sct-gui
         npm i @angular/core
+        npm i tslint-eslint-rules
         ng build
     }
   - >
@@ -79,11 +90,25 @@ build_venv:
     - Install-PythonRequirements $venvPath
   tags:
     - pyt
+
+build_qtvenv:
+  stage: generate_build_dependencies
+  artifacts:
+    expire_in: '10 mins'
+    paths:
+      - .qtvenv
+  script:
+    - Create-Venv $qtvenvPath
+    - Enable-Venv $qtvenvPath
+    - Install-QtPythonRequirements $qtvenvPath
+  tags:
+    - pyt
     
 build_angular_dependencies:
   stage: generate_build_dependencies
   script:
     - Install-AngularRequirementsAndBuild $venvPath
+    - ng lint
   tags:
     - pyt
     
@@ -117,6 +142,17 @@ pytest-stdf:
   tags:
    - pyt
 
+pytest-qt:
+  stage: test
+  script:
+   - Enable-Venv $qtvenvPath
+   - cd ATE.org
+   - python -m pytest
+  dependencies:
+   - build_qtvenv
+  tags:
+   - pyt
+   
 pytest-integration:
   stage: integration-test
   script:

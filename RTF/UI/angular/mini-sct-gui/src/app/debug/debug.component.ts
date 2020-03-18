@@ -6,11 +6,12 @@ import { SystemStatus, SystemState } from '../system-status';
   templateUrl: './debug.component.html',
   styleUrls: ['./debug.component.scss']
 })
+
 export class DebugComponent implements OnInit {
 
   mySystemState = SystemState;
 
-  states: any = [
+  states = [
     {
       description: 'Connecting',
       value: this.mySystemState.connecting

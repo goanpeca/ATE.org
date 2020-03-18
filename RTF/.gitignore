@@ -66,4 +66,8 @@ MANIFEST
 
 # Per-project virtualenvs
 .venv*/
+.mockup/
+ATE.org/pip-wheel-metadata/
+ATE.org/build/
+ATE.org/.atevenv/
 RTF/UI/angular/mini-sct-gui/.angulardoc.json

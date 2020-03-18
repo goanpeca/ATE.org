@@ -95,7 +95,7 @@ class NewDieWizard(QtWidgets.QDialog):
         hardware = self.WithHardware.currentText()
         
         self.parent.project_info.add_die(name, maskset, hardware)
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
 def new_die_dialog(parent):

@@ -35,11 +35,11 @@ export class SystemControlComponent {
     this.lotNumber.emit(null);
   }
   // check input
-    numericOnly(event): boolean {
-      // TODO: There must be more possibilities hier for testing purpose ??
-      // allows only number and .
-      const pattern = /^([0-9.])$/;
-      const result = pattern.test(event.key);
-      return result;
+  numericOnly(event): boolean {
+    // TODO: There must be more possibilities hier for testing purpose ??
+    // allows only number and .
+    const pattern = /^([0-9.])$/;
+    const result = pattern.test(event.key);
+    return result;
   }
 }
