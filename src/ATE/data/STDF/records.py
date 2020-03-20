@@ -23,32 +23,19 @@ License : GPL
 '''
 
 import bz2
-import gzip
-import hashlib
 import io
 import os
 import pickle
-import re
-import shutil
 import struct
 import sys
-import time
 from abc import ABC
 from mimetypes import guess_type
-from shutil import copyfileobj
+import time
+import datetime
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-# from ATE.Data.Formats.STDF.utils import File
-from ATE.utils import DT, magicnumber
-from tqdm import tqdm
 
 if sys.version_info[0] < 3:
     raise Exception("The STDF library is made for Python 3")
-
-
-
 
 
 __version__ = '$Revision: 0.51 $'
@@ -130,6 +117,32 @@ RecordDefinitions = {
 
 class STDFError(Exception):
     pass
+
+# Removal of dependency on ATE.utils.macignumber:
+# The original implementation in ATE.utils.magicnumber.extension_from_magic_number_in_file(filename)
+# returns '.stdf' if the two bytes at offset 2 of the given file are equal to b'\x00\x0A'.
+# This checks that the data in the file looks a FAR record (REC_TYP is 0, REC_SUB is 10).
+# Note that the REC_LEN field (first two bytes of the file) is probably ignored because it
+# depends on the endianness, defined by CPU_TYPE (fifth byte).
+def is_file_with_stdf_magicnumber(filename):
+    try:
+        with open(filename, 'rb') as f:
+            f.seek(2)
+            return f.read(2) == b'\x00\x0A'
+    except OSError:
+        # if it cannot be read it's not an stdf file
+        return False
+
+# Removal of dependency on ATE.utils.DT: DT().epoch and DT.__repr__
+def _missing_stdf_time_field_value() -> int:
+    return int(time.time()) # used to be DT().epoch, which returned time.time(). note that we need an 32bit unsigned integer to allow de-/serialization without data loss
+
+# date and time format according to the STDF spec V4:
+# number of seconds since midnight on January 1st, 1970, in the local time zone (32bit unsigned int)
+# Note that DT() has a more detailed format but that is not relevant for now (e.g. we dont need Quarter)
+def _stdf_time_field_value_to_string(seconds_since_1970_in_local_time: int):
+    return datetime.datetime.fromtimestamp(seconds_since_1970_in_local_time).strftime('%Y-%m-%d %H:%M:%S')
+
 
 def ts_to_id(Version=__latest_STDF_version__, Extensions=None):
     '''
@@ -320,10 +333,14 @@ class STDR(ABC):
                 else:
                     return (None, None, None, None, None)
             else:
-                raise STDFError("%s.get_value(%s) Error : '%s' is not a string or integer" % (self.id, FieldID, FieldID))
+                raise STDFError("%s.get_fields(%s) Error : '%s' is not a string or integer" % (self.id, FieldID, FieldID))
 
     def get_value(self, FieldID):
-        return self.fields[FieldID]['Value']
+        _, _, Ref, Value, _, Missing = self.get_fields(FieldID)
+        # TODO: ref value handling is missing here: for arrays (kxTYPE etc.) this returns the size of the array instead of its value for now
+        if Ref is not None:
+            return self.get_value(ref)
+        return Missing if Value is None else Value
 
     def set_value(self, FieldID, Value):
         '''
@@ -346,6 +363,7 @@ class STDR(ABC):
 
         Type, Ref = self.get_fields(FieldKey)[1:3]
         K = None
+        # TODO: the following condition should most likely be "Ref is not None", since this one is always true but initialized K to the field with '#' == 3 in case of Ref == None
         if Ref != '':
             K = self.get_fields(Ref)[3]
         Type, Bytes = Type.split("*")
@@ -590,6 +608,8 @@ class STDR(ABC):
                 if Bytes.isdigit():
                     temp = Value.strip()[:int(Bytes)]
                     #TODO: pad with spaces if the length doesn't match !!!
+                    # TODO: OK, but why strip first, just to pad again? common value for "C*1" is a single space ' ', but "C*n" is usually not filled with spaces, is it?
+                    temp = temp.ljust(int(Bytes), ' ')
                 elif Bytes == 'n':
                     temp = Value.strip()[:255]
                 elif Bytes == 'f':
@@ -641,7 +661,7 @@ class STDR(ABC):
                                 raise STDFError("%s.set_value(%s, %s) : '%s' list does contain an non-8-bit integer." % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                         else:
                             raise STDFError("%s.set_value(%s, %s) : '%s' list does contain an element that is not of type int or string." % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
-                    if result_length / 8 != 0:
+                    if result_length % 8 != 0:
                         raise STDFError("%s.set_value(%s, %s) : '%s' list does not constitute a multiple of 8 bits." % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                     temp = ['0'] * result_length
                     temp_index = 0
@@ -763,6 +783,10 @@ class STDR(ABC):
             raise STDFError("%s._type_size(%s) : '%s' is not a string or integer." % (self.id, FieldID,FieldID))
 
         Type, Ref, Value = self.get_fields(FieldKey)[1:4]
+        if Value==None: Value=self.get_fields(FieldKey)[5] # get the 'missing' default
+        # TODO: the reference handling and/or array ("kxTYPE") handling here is most probably
+        # broken and need to be tested: (e.g. Ref !='' seems wrong, missing/default value of
+        # referenced field should be used, None check before use of K below etc.)
         K = None
         if Ref != '':
             K = self.get_fields(Ref)[3]
@@ -814,7 +838,7 @@ class STDR(ABC):
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, str(K) + '*'.join((Type, Bytes))))
             elif Type == 'xN':
                 if Bytes.isdigit():
-                    bytes_to_pack = int(Bytes) / 2
+                    bytes_to_pack = int(Bytes) // 2
                     if (int(Bytes) % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack * K
@@ -874,7 +898,7 @@ class STDR(ABC):
                     return retval
                 elif Bytes == 'n':
                     bits_to_pack = len(Value)
-                    bytes_to_pack = bits_to_pack / 8
+                    bytes_to_pack = bits_to_pack // 8
                     if (bits_to_pack % 8) != 0:
                         bytes_to_pack += 1
                     if bytes_to_pack <= 255:
@@ -889,7 +913,7 @@ class STDR(ABC):
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
             elif Type == 'D':
                 if Bytes.isdigit():
-                    bytes_to_pack = int(Bytes) / 8
+                    bytes_to_pack = int(Bytes) // 8
                     if (int(Bytes) % 8) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack
@@ -897,7 +921,7 @@ class STDR(ABC):
                     return retval
                 elif Bytes == 'n':
                     bits_to_pack = len(Value)
-                    bytes_to_pack = bits_to_pack / 8
+                    bytes_to_pack = bits_to_pack // 8
                     if (bits_to_pack % 8) != 0:
                         bytes_to_pack += 1
                     if bytes_to_pack <= 8192:
@@ -912,7 +936,7 @@ class STDR(ABC):
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
             elif Type == 'N':
                 if Bytes.isdigit():
-                    bytes_to_pack = int(Bytes) / 2
+                    bytes_to_pack = int(Bytes) // 2
                     if (int(Bytes) % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack
@@ -920,7 +944,7 @@ class STDR(ABC):
                     return retval
                 elif Bytes == 'n':
                     nibbles_to_pack = len(Value)
-                    bytes_to_pack = nibbles_to_pack / 2
+                    bytes_to_pack = nibbles_to_pack // 2
                     if (nibbles_to_pack % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack + 1
@@ -994,6 +1018,14 @@ class STDR(ABC):
 
         TypeFormat, Ref, Value = self.get_fields(FieldKey)[1:4] # get Type, Reference and Value
         if Value==None: Value=self.get_fields(FieldKey)[5] # get the 'missing' default
+
+        if Value is None:
+            # changed behavior to consistently require explicit initialization of non-optional
+            # fields (instead of crashing somewhere below when None is accessed).
+            # we could introdce a non-strict mode where we store valid data for the current
+            # type here if this is not desired.
+            raise STDFError("%s._pack_item(%s) : Error : cannot pack uninitialized value (None) of non-optional field" % (self.id, FieldKey))
+
         Type, Size = TypeFormat.split("*")
         if Type.startswith('x'):
             Type = Type[1:]
@@ -1077,7 +1109,7 @@ class STDR(ABC):
                 for i in range(K):
                     if Size == 'n':
                         pkg += struct.pack('B', len(ValueMask[i]))
-                    pkg += ValueMask[i]
+                    pkg += ValueMask[i].encode()
             else:
                 if TypeMultiplier: raise STDFError("%s._pack_item(%s) : Unsupported type-format '%s'" % (self.id, FieldKey, str(K) + TypeFormat))
                 else: raise STDFError("%s._pack_item(%s) : Unsupported type-format '%s'" % (self.id, FieldKey, TypeFormat))
@@ -1104,7 +1136,7 @@ class STDR(ABC):
             if Size.isdigit() or Size=='f' or Size == 'n':
                 for i in range(K):
                     bits_to_pack = len(ValueMask[i])
-                    bytes_to_pack = bits_to_pack / 8 # Bits to pack should always be a multiple of 8, guaranteed by set_value
+                    bytes_to_pack = bits_to_pack // 8 # Bits to pack should always be a multiple of 8, guaranteed by set_value
                     if Size == 'n':
                         pkg += struct.pack('B', bytes_to_pack)
                     for Byte in range(bytes_to_pack):
@@ -1126,7 +1158,7 @@ class STDR(ABC):
                 for i in range(K):
                     temp_value = ValueMask[i]
                     bits_to_pack = len(temp_value)
-                    bytes_to_pack = int(bits_to_pack) / 8
+                    bytes_to_pack = int(bits_to_pack) // 8
                     if Size == 'n':
                         pkg += struct.pack('%sH' % self.endian, bits_to_pack)
                     if (bits_to_pack % 8) != 0:
@@ -1727,9 +1759,23 @@ class STDR(ABC):
             if self.fields[sequence[field]]['Ref'] != None:
                 retval += " -> %s" % self.fields[sequence[field]]['Ref']
             if sequence[field] in time_fields:
-                retval += " = %s" % DT(float(self.fields[sequence[field]]['Value']))
+                local_unix_time_stamp = float(self.fields[sequence[field]]['Value'])
+                retval += " = %s" % _stdf_time_field_value_to_string(float(self.fields[sequence[field]]['Value']))
             retval += "\n"
         return retval
+
+    def to_dict(self, include_missing_values=False):
+        '''
+        Method used by convert the record to dict
+        '''
+        time_fields = ['MOD_TIM', 'SETUP_T', 'START_T', 'FINISH_T']
+        sequence = {}
+        for field in self.fields:
+            sequence[self.fields[field]['#']] = field
+        return {sequence[field]: self.fields[sequence[field]]['Value'] 
+                for field in sequence
+                if include_missing_values or self.fields[sequence[field]]['Value'] != self.fields[sequence[field]]['Missing']}
+
 
 ###################################################################################################################################################
 #TODO: change 'V4' and 'V3' in self.version to 4 and 3 respectively
@@ -2199,7 +2245,7 @@ Location:
                 'REC_TYP'  : {'#' :  1, 'Type' : 'U*1', 'Ref' : None, 'Value' :    0, 'Text' : 'Record type                           ', 'Missing' :         None},
                 'REC_SUB'  : {'#' :  2, 'Type' : 'U*1', 'Ref' : None, 'Value' :   10, 'Text' : 'Record sub-type                       ', 'Missing' :         None},
                 'CPU_TYPE' : {'#' :  3, 'Type' : 'U*1', 'Ref' : None, 'Value' : None, 'Text' : 'CPU type that wrote this file         ', 'Missing' :    sys_cpu()},
-                'STDF_VER' : {'#' :  4, 'Type' : 'U*1', 'Ref' : None, 'Value' : None, 'Text' : 'STDF version number                   ', 'Missing' : self.version}
+                'STDF_VER' : {'#' :  4, 'Type' : 'U*1', 'Ref' : None, 'Value' : None, 'Text' : 'STDF version number                   ', 'Missing' : int(self.version[1])}
             }
         else:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
@@ -2606,12 +2652,13 @@ Location:
     Immediately after the File Attributes Record (FAR) and the Audit Trail Records (ATR),
     if ATRs are used.
 '''
+            initial_timestamp_value = _missing_stdf_time_field_value()
             self.fields = {
                 'REC_LEN'  : {'#' :  0, 'Type' : 'U*2', 'Ref' : None, 'Value' :    0, 'Text' : 'Bytes of data following header        ', 'Missing' :       None},
                 'REC_TYP'  : {'#' :  1, 'Type' : 'U*1', 'Ref' : None, 'Value' :    1, 'Text' : 'Record type                           ', 'Missing' :       None},
                 'REC_SUB'  : {'#' :  2, 'Type' : 'U*1', 'Ref' : None, 'Value' :   10, 'Text' : 'Record sub-type                       ', 'Missing' :       None},
-                'SETUP_T'  : {'#' :  3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time of job setup            ', 'Missing' :  'START_T'},
-                'START_T'  : {'#' :  4, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time first part tested       ', 'Missing' : DT().epoch},
+                'SETUP_T'  : {'#' :  3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time of job setup            ', 'Missing' :       initial_timestamp_value},
+                'START_T'  : {'#' :  4, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time first part tested       ', 'Missing' :       initial_timestamp_value},
                 'STAT_NUM' : {'#' :  5, 'Type' : 'U*1', 'Ref' : None, 'Value' : None, 'Text' : 'Tester station number                 ', 'Missing' :          0},
                 'MODE_COD' : {'#' :  6, 'Type' : 'C*1', 'Ref' : None, 'Value' : None, 'Text' : 'Test mode code : A/M/P/E/M/P/Q/space  ', 'Missing' :        ' '},
                 'RTST_COD' : {'#' :  7, 'Type' : 'C*1', 'Ref' : None, 'Value' : None, 'Text' : 'Lot retest code : Y/N/0..9/space      ', 'Missing' :        ' '},
@@ -2682,7 +2729,7 @@ Location:
                 'PROT_COD' : {'#' :  9, 'Type' : 'C*1', 'Ref' : None, 'Value' : None, 'Text' : 'Data protection code 0..9/A..Z/space  ', 'Missing' :          ' '},
                 'CMOD_COD' : {'#' : 10, 'Type' : 'C*1', 'Ref' : None, 'Value' : None, 'Text' : 'Command mode code                     ', 'Missing' :          ' '},
                 'SETUP_T'  : {'#' : 11, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time of job setup            ', 'Missing' :    'START_T'},
-                'START_T'  : {'#' : 12, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time first part tested       ', 'Missing' :   DT().epoch},
+                'START_T'  : {'#' : 12, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time first part tested       ', 'Missing' :   _missing_stdf_time_field_value()},
                 'LOT_ID'   : {'#' : 13, 'Type' : 'C*n', 'Ref' : None, 'Value' : None, 'Text' : 'Lot ID (customer specified)           ', 'Missing' :           ''},
                 'PART_TYP' : {'#' : 14, 'Type' : 'C*n', 'Ref' : None, 'Value' : None, 'Text' : 'Part Type (or product ID)             ', 'Missing' :           ''},
                 'JOB_NAM'  : {'#' : 15, 'Type' : 'C*n', 'Ref' : None, 'Value' : None, 'Text' : 'Job name (test program name)          ', 'Missing' :           ''},
@@ -2829,7 +2876,7 @@ Location:
                 'REC_LEN'  : {'#' : 0, 'Type' : 'U*2', 'Ref' : None, 'Value' : None, 'Text' : 'Bytes of data following header        ', 'Missing' :       None},
                 'REC_TYP'  : {'#' : 1, 'Type' : 'U*1', 'Ref' : None, 'Value' :    1, 'Text' : 'Record type                           ', 'Missing' :       None},
                 'REC_SUB'  : {'#' : 2, 'Type' : 'U*1', 'Ref' : None, 'Value' :   20, 'Text' : 'Record sub-type                       ', 'Missing' :       None},
-                'FINISH_T' : {'#' : 3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time last part tested        ', 'Missing' : DT().epoch},
+                'FINISH_T' : {'#' : 3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time last part tested        ', 'Missing' : _missing_stdf_time_field_value()},
                 'DISP_COD' : {'#' : 4, 'Type' : 'C*1', 'Ref' : None, 'Value' : None, 'Text' : 'Lot disposition code                  ', 'Missing' :        ' '},
                 'USR_DESC' : {'#' : 5, 'Type' : 'C*n', 'Ref' : None, 'Value' : None, 'Text' : 'Lot description supplied by user      ', 'Missing' :         ''},
                 'EXC_DESC' : {'#' : 6, 'Type' : 'C*n', 'Ref' : None, 'Value' : None, 'Text' : 'Lot description supplied by exec      ', 'Missing' :         ''}
@@ -2857,7 +2904,7 @@ Location:
                 'REC_LEN'  : {'#' :  0, 'Type' : 'U*2', 'Ref' : None, 'Value' : None, 'Text' : 'Bytes of data following header        ', 'Missing' :       None},
                 'REC_TYP'  : {'#' :  1, 'Type' : 'U*1', 'Ref' : None, 'Value' :    1, 'Text' : 'Record type                           ', 'Missing' :       None},
                 'REC_SUB'  : {'#' :  2, 'Type' : 'U*1', 'Ref' : None, 'Value' :   20, 'Text' : 'Record sub-type                       ', 'Missing' :       None},
-                'FINISH_T' : {'#' :  3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time last part tested        ', 'Missing' : DT().epoch},
+                'FINISH_T' : {'#' :  3, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Date and time last part tested        ', 'Missing' : _missing_stdf_time_field_value()},
                 'PART_CNT' : {'#' :  4, 'Type' : 'U*4', 'Ref' : None, 'Value' : None, 'Text' : 'Number of parts tested                ', 'Missing' :          0},
                 'RTST_CNT' : {'#' :  5, 'Type' : 'I*4', 'Ref' : None, 'Value' : None, 'Text' : 'Number of parts retested              ', 'Missing' :          0},
                 'ABRT_CNT' : {'#' :  6, 'Type' : 'I*4', 'Ref' : None, 'Value' : None, 'Text' : 'Number of parts aborted               ', 'Missing' :          0},
@@ -4425,7 +4472,7 @@ class records_from_file(object):
         if isinstance(FileName, str):
             self.keep_open = False
             if not os.path.exists(FileName):
-                STDFError("'%s' does not exist")
+                raise STDFError("'%s' does not exist")
             self.endian = get_STDF_setup_from_file(FileName)[0]
             self.version = 'V%s' % struct.unpack('B', get_bytes_from_file(FileName, 5, 1))
             self.fd = open(FileName, 'rb')
@@ -4435,15 +4482,14 @@ class records_from_file(object):
             ptr = self.fd.tell()
             self.fd.seek(4)
             buff = self.fd.read(2)
-            CPU_TYPE = struct.unpack('B', buff[0])[0]
-            STDF_VER = struct.unpack('B', buff[1])[0]
+            CPU_TYPE, STDF_VER = struct.unpack('BB', buff)
             if CPU_TYPE == 1: self.endian = '>'
             elif CPU_TYPE == 2: self.endian = '<'
             else: self.endian = '?'
             self.version = 'V%s' % STDF_VER
             self.fd.seek(ptr)
         else:
-            STDFError("'%s' is not a string or an open file descriptor")
+            raise STDFError("'%s' is not a string or an open file descriptor")
         self.unpack = unpack
         self.fmt = '%sHBB' % self.endian
         TS2ID = ts_to_id(self.version)
@@ -4493,8 +4539,8 @@ def objects_from_indexed_file(FileName, index, records_of_interest=None):
     '''
      This is a Generator of records (not in order!)
     '''
-    if not isinstance(FileName, str): STDFError("'%s' is not a string.")
-    if not os.path.exists(FileName): STDFError("'%s' does not exist")
+    if not isinstance(FileName, str): raise STDFError("'%s' is not a string.")
+    if not os.path.exists(FileName): raise STDFError("'%s' does not exist")
     endian = get_STDF_setup_from_file(FileName)[0]
     RLF = '%sH' % endian
     version = 'V%s' % struct.unpack('B', get_bytes_from_file(FileName, 5, 1))
@@ -4773,10 +4819,10 @@ def get_bytes_from_file(FileName, Offset, Number):
     '''
     This function will return 'Number' bytes starting after 'Offset' from 'FileName'
     '''
-    if not isinstance(FileName, str): STDFError("'%s' is not a string")
-    if not isinstance(Offset, int): STDFError("Offset is not an integer")
-    if not isinstance(Number, int): STDFError("Number is not an integer")
-    if not os.path.exists(FileName): STDFError("'%s' does not exist")
+    if not isinstance(FileName, str): raise STDFError("'%s' is not a string")
+    if not isinstance(Offset, int): raise STDFError("Offset is not an integer")
+    if not isinstance(Number, int): raise STDFError("Number is not an integer")
+    if not os.path.exists(FileName): raise STDFError("'%s' does not exist")
     if guess_type(FileName)[1]=='gzip':
         raise NotImplemented("Not yet implemented")
     else:
@@ -4800,7 +4846,7 @@ def get_STDF_setup_from_file(FileName):
     endian = None
     version = None
     if os.path.exists(FileName) and os.path.isfile(FileName):
-        if '.stdf' in magicnumber.extension_from_magic_number_in_file(FileName):
+        if is_file_with_stdf_magicnumber(FileName):
             CPU_TYP, STDF_VER = struct.unpack('BB', get_bytes_from_file(FileName, 4, 2))
             if CPU_TYP == 1: endian = '>'
             elif CPU_TYP == 2: endian = '<'

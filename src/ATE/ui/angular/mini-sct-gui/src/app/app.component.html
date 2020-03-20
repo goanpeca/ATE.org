@@ -1,0 +1,17 @@
+<app-header></app-header>
+<app-system-status [systemStatus]="systemStatus">
+</app-system-status>
+
+<app-system-control [systemStatus]="systemStatus" (startDutTestEvent)="startDutTestEventChange($event)" (unLoadTestProgramEvent)="unLoadTestProgramEventChange($event)" (lotNumber)="lotNumberChange($event)">
+</app-system-control>
+
+<app-system-site [systemStatus]="systemStatus" [msg]="msg" [sites]="sites">
+</app-system-site>
+
+<app-debug (systemStateEvent)="systemStateEventChange($event)">
+</app-debug>
+
+<app-system-dialog [msg]="msg">
+
+</app-system-dialog>
+<app-footer></app-footer>

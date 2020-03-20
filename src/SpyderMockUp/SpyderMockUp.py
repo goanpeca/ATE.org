@@ -26,6 +26,7 @@ from ATE.org.navigation import project_navigator
 from ATE.org.validation import is_ATE_project
 from SCT.utils.finders import SCT_finder
 
+
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
 
@@ -255,36 +256,27 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         This mentod will update the hardware list in the toolbar's combo box
         '''
-        if self.project_info == None:
-            self.hw_combo.blockSignals(True)
-            self.hw_combo.clear()
-            self.hw_combo.setEnabled(False)
-            self.hw_combo.blockSignals(False)
-        else:            
-            saved_hw = self.hw_combo.currentText()
-            if saved_hw == '':
-                saved_hw = self.project_info.get_latest_hardware_name()
-            
-            print(f"saved_hw = {saved_hw}")
-            self.hw_combo.blockSignals(True)
-            self.hw_combo.clear()
-            new_hw_list = self.project_info.get_hardwares()
-            self.hw_combo.addItems(new_hw_list)
-            index = self.hw_combo.findText(saved_hw)
-            if index >= 0: # saved hw found in new list
-                self.hw_combo.setCurrentIndex(index)
-            else: # saved hw not found in new list
-                self.hw_combo.setCurrentIndex(0) # the empty string
-            if len(new_hw_list) > 1:
-                self.hw_combo.setEnabled(True)
-            else: # only one element in list (must be the empty string)
-                self.hw_combo.setEnabled(False)
-            self.hw_combo.blockSignals(False)
-        
-        
-        
-        
-        
+        if self.active_project != '':
+            hw_list = self.project_info.get_hardwares()
+            old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
+
+            if len(hw_list) == 0:
+                hw_list.append('')
+                self.active_hw = ''
+
+            if self.active_hw not in hw_list:
+                self.active_hw = hw_list[0]
+
+            if set(hw_list) != set(old_hw_list):
+                self.hw_combo.blockSignals(True)
+                self.hw_combo.clear()
+                for index, hw in enumerate(hw_list):
+                    self.hw_combo.addItem(str(hw))
+                    if hw == self.active_hw:
+                        self.hw_combo.setCurrentIndex(index)
+                self.hw_combo.blockSignals(False)
+
+
         # if self.active_project != '':
         #     hw_list = self.project_info.get_hardwares()
         #     old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
@@ -322,7 +314,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.target_label.setText('Target:')
             else:
                 self.base_combo.setEnabled(False)
-        
+    
     def update_target(self):
         if self.project_info == None:
             self.target_label.setText('Targets:')
@@ -332,10 +324,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             saved_target = self.target_combo.currentText()
             if self.base_combo.isEnabled():
-                
-                
-                
-                
                 if self.target_label.text() == 'FT':
                     targets = [''] 
                     targets += self.project_info.get_products_for_hardware(self.active_hw)
@@ -360,7 +348,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.target_combo.clear()
                 self.target_combo.setEnabled(False)
                 self.target_combo.blockSignals(False)
-        
+
+
     def update_toolbar(self):
         '''
         This method will update the toolbar.
@@ -369,11 +358,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_base()
         self.update_target()
 
-    def update_tree(self):
-        '''
-        this method will update the 'project explorer'
-        '''
 
+    def set_tree(self):
         if self.project_info != None:
             self.tree.clear()
             self.tree.setHeaderHidden(True)
@@ -396,7 +382,7 @@ class MainWindow(QtWidgets.QMainWindow):
             standards_documentation = QtWidgets.QTreeWidgetItem(documentation, None)
             standards_documentation.setText(0, 'standards')
             standards_documentation.setText(1, 'standards_dir')
-            
+
             tmp = os.listdir(os.path.join(doc_root, 'standards'))
             print(tmp)
             std_docs = [f for f in tmp if os.path.isfile(os.path.join(doc_root, 'standards', f))]
@@ -406,14 +392,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 doc.setText(0, doc_name)
                 doc.setText(1, 'standards_doc')
                 previous = doc
-            
+
             #TODO: doc structure should follow the directory structure
-            
+
         # sources
             sources = QtWidgets.QTreeWidgetItem(project, documentation)
             sources.setText(0, 'sources')
             sources.setText(1, 'sources')
-            
+
         # sources/definitions
             definitions = QtWidgets.QTreeWidgetItem(sources)
             definitions.setText(0, 'definitions')
@@ -430,7 +416,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 print(product_name)
                 product.setText(1, 'product')
                 previous = product
-                
+
         # sources/definitions/devices
             devices = QtWidgets.QTreeWidgetItem(definitions, products)
             devices.setText(0, 'devices')
@@ -503,7 +489,7 @@ class MainWindow(QtWidgets.QMainWindow):
             patterns.setText(0, 'patterns')
             patterns.setText(1, 'patterns')
             #TODO: insert the appropriate patterns from /sources/patterns, based on HWR and Base
-                
+
         # sources/states
             states = QtWidgets.QTreeWidgetItem(sources, patterns)
             states.setText(0, 'states')
@@ -514,147 +500,52 @@ class MainWindow(QtWidgets.QMainWindow):
             flows = QtWidgets.QTreeWidgetItem(sources, states)
             flows.setText(0, 'flows')
             flows.setText(1, 'flows')
-            if self.target_combo.currentText() == '': # gray out flows
-                flows.setDisabled(True)
-            else: # build the subtree with flow-types and programs
-                flows.setDisabled(False)
-        # sources/flows/production
-                production_flow = QtWidgets.QTreeWidgetItem(flows, None)
-                production_flow.setText(0, 'production')
-                production_flow.setText(1, 'production_flow')
-        # HALT vs HASS --> https://www.intertek.com/performance-testing/halt-and-hass/
-                
-        # sources/flows/qualification
-                qualification_flows = QtWidgets.QTreeWidgetItem(flows, production_flow)
-                qualification_flows.setText(0, 'qualification')
-                qualification_flows.setText(1, 'qualification_flows')
-                
-        # sources/flows/qualification/ZHM
-                qualification_ZHM_flows = QtWidgets.QTreeWidgetItem(qualification_flows, None)
-                qualification_ZHM_flows.setToolTip(0, 'Zero Hour Measurements')
-                qualification_ZHM_flows.setText(0, 'ZHM')
-                qualification_ZHM_flows.setText(1, 'qualification_ZHM_flows')
-                
-        # sources/flows/qualification/HTOL
-                qualification_HTOL_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ZHM_flows)
-                qualification_HTOL_flows.setToolTip(0, 'High Temperature Operating Life')
-                qualification_HTOL_flows.setText(0, 'HTOL')
-                qualification_HTOL_flows.setText(1, 'qualification_HTOL_flow')
-                
-        # sources/flows/qualification/HAST
-                qualification_HAST_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HTOL_flows)
-                qualification_HAST_flows.setToolTip(0, 'Highley Accelerated Stress Test')
-                qualification_HAST_flows.setText(0, 'HAST')
-                qualification_HAST_flows.setText(1, 'qualification_HAST_flows')
-                
-        # sources/flows/qualification/ESD
-                qualification_ESD_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HAST_flows)
-                qualification_ESD_flows.setToolTip(0, 'Electro Static Discharge')
-                qualification_ESD_flows.setText(0, 'ESD')
-                qualification_ESD_flows.setText(1, 'qualification_ESD_flows')
-
-        # sources/flows/qualification/HTSL
-                qualification_HTSL_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ESD_flows)
-                qualification_HTSL_flows.setToolTip(0, 'High Temperature Storage Life')
-                qualification_HTSL_flows.setText(0, 'HTSL')
-                qualification_HTSL_flows.setText(1, 'qualification_HTSL_flows')
-
-        # sources/flows/qualification/DR
-                qualification_DR_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HTSL_flows)
-                qualification_DR_flows.setToolTip(0, 'Data Retention')
-                qualification_DR_flows.setText(0, 'DR')
-                qualification_DR_flows.setText(1, 'qualification_DR_flows')
-
-        # sources/flows/qualification/EC
-                qualification_EC_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_DR_flows)
-                qualification_EC_flows.setToolTip(0, 'Endurance Cycling')
-                qualification_EC_flows.setText(0, 'EC')
-                qualification_EC_flows.setText(1, 'qualification_EC_flows')
-
-        # sources/flows/qualification/ABSMAX
-                qualification_ABSMAX_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_EC_flows)
-                qualification_ABSMAX_flows.setToolTip(0, 'Absolute Maximum Ratings')
-                qualification_ABSMAX_flows.setText(0, 'ABSMAX')
-                qualification_ABSMAX_flows.setText(1, 'qualification_ABSMAX_flows')
-
-        # sources/flows/qualification/XRAY
-                qualification_XRAY_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ABSMAX_flows)
-                # qualification_XRAY_flows.setToolTip(0, 'X-Ray')
-                qualification_XRAY_flows.setText(0, 'XRAY')
-                qualification_XRAY_flows.setText(1, 'qualification_XRAY_flows')
-
-        # sources/flows/qualification/LI
-                qualification_LI_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_XRAY_flows)
-                qualification_LI_flows.setToolTip(0, 'Lead Integrity')
-                qualification_LI_flows.setText(0, 'LI')
-                qualification_LI_flows.setText(1, 'qualification_LI_flows')
-
-        # sources/flows/qualification/ELFR
-                qualification_ELFR_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_LI_flows)
-                qualification_ELFR_flows.setToolTip(0, 'Early Life Failure Rate (aka: BurnIn)')
-                qualification_ELFR_flows.setText(0, 'ELFR')
-                qualification_ELFR_flows.setText(1, 'qualification_ELFR_flows')
-
-        # sources/flows/qualification/RSH
-                qualification_RSH_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ELFR_flows)
-                qualification_RSH_flows.setToolTip(0, 'Resistance to Solder Heat')
-                qualification_RSH_flows.setText(0, 'RSH')
-                qualification_RSH_flows.setText(1, 'qualification_RSH_flows')
-                
-        # sources/flows/qualification/SA
-                qualification_SA_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_RSH_flows)
-                qualification_SA_flows.setToolTip(0, 'SolderAbility')
-                qualification_SA_flows.setText(0, 'SA')
-                qualification_SA_flows.setText(1, 'qualification_SA_flows')
-                
-        # sources/flows/qualification/LU
-                qualification_LU_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_SA_flows)
-                qualification_LU_flows.setToolTip(0, 'Latch-up')
-                qualification_LU_flows.setText(0, 'LU')
-                qualification_LU_flows.setText(1, 'qualification_LU_flows')
-                
-                
-                
-                
-                
-                
-        # sources/flows/characterisation
-                characterisation_flows = QtWidgets.QTreeWidgetItem(flows, qualification_flows)
-                characterisation_flows.setText(0, 'characterisation')
-                characterisation_flows.setText(1, 'characterisation_flow')
-                
-        # sources/flows/validation
-                validation_flow = QtWidgets.QTreeWidgetItem(flows, characterisation_flows)
-                validation_flow.setText(0, 'validation')
-                validation_flow.setText(1, 'validation_flow')
-
-        # sources/flows/engineering
-                engineering_flow = QtWidgets.QTreeWidgetItem(flows, validation_flow)
-                engineering_flow.setText(0, 'engineering')
-                engineering_flow.setText(1, 'engineering_flow')
-        
-                
-                # production_flow = 
-                # qualification_flow = 
+            flows.setDisabled(True)
 
         # sources/tests
             tests = QtWidgets.QTreeWidgetItem(sources, flows)
             tests.setText(0, 'tests')
             tests.setText(1, 'tests')
-            if self.base_combo.currentText() == '': #gray out tests
-                tests.setDisabled(True)
-            else: # build the sub-tree with self.base_combo
-                tests.setDisabled(False)
-                test_list = self.project_info.get_tests_from_db(self.hw_combo.currentText(), 
-                                                                self.base_combo.currentText())
-                previous = None
-                for test_entry in test_list:
-                    test = QtWidgets.QTreeWidgetItem(tests, previous)
-                    test.setText(0, test_entry)
-                    test.setText(1, 'test')
-                    test.setText(2, test_list[test_entry])
-                    previous = test
+            tests.setDisabled(True)
 
+    def update_tree(self):
+        '''
+        this method will update the 'project explorer'
+        '''
+        current_item = None
+        if not self.tree.currentItem() is None:
+            current_item = self.tree.currentItem()
+
+        if self.project_info is not None:
+            get_info_from_type = {"hardwaresetups": self.project_info.get_hardwares(),
+                                  "masksets": self.project_info.get_masksets(),
+                                  "dies": self.project_info.get_masksets(),
+                                  "packages": self.project_info.get_packages(),
+                                  "devices": self.project_info.get_devices(),
+                                  "products": self.project_info.get_products()}
+
+            sub_type = {"hardwaresetups": "hardware",
+                        "masksets": "maskset",
+                        "dies": "die",
+                        "packages": "package",
+                        "devices": "device",
+                        "products": "product"}
+
+            changed = current_item
+            changed_type = current_item.text(1)
+            if changed_type not in get_info_from_type:
+                return
+            children= []
+            for child in range(changed.childCount()):
+                children.append(changed.child(child).text(0))
+
+            diff = list(set(get_info_from_type[changed_type]) - set(children))
+            for name in diff:
+                child = QtWidgets.QTreeWidgetItem()
+                child.setText(0, name)
+                child.setText(1, sub_type[changed_type])
+                changed.insertChild(changed.childCount(), child)
+                return
 
     def context_menu_manager(self, point):
         #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
@@ -734,10 +625,6 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'die':
             menu = QtWidgets.QMenu(self)
-            activate_die = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
-            # activate_die.triggered.connect
-            view_die = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_die.triggered.connect
             edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_die.triggered.connect
             delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -750,8 +637,6 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'package':
             menu = QtWidgets.QMenu(self)
-            view_package = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_package.triggered.connect
             edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_package.triggered.connect
             delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -789,10 +674,9 @@ class MainWindow(QtWidgets.QMainWindow):
             add_device.triggered.connect(self.new_device)
             menu.exec_(QtGui.QCursor.pos())
             #TODO: update the base filter to 'FT' if needed !
+
         elif self.node_type == 'device':
             menu = QtWidgets.QMenu(self)
-            view_device = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_device.triggered.connect
             edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_device.triggered.connect
             delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -805,10 +689,6 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'product':
             menu = QtWidgets.QMenu(self)
-            activate_product = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
-            # activate_product.triggered.connect
-            view_product = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_product.triggered.connect
             edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             # edit_product.triggered.connect
             delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
@@ -826,6 +706,12 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             # delete_flow.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == 'production_flow':
+            menu = QtWidgets.QMenu(self)
+            add_program = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_program.triggered.connect(self.new_testprogram)
+            menu.exec_(QtGui.QCursor.pos())
+
         elif self.node_type == 'registermaps':
             menu = QtWidgets.QMenu(self)
             add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
@@ -857,13 +743,13 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'tests':
             menu = QtWidgets.QMenu(self)
             add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_test.triggered.connect(self.new_test)
+            #add_test.triggered.connect
             clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'test':
             menu = QtWidgets.QMenu(self)
             edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_test.triggered.connect(self.edit_test)
+            # edit_test.triggered.connect
             clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
             # clone_to_test.triggered.connect
             trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
@@ -872,9 +758,6 @@ class MainWindow(QtWidgets.QMainWindow):
             # delete_test.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
 
-            
-            
-
     def testerChanged(self):
         self.active_tester = self.tester_combo.currentText()
 
@@ -882,14 +765,174 @@ class MainWindow(QtWidgets.QMainWindow):
         self.active_hw = self.hw_combo.currentText()
         self.update_base()
         self.update_target()
-        self.update_tree()
+        # self.update_tree()
+
+    def update_tests(self):
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        # nasty way to update flows
+        while it.value():
+            if it.value().text(1) == "tests":
+                if self.base_combo.currentText() == '':
+                    it.value().setDisabled(True)
+                    # remove all children from node: "flows"
+                    it.value().takeChildren()
+                else: # build the sub-tree with self.base_combo
+                    it.value().setDisabled(False)
+                    test_list = self.project_info.get_tests_from_db(self.hw_combo.currentText(), 
+                                                                    self.base_combo.currentText())
+                    print(test_list)
+                    for test_entry in test_list:
+                        test = QtWidgets.QTreeWidgetItem()
+                        test.setText(0, test_entry)
+                        test.setText(1, 'test')
+                        test.setText(2, test_list[test_entry])
+                        it.value().insertChild(it.value().childCount(), test)
+                    
+                    it.value().sortChildren(0, QtCore.Qt.AscendingOrder)
+                    return
+
+            it += 1
+
+    def update_flow_state(self):
+        it = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        while it.value():
+            if it.value().text(1) == "flows":
+                # remove all children from node: "flows"
+                it.value().takeChildren()
+                if self.target_combo.currentText() == '':
+                    it.value().setDisabled(True)
+                else:
+                    it.value().setDisabled(False)
+
+            # sources/flows/production
+                    flows = it.value()
+                    production_flow = QtWidgets.QTreeWidgetItem(flows, None)
+                    production_flow.setText(0, 'production')
+                    production_flow.setText(1, 'production_flow')
+
+                    production_flow.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
+
+            # HALT vs HASS --> https://www.intertek.com/performance-testing/halt-and-hass/
+            # sources/flows/qualification
+                    qualification_flows = QtWidgets.QTreeWidgetItem(flows, production_flow)
+                    qualification_flows.setText(0, 'qualification')
+                    qualification_flows.setText(1, 'qualification_flows')
+
+            # sources/flows/qualification/ZHM
+                    qualification_ZHM_flows = QtWidgets.QTreeWidgetItem(qualification_flows, None)
+                    qualification_ZHM_flows.setToolTip(0, 'Zero Hour Measurements')
+                    qualification_ZHM_flows.setText(0, 'ZHM')
+                    qualification_ZHM_flows.setText(1, 'qualification_ZHM_flows')
+
+            # sources/flows/qualification/HTOL
+                    qualification_HTOL_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ZHM_flows)
+                    qualification_HTOL_flows.setToolTip(0, 'High Temperature Operating Life')
+                    qualification_HTOL_flows.setText(0, 'HTOL')
+                    qualification_HTOL_flows.setText(1, 'qualification_HTOL_flow')
+
+            # sources/flows/qualification/HAST
+                    qualification_HAST_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HTOL_flows)
+                    qualification_HAST_flows.setToolTip(0, 'Highley Accelerated Stress Test')
+                    qualification_HAST_flows.setText(0, 'HAST')
+                    qualification_HAST_flows.setText(1, 'qualification_HAST_flows')
+            # sources/flows/qualification/ESD
+                    qualification_ESD_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HAST_flows)
+                    qualification_ESD_flows.setToolTip(0, 'Electro Static Discharge')
+                    qualification_ESD_flows.setText(0, 'ESD')
+                    qualification_ESD_flows.setText(1, 'qualification_ESD_flows')
+
+            # sources/flows/qualification/HTSL
+                    qualification_HTSL_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ESD_flows)
+                    qualification_HTSL_flows.setToolTip(0, 'High Temperature Storage Life')
+                    qualification_HTSL_flows.setText(0, 'HTSL')
+                    qualification_HTSL_flows.setText(1, 'qualification_HTSL_flows')
+
+            # sources/flows/qualification/DR
+                    qualification_DR_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_HTSL_flows)
+                    qualification_DR_flows.setToolTip(0, 'Data Retention')
+                    qualification_DR_flows.setText(0, 'DR')
+                    qualification_DR_flows.setText(1, 'qualification_DR_flows')
+
+            # sources/flows/qualification/EC
+                    qualification_EC_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_DR_flows)
+                    qualification_EC_flows.setToolTip(0, 'Endurance Cycling')
+                    qualification_EC_flows.setText(0, 'EC')
+                    qualification_EC_flows.setText(1, 'qualification_EC_flows')
+
+            # sources/flows/qualification/ABSMAX
+                    qualification_ABSMAX_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_EC_flows)
+                    qualification_ABSMAX_flows.setToolTip(0, 'Absolute Maximum Ratings')
+                    qualification_ABSMAX_flows.setText(0, 'ABSMAX')
+                    qualification_ABSMAX_flows.setText(1, 'qualification_ABSMAX_flows')
+
+            # sources/flows/qualification/XRAY
+                    qualification_XRAY_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ABSMAX_flows)
+                    # qualification_XRAY_flows.setToolTip(0, 'X-Ray')
+                    qualification_XRAY_flows.setText(0, 'XRAY')
+                    qualification_XRAY_flows.setText(1, 'qualification_XRAY_flows')
+
+            # sources/flows/qualification/LI
+                    qualification_LI_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_XRAY_flows)
+                    qualification_LI_flows.setToolTip(0, 'Lead Integrity')
+                    qualification_LI_flows.setText(0, 'LI')
+                    qualification_LI_flows.setText(1, 'qualification_LI_flows')
+
+            # sources/flows/qualification/ELFR
+                    qualification_ELFR_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_LI_flows)
+                    qualification_ELFR_flows.setToolTip(0, 'Early Life Failure Rate (aka: BurnIn)')
+                    qualification_ELFR_flows.setText(0, 'ELFR')
+                    qualification_ELFR_flows.setText(1, 'qualification_ELFR_flows')
+
+            # sources/flows/qualification/RSH
+                    qualification_RSH_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_ELFR_flows)
+                    qualification_RSH_flows.setToolTip(0, 'Resistance to Solder Heat')
+                    qualification_RSH_flows.setText(0, 'RSH')
+                    qualification_RSH_flows.setText(1, 'qualification_RSH_flows')
+
+            # sources/flows/qualification/SA
+                    qualification_SA_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_RSH_flows)
+                    qualification_SA_flows.setToolTip(0, 'SolderAbility')
+                    qualification_SA_flows.setText(0, 'SA')
+                    qualification_SA_flows.setText(1, 'qualification_SA_flows')
+
+            # sources/flows/qualification/LU
+                    qualification_LU_flows = QtWidgets.QTreeWidgetItem(qualification_flows, qualification_SA_flows)
+                    qualification_LU_flows.setToolTip(0, 'Latch-up')
+                    qualification_LU_flows.setText(0, 'LU')
+                    qualification_LU_flows.setText(1, 'qualification_LU_flows')
+
+            # sources/flows/characterisation
+                    characterisation_flows = QtWidgets.QTreeWidgetItem(flows, qualification_flows)
+                    characterisation_flows.setText(0, 'characterisation')
+                    characterisation_flows.setText(1, 'characterisation_flow')
+
+            # sources/flows/validation
+                    validation_flow = QtWidgets.QTreeWidgetItem(flows, characterisation_flows)
+                    validation_flow.setText(0, 'validation')
+                    validation_flow.setText(1, 'validation_flow')
+
+            # sources/flows/engineering
+                    engineering_flow = QtWidgets.QTreeWidgetItem(flows, validation_flow)
+                    engineering_flow.setText(0, 'engineering')
+                    engineering_flow.setText(1, 'engineering_flow')             
+
+                    flows.sortChildren(0, QtCore.Qt.AscendingOrder)
+                    # stop iteration when done
+                    return
+
+            it += 1
 
     def baseChanged(self):
         self.update_target()
-        self.update_tree()
+        self.update_flow_state()
+        self.update_tests()
+        # self.update_tree()
 
     def targetChanged(self):
-        self.update_tree()
+        self.update_flow_state()
+        self.update_tests()
+        # self.update_tree()
+        pass
 
     def active_project_changed(self):
         self.active_project = self.comboBox.currentText()
@@ -939,21 +982,18 @@ class MainWindow(QtWidgets.QMainWindow):
         while it.value():
             toExpand = [i for i in state if i == self.tree.indexFromItem(it.value(),0)]
             shouldExpand = state.get(toExpand[0])
-            if shouldExpand == True:
+            if shouldExpand:
                 if not self.tree.isItemExpanded(it.value()):
                     self.tree.expandItem(it.value())
             it += 1
 
-
-
-
     def new_test(self):
-        from ATE.org.actions.new.test.NewTestWizard import new_test_dialog     
+        from ATE.org.actions.new.test.NewTestWizard import new_test_dialog
         new_test_dialog(self)
-        self.update_tree()
 
     def new_testprogram(self):
-        print("new_testprogram")
+        from ATE.org.actions.new.program.NewProgramWizard import new_program_dialog
+        new_program_dialog(self)
 
     def new_flow(self):
         print("new_flow")
@@ -1006,15 +1046,40 @@ class MainWindow(QtWidgets.QMainWindow):
             self.active_project_path = selected_directory
             self.active_project = os.path.split(self.active_project_path)[-1]            
             self.project_info = project_navigator(self.active_project_path)
-            
-            latest_hardware = self.project_info.get_latest_hardware_name()
-            print(f"latest_hardware = {latest_hardware}")
-            self.hw_combo.setCurrentText(latest_hardware)
-            self.base_combo.setCurrentIndex(0) # empty string
-            self.target_combo.setCurrentIndex(0) # empty string
-            
-            self.update_toolbar()
-            self.update_tree()
+            available_hardwares =  self.project_info.get_hardwares()
+            print(f"{available_hardwares}")
+            available_hardwares.sort()
+            print(f"{available_hardwares}")
+            if len(available_hardwares)>0:
+                self.active_hw = available_hardwares[-1]
+                
+                self.hw_combo.blockSignals(True)
+                self.hw_combo.clear()
+                self.hw_combo.addItems(available_hardwares)
+                self.hw_combo.setCurrentIndex(len(available_hardwares)-1)
+                self.hw_combo.setEnabled(True)
+                self.hw_combo.blockSignals(False)
+                
+                
+                self.base_combo.setCurrentIndex(0) # = nothing selected
+                self.base_combo.setEnabled(True)
+                
+                targets = [''] 
+                targets += self.project_info.get_dies_for_hardware(self.active_hw)
+                targets += self.project_info.get_products_for_hardware(self.active_hw)
+                self.target_combo.blockSignals(True)
+                self.target_combo.clear()
+                self.target_combo.addItems(targets)
+                self.target_combo.setCurrentIndex(0) # = nothing
+                self.target_combo.setEnabled(True)
+                self.target_combo.blockSignals(False)
+            else:
+                self.active_hw = ''
+
+            self.update_hardware()
+
+            # set tree once and use "update_tree" function to update if needed
+            self.set_tree()
 
     def clone_test(self):
         print("clone_test")
@@ -1236,3 +1301,4 @@ if __name__ == '__main__':
     window = MainWindow(app)
     window.show()
     sys.exit(app.exec_())
+

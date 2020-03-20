@@ -1,0 +1,27 @@
+@import '../../styles.scss';
+button {
+    width: 100%;
+    color: #dddddd;
+    background-color: #0046AD;
+    font-weight: bolder;
+    font-size: 20px;
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    @include solidBorder(5px, $white);
+    border-radius: 15px;
+    border-style: outset;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    -ms-border-radius: 15px;
+    -o-border-radius: 15px;
+}
+
+button:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+button:active {
+    background-color: #2291EC;
+}

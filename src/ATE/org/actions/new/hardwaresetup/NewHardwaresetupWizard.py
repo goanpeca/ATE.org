@@ -143,7 +143,7 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
             raise Exception(f"Woops, something wrong with the name !!! '{name}'<->'{new_name}'")
         self.parent.active_hw = name
         self.parent.update_hardware()
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
     def CancelButtonPressed(self):

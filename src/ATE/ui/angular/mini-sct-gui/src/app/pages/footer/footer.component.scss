@@ -1,0 +1,16 @@
+@import '../../../styles.scss';
+
+/* Footer */
+
+.footer {
+    padding: 20px;
+    text-align: center;
+    background: $colorFooter;
+}
+
+
+/* blue hr */
+
+hr {
+    @include blueDivider;
+}

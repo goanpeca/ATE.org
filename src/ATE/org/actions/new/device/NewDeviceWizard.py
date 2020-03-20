@@ -192,7 +192,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
                       'pin_names' : {}}
             
         self.parent.project_info.add_device(name, hardware, package, definition)    
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
 def new_device_dialog(parent):

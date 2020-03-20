@@ -1,0 +1,65 @@
+<!-- error state -->
+<div *ngIf="visiable">
+    <div class="error" *ngIf="systemStatus.state == mySystemState.error">
+        <button class="btn-close" type="button" (click)="visiable = false">&times;</button>
+        <p class="error_reason"> {{systemStatus.reason}} </p>
+    </div>
+</div>
+
+<!-- deviders -->
+<hr class="blueDivider">
+
+<!-- System Information -->
+<div class="row">
+    <div class="side">
+        <h2>System Information</h2>
+    </div>
+    <div class="main">
+        <!-- connecting state -->
+        <div style="height:200px;" class="warn" *ngIf="systemStatus.state === mySystemState.connecting">
+            <h3>
+                <strong>Identifying Test System!</strong>
+            </h3>
+        </div>
+
+        <!-- system information -->
+        <div *ngIf="systemStatus.state !> mySystemState.error">
+            <div class="infobox" id="sysStatus">
+                <div class="infobox-header">
+                    <h3>System</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <strong>Name:</strong> {{systemStatus.deviceId}}
+                    <br>
+                    <strong>Number of Sites:</strong>
+                    <input type="button" name="numOfSites" id="numOfSites" disabled value="{{systemStatus.sites.length}}" />
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Time</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.time}}</p>
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Environment</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.env}}</p>
+                </div>
+                <br>
+                <div class="infobox-header">
+                    <h3>Handler</h3>
+                </div>
+                <hr>
+                <div class="infobox-body">
+                    <p>{{systemStatus.handler}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
