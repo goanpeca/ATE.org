@@ -21,6 +21,8 @@ __pycache__/*
 .settings
 .idea
 tags
+.flake8
+.gitlab-ci.yml
 
 # Package files
 *.egg
