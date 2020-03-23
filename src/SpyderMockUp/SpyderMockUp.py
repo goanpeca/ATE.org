@@ -532,7 +532,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         "products": "product"}
 
             changed = current_item
-            changed_type = current_item.text(1)
+            changed_type = current_item.text(1) # AttributeError: 'NoneType' object has no attribute 'text' 
             if changed_type not in get_info_from_type:
                 return
             children= []

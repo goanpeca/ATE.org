@@ -24,6 +24,7 @@ __pycache__/*
 tags
 .flake8
 .gitlab-ci.yml
+mypy.ini
 
 # Package files
 *.egg
