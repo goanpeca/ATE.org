@@ -1,0 +1,1 @@
+This directory contains template files that are used to create a new project.

@@ -113,7 +113,10 @@ class project_navigator(object):
             create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
             os.makedirs(os.path.join(psrcd, 'programs'))
             create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
-    
+            os.makedirs(os.path.join(psrcd, 'drawings'))
+            os.makedirs(os.path.join(psrcd, 'drawings', 'packages'))
+            os.makedirs(os.path.join(psrcd, 'drawings', 'dies'))
+            
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
@@ -136,12 +139,13 @@ class project_navigator(object):
         # dies
         self.cur.execute('''CREATE TABLE "dies" (
 	                           "name"	TEXT NOT NULL UNIQUE,
+	                           "hardware"	TEXT NOT NULL,
 	                           "maskset"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+                               "customer"   TEXT NOT NULL,
 
 	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("maskset") REFERENCES "masksets"("name"),
-	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name")
+	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name"),
+	                           FOREIGN KEY("maskset") REFERENCES "masksets"("name")
                             );''')
         self.con.commit()
         # flows
@@ -165,19 +169,23 @@ class project_navigator(object):
         self.con.commit()
         # masksets
         self.cur.execute('''CREATE TABLE "masksets" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "definition"	BLOB NOT NULL,
+	                          "name"	TEXT NOT NULL UNIQUE,
+	                          "customer"	TEXT NOT NULL,
+	                          "definition"	BLOB NOT NULL,
 
-	                           PRIMARY KEY("name")
-                            );''')
+	                          PRIMARY KEY("name")
+                           );''')
         self.con.commit()
         # packages
         self.cur.execute('''CREATE TABLE "packages" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "definition"	BLOB NOT NULL,
-                               
-	                           PRIMARY KEY("name")
-                            );''')
+	                          "name"	TEXT NOT NULL UNIQUE,
+	                          "type"	TEXT NOT NULL 
+                                 CHECK(type=='naked' OR type=='regular'),
+	                          "leads"	INTEGER NOT NULL 
+                                 CHECK(leads>=2 AND leads<=99),
+
+	                          PRIMARY KEY("name")
+                           );''')
         self.con.commit()
         # products
         self.cur.execute('''CREATE TABLE "products" (
@@ -193,7 +201,7 @@ class project_navigator(object):
         # programs  
         self.cur.execute('''CREATE TABLE "programs" (
 	                           "name"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+	                           "hardware"	TEXT NOT NULL,
 	                           "base"	TEXT NOT NULL 
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "relative_path"	TEXT NOT NULL,
@@ -204,13 +212,15 @@ class project_navigator(object):
         # tests  
         self.cur.execute('''CREATE TABLE "tests" (
 	                           "name"	TEXT NOT NULL,
-	                           "hardware"	INTEGER NOT NULL,
+	                           "hardware"	TEXT NOT NULL,
+	                           "type"	TEXT NOT NULL 
+                                  CHECK(type=='standard' OR type=='custom'),
 	                           "base"	TEXT NOT NULL 
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "definition"	BLOB NOT NULL,
 	                           "relative_path"	TEXT NOT NULL,
 
- 	                           PRIMARY KEY("name")
+	                           PRIMARY KEY("name")
                             );''')
         self.con.commit()
 
@@ -316,7 +326,7 @@ class project_navigator(object):
         raise NotImplementedError
         
     
-    def add_maskset(self, name, definition):
+    def add_maskset(self, name, customer, definition):
         '''
         this method will insert maskset 'name' and 'definition' in the 
         database, but prior it will check if 'name' already exists, if so
@@ -325,9 +335,9 @@ class project_navigator(object):
         existing_masksets = self.get_masksets()
         if name in existing_masksets:
             raise KeyError(f"{name} already exists")
-        insert_query = '''INSERT INTO masksets(name, definition) VALUES (?, ?)'''
+        insert_query = '''INSERT INTO masksets(name, customer, definition) VALUES (?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
-        self.cur.execute(insert_query, (name, blob))
+        self.cur.execute(insert_query, (name, customer, blob))
         self.con.commit()        
     
     def update_maskset(self, name, definition):
@@ -346,12 +356,33 @@ class project_navigator(object):
         '''
         this method lists all available masksets
         '''
-        self.cur.execute("SELECT name FROM masksets")
+        query = '''SELECT name FROM masksets'''
+        self.cur.execute(query)
         retval = []
         for row in self.cur.fetchall():
             retval.append(row[0])
         return retval
     
+    def get_ASIC_masksets(self):
+        '''
+        this method lists all 'ASIC' masksets
+        '''
+        all_masksets = self.get_masksets()
+        ASSP_masksets = self.get_ASSP_masksets()
+        return list(set(all_masksets).difference(ASSP_masksets))
+        
+    def get_ASSP_masksets(self):
+        '''
+        this method lists all 'ASSP' masksets
+        '''
+        query = '''SELECT name FROM masksets WHERE customer == ""'''
+        self.cur.execute(query)
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+        return retval
+        
+        
     def get_maskset_definition(self, name):
         '''
         this method will return the definition of maskset 'name'
@@ -373,7 +404,7 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_die(self, name, maskset, hardware):
+    def add_die(self, name, hardware, maskset, customer):
         '''
         this method will add die 'name' with 'maskset' and 'hardware'
         to the database. if 'maskset' or 'hardware' doesn't exist, a
@@ -392,8 +423,8 @@ class project_navigator(object):
         if hardware not in existing_hardware:
             raise KeyError(f"{hardware} doesn't exist")
 
-        insert_query = '''INSERT INTO dies(name, maskset, hardware) VALUES (?, ?, ?)'''
-        self.cur.execute(insert_query, (name, maskset, hardware))
+        insert_query = '''INSERT INTO dies(name, hardware, maskset, customer) VALUES (?, ?, ?, ?)'''
+        self.cur.execute(insert_query, (name, hardware, maskset, customer))
         self.con.commit()        
     
     def update_die(self, name, maskset, hardware):
@@ -496,18 +527,17 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_package(self, name, definition):
+    def add_package(self, pname, ptype, pleads):
         '''
         this method will insert package 'name' and 'definition' in the 
         database, but prior it will check if 'name' already exists, if so
         it will trow a KeyError
         '''
         existing_packages = self.get_packages()
-        if name in existing_packages:
-            raise KeyError(f"package '{name}' already exists")
-        insert_query = '''INSERT INTO packages(name, definition) VALUES (?, ?)'''
-        blob = pickle.dumps(definition, 4)
-        self.cur.execute(insert_query, (name, blob))
+        if pname in existing_packages:
+            raise KeyError(f"package '{pname}' already exists")
+        query = '''INSERT INTO packages(name, type, leads) VALUES (?, ?, ?)'''
+        self.cur.execute(query, (pname, ptype, pleads))
         self.con.commit()        
 
     def update_package(self, name, definition):
@@ -731,7 +761,7 @@ class project_navigator(object):
         
         
     
-    def add_test(self, name, hardware, base, definition):
+    def add_test(self, name, hardware, base, test_type, definition):
         '''
         given the name, hardware, base and test_numbers for a test, 
         create the test based on the supplied info and add the info to 
@@ -740,38 +770,62 @@ class project_navigator(object):
         from ATE.org.coding import test_generator
         
         relative_path = test_generator(self.project_directory, name, hardware, base, definition)
-        query = '''INSERT INTO tests(name, hardware, base, definition, relative_path) VALUES (?, ?, ?, ?, ?)'''
+        query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path) VALUES (?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
-        self.cur.execute(query, (name, hardware, base, blob, relative_path))
+        self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path))
         self.con.commit() 
 
     def update_test(self, name):
         pass
     
-    def get_tests_from_files(self, hardware, base):
+    def get_tests_from_files(self, hardware, base, test_type='all'):
         '''
-        given hardware and base, this method will return a dictionary
+        given hardware , base and type this method will return a dictionary
         of tests, and as value the absolute path to the tests.
         by searching the directory structure.
+        type can be:
+            'standard' --> standard tests
+            'custom' --> custom tests
+            'all' --> standard + custom tests
         '''
         retval = {}
         tests_directory = os.path.join(self.project_directory, 'src', 'tests', hardware, base)
         potential_tests = os.listdir(tests_directory)
+        from ATE.org.actions.new.standard_test import standard_test_names
+        
         for potential_test in potential_tests:
             if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY
                 if not '_' in potential_test.upper().replace('.PY', ''): # name doesn't contain an underscore
                     if not '.' in potential_test.upper().replace('.PY', ''): # name doesn't contain extra dot(s)
-                        retval['.'.join(potential_test.split('.')[0:-1])] = os.path.join(tests_directory, potential_test)
+                        if test_type=='all':
+                            retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
+                        elif test_type=='standard':
+                            if '.'.join(potential_test.split('.')[0:-1]) in standard_test_names:
+                                retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
+                        elif test_type=='custom':
+                            if '.'.join(potential_test.split('.')[0:-1]) not in standard_test_names:
+                                retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
+                        else:
+                            raise Exception('unknown test type !!!')
         return retval
     
-    def get_tests_from_db(self, hardware, base):
+    def get_tests_from_db(self, hardware, base, test_type='all'):
         '''
         given hardware and base, this method will return a dictionary
         of tests, and as value the absolute path to the tests.
         by querying the database.
+        type can be:
+            'standard' --> standard tests
+            'custom' --> custom tests
+            'all' --> standard + custom tests
         '''
-        query = '''SELECT name, relative_path FROM tests WHERE hardware = ? AND base = ?'''
-        self.cur.execute(query, (hardware, base))
+        query = '''SELECT name, relative_path FROM tests WHERE hardware = ? AND base = ? AND type = ?'''
+        if test_type=='all':
+            test_type='*'
+        elif test_type not in ['standard', 'custom']:
+            raise Exception('unknown test type !!!')
+            
+        self.cur.execute(query, (hardware, base, test_type))
         retval = {}
         for row in self.cur.fetchall():
             retval[row[0]]=row[1]

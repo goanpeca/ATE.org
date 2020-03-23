@@ -2,7 +2,12 @@
 Created on 24 Oct 2016
 
 @author: tho
+
 '''
+
+#TODO: change the capitalization of this file for consistency with the rest of the source tree
+#TODO: change the name so that this is no longer recognized as a unit-test ... (ABC.py ?!?)
+
 import copy
 import imp
 import inspect

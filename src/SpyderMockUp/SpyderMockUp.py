@@ -1017,20 +1017,20 @@ class MainWindow(QtWidgets.QMainWindow):
         new_package_dialog(self)
 
     def new_die(self):
-        from ATE.org.actions.new.die.NewDieWizard import new_die_dialog
+        from ATE.org.actions_on.die.NewDieWizard import new_die_dialog
         new_die_dialog(self)
 
     def new_maskset(self):
-        from ATE.org.actions.new.maskset.NewMasksetWizard import new_maskset_dialog
+        from ATE.org.actions_on.maskset.NewMasksetWizard import new_maskset_dialog
         new_maskset_dialog(self)
 
     def new_hardwaresetup(self):
-        from ATE.org.actions.new.hardwaresetup.NewHardwaresetupWizard import new_hardwaresetup_dialog
+        from ATE.org.actions_on.hardwaresetup.NewHardwaresetupWizard import new_hardwaresetup_dialog
         new_hardwaresetup_dialog(self)
         self.update_hardware()
 
     def new_project(self):
-        from ATE.org.actions.new.project.NewProjectWizard import new_project_dialog
+        from ATE.org.actions_on.project.NewProjectWizard import new_project_dialog
         new_project_dialog(self)
 
     def open_project(self):
@@ -1263,6 +1263,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def onSettings(self):
         print("settings")
+        print(f"\tself.tree.Width = {self.tree.width()}")
+        print(f"\tself.editorTabs.Width = {self.editorTabs.width()}")
+        print(f"\tself.infoTabs.Width = {self.infoTabs.width()}")
 
     def screencast_settings(self):
         print("start screencast settings")

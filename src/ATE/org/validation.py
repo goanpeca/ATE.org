@@ -16,7 +16,8 @@ valid_test_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_testprogram_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_project_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
-valid_integer_regex = r"^\d*"
+valid_positive_integer_regex = r"^[+]?\d*"
+valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
 
 def is_Spyder_project(project_directory):
     '''

@@ -15,7 +15,7 @@ __pycache__/*
 .DS_Store
 
 # Project files
-.spyproject/*
+.spyproject
 .ropeproject
 .project
 .pydevproject
@@ -31,6 +31,9 @@ mypy.ini
 *.eggs/
 .installed.cfg
 *.egg-info
+
+# linting
+.pylint.d
 
 # Unittest and coverage
 htmlcov/*
