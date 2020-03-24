@@ -1,7 +1,7 @@
 # treeview
 
 We need to move from an item-based item view to a model-based item-view.
-Spyder 'owns' the 'treeView' object (as it needs to handle the pane-stuff)
+Spyder 'owns' the 'treeView' object (as it is in charge of pane management)
 this 'treeView' is *MODEL* based. A plugin (we thus) can register a *MODEL*
 to the treeView, and interact with the model. This actually already takes 
 care of the 'folding state' (I presume) ...
@@ -12,6 +12,9 @@ Spyder uses the following 2 libraries already :
 
 For the time being we can stick to item based, and consentrate on the important
 work, but upon integration with Spyder, we will need to do some work here !
+
+If someone is in need of 'work', he can start figuring out how model based tree
+views work :-)
 
 # SpyderMockup document structure
 

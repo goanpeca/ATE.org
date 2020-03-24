@@ -8,15 +8,15 @@ import os
 import pickle
 import re
 
-import qtawesome as qta
-from ATE.org.listings import dict_project_paths, list_devices, list_dies, list_packages
-from ATE.org.validation import is_ATE_project, valid_device_name_regex
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+import qtawesome as qta
+
+from ATE.org.validation import valid_device_name_regex
 
 class NewDeviceWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, fixed=True):
         self.parent = parent
         super().__init__()
 
@@ -29,163 +29,241 @@ class NewDeviceWizard(QtWidgets.QDialog):
 
         self.parent = parent
 
-        self.existing_hardware = self.parent.project_info.get_hardwares()
-        self.Hardware.blockSignals(True)
-        self.Hardware.clear()
-        for index, hardware in enumerate(self.existing_hardware):
-            self.Hardware.addItem(hardware)
-            if hardware == self.parent.active_hw:
-                self.Hardware.setCurrentIndex(index)
-        self.Hardware.currentIndexChanged.connect(self.hardware_changed)
-        self.Hardware.blockSignals(False)        
+    # hardware
+        self.existing_hardwares = self.parent.project_info.get_hardwares()
+        self.hardware.blockSignals(True)
+        self.hardware.clear()
+        self.hardware.addItems(self.existing_hardwares)
+        self.hardware.setCurrentText(self.parent.active_hw)
+        if fixed:
+            self.hardware.setEnabled(False)
+        self.hardware.currentTextChanged.connect(self.hardwareChanged)
+        self.hardware.blockSignals(False)        
 
-        self.existing_packages = self.parent.project_info.get_packages()
-        self.Package.blockSignals(True)
-        self.Package.clear()
-        self.Package.addItems([''] + self.existing_packages + ['Naked Die'])
-        self.Package.setCurrentIndex(0) # this is the empty string !
-        self.Package.currentIndexChanged.connect(self.verify)
-        self.Package.blockSignals(False)
-
-        self.existing_devices = self.parent.project_info.get_devices()
-        self.DeviceName.setText("")
+    # name
         rxDeviceName = QtCore.QRegExp(valid_device_name_regex)
         DeviceName_validator = QtGui.QRegExpValidator(rxDeviceName, self)
-        self.DeviceName.setValidator(DeviceName_validator)
-        self.DeviceName.textChanged.connect(self.verify)
+        self.deviceName.blockSignals(True)
+        self.deviceName.setValidator(DeviceName_validator)
+        self.deviceName.setText('')
+        self.deviceName.textChanged.connect(self.verify)
+        self.deviceName.blockSignals(False)
+        self.existing_devices = self.parent.project_info.get_devices_for_hardware(self.hardware.currentText())
+    
+    # packages
+        self.existing_packages = self.parent.project_info.packages_get()
+        self.package.blockSignals(True)
+        self.package.clear()
+        self.package.addItems([''] + self.existing_packages + ['Naked Die'])
+        self.package.setCurrentIndex(0) # this is the empty string !
+        self.package.currentTextChanged.connect(self.packageChanged)
+        self.package.blockSignals(False)
 
-        self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
-        print(f"get_dies_for_hardware = {self.existing_dies}")
-        self.AvailableDies.blockSignals(True)
-        self.AvailableDies.clear()
-        self.AvailableDies.addItems(self.existing_dies)
-        self.AvailableDies.clearSelection()
-        self.AvailableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.AvailableDies.blockSignals(False)
-
-        self.AddDie.setEnabled(True)
-        self.AddDie.setIcon(qta.icon('mdi.arrow-right-bold-outline', color='orange'))
-        self.AddDie.clicked.connect(self.add_dies)
-
-        self.RemoveDie.setEnabled(True)
-        self.RemoveDie.setIcon(qta.icon('mdi.arrow-left-bold-outline', color='orange'))
-        self.RemoveDie.clicked.connect(self.remove_dies)
-
+    # Dies/Pins
+        if self.hardware.currentText()=='':
+            self.tabWidget.setEnabled(False)
+            self.available_dies = []
+        else:
+            self.tabWidget.setEnabled(True)
+            self.pins.setEnabled(False)
+            self.available_dies = self.parent.project_info.get_dies_for_hardware(self.hardware.currentText())
         self.dies_in_device = []
-        self.DiesInDevice.blockSignals(True)
-        self.DiesInDevice.clear()
-        self.DiesInDevice.addItems(self.dies_in_device)
-        self.DiesInDevice.clearSelection()
-        self.DiesInDevice.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.DiesInDevice.blockSignals(False)
+        
+    # available dies
+        self.availableDies.blockSignals(True)
+        self.availableDies.clear()
+        self.availableDies.clearSelection()
+        self.availableDies.addItems(self.available_dies)
+        self.availableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.availableDies.blockSignals(False)
 
-        self.Feedback.setStyleSheet('color: orange')
+    # dies in device    
+        self.diesInDevice.blockSignals(True)
+        self.diesInDevice.clear()
+        self.diesInDevice.clearSelection()
+        self.diesInDevice.addItems(self.dies_in_device)
+        self.diesInDevice.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.diesInDevice.blockSignals(False)
 
+    # add die(s) to device
+        self.addDie.blockSignals(True)
+        self.addDie.setEnabled(True)
+        self.addDie.setIcon(qta.icon('mdi.arrow-right-bold-outline', color='orange'))
+        self.addDie.clicked.connect(self.add_dies)
+        self.addDie.blockSignals(False)
+
+    # remove die(s) from device
+        self.removeDie.blockSignals(True)
+        self.removeDie.setEnabled(True)
+        self.removeDie.setIcon(qta.icon('mdi.arrow-left-bold-outline', color='orange'))
+        self.removeDie.clicked.connect(self.remove_dies)
+        self.removeDie.blockSignals(False)
+
+    # Type
+        #TODO: also add the Type = ['ASSP' or 'ASIC']
+
+    # feedback
+        self.feedback.setStyleSheet('color: orange')
+
+    # buttons
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
         self.OKButton.clicked.connect(self.OKButtonPressed)
+        self.OKButton.setDisabled(True)
 
+    # go
         self.verify()
         self.show()
 
-    def add_dies(self):
-        self.DiesInDevice.blockSignals(True)
-        for die_to_add in self.AvailableDies.selectedItems():
-            self.DiesInDevice.insertItem(self.DiesInDevice.count(), die_to_add.text())
-        self.DiesInDevice.clearSelection()
-        self.AvailableDies.clearSelection()
-        self.DiesInDevice.blockSignals(False)
-        self.check_for_dual_die()
-        self.verify()
-        
-    def remove_dies(self):
-        self.DiesInDevice.blockSignals(True)
-        self.DiesInDevice.takeItem(self.DiesInDevice.selectedIndexes()[0].row()) # DiesInDevice set to SingleSelection ;-)
-        self.DiesInDevice.clearSelection()
-        self.AvailableDies.clearSelection()
-        self.DiesInDevice.blockSignals(False)
-        self.check_for_dual_die()
-        self.verify()
-        
-    def hardware_changed(self):
+    def hardwareChanged(self, SelectedHardware):
         '''
         if the selected hardware changes, make sure the active_hardware 
         at the parent level is also changed, the dies in device list is cleared,
         and the available dies is reloaded.
         '''
         self.parent.active_hw = self.Hardware.currentText()
-        self.DiesInDevice.clear()
+        self.diesInDevice.clear()
         self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
-        self.AvailableDies.blockSignals(True)
-        self.AvailableDies.clear()
-        self.AvailableDies.addItems(self.existing_dies)
-        self.AvailableDies.clearSelection()
-        self.AvailableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.AvailableDies.blockSignals(False)
+        self.availableDies.blockSignals(True)
+        self.availableDies.clear()
+        self.availableDies.addItems(self.existing_dies)
+        self.availableDies.clearSelection()
+        self.availableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.availableDies.blockSignals(False)
     
-    def verify(self):
-        feedback = ""
-
-        device_name = self.DeviceName.text()
-        if device_name == "":
-            feedback = "Invalid device name"
-        elif device_name in self.existing_devices:
-            feedback = "device already defined"
-        else: # valid device name
-            package_name = self.Package.currentText()
-            if package_name == '':
-                feedback = "No package selected"
-            elif package_name != 'Naked Die':
-                number_of_dies_in_device = self.DiesInDevice.count()
-                if self.DualDie.checkState(): # dual die
-                    feedback = ''
-                else: # normal
-                    if number_of_dies_in_device == 0:
-                        feedback = 'need at least ONE die'
-                    else:
-                        feedback = ''
-            else: # Naked die
-                number_of_dies_in_device = self.DiesInDevice.count()
-                if number_of_dies_in_device == 0:
-                    feedback = "select the naked die"
-                elif number_of_dies_in_device > 1:
-                    feedback = "only one die allowed in 'Naked Die'"
-                else: # one selected
-                    feedback = ''
-
-        self.Feedback.setText(feedback)
-
-        if feedback == "":
-            self.OKButton.setEnabled(True)
-        else:
-            self.OKButton.setEnabled(False)
-
+    def nameChanged(self, DeviceName):
+        pass
+    
+    def packageChanged(self, Package):
+        if self.package.currentText()=='': # no package
+            self.pins.setVisible(False)
+        elif self.package.currentText()=='Naked Die': # naked die
+            self.pins.setVisible(True)
+            self.diesInDevice.clear()
+            self.pinsTable.setRowCount(0)
+        else: # normal package
+            self.pins.setVisible(True)
+            packages_info = self.parent.project_info.packages_get_info()
+            pins_in_package = packages_info[self.package.currentText()]
+            self.pinsTable.setRowCount(pins_in_package)
+    
     def check_for_dual_die(self):
         '''
         this mentod will check if a configuration qualifies for 'DualDie',
         if so, the radio will be enabled, if not disabled (and cleared)
         '''
         temp = []
-        for die in self.DiesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
+        for die in self.diesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
             temp.append(die.text())
         if len(temp)==2:
+            self.dualDie.setCheckState(QtCore.Qt.Unchecked)
             if temp[0] == temp[1]:
-                self.DualDie.setEnabled(True)
+                self.dualDie.setEnabled(True)
             else:
-                self.DualDie.setCheckState(QtCore.Qt.Unchecked)
-                self.DualDie.setEnabled(False)
+                self.dualDie.setEnabled(False)
         else:
-            self.DualDie.setCheckState(QtCore.Qt.Unchecked)
-            self.DualDie.setEnabled(False)
+            self.dualDie.setCheckState(QtCore.Qt.Unchecked)
+            self.dualDie.setEnabled(False)
+    
+    def verify(self):
+        self.feedback.setText('')
 
+    # Check hardware
+        if self.feedback.text()=='':
+            if self.hardware.currentText()=='':
+                self.feedback.setText("Select a hardware setup")
+
+    # Check Device Name
+        if self.feedback.text()=='':
+            if self.deviceName.text()=='':
+                self.feedback.setText("Supply a Device Name")
+            elif self.deviceName.text() in self.existing_devices:
+                self.feedback.setText(f"Device '{self.deviceName.text()}' already defined!")
+
+    # Check Package
+        if self.feedback.text()=='':
+            if self.package.currentText()=='':
+                self.feedback.setText("Select a Package")
+    
+    # Check Dies
+    
+    # Check Pins
+    
+    # Check Type
+
+                
+        if self.feedback.text()=='':
+            package_name = self.package.currentText()
+            if package_name == '':
+                feedback = "No package selected"
+            elif package_name != 'Naked Die':
+                number_of_dies_in_device = self.diesInDevice.count()
+                if not self.dualDie.checkState(): # no dual die
+                    if number_of_dies_in_device == 0:
+                        self.feedback.setText('Need at least ONE die')
+            else: # Naked die
+                number_of_dies_in_device = self.diesInDevice.count()
+                if number_of_dies_in_device == 0:
+                    self.feedback.setText("select the naked die")
+                elif number_of_dies_in_device > 1:
+                    self.feedback.setText("Only one die allowed in 'Naked Die'")
+                else: # one selected
+                    self.feedback.setText('')
+
+
+
+    # Check the pins table
+        if self.feedback.text()=='':
+            pass
+
+
+        if self.feedback.text() == "":
+            self.OKButton.setEnabled(True)
+        else:
+            self.OKButton.setEnabled(False)
+
+    def add_dies(self):
+        '''
+        this method is called when the 'add die' (tool)button is pressed
+        '''
+        if self.dualDie.isChecked(): 
+            pass
+        
+        
+        
+        self.diesInDevice.blockSignals(True)
+        for die_to_add in self.availableDies.selectedItems():
+            self.diesInDevice.insertItem(self.diesInDevice.count(), die_to_add.text())
+        self.diesInDevice.clearSelection()
+        self.availableDies.clearSelection()
+        self.diesInDevice.blockSignals(False)
+        
+        
+        
+        
+        self.check_for_dual_die()
+        self.verify()
+        
+    def remove_dies(self):
+        '''
+        this method is called when the 'remove die' (tool)button is pressed
+        '''
+        self.diesInDevice.blockSignals(True)
+        self.diesInDevice.takeItem(self.diesInDevice.selectedIndexes()[0].row()) # DiesInDevice set to SingleSelection ;-)
+        self.diesInDevice.clearSelection()
+        self.availableDies.clearSelection()
+        self.diesInDevice.blockSignals(False)
+        self.check_for_dual_die()
+        self.verify()
+        
     def CancelButtonPressed(self):
         self.accept()
 
     def OKButtonPressed(self):
-        name = self.DeviceName.text()
-        hardware = self.Hardware.currentText()
-        package = self.Package.currentText()
+        hardware = self.hardware.currentText()
+        name = self.deviceName.text()
+        package = self.package.currentText()
         dies_in_package = []
-        for die in self.DiesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
+        for die in self.diesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
             dies_in_package.append(die.text())
         definition = {'dies_in_package' : dies_in_package,
                       'is_dual_die' : self.DualDie.checkState(),

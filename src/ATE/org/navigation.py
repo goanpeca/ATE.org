@@ -141,11 +141,24 @@ class project_navigator(object):
 	                           "name"	TEXT NOT NULL UNIQUE,
 	                           "hardware"	TEXT NOT NULL,
 	                           "maskset"	TEXT NOT NULL,
-                               "customer"   TEXT NOT NULL,
+	                           "grade"	TEXT NOT NULL
+                                   CHECK (grade=='A' OR
+                                          grade=='B' OR
+                                          grade=='C' OR
+                                          grade=='D' OR
+                                          grade=='E' OR
+                                          grade=='F' OR
+                                          grade=='G' OR
+                                          grade=='H' OR
+                                          grade=='I'),
+	                           "grade_reference"	TEXT NOT NULL,
+	                           "customer"	TEXT NOT NULL,
 
 	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name"),
-	                           FOREIGN KEY("maskset") REFERENCES "masksets"("name")
+	                           FOREIGN KEY("hardware") 
+                                   REFERENCES "hardware"("name"),
+	                           FOREIGN KEY("maskset") 
+                                   REFERENCES "masksets"("name")
                             );''')
         self.con.commit()
         # flows
@@ -179,8 +192,6 @@ class project_navigator(object):
         # packages
         self.cur.execute('''CREATE TABLE "packages" (
 	                          "name"	TEXT NOT NULL UNIQUE,
-	                          "type"	TEXT NOT NULL 
-                                 CHECK(type=='naked' OR type=='regular'),
 	                          "leads"	INTEGER NOT NULL 
                                  CHECK(leads>=2 AND leads<=99),
 
@@ -395,6 +406,15 @@ class project_navigator(object):
         self.cur.execute(get_blob_query, (name,))
         return pickle.loads(self.cur.fetchone()[0])         
 
+    def get_maskset_customer(self, name):
+        '''
+        this method will return the customer of maskset 'name'
+        (empty string means no customer, thus 'ASSP')
+        '''
+        query = '''SELECT customer FROM masksets WHERE name = ?'''
+        self.cur.execute(query, (name,))
+        return self.cur.fetchone()[0]        
+        
     def remove_maskset(self, name):
         '''
         this method will remove the maskset defined by 'name'
@@ -404,35 +424,71 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_die(self, name, hardware, maskset, customer):
+    def add_die(self, name, hardware, maskset, grade, grade_reference, customer):
         '''
-        this method will add die 'name' with 'maskset' and 'hardware'
-        to the database. if 'maskset' or 'hardware' doesn't exist, a
-        KeyError will be raised. Also if 'name' already exists, a KeyError
-        will be raised.
+        this method will add die 'name' with the given attributes to the database. 
+        if 'maskset' or 'hardware' doesn't exist, a KeyError will be raised. 
+        Also if 'name' already exists, a KeyError will be raised.
+        if grade is not 'A'..'I' (9 possibilities) then a ValueError is raised
+        if grade is 'A' then grade_reference must be an empty string
+        if grade is not 'A', then grade_reference can not be an empty string,
+        and it must reference another (existing) die with grade 'A'!
         '''
         existing_dies = self.get_dies()
         if name in existing_dies:
-            raise KeyError(f"{name} already exists")
+            raise KeyError(f"{name} already exists, should not be able to reach this place")
 
         existing_masksets = self.get_masksets()
         if maskset not in existing_masksets:
-            raise KeyError(f"{maskset} doesn't exist")
+            raise KeyError(f"{maskset} doesn't exist, should not be able to reach this place")
 
         existing_hardware = self.get_hardwares()
         if hardware not in existing_hardware:
-            raise KeyError(f"{hardware} doesn't exist")
+            raise KeyError(f"{hardware} doesn't exist, should not be able to reach this place")
 
-        insert_query = '''INSERT INTO dies(name, hardware, maskset, customer) VALUES (?, ?, ?, ?)'''
-        self.cur.execute(insert_query, (name, hardware, maskset, customer))
+        if grade not in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+            raise ValueError(f"unrecognized grade '{grade}'")
+
+        if grade=='A':
+            if grade_reference != '':
+                raise ValueError("grade_reference should be '' not '{grade_reference}'")
+        else:
+            
+            
+            
+            pass
+
+        #TODO: implement the other checks (see docstring)
+
+        insert_query = '''INSERT INTO dies(name, hardware, maskset, grade, grade_reference, customer) VALUES (?, ?, ?, ?, ?, ?)'''
+        self.cur.execute(insert_query, (name, hardware, maskset, grade, grade_reference, customer))
         self.con.commit()        
     
-    def update_die(self, name, maskset, hardware):
+    def update_die(self, name, hardware, maskset, grade, customer):
         '''
         this method updates both maskset and hardware for die with 'name'
         '''
-        self.update_die_maskset(name, maskset)
         self.update_die_hardware(name, hardware)
+        self.update_die_maskset(name, maskset)
+
+    def update_die_hardware(self, name, hardware):
+        '''
+        this method will update die 'name' with 'hardware'.
+        if 'name' doesn't exist, a KeyError will be raised.
+        if 'hardware' doesn't exist, a KeyError will be raised.
+        '''
+        existing_dies = self.get_dies()
+        if name not in existing_dies:
+            raise KeyError(f"die'{name}' doesn't exist")
+
+        existing_hardware = self.get_hardwares()
+        if hardware not in existing_hardware:
+            raise KeyError(f"hardware '{hardware}' doesn't exist")
+    
+        update_query = '''UPDATE dies SET hardware = ? WHERE name = ?'''
+        self.cur.execute(update_query, (hardware, name))
+        self.con.commit()        
+
     
     def update_die_maskset(self, name, maskset):
         '''
@@ -452,59 +508,99 @@ class project_navigator(object):
         self.cur.execute(update_query, (maskset, name))
         self.con.commit()        
 
-    def update_die_hardware(self, name, hardware):
+    def update_die_grade(self, name, grade, grade_reference):
+        print("update_die_grade not implemented yet")
+    
+    def update_die_customer(self, name, customer):
         '''
-        this method will update die 'name' with 'hardware'.
-        if 'name' doesn't exist, a KeyError will be raised.
-        if 'hardware' doesn't exist, a KeyError will be raised.
+        Note : if the maskset is an ASIC, one can not change the customer to something else !
         '''
-        existing_dies = self.get_dies()
-        if name not in existing_dies:
-            raise KeyError(f"die'{name}' doesn't exist")
+        print("update_die_customer not implemented yet")
+    
+    
+    
+    def get_dies_info(self):
+        '''
+        this method will return a DICTIONARY with as keys all existing die names,
+        and as value the tuple (hardware, maskset, grade, grade_reference, customer)
+        '''
+        query = '''SELECT name, hardware, maskset, grade, grade_reference, customer FROM dies'''
+        self.cur.execute(query)
+        retval = {}
+        for row in self.cur.fetchall():
+            retval[row[0]] = (row[1], row[2], row[3], row[4], row[5])
+        return retval
 
-        existing_hardware = self.get_hardwares()
-        if hardware not in existing_hardware:
-            raise KeyError(f"hardware '{hardware}' doesn't exist")
-    
-        update_query = '''UPDATE dies SET hardware = ? WHERE name = ?'''
-        self.cur.execute(update_query, (hardware, name))
-        self.con.commit()        
-    
     def get_dies(self):
         '''
-        this method will return a list of existing dies.
+        this method will return a LIST of all dies
         '''
-        self.cur.execute("SELECT name FROM dies")
-        retval = []
-        for row in self.cur.fetchall():
-            retval.append(row[0])
-        return retval
+        return list(self.get_dies_info())
 
-    def get_dies_for_hardware(self, hardware_name):
+    def get_dies_for_hardware(self, hardware):
         '''
-        this method will return a list of all dies for hardware 'hardware_name'
+        this method will return a LIST of all dies that conform to 'hardware'
         '''
-        query = '''SELECT name FROM dies WHERE hardware = ?'''
-        
-        self.cur.execute(query, (hardware_name,))
+        dies_info = self.get_dies_info()
         retval = []
-        for row in self.cur.fetchall():
-            retval.append(row[0])
+        for die in dies_info:
+            if dies_info[die][0] == hardware:
+                retval.append(die)
         return retval
         
+    def get_dies_for_maskset(self, maskset):
+        '''
+        this method will return a LIST of all dies that conform to 'maskset'
+        '''
+        dies_info = self.get_dies_info()
+        retval = []
+        for die in dies_info:
+            if dies_info[die][1] == maskset:
+                retval.append(die)
+        return retval
+    
+    def get_dies_for_grade(self, grade):
+        '''
+        this method will return a LIST of all dies that conform to 'maskset'
+        '''
+        dies_info = self.get_dies_info()
+        retval = []
+        for die in dies_info:
+            if dies_info[die][2] == grade:
+                retval.append(die)
+        return retval
+    
+    def get_dies_for_grade_reference(self, grade_reference):
+        '''
+        this method will return a LIST of all dies that conform to 'maskset'
+        '''
+        dies_info = self.get_dies_info()
+        retval = []
+        for die in dies_info:
+            if dies_info[die][3] == grade_reference:
+                retval.append(die)
+        return retval
+    
+    def get_dies_for_customer(self, customer):
+        '''
+        this method will return a LIST of all dies that conform to 'maskset'
+        '''
+        dies_info = self.get_dies_info()
+        retval = []
+        for die in dies_info:
+            if dies_info[die][4] == customer:
+                retval.append(die)
+        return retval
+    
     def get_die(self, name):
         '''
-        this method returns a tuple (maskset, hardware) for die 'name'
+        this method returns a tuple (hardware, maskset, grade, grade_reference, customer) for die 'name'
         if name doesn't exist, a KeyError will be raised.
         '''
-        existing_dies = self.get_dies()
-        if name not in existing_dies:
+        dies_info = self.get_dies_info()
+        if name not in dies_info:
             raise KeyError(f"die'{name}' doesn't exist")
-        
-        select_query = '''SELECT maskset, hardware FROM dies WHERE name=?'''
-        self.cur.execute(select_query, (name,))
-        temp = self.cur.fetchone()
-        return temp[0], temp[1]
+        return dies_info[name]
     
     def get_die_maskset(self, name):
         '''
@@ -517,7 +613,7 @@ class project_navigator(object):
         this method returns the hardware of die 'name'
         '''
         return self.get_die(name)[1]
-    
+        
     def remove_die(self, name):
         '''
         this method will removes the die defined by 'name'
@@ -526,55 +622,59 @@ class project_navigator(object):
             to understand what the implications are !!!
         '''
         raise NotImplementedError
-    
-    def add_package(self, pname, ptype, pleads):
+
+# Packages
+
+    def package_add(self, name, leads):
         '''
-        this method will insert package 'name' and 'definition' in the 
+        this method will insert package 'name' and 'pleads' in the 
         database, but prior it will check if 'name' already exists, if so
         it will trow a KeyError
         '''
-        existing_packages = self.get_packages()
-        if pname in existing_packages:
-            raise KeyError(f"package '{pname}' already exists")
-        query = '''INSERT INTO packages(name, type, leads) VALUES (?, ?, ?)'''
-        self.cur.execute(query, (pname, ptype, pleads))
+        existing_packages = self.packages_get()
+        if name in existing_packages:
+            raise KeyError(f"package '{name}' already exists")
+        query = '''INSERT INTO packages(name, leads) VALUES (?, ?)'''
+        self.cur.execute(query, (name, leads))
         self.con.commit()        
 
-    def update_package(self, name, definition):
+    def package_update(self, name, new_name, new_leads):
         '''
-        this method will update the definition of package 'name' to 'definition'
+        this method will update package 'name' with 'new_name' and 'new_leads'
+        '''
+        query = '''UPDATE'''
+        #TODO: refactor this whole thing for better nameing !
+
+    def package_update_leads(self, package_name, leads):
+        '''
+        this method will update the leads of 'package_name' to 'leads'
         '''
         existing_packages = self.get_packages()
         if name not in existing_packages:
             raise KeyError
-        blob = pickle.dumps(definition, 4)
-        update_query = '''UPDATE packages SET definition = ? WHERE name = ?'''
-        self.cur.execute(update_query, (blob, name))
+        query = '''UPDATE packages SET leads = ? WHERE name = ?'''
+        self.cur.execute(query, (leads, package_name))
         self.con.commit()        
     
-    def get_packages(self):
+    def packages_get_info(self):
         '''
-        this method lists all available packages
+        this method will return a DICTIONARY with ALL packages as key and 
+        the number of leads as value
         '''
-        self.cur.execute("SELECT name FROM packages")
-        retval = []
+        query = '''SELECT name, leads FROM packages'''
+        self.cur.execute(query)
+        retval = {}
         for row in self.cur.fetchall():
-            retval.append(row[0])
+            retval[row[0]] = row[1]
         return retval
-    
-    def get_package_definition(self, name):
+
+    def packages_get(self):
         '''
-        this method will return the definition of package 'name'
+        this method will return a LIST with all packages
         '''
-        existing_packages = self.get_packages()
-        if name not in existing_packages:
-            raise KeyError(f"package '{name}' doesn't exist")
-        
-        get_blob_query = '''SELECT definition FROM packages WHERE name = ?'''
-        self.cur.execute(get_blob_query, (name,))
-        return pickle.loads(self.cur.fetchone()[0])         
+        return list(self.packages_get_info())
     
-    def remove_package(self, name):
+    def package_remove(self, name):
         '''
         this method will remove the package defined by 'name'
         
@@ -582,6 +682,8 @@ class project_navigator(object):
             to understand what the implications are !!!
         '''
         raise NotImplementedError
+
+# Devices
     
     def add_device(self, name, hardware, package, definition):
         '''

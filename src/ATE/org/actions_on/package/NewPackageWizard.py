@@ -27,56 +27,56 @@ class NewPackageWizard(QtWidgets.QDialog):
 
         self.parent = parent
         
+    # create a temporary directory to store the drawing(s)
         self.temp_dir = tempfile.mkdtemp()
         self.temp_drawing = None
-        
+
+    # name        
         rxPackageName = QtCore.QRegExp(valid_package_name_regex)
         PackageName_validator = QtGui.QRegExpValidator(rxPackageName, self)
+        self.existing_packages = self.parent.project_info.packages_get()
+        self.packageName.blockSignals(True)
+        self.packageName.setValidator(PackageName_validator)
+        self.packageName.textChanged.connect(self.validate)
+        self.packageName.blockSignals(False)
 
-        self.existing_packages = self.parent.project_info.get_packages()
-
-        self.PackageName.setValidator(PackageName_validator)
-        self.PackageName.textChanged.connect(self.validate)
-
-        self.isNakedDie.setChecked(False)
-        self.isNakedDie.toggled.connect(self.NakedDieChanged)
-
+    # leads
+        self.leads.blockSignals(True)
         self.leads.setMinimum(2)
         self.leads.setMaximum(99)
         self.leads.setValue(3)
+        self.leads.blockSignals(False)
 
-        self.DrawingGroup.setVisible(False)
-
+    # drawing
+        self.drawingGroup.setVisible(False)
         self.drawingLabel.setText("N/A")
-        
         self.findOnFilesystem.clicked.connect(self.FindOnFileSystem)
-
         companies = ['', 'Micronas', 'InvenSense', 'IC-Sense', '...']
         self.importFor.clear()
         self.importFor.addItems(companies)
         self.importFor.setCurrentIndex(0) # empty string
         self.importFor.currentTextChanged.connect(self.importForChanged)
-
         self.doImport.setEnabled(False)
         self.doImport.clicked.connect(self.doImportFor)        
         
-        self.Feedback.setText("")
-        self.Feedback.setStyleSheet('color: orange')
+        self.feedback.setText("")
+        self.feedback.setStyleSheet('color: orange')
 
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
-
+        self.OKButton.setEnabled(False)
+        
         self.validate()
         self.show()
 
     def __del__(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def NakedDieChanged(self, State):
-        print(f"NakedDieChanged : {State} ({type(State)})")
-
     def FindOnFileSystem(self):
         print("Find On File System not yet implemented")
+
+        #TODO: Implement 'FindOnFileSystem'
+
 
     def importForChanged(self, Company):
         if Company == '':
@@ -93,6 +93,7 @@ class NewPackageWizard(QtWidgets.QDialog):
         name of the package with the .png extension.
         upon OK button, this file is copied in ~/src/drawings/packages.
         '''
+        print("Import for '{self.importFor.currentText()}' not yet implemented")
         
         #TODO: Implement, save the file in self.temp_dir under the name of the package !!!
         
@@ -101,32 +102,28 @@ class NewPackageWizard(QtWidgets.QDialog):
         self.doImport.setEnabled(False)
 
     def validate(self):
-        self.Feedback = ''
+        self.feedback = ''
         
-        package_name = self.PackageName.text()
+        package_name = self.packageName.text()
         if package_name == "":
-            self.Feedback = "Supply a name for the Package"
-            self.DrawingGroup.setVisible(False)
+            self.feedback = "Supply a name for the Package"
+            self.drawingGroup.setVisible(False)
         else:
             if package_name in self.existing_packages:
-                self.Feedback = "Package already defined"
+                self.feedback = "Package already defined"
             else:
-                self.DrawingGroup.setVisible(True)
+                self.drawingGroup.setVisible(True)
 
-        if self.Feedback == "":
+        if self.feedback == "":
             self.OKButton.setEnabled(True)
         else:
             self.OKButton.setEnabled(False)
 
     def OKButtonPressed(self):
-        pname = self.PackageName.text()
-        if self.isNakedDie.isChecked():
-            ptype = 'naked'
-        else:
-            ptype = 'regular'
-        pleads = self.leads.value()
+        name = self.packageName.text()
+        leads = self.leads.value()
         
-        self.parent.project_info.add_package(pname, ptype, pleads)
+        self.parent.project_info.package_add(name, leads)
 
         self.parent.update_tree()
         self.accept()

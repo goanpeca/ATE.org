@@ -433,7 +433,7 @@ class MainWindow(QtWidgets.QMainWindow):
             packages.setText(0, 'packages')
             packages.setText(1, 'packages')
             previous = None
-            for name in self.project_info.get_packages():
+            for name in self.project_info.packages_get():
                 package = QtWidgets.QTreeWidgetItem(packages, previous)
                 package.setText(0, name)
                 package.setText(1, 'package')
@@ -520,7 +520,7 @@ class MainWindow(QtWidgets.QMainWindow):
             get_info_from_type = {"hardwaresetups": self.project_info.get_hardwares(),
                                   "masksets": self.project_info.get_masksets(),
                                   "dies": self.project_info.get_masksets(),
-                                  "packages": self.project_info.get_packages(),
+                                  "packages": self.project_info.packages_get(),
                                   "devices": self.project_info.get_devices(),
                                   "products": self.project_info.get_products()}
 
@@ -1005,15 +1005,15 @@ class MainWindow(QtWidgets.QMainWindow):
         print("new_registermap")
 
     def new_product(self):
-        from ATE.org.actions.new.product.NewProductWizard import new_product_dialog
+        from ATE.org.actions_on.product.NewProductWizard import new_product_dialog
         new_product_dialog(self)
 
     def new_device(self):
-        from ATE.org.actions.new.device.NewDeviceWizard import new_device_dialog
+        from ATE.org.actions_on.device.NewDeviceWizard import new_device_dialog
         new_device_dialog(self)
 
     def new_package(self):
-        from ATE.org.actions.new.package.NewPackageWizard import new_package_dialog
+        from ATE.org.actions_on.package.NewPackageWizard import new_package_dialog
         new_package_dialog(self)
 
     def new_die(self):

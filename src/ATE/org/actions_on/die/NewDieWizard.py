@@ -26,6 +26,7 @@ class NewDieWizard(QtWidgets.QDialog):
 
         self.parent = parent
 
+    # hardware
         self.withHardware.blockSignals(True)
         self.withHardware.clear()
         self.withHardware.addItems(self.parent.project_info.get_hardwares())        
@@ -35,29 +36,15 @@ class NewDieWizard(QtWidgets.QDialog):
         self.withHardware.currentTextChanged.connect(self.hardwareChanged)
         self.withHardware.blockSignals(False)
 
+    # name
         rxDieName = QtCore.QRegExp(valid_die_name_regex)
         DieName_validator = QtGui.QRegExpValidator(rxDieName, self)
         self.dieName.setText("")
         self.dieName.setValidator(DieName_validator)
         self.dieName.textChanged.connect(self.verify)
         self.existing_dies = self.parent.project_info.get_dies()
-        
-        self.Type.blockSignals(True)
-        self.Type.setCurrentText('ASSP')
-        self.Type.currentTextChanged.connect(self.typeChanged)
-        self.Type.blockSignals(False)
-        
-        self.customerLabel.setVisible(False)
-        
-        self.customer.blockSignals(True)
-        self.customer.setCurrentText('')
-        self.customer.currentTextChanged.connect(self.customerChanged)
-        self.customer.setVisible(False)
-        self.customer.blockSignals(False)
-        
-        
-        
-        
+   
+    # maskset    
         self.existing_masksets = [''] + self.parent.project_info.get_masksets()
         self.fromMaskset.blockSignals(True)
         self.fromMaskset.clear()
@@ -66,72 +53,142 @@ class NewDieWizard(QtWidgets.QDialog):
         self.fromMaskset.currentTextChanged.connect(self.masksetChanged)
         self.fromMaskset.blockSignals(False)
 
+    # grade
         self.grade.blockSignals(True)
         self.grade.setCurrentText('A')
-        self.grade.setVisible(False)
+        self.grade.setDisabled(True)
         self.grade.currentTextChanged.connect(self.gradeChanged)
         self.grade.blockSignals(False)
+        
+        self.gradeLabel.setDisabled(True)
+
+    # reference grade
+        self.referenceGradeLabel.setHidden(True)
+        self.referenceGradeLabel.setVisible(False)
 
         self.referenceGrade.blockSignals(True)
-        
-        
-        
-        
+        self.referenceGrade.clear() 
+        self.referenceGrade.setHidden(True)
         self.referenceGrade.setVisible(False)
         self.referenceGrade.currentTextChanged.connect(self.referenceGradeChanged)
         self.referenceGrade.blockSignals(False)
-
+    
+    # Type & customer
         self.Type.blockSignals(True)
         self.Type.clear()
         self.Type.addItems(['ASSP', 'ASIC'])
-        self.Type.setCurrentIndex(0) # --> ASSP
-        self.Type.currentIndexChanged.connect(self.type_changed)
+        self.Type.setCurrentText('ASSP')
+        self.Type.setDisabled(True)
+        self.Type.currentTextChanged.connect(self.typeChanged)
         self.Type.blockSignals(False)
         
-        self.customerLabel.setDisabled(True)
+        self.typeLabel.setDisabled(True)
+        
         self.customerLabel.setHidden(True)
         self.customerLabel.setVisible(False)
         
         self.customer.blockSignals(True)
-        self.customer.setText("")
-        self.customer.setDisabled(True)
+        self.customer.setText('')
+        self.customer.textChanged.connect(self.customerChanged)
         self.customer.setHidden(True)
         self.customer.setVisible(False)
         self.customer.blockSignals(False)
-        
-        self.feedback.setText("No die name")
+
+    # feedback
         self.feedback.setStyleSheet('color: orange')
 
+    # buttons
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.OKButton.setEnabled(False)
 
+    # go
         self.verify()
         self.show()
 
-    def nameChanged(self, name):
+
+    def hardwareChanged(self, hardware):
         pass
+
+    def nameChanged(self, name):
+        self.verify()
 
 
     def masksetChanged(self, SelectedMaskset):
-        pass
+        print(f"masksetChanged --> {SelectedMaskset}")
+        if SelectedMaskset=='':
+            self.gradeLabel.setDisabled(True)
+            self.grade.blockSignals(True)
+            self.grade.setCurrentText('A')
+            self.grade.setDisabled(True)
+            self.grade.blockSignals(False)
+            self.typeLabel.setDisabled(True)
+            self.Type.blockSignals(True)
+            self.Type.setCurrentText('ASSP')
+            self.Type.setDisabled(True)
+            self.Type.blockSignals(False)
+            self.customerLabel.setHidden(True)
+            self.customer.blockSignals(True)
+            self.customer.setText('')
+            self.customer.setHidden(True)
+            self.customer.blockSignals(True)
+        else:
+            ASIC_masksets = self.parent.project_info.get_ASIC_masksets()
+            if SelectedMaskset in ASIC_masksets:
+                print("ASIC")
+                self.gradeLabel.setDisabled(False)
+                self.grade.blockSignals(True)
+                self.grade.setCurrentText('A')
+                self.grade.setDisabled(False)
+                self.grade.blockSignals(False)
+                self.typeLabel.setDisabled(True)
+                self.Type.blockSignals(True)
+                self.Type.setCurrentText('ASIC')
+                self.Type.setDisabled(True)
+                self.Type.blockSignals(False)
+                self.customerLabel.setHidden(False)
+                self.customerLabel.setDisabled(True)
+                Customer = self.parent.project_info.get_maskset_customer(SelectedMaskset)
+                self.customer.blockSignals(True)
+                self.customer.setText(Customer)
+                self.customer.setHidden(False)
+                self.customer.setDisabled(True)
+                self.customer.blockSignals(True)
+            else:
+                print("ASSP")
+                self.gradeLabel.setDisabled(False)
+                self.grade.blockSignals(True)
+                self.grade.setCurrentText('A')
+                self.grade.setDisabled(False)
+                self.grade.blockSignals(False)
+                self.typeLabel.setDisabled(False)
+                self.Type.blockSignals(True)
+                self.Type.setCurrentText('ASSP')
+                self.Type.setDisabled(False)
+                self.Type.blockSignals(False)
+                self.customerLabel.setHidden(True)
+                self.customer.blockSignals(True)
+                self.customer.setText('')
+                self.customer.setHidden(True)
+                self.customer.blockSignals(True)
+        self.verify()
 
     def gradeChanged(self, SelectedGrade):
-        if SelectedGrade != 'A':
-            self.referenceGradeLabel.setVisible(False)
-            self.referenceGrade.setVisible(False)
+        if SelectedGrade == 'A':
+            self.referenceGradeLabel.setHidden(True)
+            self.referenceGrade.setHidden(True)
         else:
-            self.referenceGradeLabel.setVisible(False)
-            self.referenceGrade.setVisible(False)
+            self.referenceGradeLabel.setHidden(False)
+            self.referenceGrade.setHidden(False)
 
     def referenceGradeChanged(self, SelectedReferenceGrade):
         pass
 
-    def typeChanged(self):
+    def typeChanged(self, SelectedType):
         '''
         if the Type is 'ASIC' enable CustomerLabel and Customer
         '''
-        if self.Type.currentText() == 'ASIC':
+        if SelectedType == 'ASIC':
             self.customerLabel.setDisabled(False)
             self.customerLabel.setHidden(False)
             self.customerLabel.setVisible(True)
@@ -154,40 +211,59 @@ class NewDieWizard(QtWidgets.QDialog):
             self.customer.setVisible(False)
             self.customer.blockSignals(False)
 
+    def customerChanged(self, Customer):
+        pass
+
     def verify(self):
-        if self.dieName.text() in self.existing_dies:
+        self.feedback.setText("")
+
+    # Die Name        
+        if self.dieName.text() == '':
+            self.feedback.setText("Supply a Die Name")
+        elif self.dieName.text() in self.existing_dies:
             self.feedback.setText("Die name already exists !")
-            self.OKButton.setEnabled(False)
-        else:
+    
+    # Maskset
+        if self.feedback.text() == '':
             if self.fromMaskset.currentText() == "":
                 self.feedback.setText("No maskset selected")
-                self.OKButton.setEnabled(False)
-            else:
-                if self.Type.currentText() == "ASIC":
-                    if self.Customer.text() == "":
-                        self.feedback.setText("need a customer for ASIC")
-                        self.OKButton.setEnabled(False)
-                    else: # ASSP
-                        self.feedback.setText("")
-                        self.OKButton.setEnabled(True)
-                else: # ASSP
-                    self.feedback.setText("")
-                    self.OKButton.setEnabled(True)
 
-    def CancelButtonPressed(self):
-        self.accept()
+    # Grade & reference grade
+        if self.feedback.text() == '':
+            if self.grade.currentText() != 'A' and self.referenceGrade.currentTet() == '':
+                self.feedback.setText("A '{self.grade.currentText()}' grade Die needs an 'A' grade reference")
+    
+    # Type & customer
+        if self.feedback.text() == '':
+            if self.Type.currentText() == "ASIC" and self.customer.text() == "":
+                self.feedback.setText("need a customer name for the ASIC")
+
+    # Buttons
+        if self.feedback.text() == '':
+            self.OKButton.setEnabled(True)
+        else:
+            self.OKButton.setEnabled(False)
 
     def OKButtonPressed(self):
-        name = self.NewDieName.text()
-        maskset = self.FromMaskset.currentText()
-        hardware = self.WithHardware.currentText()
+        hardware = self.withHardware.currentText()
+        name = self.dieName.text()
+        maskset = self.fromMaskset.currentText()
+        grade = self.grade.currentText()
+        if grade == 'A':
+            grade_reference = ''
+        else:
+            grade_reference = self.referenceGrade.currentText()
         if self.Type.currentText() == 'ASIC':
-            customer = 'ASIC'
+            customer = self.customer.text()
         else: #ASSP
-            customer = self.Customer.text()
+            customer = ''
         
-        self.parent.project_info.add_die(name, hardware, maskset, customer)
+        self.parent.project_info.add_die(name, hardware, maskset, grade, grade_reference, customer)
+        
         self.parent.update_tree()
+        self.accept()
+
+    def CancelButtonPressed(self):
         self.accept()
 
 def new_die_dialog(parent):

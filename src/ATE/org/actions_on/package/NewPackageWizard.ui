@@ -59,7 +59,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="PackageName">
+        <widget class="QLineEdit" name="packageName">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
@@ -82,64 +82,6 @@
           <string/>
          </property>
         </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="typeLayout">
-       <item>
-        <widget class="QLabel" name="NewMasksetLabel_2">
-         <property name="minimumSize">
-          <size>
-           <width>91</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>91</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Is a 'Naked Die' :</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QRadioButton" name="isNakedDie">
-         <property name="minimumSize">
-          <size>
-           <width>22</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>22</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </item>
@@ -207,7 +149,7 @@
      <item>
       <layout class="QHBoxLayout" name="DrawingLayout">
        <item>
-        <widget class="QGroupBox" name="DrawingGroup">
+        <widget class="QGroupBox" name="drawingGroup">
          <property name="title">
           <string>Drawing :</string>
          </property>
@@ -322,7 +264,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QLabel" name="Feedback">
+      <widget class="QLabel" name="feedback">
        <property name="text">
         <string>Feedback line</string>
        </property>
@@ -391,7 +333,7 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>PackageName</tabstop>
+  <tabstop>packageName</tabstop>
   <tabstop>CancelButton</tabstop>
   <tabstop>OKButton</tabstop>
  </tabstops>
