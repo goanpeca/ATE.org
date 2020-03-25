@@ -266,11 +266,11 @@ class NewDeviceWizard(QtWidgets.QDialog):
         for die in self.diesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
             dies_in_package.append(die.text())
         definition = {'dies_in_package' : dies_in_package,
-                      'is_dual_die' : self.DualDie.checkState(),
+                      'is_dual_die' : self.dualDie.checkState(),
                       'pin_names' : {}}
             
         self.parent.project_info.add_device(name, hardware, package, definition)    
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
 def new_device_dialog(parent):

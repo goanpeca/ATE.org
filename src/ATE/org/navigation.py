@@ -696,7 +696,7 @@ class project_navigator(object):
         if name in existing_devices:
             raise KeyError(f"device '{name}' already exists")
 
-        existing_packages = self.get_packages()
+        existing_packages = self.packages_get()
         if package not in existing_packages:
             raise KeyError(f"package '{package}' doesn't exist")
 
@@ -860,8 +860,56 @@ class project_navigator(object):
 
 
         
+    def tests_get_info(self):
+        '''
+        this method will return a DICTIONARY with *ALL* existing tests as key, 
+        and as value the tuple (hardware, type, base, definition, relative_path)
+        '''
+        retval = {}
+        query = '''SELECT name, hardware, type, base, definition, relative_path FROM tests'''
         
+        self.cur.execute(query)
+    
+        for row in self.cur.fetchall():
+            #        name   hardware    type    base     def  relpath
+            retval[row[0]] = (row[1], row[2], row[3], row[4], row[5])
+        return retval
         
+    def tests_get_standard_tests(self, hardware, base):
+        '''
+        given 'hardware' and 'base', this method will return a LIST
+        of all existing STANDARD TESTS.        
+        '''
+        all_tests = self.tests_get_info()
+        retval = []
+        
+        for test in all_tests:
+            if (all_tests[test][0] == hardware) and (all_tests[test][2] == base):
+                retval.append(test)
+        
+        return retval
+        
+    def test_add(self, name, hardware, Type, base, definition):
+        '''
+        given a name, hardware, Type, base and definition, this method will
+        create the test (.py) file at the right place (=test_file_path), it 
+        will add the test to the database, and return the relative path to
+        test_file_path.
+        
+        If a failure of some kind arrises an exception is raised 
+        '''
+        from ATE.org.coding import test_generator
+
+        try:
+            rel_path = test_generator(self.project_directory, name, hardware, Type, base, definition) 
+            query = '''INSERT INTO tests(name, hardware, type, base, definition, relative_path) VALUES (?, ?, ?, ?, ?, ?)'''
+            blob = pickle.dumps(definition, 4)
+            self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
+            self.con.commit()
+        except _ as e:
+            raise e
+        else:
+            return rel_path
     
     def add_test(self, name, hardware, base, test_type, definition):
         '''
@@ -893,7 +941,7 @@ class project_navigator(object):
         retval = {}
         tests_directory = os.path.join(self.project_directory, 'src', 'tests', hardware, base)
         potential_tests = os.listdir(tests_directory)
-        from ATE.org.actions.new.standard_test import standard_test_names
+        from ATE.org.actions_on.tests import standard_test_names
         
         for potential_test in potential_tests:
             if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY

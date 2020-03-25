@@ -742,9 +742,12 @@ class MainWindow(QtWidgets.QMainWindow):
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'tests':
             menu = QtWidgets.QMenu(self)
-            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_test.triggered.connect
+            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add Test")
+            add_test.triggered.connect(self.add_test)
+            add_standard_test = menu.addAction(qta.icon('mdi.plus-box-outline', color='orange'), "Add Standard Test")
+            add_standard_test.triggered.connect(self.add_standard_test)
             clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
+            clone_from_test.triggered.connect(self.clone_from_test)
             menu.exec_(QtGui.QCursor.pos())
         elif self.node_type == 'test':
             menu = QtWidgets.QMenu(self)
@@ -987,9 +990,20 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.tree.expandItem(it.value())
             it += 1
 
-    def new_test(self):
-        from ATE.org.actions.new.test.NewTestWizard import new_test_dialog
+    def add_test(self):
+        from ATE.org.actions_on.tests.NewTestWizard import new_test_dialog
         new_test_dialog(self)
+
+
+    def add_standard_test(self):
+        from ATE.org.actions_on.tests.NewStandardTestWizard import new_standard_test_dialog
+        new_standard_test_dialog(self)
+    
+    def clone_from_test(self):
+        pass
+        
+        
+
 
     def new_testprogram(self):
         from ATE.org.actions.new.program.NewProgramWizard import new_program_dialog

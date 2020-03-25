@@ -5,13 +5,9 @@ Created on Thu Nov 28 16:09:05 2019
 @author: hoeren
 """
 import os
-import pickle
 import re
 
-from ATE.org.listings import dict_project_paths, list_devices, list_products
-from ATE.org.validation import is_ATE_project
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
 
 class NewProductWizard(QtWidgets.QDialog):
 
@@ -100,7 +96,7 @@ class NewProductWizard(QtWidgets.QDialog):
         hardware = self.WithHardware.currentText()
 
         self.parent.project_info.add_product(name, device, hardware)
-        self.parent.tree_update()
+        self.parent.update_tree()
         self.accept()
 
 def new_product_dialog(parent):
