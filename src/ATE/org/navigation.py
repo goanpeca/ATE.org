@@ -214,10 +214,11 @@ class project_navigator(object):
 	                           "name"	TEXT NOT NULL,
 	                           "hardware"	TEXT NOT NULL,
 	                           "base"	TEXT NOT NULL 
-                                  CHECK(base=='PR' OR base=='FT'),
+                                   CHECK(base=='PR' OR base=='FT'),
+	                           "definition"	BLOB NOT NULL,
 	                           "relative_path"	TEXT NOT NULL,
 
-                           	   PRIMARY KEY("name")
+ 	                           PRIMARY KEY("name")
                             );''')
         self.con.commit()
         # tests  
