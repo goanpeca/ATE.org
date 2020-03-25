@@ -34,12 +34,8 @@ class %TSTCLASS%(testABC):
         #the_value = SCT.protocol.my_bi_phase.read('adc')
         #SCT.protocol.my_bi_phase.write('dac', 0xAA)
 
-
     def target(self, ip, op, gp, dm):
         return self.do(ip, op, gp, dm)
-
-
-
 
 if __name__ == '__main__':
     from ATE.org.Sequencers import development_sequencer
