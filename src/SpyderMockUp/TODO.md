@@ -7,7 +7,7 @@ to the treeView, and interact with the model. This actually already takes
 care of the 'folding state' (I presume) ...
 
 Spyder uses the following 2 libraries already :
-    - intervaltree (folding states)
+    - [intervaltree (folding states)]
     - watchdog (to see if something changed in the project !!!)
 
 For the time being we can stick to item based, and consentrate on the important
@@ -33,6 +33,8 @@ We try to stick with the mdi icons for as long as it is workable!
 
 
 In an ATE project, the structure under 'documentation' should reflect the structure under ~project/doc.
+
+>>> next point only the icons as a visual representation, Spyder has the full implementation already
 
 We recognize the following files (based on -last- extension) and those must be shown with the noted icon:
 
@@ -68,6 +70,8 @@ All folders under (and including) ~project/documentation have the following cont
       <separator>
     - 'Delete'                 mdi-delete-outline                 Deletes everything under the current folder ! (no confirmation dialog)
                                                                   Maybe the text 'Delete' can be made in RED ?!?
+
+>>> following point is already available in Spyder, don't put too much effort in this   
                                                                   
 All files under ~project/documentation have the folowing contet menu:
     

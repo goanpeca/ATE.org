@@ -39,11 +39,6 @@ class %TSTCLASS%(testABC):
         return self.do(ip, op, gp, dm)
 
 
-    def flow(self, ip, op, gp, dm):
-        return self.target(ip, op, gp, dm)
-
-
-
 
 
 if __name__ == '__main__':
