@@ -1046,6 +1046,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def new_project(self):
         from ATE.org.actions_on.project.NewProjectWizard import new_project_dialog
         new_project_dialog(self)
+        self.set_tree()
 
     def open_project(self):
         selected_directory = os.path.normpath(

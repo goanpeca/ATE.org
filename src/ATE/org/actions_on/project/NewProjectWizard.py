@@ -74,7 +74,7 @@ class NewProjectWizard(QtWidgets.QDialog):
             
         else:
             self.parent.project_info(self.parent.active_project_path)
-        self.parent.update_tree()      
+       
         self.accept()
 
     def CancelButtonPressed(self):
