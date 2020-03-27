@@ -6,7 +6,7 @@ from enum import Enum
 
 from functools import wraps
 
-from ATE.org.actions.new.program.ConfigureTest import ConfigureTest
+from ATE.org.actions_on.program.ConfigureTest import ConfigureTest
 
 
 class Action(Enum):

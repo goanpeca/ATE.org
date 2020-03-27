@@ -1,9 +1,9 @@
 import pytest
 from PyQt5 import QtCore, Qt
 
-from ATE.org.actions.new.program.NewProgramWizard import NewProgramWizard
-from ATE.org.actions.new.program.NewProgramWizard import ErrorMessage
-from ATE.org.actions.new.program.NewProgramWizard import Action
+from ATE.org.actions_on.program.NewProgramWizard import NewProgramWizard
+from ATE.org.actions_on.program.NewProgramWizard import ErrorMessage
+from ATE.org.actions_on.program.NewProgramWizard import Action
 
 from pytestqt.qt_compat import qt_api  # debug prints inside unittests
 
@@ -21,7 +21,7 @@ def debug_visual(window, qtbot):
 
 
 AVAILABE_TESTS = ["test1", "test2"]
-def setup_method(show_window=False, test_path="./tests/test"):
+def setup_method(test_path="./tests/test"):
     def setup(test_func):
         def wrap(qtbot):
             window = NewProgramWizard(test_path=test_path)

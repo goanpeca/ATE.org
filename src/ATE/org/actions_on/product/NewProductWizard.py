@@ -96,7 +96,6 @@ class NewProductWizard(QtWidgets.QDialog):
         hardware = self.WithHardware.currentText()
 
         self.parent.project_info.add_product(name, device, hardware)
-        self.parent.update_tree()
         self.accept()
 
 def new_product_dialog(parent):

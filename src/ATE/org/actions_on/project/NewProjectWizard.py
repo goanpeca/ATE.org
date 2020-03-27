@@ -68,24 +68,20 @@ class NewProjectWizard(QtWidgets.QDialog):
         self.parent.active_project = project_name
         self.parent.active_project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
         
-        if self.parent.project_info is None:
-            from ATE.org.navigation import project_navigator
-            self.parent.project_info = project_navigator(self.parent.active_project_path)
-            
-        else:
-            self.parent.project_info(self.parent.active_project_path)
-       
+        # from ATE.org.navigation import project_navigator
+        # self.parent.project_info = project_navigator(self.parent.active_project_path)
+
         self.accept()
 
     def CancelButtonPressed(self):
-        self.accept()
-
+        self.reject()
 
 
 def new_project_dialog(parent):
     newProjectWizard = NewProjectWizard(parent)
     newProjectWizard.exec_()
     del(newProjectWizard)
+
 
 if __name__ == '__main__':
     import sys, qdarkstyle
