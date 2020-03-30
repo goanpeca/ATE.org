@@ -26,7 +26,7 @@ class TextBoxParam(parameter):
         
         textField = QtWidgets.QLabel()
         textField.setText(self.name)
-        textField.setMaximumWidth(128)
+        textField.setMaximumWidth(196)
         layout.addWidget(textField)
         
         # Append Input box       
@@ -44,12 +44,12 @@ class TextBoxParam(parameter):
     # The validate method shall yield true, if the
     # data entered in the parameters fields is correct
     def validate(self) -> bool:
-         good = self._validate_impl() 
-         if not good:
-             self.inputBox.setStyleSheet('color: orange')
-         else:
-             self.inputBox.setStyleSheet('color: white')
-         return good 
+        good = self._validate_impl() 
+        if not good:
+            self.inputBox.setStyleSheet('color: orange')
+        else:
+            self.inputBox.setStyleSheet('color: white')
+        return good
     
     def _validate_impl(self) -> bool:
         return self.inputBox.text() != ""

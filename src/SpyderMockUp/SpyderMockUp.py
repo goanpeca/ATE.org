@@ -539,8 +539,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def context_menu_manager(self, point):
         from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
         from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
+        from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
         from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
         from ATE.org.actions_on.flow.PC.pcwizard import quali_pc_flow_name
+        from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
+        from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
 
         #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
         #https://doc.qt.io/qt-5/qtreewidget-members.html
@@ -773,6 +776,24 @@ class MainWindow(QtWidgets.QMainWindow):
             add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             add_flow.triggered.connect(self.edit_hast)
             menu.exec_(QtGui.QCursor.pos())
+        
+        elif self.node_type == quali_htsl_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_flow.triggered.connect(self.new_htsl)
+            menu.exec_(QtGui.QCursor.pos())
+
+        elif self.node_type =="qualification_HTSL_flow_instance":
+            menu = QtWidgets.QMenu(self)
+            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            edit_flow.triggered.connect(lambda: self.edit_htsl(item.get_item_data()[3]))
+
+            view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            view_flow.triggered.connect(lambda: self.view_htsl(item.get_item_data()[3]))
+
+            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
+            menu.exec_(QtGui.QCursor.pos())
             
         elif self.node_type == quali_htol_flow_name:
             menu = QtWidgets.QMenu(self)
@@ -809,6 +830,17 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
             menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == quali_tc_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            add_flow.triggered.connect(self.edit_tc)
+            menu.exec_(QtGui.QCursor.pos())
+
+        elif self.node_type == quali_sam_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            add_flow.triggered.connect(self.edit_sam)
+            menu.exec_(QtGui.QCursor.pos())
 
     def testerChanged(self):
         self.active_tester = self.tester_combo.currentText()
@@ -841,7 +873,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
                 from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
                 from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
+                from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
                 from ATE.org.actions_on.flow.PC.pcwizard import quali_pc_flow_name
+                from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
+                from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
 
         # sources/flows/production
                 self.production_flow = QtWidgets.QTreeWidgetItem(parent, None)
@@ -883,7 +918,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.qualification_HTSL_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ESD_flows)
                 self.qualification_HTSL_flows.setToolTip(0, 'High Temperature Storage Life')
                 self.qualification_HTSL_flows.setText(0, 'HTSL')
-                self.qualification_HTSL_flows.setText(1, 'qualification_HTSL_flows')
+                self.qualification_HTSL_flows.setText(1, quali_htsl_flow_name)
 
         # sources/flows/qualification/DR
                 self.qualification_DR_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HTSL_flows)
@@ -945,6 +980,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.qualification_PC_flows.setText(0, 'PC')
                 self.qualification_PC_flows.setText(1, quali_pc_flow_name)
 
+        # sources/flows/qualification/TC
+                self.qualification_TC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_PC_flows)
+                self.qualification_TC_flows.setToolTip(0, 'Temperature Cycling')
+                self.qualification_TC_flows.setText(0, 'TC')
+                self.qualification_TC_flows.setText(1, quali_tc_flow_name)
+        
+                # sources/flows/qualification/SAM
+                self.qualification_SAM_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_TC_flows)
+                self.qualification_SAM_flows.setToolTip(0, '')
+                self.qualification_SAM_flows.setText(0, 'SAM')
+                self.qualification_SAM_flows.setText(1, quali_sam_flow_name)
+
         # sources/flows/characterisation
                 self.characterisation_flows = QtWidgets.QTreeWidgetItem(parent, self.qualification_flows)
                 self.characterisation_flows.setText(0, 'characterisation')
@@ -971,6 +1018,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.flows.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.ShowIndicator)
 
         self.populateQualificationFlow(self.qualification_HTOL_flows)
+        self.populateQualificationFlow(self.qualification_HTSL_flows)
         self.populateQualificationFlow(self.qualification_PC_flows)
 
     def populateQualificationFlow(self, item: QtWidgets.QWidget):
@@ -1136,6 +1184,27 @@ class MainWindow(QtWidgets.QMainWindow):
     def edit_hast(self):
         from ATE.org.actions_on.flow.HAST.hastwizard import edit_hast_wizard
         edit_hast_wizard(self.project_info, self.target_combo.currentText())
+
+    def edit_sam(self):
+        from ATE.org.actions_on.flow.SAM.samwizard import edit_sam_wizard
+        edit_sam_wizard(self.project_info, self.target_combo.currentText())
+
+    def edit_tc(self):
+        from ATE.org.actions_on.flow.TC.tcwizard import edit_tc_wizard
+        edit_tc_wizard(self.project_info, self.target_combo.currentText())
+
+    def new_htsl(self, checked):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import new_htsl_wizard
+        new_htsl_wizard(self.project_info, self.target_combo.currentText())
+        self.populateQualificationFlow(self.tree.currentItem())
+
+    def edit_htsl(self, data: dict):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import edit_htsl_wizard
+        edit_htsl_wizard(self.project_info, data)
+
+    def view_htsl(self, data: dict):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import view_htsl_wizard
+        view_htsl_wizard(self.project_info, data)
 
     def new_htol(self, checked):
         from ATE.org.actions_on.flow.HTOL.htolwizard import new_htol_wizard

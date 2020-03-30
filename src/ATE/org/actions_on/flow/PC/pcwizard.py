@@ -2,7 +2,7 @@
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
-from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
+from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
@@ -13,7 +13,7 @@ class PCWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
-        return [textboxparam.TextBoxParam("name"),
+        return [writeoncetextparam.WriteOnceTextParam("name"),
                 intparam.IntParam("MSL", 0, 0, 10000),
                 intparam.IntParam("Bake Time (hours)", 0, 0, 500),
                 intparam.IntParam("Bake Temperature (°C)", 0, 0, 500),
