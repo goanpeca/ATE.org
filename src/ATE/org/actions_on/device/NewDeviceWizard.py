@@ -16,7 +16,8 @@ from ATE.org.validation import valid_device_name_regex
 
 class NewDeviceWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent, fixed=True):
+
+    def __init__(self, parent):
         self.parent = parent
         super().__init__()
 
@@ -35,8 +36,10 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.hardware.clear()
         self.hardware.addItems(self.existing_hardwares)
         self.hardware.setCurrentText(self.parent.active_hw)
-        if fixed:
-            self.hardware.setEnabled(False)
+
+        # if fixed:
+        #     self.hardware.setEnabled(False)
+
         self.hardware.currentTextChanged.connect(self.hardwareChanged)
         self.hardware.blockSignals(False)        
 
@@ -120,7 +123,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         at the parent level is also changed, the dies in device list is cleared,
         and the available dies is reloaded.
         '''
-        self.parent.active_hw = self.Hardware.currentText()
+        self.parent.active_hw = self.hardware.currentText()
         self.diesInDevice.clear()
         self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
         self.availableDies.blockSignals(True)
@@ -270,7 +273,6 @@ class NewDeviceWizard(QtWidgets.QDialog):
                       'pin_names' : {}}
             
         self.parent.project_info.add_device(name, hardware, package, definition)    
-        self.parent.update_tree()
         self.accept()
 
 def new_device_dialog(parent):

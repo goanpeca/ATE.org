@@ -28,9 +28,9 @@
   <widget class="QComboBox" name="Parallelism">
    <property name="geometry">
     <rect>
-     <x>100</x>
+     <x>80</x>
      <y>140</y>
-     <width>41</width>
+     <width>61</width>
      <height>21</height>
     </rect>
    </property>
@@ -121,8 +121,8 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>141</y>
+     <x>0</x>
+     <y>140</y>
      <width>71</width>
      <height>21</height>
     </rect>
@@ -176,7 +176,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>139</y>
+     <y>140</y>
      <width>71</width>
      <height>21</height>
     </rect>

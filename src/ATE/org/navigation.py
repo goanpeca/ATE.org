@@ -16,114 +16,95 @@ class project_navigator(object):
     '''
     This class takes care of the project creation/navigation/evolution.
     '''
-    
     def __init__(self, project_directory):
-        self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
-        self.__call__(project_directory)
-            
-    def __call__(self, project_directory):
-        
         print(f"project_directory = {project_directory}")
+        self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
+        self.project_directory = project_directory
         
-        if not isinstance(project_directory, str):
-            self.project_directory = ''
-        else:
-            self.project_directory = project_directory
-            
-        if len(self.project_directory.split(os.path.sep)) >= 2:
-            self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
-    
-            if not os.path.exists(project_directory):
-                self.create_project_structure()
-            if not os.path.exists(self.db_file):
-                self.create_project_database()
-            self.con = sqlite3.connect(self.db_file)
-            self.cur = self.con.cursor()
-            print("navigator")
-        else:
-            self.db_file = None
-            self.con = None
-            self.cur = None
-            print("no navigator")
+        self.db_file = None
+        self.con = None
+        self.cur = None
+        
+        self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
     
     def create_project_structure(self):
         '''
         this method creates a new project (self.project_directroy must *not* 
         exist yet, otherwhise an exception will be raised)
         '''
-        if len(self.project_directory.split(os.path.sep)) >= 2:
-            # project root directory
-            os.makedirs(self.project_directory)
-            shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
-                            os.path.join(self.project_directory, '__main__.py'))
-            create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
-            shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
-                            os.path.join(self.project_directory, '.gitignore'))
-            # setup.py ???
-            # .pre-commit-config.yaml ???
+        # project root directory
+        os.makedirs(self.project_directory)
+        shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
+                        os.path.join(self.project_directory, '__main__.py'))
+        create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
+        shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
+                        os.path.join(self.project_directory, '.gitignore'))
+        # setup.py ???
+        # .pre-commit-config.yaml ???
     
-            # spyder
-            pspyd = os.path.join(self.project_directory, '.spyproject')
-            os.makedirs(pspyd)
-            shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
-                            os.path.join(pspyd, 'codestyle.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
-                            os.path.join(pspyd, 'encoding.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'vcs.ini'),
-                            os.path.join(pspyd, 'vcs.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
-                            os.path.join(pspyd, 'workspace.ini'))
-            create_file(os.path.join(pspyd, 'ATE.config')).touch()
+        # spyder
+        pspyd = os.path.join(self.project_directory, '.spyproject')
+        os.makedirs(pspyd)
+        shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
+                        os.path.join(pspyd, 'codestyle.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'encoding.ini'),
+                        os.path.join(pspyd, 'encoding.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'vcs.ini'),
+                        os.path.join(pspyd, 'vcs.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'workspace.ini'),
+                        os.path.join(pspyd, 'workspace.ini'))
+        create_file(os.path.join(pspyd, 'ATE.config')).touch()
 
-            os.makedirs(os.path.join(pspyd, 'config'))
+        os.makedirs(os.path.join(pspyd, 'config'))
 
-            pspydefd = os.path.join(pspyd, 'defaults')
-            os.makedirs(pspydefd)
-            shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
-                            os.path.join(pspydefd, 'defaults-codestyle-0.2.0.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'defaults-encoding-0.2.0.ini'),
-                            os.path.join(pspydefd, 'defaults-encoding-0.2.0.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'defaults-vcs-0.2.0.ini'),
-                            os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
-            shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
-                            os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
-                        
-            # documentation 
-            os.makedirs(os.path.join(self.project_directory, 'doc'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'export'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'pdf'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'ppt'))
-            os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'xls'))
-            
-            # sources
-            psrcd = os.path.join(self.project_directory, 'src')
-            os.makedirs(psrcd)
-            create_file(os.path.join(psrcd, '__init__.py')).touch()
-            os.makedirs(os.path.join(psrcd, 'patterns'))
-            create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
-            os.makedirs(os.path.join(psrcd, 'protocols'))
-            create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
-            os.makedirs(os.path.join(psrcd, 'states'))
-            create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
-            shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
-                            os.path.join(psrcd, 'states', 'init_hardware.py'))
-            os.makedirs(os.path.join(psrcd, 'tests'))
-            create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
-            os.makedirs(os.path.join(psrcd, 'programs'))
-            create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
-            os.makedirs(os.path.join(psrcd, 'drawings'))
-            os.makedirs(os.path.join(psrcd, 'drawings', 'packages'))
-            os.makedirs(os.path.join(psrcd, 'drawings', 'dies'))
+        pspydefd = os.path.join(pspyd, 'defaults')
+        os.makedirs(pspydefd)
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-codestyle-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-codestyle-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-encoding-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-encoding-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-vcs-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
+        shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
+                        os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
+                    
+        # documentation 
+        os.makedirs(os.path.join(self.project_directory, 'doc'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'export'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'pdf'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'ppt'))
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'export', 'xls'))
+        
+        # sources
+        psrcd = os.path.join(self.project_directory, 'src')
+        os.makedirs(psrcd)
+        create_file(os.path.join(psrcd, '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'patterns'))
+        create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'protocols'))
+        create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'states'))
+        create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
+        shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
+                        os.path.join(psrcd, 'states', 'init_hardware.py'))
+        os.makedirs(os.path.join(psrcd, 'tests'))
+        create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'programs'))
+        create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
+        os.makedirs(os.path.join(psrcd, 'drawings'))
+        os.makedirs(os.path.join(psrcd, 'drawings', 'packages'))
+        os.makedirs(os.path.join(psrcd, 'drawings', 'dies'))
+
+    def create_sql_connection(self):
+        self.con = sqlite3.connect(self.db_file)
+        self.cur = self.con.cursor()
             
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
         '''
-        
-        self.con = sqlite3.connect(self.db_file)
-        self.cur = self.con.cursor()
         # devices
         self.cur.execute('''CREATE TABLE "devices" (
 	                           "name"	TEXT NOT NULL UNIQUE,
@@ -172,6 +153,18 @@ class project_navigator(object):
  	                           PRIMARY KEY("name")
                             );''')
         self.con.commit()
+
+        # qualification flow data:
+        self.cur.execute('''CREATE TABLE "qualification_flow_data" (
+	                           "name"	    TEXT NOT NULL,
+                               "type"       TEXT NOT NULL,
+                               "product"    TEXT NOT NULL,
+                               "data"	    BLOB NOT NULL,
+ 	                           PRIMARY KEY("name"),
+                               FOREIGN KEY("product") REFERENCES "products"("name")
+                            );''')
+        self.con.commit()
+
         # hardwares
         self.cur.execute('''CREATE TABLE "hardwares" (
 	                           "name"	TEXT NOT NULL UNIQUE,
@@ -999,14 +992,49 @@ class project_navigator(object):
     def remove_program(self, name):
         pass
 
-
-
-
-
     def get_states(self, hardware):
         pass
     
-    
+    def get_data_for_qualification_flow(self, quali_flow_type, product):
+        query = '''SELECT * from qualification_flow_data where type = ? AND product = ?'''
+        self.cur.execute(query, (quali_flow_type,product))
+        retval = []
+        for row in self.cur.fetchall():
+            unpickleddata = pickle.loads(row[3])
+            retval.append((row[0], row[1], row[2], unpickleddata))
+        return retval
+
+    def get_unique_data_for_qualifcation_flow(self, quali_flow_type, product):
+        '''
+            Returns one and only one instance of the data for a given quali_flow.
+            Will throw if multiple instances are found in db.
+            Will return a default item, if nothing exists.
+        '''
+        items = self.get_data_for_qualification_flow(quali_flow_type, product)
+        if(len(items) == 0):
+            return {"product": product}
+        elif(len(items) == 1):
+            return items[0][3]
+        else:
+            raise Exception("Multiple items for qualification flow, where only one is allowed")
+
+
+    def add_or_update_qualification_flow_data(self, quali_flow_data):
+        '''
+            Inserts a given set of qualification flow data into the database,
+            updating any already existing data with the same "name" field. Note
+            that we expect a "type" field to be present.
+        '''
+
+        query = '''INSERT OR REPLACE INTO qualification_flow_data VALUES(?,?,?,?)'''
+        blob = pickle.dumps(quali_flow_data, 4)
+        self.cur.execute(query, (quali_flow_data["name"], quali_flow_data["type"], quali_flow_data["product"], blob))
+        self.con.commit()
+
+    def delete_qualifiaction_flow_instance(self, quali_flow_data):
+        query = '''DELETE from qualification_flow_data WHERE name=? and type=? and product=?'''
+        self.cur.execute(query, (quali_flow_data["name"], quali_flow_data["type"], quali_flow_data["product"]))
+        self.con.commit()
     
 if __name__ == '__main__':
     project_test_directory = os.path.join(os.path.dirname(__file__), 'test')

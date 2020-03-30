@@ -9,63 +9,71 @@ import re
 from PyQt5 import QtCore, QtWidgets, uic
 
 from ATE.org.validation import is_ATE_project, is_valid_pcb_name
+from ATE.org.actions_on.hardwaresetup.constants import UI_FILE
+
 
 class NewHardwaresetupWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, project_info):
         super().__init__()
+        self.project_info = project_info
 
-        my_ui = __file__.replace('.py', '.ui')
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
-        uic.loadUi(my_ui, self)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
+        self._load_ui()
+        self._setup()
+        self._connect_event_handler()
 
-        new_hardware_name = self.parent.project_info.get_next_hardware_name()
-
+    def _setup(self):
         self.blockSignals(True)
 
-        self.HardwareSetup.setText(new_hardware_name)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, False)
+        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
+
+        self.hardware_name = self.project_info.get_next_hardware_name()
+        self.HardwareSetup.setText(self.hardware_name)
         self.HardwareSetup.setEnabled(False)
 
         self.SingleSiteLoadboard.setText("")
-        self.SingleSiteLoadboard.textChanged.connect(self.verify)
 
         self.MultiSiteLoadboard.setText("")
-        self.MultiSiteLoadboard.textChanged.connect(self.verify)
         self.MultiSiteLoadboard.setEnabled(False)
 
         self.ProbeCard.setText("")
-        self.ProbeCard.textChanged.connect(self.verify)
 
         self.SingleSiteDIB.setText("")
-        self.SingleSiteDIB.textChanged.connect(self.verify)
 
         self.MultiSiteDIB.setText("")
-        self.MultiSiteDIB.textChanged.connect(self.verify)
         self.MultiSiteDIB.setEnabled(False)
 
-        self.Parallelism.clear()
+        # self.Parallelism.clear()
         self.Parallelism.addItems(['%s'%(i+1) for i in range(16)])
         self.Parallelism.setCurrentIndex(0) # conforms to '1'
-        self.Parallelism.currentTextChanged.connect(self.ParallelismChanged)
         self.parallelism = int(self.Parallelism.currentText())
 
         self.Feedback.setText("")
         self.Feedback.setStyleSheet('color: orange')
 
         self.OKButton.setEnabled(False)
-        self.OKButton.clicked.connect(self.OKButtonPressed)
 
         self.CancelButton.setEnabled(True)
-        self.CancelButton.clicked.connect(self.CancelButtonPressed)
 
         self.blockSignals(False)
 
-        self.verify()
-        self.show()
+    def _connect_event_handler(self):
+        self.CancelButton.clicked.connect(self.CancelButtonPressed)
+        self.OKButton.clicked.connect(self.OKButtonPressed)
+        self.Parallelism.currentTextChanged.connect(self.ParallelismChanged)
+        self.MultiSiteDIB.textChanged.connect(self.verify)
+        self.SingleSiteDIB.textChanged.connect(self.verify)
+        self.ProbeCard.textChanged.connect(self.verify)
+        self.SingleSiteLoadboard.textChanged.connect(self.verify)
+        self.MultiSiteLoadboard.textChanged.connect(self.verify)
+
+    def _load_ui(self):
+        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
+        if not os.path.exists(my_ui):
+            raise Exception("can not find %s" % my_ui)
+        uic.loadUi(my_ui, self)
 
     def verify(self):
         if self.parallelism == 1:
@@ -127,32 +135,31 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
             self.MultiSiteDIB.setEnabled(True)
         self.update()
 
-    def OKButtonPressed(self):
-        #project_path, hardware_setup_version, hardware_data
+    def _get_actual_definition(self):
+        return {'SingleSiteLoadboard' : self.SingleSiteLoadboard.text(),
+                'SingleSiteDIB' : self.SingleSiteDIB.text(),
+                'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
+                'MultiSiteDIB' : self.MultiSiteDIB.text(),
+                'ProbeCard' : self.ProbeCard.text(),
+                'Parallelism' : self.parallelism}
 
-        
-        definition = {'SingeSiteLoadboard' : self.SingleSiteLoadboard.text(),
-                      'SingleSiteDIB' : self.SingleSiteDIB.text(),
-                      'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
-                      'MultiSiteDIB' : self.MultiSiteDIB.text(),
-                      'ProbeCard' : self.ProbeCard.text(),
-                      'parallelism' : self.parallelism}
+    def OKButtonPressed(self):
         name = self.HardwareSetup.text()
-        new_name = self.parent.project_info.add_hardware(definition)
+        new_name = self.project_info.add_hardware(self._get_actual_definition())
         if name != new_name:
             raise Exception(f"Woops, something wrong with the name !!! '{name}'<->'{new_name}'")
-        self.parent.active_hw = name
-        self.parent.update_hardware()
-        self.parent.update_tree()
+
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
-        
-def new_hardwaresetup_dialog(parent):
-    newHardwaresetupWizard = NewHardwaresetupWizard(parent)
+
+
+def new_hardwaresetup_dialog(project_info):
+    newHardwaresetupWizard = NewHardwaresetupWizard(project_info)
     newHardwaresetupWizard.exec_()
     del(newHardwaresetupWizard)
+
 
 if __name__ == '__main__':
     import sys, qdarkstyle
