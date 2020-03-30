@@ -7,6 +7,7 @@ Created on Fri Mar 13 11:56:05 2020
 This module holds the code that generates:
     1) a test (class)
     2) a test program
+    3) the common.py file
 based on the supplied info.
 """
 
@@ -39,16 +40,14 @@ def test_generator(project_path, name, hardware, Type, base, definition):
     user = getpass.getuser()
         
     rel_path_to_file = os.path.join('src', 'tests', hardware, base, f"{name}.py")
-    print(f"rel_path_to_file = '{rel_path_to_file}'")
     abs_path_to_file = os.path.join(project_path, rel_path_to_file)
-    print(f"abs_path_to_file = '{abs_path_to_file}'")
     
     if os.path.exists(abs_path_to_file):
         raise Exception("asked to generate a test that already exists ! should not be possible")
 
     with open(abs_path_to_file, 'w') as tf:
         # reference : https://stackoverflow.com/questions/41914739/how-do-i-activate-a-conda-env-in-a-subshell
-        tf.write("#!/usr/bin/env conda run -n SCT python\n") 
+        tf.write("#!/usr/bin/env conda run -n ATE python\n") 
         tf.write("# -*- coding: utf-8 -*-\n") # not sure if in python 3 this is still necessary, but just in case
         tf.write("'''\n")
         tf.write(f"Created on {now}\n\n")
@@ -62,7 +61,7 @@ def test_generator(project_path, name, hardware, Type, base, definition):
         tf.write("from ATE.org.abc import testABC\n\n")
     
         tf.write(f"class {name}(testABC):\n")        
-        if 'doc_sting' in definition:
+        if 'doc_string' in definition:
             tf.write("\t'''\n")
             for line in definition['doc_string']:
                 tf.write("\t{line}\n")
@@ -75,4 +74,49 @@ def test_generator(project_path, name, hardware, Type, base, definition):
     return rel_path_to_file
 
 def program_generator():
+    pass
+
+def common_generatro(project_path, hardware, base):
+    '''
+    This function will generate the project's base "common.py" file from scratch,
+    then the TE can add things to it.
+    The idea is here that the whole tester initialization (and/or instruments
+    initialization is done here), TCC initialization and so on is done here.
+    each test includes this with "from src import common"
+    '''
+    pass
+
+def tippprint(fd, ip):
+    '''
+    Test Input Parameters Pretty PRINT
+    
+    This function will be given a file descriptor of an open test file, 
+    and the input parameters (dictionary). 
+    The function will print the dictionary nicely aligned to the file descriptor.
+    '''
+    pass
+
+def toppprint(fd, op):
+    '''
+    Test Output Parameters Pretty PRINT
+    
+    same as tippprint but for output parameters to a test file.
+    '''
+    pass
+
+
+def pcvpprint(fd, cv):
+    '''
+    Program Call Values Pretty PRINT
+    
+    same principle as tippprint but for test programs and call value
+    '''
+    pass
+
+def ptlpprint(fd, tl):
+    '''
+    Program Test Limits Pretty PRINT
+    
+    same principle as tipprint but for test programs and test limits
+    '''
     pass

@@ -4,7 +4,7 @@ ATE.scripts.deflate -- compresses file(s)
 
 @author:     Tom Hören
 @copyright:  2019 TDK™, All rights reserved.
-@license:    GPL V3
+@license:    GPL V2
 @contact:    hoeren@micronas.com
 '''
 
@@ -83,7 +83,7 @@ def main(argv=None): # IGNORE:C0111
   Created by %s on %s.
   Copyright %s, All rights reserved.
 
-  Licensed under GNU GPL V3
+  Licensed under GNU GPL V2
   https://www.gnu.org/licenses/gpl-3.0.en.html
 
   Distributed on an "AS IS" basis without warranties

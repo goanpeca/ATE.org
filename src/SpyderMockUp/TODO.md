@@ -1,3 +1,8 @@
+# This section holds
+
+*ALL* code that we created as a placeholder for Spyder itself.
+All our own logic should be moved to ATE.org ...
+
 # treeview
 
 We need to move from an item-based item view to a model-based item-view.
