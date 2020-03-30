@@ -15,6 +15,9 @@ default_run_mode = '1'
 default_test_number_separation = 50
 default_loop_number = 1000
 
+
+#TODO: move this to the __init__.py file as the ABC !!!
+
 class development_sequencer(object):
     '''
     This is a simple sequencer for testing individual tests interactively.
