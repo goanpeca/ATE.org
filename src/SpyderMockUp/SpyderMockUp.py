@@ -974,7 +974,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.populateQualificationFlow(self.qualification_PC_flows)
 
     def populateQualificationFlow(self, item: QtWidgets.QWidget):
-        import UIElements.TreeItemWithData
+        import UIElements.TreeItemWithData #TODO: move to ATE.org.actions_on.flow !
         item.takeChildren()
         for subflow in self.project_info.get_data_for_qualification_flow(item.text(1), self.target_combo.currentText()):
             flows = UIElements.TreeItemWithData.TreeItemWithData(item)
