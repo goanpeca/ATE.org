@@ -4,7 +4,7 @@ ATE.scripts.deflate -- decompresses file(s)
 
 @author:     Tom Hören
 @copyright:  2019 TDK™, All rights reserved.
-@license:    GPL V3
+@license:    GPL V2
 @contact:    hoeren@micronas.com
 '''
 
