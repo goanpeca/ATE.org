@@ -47,7 +47,7 @@ def test_generator(project_path, name, hardware, Type, base, definition):
 
     with open(abs_path_to_file, 'w') as tf:
         # reference : https://stackoverflow.com/questions/41914739/how-do-i-activate-a-conda-env-in-a-subshell
-        tf.write("#!/usr/bin/env conda run -n SCT python\n") 
+        tf.write("#!/usr/bin/env conda run -n ATE python\n") 
         tf.write("# -*- coding: utf-8 -*-\n") # not sure if in python 3 this is still necessary, but just in case
         tf.write("'''\n")
         tf.write(f"Created on {now}\n\n")

@@ -1,3 +1,4 @@
+#!/usr/bin/env conda run -n ATE python
 # -*- coding: utf-8 -*-
 """
 This is a skeleton file that can serve as a starting point for a Python
@@ -21,9 +22,9 @@ import logging
 
 from ATE import __version__
 
-__author__ = "Tom Hören"
-__copyright__ = "Tom Hören"
-__license__ = "gpl2"
+__author__ = "fill in"
+__copyright__ = "TDK"
+__license__ = "GPLV2"
 
 _logger = logging.getLogger(__name__)
 
