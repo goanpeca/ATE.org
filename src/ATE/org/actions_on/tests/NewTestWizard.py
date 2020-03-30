@@ -157,7 +157,9 @@ class NewTestWizard(QtWidgets.QDialog):
         if self.col == 5: # Unit
             if self.row != 0: # not temperature
                 menu = QtWidgets.QMenu(self)
-                # unitContextMenu --> reference = https://en.wikipedia.org/wiki/International_System_of_Units
+                # unitContextMenu
+                #    reference to SI : https://en.wikipedia.org/wiki/International_System_of_Units
+                #    reference to unicode : https://en.wikipedia.org/wiki/List_of_Unicode_characters
                 base_units = [
                     ('s (time - second)', self.setUnitSecond),
                     ('m (length - meter)', self.setUnitMeter),
@@ -200,7 +202,8 @@ class NewTestWizard(QtWidgets.QDialog):
     
                 alternative_units = [
                     ('°C (temperature - degree Celcius = K - 273.15)', self.setUnitCelcius),
-                    ('Gs (magnetic flux density - gauss = 10⁻⁴ Tesla)', self.setUnitGauss)]
+                    ('Gs (magnetic flux density - gauss = 10⁻⁴ Tesla)', self.setUnitGauss),
+                    ('˽ (no dimension / unit)', self.setUnitDimensionless)]
                 for unit in alternative_units:
                     item = menu.addAction(unit[0])
                     item.triggered.connect(unit[1])
@@ -210,7 +213,7 @@ class NewTestWizard(QtWidgets.QDialog):
         elif self.col == 4: # multiplier --> reference = STDF V4.pdf @ page 50 & https://en.wikipedia.org/wiki/Order_of_magnitude
             if self.row != 0: # temperature
                 menu = QtWidgets.QMenu(self)
-                multipliers = [
+                normal_multipliers = [
                     ('y (yocto=10⁻²⁴)', self.setMultiplierYocto),
                     ('z (zepto=10⁻²¹)', self.setMultiplierZepto),
                     ('a (atto=10⁻¹⁸)', self.setMultiplierAtto),
@@ -218,10 +221,7 @@ class NewTestWizard(QtWidgets.QDialog):
                     ('p (pico=10⁻¹²)', self.setMultiplierPico),
                     ('η (nano=10⁻⁹)', self.setMultiplierNano),
                     ('μ (micro=10⁻⁶)', self.setMultiplierMicro),
-                    ('ppm (parts per million=ᴺ/₁․₀₀₀․₀₀₀)', self.setMultiplierPPM),
                     ('m (mili=10⁻³)', self.setMultiplierMili),
-                    ('‰ (promille=ᴺ/₁․₀₀₀)', self.setMultiplierPromille),
-                    ('% (percent=ᴺ/₁₀₀)', self.setMultiplierPercent),
                     ('c (centi=10⁻²)', self.setMultiplierCenti),
                     ('d (deci=10⁻¹)', self.setMultiplierDeci),
                     ('˽ (no scaling=10⁰)', self.setMultiplierNone),
@@ -235,9 +235,28 @@ class NewTestWizard(QtWidgets.QDialog):
                     ('E (exa=10¹⁸)', self.setMultiplierExa),
                     ('Z (zetta=10²¹)', self.setMultiplierZetta),
                     ('ϒ (yotta=10²⁴)', self.setMultiplierYotta)]
-                for multiplier in multipliers:
+                for multiplier in normal_multipliers:
                     item = menu.addAction(multiplier[0])
                     item.triggered.connect(multiplier[1])
+                menu.addSeparator()
+    
+                dimensionless_multipliers = [
+                    ('ppm (parts per million=ᴺ/₁․₀₀₀․₀₀₀)', self.setMultiplierPPM),
+                    ('‰ (promille=ᴺ/₁․₀₀₀)', self.setMultiplierPromille),
+                    ('% (percent=ᴺ/₁₀₀)', self.setMultiplierPercent),
+                    ('dB (decibel=10·log[P/Pref])', self.setMultiplierdB), 
+                    ('dBV (decibel=20·log[V/Vref])', self.setMultiplierdBV)]
+                for multiplier in dimensionless_multipliers:
+                    item = menu.addAction(multiplier[0])
+                    item.triggered.connect(multiplier[1])
+
+                
+                
+                
+                
+                
+                
+                
                 
                 menu.exec_(QtGui.QCursor.pos())
             
@@ -258,7 +277,7 @@ class NewTestWizard(QtWidgets.QDialog):
         else: # Name
             if self.row != 0: # not for temperature
                 menu = QtWidgets.QMenu(self)
-    
+                # http://www.cplusplus.com/reference/cstdio/fprintf/
                 parameter_types =[
                     ("Real", self.setParameterReal),
                     ("Integer (Decimal - '123...')", self.setParameterDecimal),
@@ -380,6 +399,9 @@ class NewTestWizard(QtWidgets.QDialog):
     def setUnitGauss(self):
         self.setUnit('Gs', 'magnetic flux density - gauss = 10⁻⁴ Tesla')
 
+    def setUnitDimensionless(self):
+        self.setUnit('', 'dimensionless')
+
 # special units
     def setUnitReal(self):
         self.setUnit('𝓡', 'unitless real number')
@@ -416,15 +438,18 @@ class NewTestWizard(QtWidgets.QDialog):
         self.setMultiplier('μ', 'micro=10⁻⁶')                
 
     def setMultiplierPPM(self):
+        #TODO: remove the unit, as PPM is dimensionless
         self.setMultiplier('ppm', 'parts per million=ᴺ/₁․₀₀₀․₀₀₀')                
 
     def setMultiplierMili(self):
         self.setMultiplier('m', 'mili=10⁻³')
 
     def setMultiplierPromille(self):
+        #TODO: remove the unit as promille is dimensionless
         self.setMultiplier('‰', 'promille=ᴺ/₁․₀₀₀')
 
     def setMultiplierPercent(self):
+        #TODO: remove the unit as percent is dimensionless
         self.setMultiplier('%', 'percent=ᴺ/₁₀₀')
 
     def setMultiplierCenti(self):
@@ -466,6 +491,14 @@ class NewTestWizard(QtWidgets.QDialog):
     def setMultiplierYotta(self):
         self.setMultiplier('ϒ', 'yotta=10²⁴')     
 
+    def setMultiplierdB(self):
+        print(f"{self.row}, {self.col}")
+        self.setMultiplier('dB', 'decibel=10·log[P/Pref]')
+        self.setUnit('W', 'power, radiant flux - watt = kg⋅m²⋅s⁻³ = J/s')        
+        
+    def setMultiplierdBV(self):
+        self.setMultiplier('dBV', 'decibel=20·log[V/Vref]')
+        self.setUnit('V', 'electric potential, emf - volt = kg⋅m²⋅s⁻³⋅A⁻¹ = W/A = J/C')
 
     def setValuePlusInfinite(self):
         for item in self.inputParameterTable.selectedItems():
@@ -621,7 +654,7 @@ class NewTestWizard(QtWidgets.QDialog):
         col = self.inputParameterTable.currentColumn()
         rows = self.inputParameterTable.rowCount()
         for row in range(rows):
-            item = self.inputParmeterTable.item(row, col)
+            item = self.inputParameterTable.item(row, col)
             if col in [1,2,3]:
                 item.setTextAlignment(QtCore.Qt.AlignCenter)
             elif col == 4:
