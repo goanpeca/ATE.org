@@ -555,7 +555,7 @@ class project_navigator(object):
     
     def get_dies_for_grade(self, grade):
         '''
-        this method will return a LIST of all dies that conform to 'maskset'
+        this method will return a LIST of all dies that conform to 'maskset' with 'grade'
         '''
         dies_info = self.get_dies_info()
         retval = []
