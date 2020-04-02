@@ -59,7 +59,7 @@ class NewProgramWizard(QtWidgets.QDialog):
         self._load_ui()
         self._setup()
         self._view()
-        self._action()
+        self._connect_event_handler()
 
     def __call__(self):
         # self.show()
@@ -80,7 +80,7 @@ class NewProgramWizard(QtWidgets.QDialog):
 
         uic.loadUi(ui, self)
 
-    def _action(self):
+    def _connect_event_handler(self):
         self.OKButton.clicked.connect(self._save_configuration)
         self.CancelButton.clicked.connect(self._cancel)
 

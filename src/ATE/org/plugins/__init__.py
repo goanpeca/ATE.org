@@ -27,10 +27,10 @@ masksetStructure = {
     'Customer' : '', # a string, '' for 'ASSP', for 'ASIC' the customer name
     'WaferDiameter' : '200', # a string, must be one of ['25', '51', '76', '100', '125', '150', '200', '300', '450'] 
     'Bondpads' : 3, # a positive integer, equal or bigger than 2, and equal or smaller than 99
-    'DieSizeX' : None, # posetive integer measured in µm
-    'DieSizeY' : None, # posetive integer measured in µm
-    'DieRefX' : None, # posetive integer measured in µm
-    'DieRefY' : None, # posetive integer measured in µm
+    'DieSizeX' : None, # positive integer measured in µm
+    'DieSizeY' : None, # positive integer measured in µm
+    'DieRefX' : None, # positive float measured in µm
+    'DieRefY' : None, # positive float measured in µm
     
 #TODO: complete the 'masksetStructure' once the UI is stabilized.
     

@@ -95,6 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tree.setHeaderHidden(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.context_menu_manager)
+        self.tree.itemDoubleClicked.connect(self.edit_test)
 
     # setup the screencaster
         self.screencast = screenCast()
@@ -110,8 +111,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_toolbar()
         self.update_testers()
 
-        self.load_last_project()
+    # TODO: not needed after refactoring .ui file
+        self.editorTabs.clear()
+        self.editorTabs.addTab(QtWidgets.QTextEdit(), 'Tab')
+        self.editorTabs.setTabsClosable(True)
+        self.editorTabs.tabCloseRequested.connect(self.close_tab)
 
+        self.load_last_project()
         self.show()
 
     def load_last_project(self):
@@ -539,8 +545,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def context_menu_manager(self, point):
         from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
         from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
+        from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
         from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
-        from ATE.org.actions_on.flow.PC.pcwizard import quali_pc_flow_name
+        from ATE.org.actions_on.flow.AC.acwizard import quali_ac_flow_name
+        from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
+        from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
 
         #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
         #https://doc.qt.io/qt-5/qtreewidget-members.html
@@ -753,7 +762,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.node_type == 'test':
             menu = QtWidgets.QMenu(self)
             edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_test.triggered.connect
+            edit_test.triggered.connect(self.edit_test)
             clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
             # clone_to_test.triggered.connect
             trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
@@ -772,6 +781,24 @@ class MainWindow(QtWidgets.QMainWindow):
             menu = QtWidgets.QMenu(self)
             add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
             add_flow.triggered.connect(self.edit_hast)
+            menu.exec_(QtGui.QCursor.pos())
+        
+        elif self.node_type == quali_htsl_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+            add_flow.triggered.connect(self.new_htsl)
+            menu.exec_(QtGui.QCursor.pos())
+
+        elif self.node_type =="qualification_HTSL_flow_instance":
+            menu = QtWidgets.QMenu(self)
+            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            edit_flow.triggered.connect(lambda: self.edit_htsl(item.get_item_data()[3]))
+
+            view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+            view_flow.triggered.connect(lambda: self.view_htsl(item.get_item_data()[3]))
+
+            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+            delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
             menu.exec_(QtGui.QCursor.pos())
             
         elif self.node_type == quali_htol_flow_name:
@@ -792,22 +819,33 @@ class MainWindow(QtWidgets.QMainWindow):
             delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
             menu.exec_(QtGui.QCursor.pos())
 
-        elif self.node_type == quali_pc_flow_name:
+        elif self.node_type == quali_ac_flow_name:
             menu = QtWidgets.QMenu(self)
             add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_flow.triggered.connect(self.new_pc)
+            add_flow.triggered.connect(self.new_ac)
             menu.exec_(QtGui.QCursor.pos()) 
 
-        elif self.node_type == "qualification_PC_flow_instance":
+        elif self.node_type == "qualification_AC_flow_instance":
             menu = QtWidgets.QMenu(self)
             edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_flow.triggered.connect(lambda: self.edit_pc(item.get_item_data()[3]))
+            edit_flow.triggered.connect(lambda: self.edit_ac(item.get_item_data()[3]))
 
             view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            view_flow.triggered.connect(lambda: self.view_pc(item.get_item_data()[3]))
+            view_flow.triggered.connect(lambda: self.view_ac(item.get_item_data()[3]))
 
             delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
             delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
+            menu.exec_(QtGui.QCursor.pos())
+        elif self.node_type == quali_tc_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            add_flow.triggered.connect(self.edit_tc)
+            menu.exec_(QtGui.QCursor.pos())
+
+        elif self.node_type == quali_sam_flow_name:
+            menu = QtWidgets.QMenu(self)
+            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+            add_flow.triggered.connect(self.edit_sam)
             menu.exec_(QtGui.QCursor.pos())
 
     def testerChanged(self):
@@ -817,6 +855,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.active_hw = self.hw_combo.currentText()
         self.update_base()
         self.update_target()
+        self.update_tests()
         self.update_tree()
 
     def update_tests(self):
@@ -828,20 +867,39 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tests.setDisabled(False)
         self.tests.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.ShowIndicator)
 
-        test_list = self.project_info.get_tests_from_db(self.hw_combo.currentText(), self.base_combo.currentText())
+        test_list = self._get_available_tests()
+        if len(test_list) == 0:
+            self.tests.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.DontShowIndicator)
+
+        self.tests.takeChildren()
         for test_entry in test_list:
             test = QtWidgets.QTreeWidgetItem()
             test.setText(0, test_entry)
             test.setText(1, 'test')
-            test.setText(2, test_list[test_entry])
             self.tests.insertChild(self.tests.childCount(), test)
+
+    def _get_available_tests(self):
+        from os import walk, path
+
+        self.tests_directory = path.join(self.workspace_path, self.active_project, 'src',
+                                    'tests', self.active_hw, self.base_combo.currentText())
+
+        files = []
+        for _, _, filenames in walk(self.tests_directory):
+            files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py'])
+            break
+
+        return files
 
     def set_flow_state(self, parent):
 
                 from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
                 from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
                 from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
-                from ATE.org.actions_on.flow.PC.pcwizard import quali_pc_flow_name
+                from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
+                from ATE.org.actions_on.flow.AC.acwizard import quali_ac_flow_name
+                from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
+                from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
 
         # sources/flows/production
                 self.production_flow = QtWidgets.QTreeWidgetItem(parent, None)
@@ -883,7 +941,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.qualification_HTSL_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ESD_flows)
                 self.qualification_HTSL_flows.setToolTip(0, 'High Temperature Storage Life')
                 self.qualification_HTSL_flows.setText(0, 'HTSL')
-                self.qualification_HTSL_flows.setText(1, 'qualification_HTSL_flows')
+                self.qualification_HTSL_flows.setText(1, quali_htsl_flow_name)
 
         # sources/flows/qualification/DR
                 self.qualification_DR_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HTSL_flows)
@@ -939,11 +997,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.qualification_LU_flows.setText(0, 'LU')
                 self.qualification_LU_flows.setText(1, 'qualification_LU_flows')
 
-    # sources/flows/qualification/PC
-                self.qualification_PC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_LU_flows)
-                self.qualification_PC_flows.setToolTip(0, 'Pressure Cooker')
-                self.qualification_PC_flows.setText(0, 'PC')
-                self.qualification_PC_flows.setText(1, quali_pc_flow_name)
+    # sources/flows/qualification/AC
+                self.qualification_AC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_LU_flows)
+                self.qualification_AC_flows.setToolTip(0, 'Autoclav')
+                self.qualification_AC_flows.setText(0, 'AC')
+                self.qualification_AC_flows.setText(1, quali_ac_flow_name)
+
+        # sources/flows/qualification/TC
+                self.qualification_TC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_AC_flows)
+                self.qualification_TC_flows.setToolTip(0, 'Temperature Cycling')
+                self.qualification_TC_flows.setText(0, 'TC')
+                self.qualification_TC_flows.setText(1, quali_tc_flow_name)
 
         # sources/flows/characterisation
                 self.characterisation_flows = QtWidgets.QTreeWidgetItem(parent, self.qualification_flows)
@@ -971,7 +1035,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.flows.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.ShowIndicator)
 
         self.populateQualificationFlow(self.qualification_HTOL_flows)
-        self.populateQualificationFlow(self.qualification_PC_flows)
+        self.populateQualificationFlow(self.qualification_HTSL_flows)
+        self.populateQualificationFlow(self.qualification_AC_flows)
 
     def populateQualificationFlow(self, item: QtWidgets.QWidget):
         import UIElements.TreeItemWithData #TODO: move to ATE.org.actions_on.flow !
@@ -1051,6 +1116,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def add_standard_test(self):
         from ATE.org.actions_on.tests.NewStandardTestWizard import new_standard_test_dialog
         new_standard_test_dialog(self)
+        self.update_tests()
     
     def clone_from_test(self):
         pass
@@ -1116,18 +1182,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.set_tree()
     
-    def edit_pc(self, data: dict):
-        from ATE.org.actions_on.flow.PC.pcwizard import edit_pc_wizard
-        edit_pc_wizard(self.project_info, data)
+    def edit_ac(self, data: dict):
+        from ATE.org.actions_on.flow.AC.acwizard import edit_ac_wizard
+        edit_ac_wizard(self.project_info, data)
 
-    def new_pc(self):
-        from ATE.org.actions_on.flow.PC.pcwizard import new_pc_wizard
-        new_pc_wizard(self.project_info, self.target_combo.currentText())
+    def new_ac(self):
+        from ATE.org.actions_on.flow.AC.acwizard import new_ac_wizard
+        new_ac_wizard(self.project_info, self.target_combo.currentText())
         self.populateQualificationFlow(self.tree.currentItem())
 
-    def view_pc(self, data:dict):
-        from ATE.org.actions_on.flow.PC.pcwizard import view_pc_wizard
-        view_pc_wizard(self.project_info, data)
+    def view_ac(self, data:dict):
+        from ATE.org.actions_on.flow.AC.acwizard import view_ac_wizard
+        view_ac_wizard(self.project_info, data)
 
     def edit_elfr(self):
         from ATE.org.actions_on.flow.ELFR.elfrwizard import edit_elfr_wizard
@@ -1136,6 +1202,27 @@ class MainWindow(QtWidgets.QMainWindow):
     def edit_hast(self):
         from ATE.org.actions_on.flow.HAST.hastwizard import edit_hast_wizard
         edit_hast_wizard(self.project_info, self.target_combo.currentText())
+
+    def edit_sam(self):
+        from ATE.org.actions_on.flow.SAM.samwizard import edit_sam_wizard
+        edit_sam_wizard(self.project_info, self.target_combo.currentText())
+
+    def edit_tc(self):
+        from ATE.org.actions_on.flow.TC.tcwizard import edit_tc_wizard
+        edit_tc_wizard(self.project_info, self.target_combo.currentText())
+
+    def new_htsl(self, checked):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import new_htsl_wizard
+        new_htsl_wizard(self.project_info, self.target_combo.currentText())
+        self.populateQualificationFlow(self.tree.currentItem())
+
+    def edit_htsl(self, data: dict):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import edit_htsl_wizard
+        edit_htsl_wizard(self.project_info, data)
+
+    def view_htsl(self, data: dict):
+        from ATE.org.actions_on.flow.HTSL.htslwizard import view_htsl_wizard
+        view_htsl_wizard(self.project_info, data)
 
     def new_htol(self, checked):
         from ATE.org.actions_on.flow.HTOL.htolwizard import new_htol_wizard
@@ -1262,9 +1349,6 @@ class MainWindow(QtWidgets.QMainWindow):
         print("import_maskset")
 
 
-
-    def edit_test(self):
-        print("edit_test")
 
     def edit_testprogram(self):
         print("edit_testprogram")
@@ -1449,6 +1533,38 @@ class MainWindow(QtWidgets.QMainWindow):
     def delete_maskset(self):
         self.project_info.delete_hardwaresetup()
 		
+    def edit_test(self, item=None):
+        if isinstance(item, QtWidgets.QTreeWidgetItem):
+            if not item.text(1) == 'test':
+                return
+
+        tabs = self.editorTabs.count()
+
+        if self.editorTabs.tabText(0) == 'Tab':
+            self.editorTabs.removeTab(0)
+
+        selected_file = self.tree.currentItem().text(0)
+        for index in range(tabs):
+            if selected_file == self.editorTabs.tabText(index):
+                self.editorTabs.setCurrentIndex(index)
+                return
+
+        file_path = os.path.join(self.tests_directory, selected_file + '.py')
+        with open(file_path) as f:
+            content = f.read()
+
+        text_editor = QtWidgets.QTextEdit('')
+        text_editor.insertPlainText(content)
+        self.editorTabs.addTab(text_editor, selected_file)
+        self.editorTabs.setCurrentIndex(self.editorTabs.count() - 1)
+
+    def close_tab(self, tab_index):
+        self.editorTabs.removeTab(tab_index)
+
+        if self.editorTabs.count() == 0:
+            text_editor = QtWidgets.QTextEdit('')
+            self.editorTabs.addTab(text_editor, 'Tab')
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

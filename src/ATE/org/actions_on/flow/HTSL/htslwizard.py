@@ -6,17 +6,18 @@ from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_htol_flow_name = "qualification_HTOL_flow"
+quali_htsl_flow_name = "qualification_HTSL_flow"
 
 
-class HTOLWizard(wizardbase.wizardbase):
+class HTSLWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
         return [writeoncetextparam.WriteOnceTextParam("name"),
                 intparam.IntParam("Length (hours)", 0, 0, 10000),
-                intparam.IntParam("Testwindow (hours)", 0, 0, 500),
-                intparam.IntParam("Vdd (V)", 12, 0, 240)]
+                intparam.IntParam("Temperature (°C)", 0, 0, 240),
+                intparam.IntParam("Testwindow (hours)", 0, 0, 500)
+                ]
     
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
@@ -24,23 +25,23 @@ class HTOLWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return quali_htol_flow_name
+        return quali_htsl_flow_name
 
 
-def new_htol_wizard(storage, product: str):
-    dialog = HTOLWizard({"product": product}, storage)
+def new_htsl_wizard(storage, product: str):
+    dialog = HTSLWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
 
-def edit_htol_wizard(storage, data):
-    dialog = HTOLWizard(data, storage)
+def edit_htsl_wizard(storage, data):
+    dialog = HTSLWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
 
-def view_htol_wizard(storage, data):
-    dialog = HTOLWizard(data, storage)
+def view_htsl_wizard(storage, data):
+    dialog = HTSLWizard(data, storage)
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
@@ -51,6 +52,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    dialog = HTOLWizard(dict(), None)
+    dialog = HTSLWizard(dict(), None)
     dialog.show()
     sys.exit(app.exec_())

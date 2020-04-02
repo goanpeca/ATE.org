@@ -83,7 +83,7 @@ def run_master(device_id, sites, broker_host, broker_port, webui_port):
         "user_settings_filepath": None  # explicitly disable persistent user settings, so we don't create or use config files
     }
     launch_master(log_file_name=f'{device_id}_master_log.log',
-                  config_file_path='master_config_file_template.json',
+                  config_file_path='src/ATE/apps/master_config_file_template.json',
                   user_config_dict=config)
 
 
@@ -96,7 +96,7 @@ def run_control(device_id, site_id, broker_host, broker_port):
         'site_id': site_id
     }
     launch_control(log_file_name=f'{device_id}_control_{site_id}_log.log',
-                   config_file_path='control_config_file_template.json',
+                   config_file_path='src/ATE/apps/control_config_file_template.json',
                    user_config_dict=config)
 
 

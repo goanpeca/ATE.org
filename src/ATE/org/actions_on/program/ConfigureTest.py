@@ -28,7 +28,7 @@ class ConfigureTest(QtWidgets.QDialog):
 
         self._load_ui()
         self._setup()
-        self._action()
+        self._connect_event_handler()
         self._view()
 
     def show(self):
@@ -73,7 +73,7 @@ class ConfigureTest(QtWidgets.QDialog):
 
         self.Feedback.setText("")
 
-    def _action(self):
+    def _connect_event_handler(self):
         self.OKButton.clicked.connect(self._save)
         self.CancelButton.clicked.connect(self._cancel)
 
