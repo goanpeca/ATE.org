@@ -120,7 +120,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -133,13 +133,12 @@
     <addaction name="actionClose_Project"/>
     <addaction name="actionDelete_Project"/>
    </widget>
-   <widget class="QMenu" name="menuFile_2">
+   <widget class="QMenu" name="file_menu">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="action_quit"/>
    </widget>
-   <addaction name="menuFile_2"/>
+   <addaction name="file_menu"/>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -581,6 +580,16 @@
   <action name="action_quit">
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="action_save">
+   <property name="text">
+    <string>save</string>
+   </property>
+  </action>
+  <action name="action_quit_2">
+   <property name="text">
+    <string>quit</string>
    </property>
   </action>
  </widget>

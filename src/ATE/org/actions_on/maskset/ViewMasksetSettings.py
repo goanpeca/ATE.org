@@ -54,6 +54,15 @@ class ViewMasksetSettings(QtWidgets.QDialog):
         self.flat.setEnabled(False)
         self.Type.setEnabled(False)
 
+        self.bondpadTable.setRowCount(len(self.maskset_configuration["BondpadTable"]))
+        row = self.bondpadTable.rowCount()
+        column = self.bondpadTable.columnCount()
+        for r in range(row):
+            for c in range(column):
+                item = QtWidgets.QTableWidgetItem('')
+                self.bondpadTable.setItem(r, c, item)
+                item.setFlags(QtCore.Qt.NoItemFlags)
+
     @staticmethod
     def is_valid_configuration(maskset_configuration):
         if not maskset_configuration.keys() == DEFINITION.keys():
@@ -94,7 +103,14 @@ class ViewMasksetSettings(QtWidgets.QDialog):
 
         owner.flat.setText(str(maskset_configuration["Flat"]))
 
-        # TODO: impl. Table Component
+        table_infos = maskset_configuration["BondpadTable"]
+        owner.bondpadTable.setRowCount(len(table_infos))
+        row = owner.bondpadTable.rowCount()
+        column = owner.bondpadTable.columnCount()
+
+        for r in range(row):
+            for c in range(column):
+                owner.bondpadTable.item(r, c).setText(str(table_infos[r + 1][c]))
 
 
 def display_maskset_settings_dialog(maskset_configuration, maskset_name):

@@ -14,9 +14,20 @@ import qtawesome as qta
 from ATE.org.validation import is_valid_maskset_name
 
 from ATE.org.actions_on.maskset.constants import UI_FILE
+from ATE.org.actions_on.maskset.constants import DEFAULT_ROW
+from ATE.org.actions_on.maskset.constants import PadType
+from ATE.org.actions_on.maskset.constants import PadDirection
 
 standard_flat_height = 7 # mm
 standard_scribe = 100 # um
+
+PAD_NAME_COLUMN = 0
+PAD_TYPE_COLUMN = 5
+PAD_DIRECTION_COLUMN = 6
+POS_X_COLUMN = 1
+POS_Y_COLUMN = 2
+SIZE_X_COLUMN = 3
+SIZE_Y_COLUMN = 4
 
 class NewMasksetWizard(QtWidgets.QDialog):
     def __init__(self, project_info):
@@ -26,7 +37,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.project_info = project_info
         self._load_ui()
         self._setup()
-        self._action()
+        self._connect_event_handler()
 
     def _load_ui(self):
         my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
@@ -38,7 +49,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
         from ATE.org.validation import valid_positive_integer_regex
         rxi = QtCore.QRegExp(valid_positive_integer_regex)
-        positive_integer_validator = QtGui.QRegExpValidator(rxi, self)
+        self.positive_integer_validator = QtGui.QRegExpValidator(rxi, self)
 
         from ATE.org.validation import valid_positive_float_1_regex
         rxf = QtCore.QRegExp(valid_positive_float_1_regex)
@@ -46,14 +57,14 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
         from ATE.org.validation import valid_maskset_name_regex
         rxMaskSetName = QtCore.QRegExp(valid_maskset_name_regex)
-        MasksetName_validator = QtGui.QRegExpValidator(rxMaskSetName, self)
+        self.maskset_name_validator = QtGui.QRegExpValidator(rxMaskSetName, self)
 
     # maskset
         self.masksetName.blockSignals(True)
         self.existing_masksets = self.project_info.get_masksets()
 
         self.masksetName.setText("")
-        self.masksetName.setValidator(MasksetName_validator)
+        self.masksetName.setValidator(self.maskset_name_validator)
         self.masksetName.blockSignals(False)
 
     # Type & Customer
@@ -75,20 +86,9 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.bondpads.blockSignals(True)
         self.bondpads.setMinimum(2)
         self.bondpads.setMaximum(99)
-        self.bondpads.setValue(3)
+        self.bondpads.setValue(2)
         self.bondpads.blockSignals(False)
-
-    # die size X
-        self.dieSizeX.blockSignals(True)
-        self.dieSizeX.setText("")
-        self.dieSizeX.setValidator(positive_integer_validator)
-        self.dieSizeX.blockSignals(False)
-
-    # die size Y
-        self.dieSizeY.blockSignals(True)
-        self.dieSizeY.setText("")
-        self.dieSizeY.setValidator(positive_integer_validator)
-        self.dieSizeY.blockSignals(False)
+        self._set_row_elements(DEFAULT_ROW)
 
     # XY Flip Button
         self.XYFlipButton.blockSignals(True)
@@ -96,55 +96,38 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.XYFlipButton.setIcon(qta.icon('mdi.arrow-up-down', color='white'))
         self.XYFlipButton.blockSignals(False)
 
+    # die size X
+        NewMasksetWizard._setup_input_element(self.dieSizeX, "", self.positive_integer_validator)
+    # die size Y
+        NewMasksetWizard._setup_input_element(self.dieSizeY, "", self.positive_integer_validator)
     # die Ref X
-        self.dieRefX.blockSignals(True)
-        self.dieRefX.setText("")
-        self.dieRefX.setValidator(positive_float_validator)
-        self.dieRefX.blockSignals(False)
-    
+        NewMasksetWizard._setup_input_element(self.dieRefX, "", positive_float_validator)
     # die Ref Y
-        self.dieRefY.blockSignals(True)
-        self.dieRefY.setText("")
-        self.dieRefY.setValidator(positive_float_validator)
-        self.dieRefY.blockSignals(False)
-    
+        NewMasksetWizard._setup_input_element(self.dieRefY, "", positive_float_validator)
     # X Offset
-        self.xOffset.blockSignals(True)
-        self.xOffset.setText("0")
-        self.xOffset.setValidator(positive_float_validator)
-        self.xOffset.blockSignals(False)
-        
+        NewMasksetWizard._setup_input_element(self.xOffset, "0", positive_float_validator)
     # Y Offset
-        self.yOffset.blockSignals(True)
-        self.yOffset.setText("0")
-        self.yOffset.setValidator(positive_float_validator)
-        self.yOffset.blockSignals(False)
-    
+        NewMasksetWizard._setup_input_element(self.yOffset, "0", positive_float_validator)
     # scribe X
-        self.scribeX.blockSignals(True)
-        self.scribeX.setText(str(standard_scribe))
-        self.scribeX.setValidator(positive_float_validator)
-        self.scribeX.blockSignals(False)
-
+        NewMasksetWizard._setup_input_element(self.scribeX, str(standard_scribe), positive_float_validator)
     # scribe Y
-        self.scribeY.blockSignals(True)
-        self.scribeY.setText(str(standard_scribe))
-        self.scribeY.setValidator(positive_float_validator)
-        self.scribeY.blockSignals(False)
+        NewMasksetWizard._setup_input_element(self.scribeY, str(standard_scribe), positive_float_validator)
 
     # Flat
         WaferDiameter = int(self.waferDiameter.currentText())
-        Flat = (WaferDiameter/2) - standard_flat_height
-        if Flat-int(Flat) == 0:
+        Flat = (WaferDiameter / 2) - standard_flat_height
+        if Flat - int(Flat) == 0:
             self.flat.setText(str(int(Flat)))
         else:
             self.flat.setText(str(Flat))    
 
     # bondpad table
         self.bondpadTable.setRowCount(self.bondpads.value())
-        #TODO: fromat the table better
-        #TODO: the context menus on the table
-        
+        self.bondpadTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.bondpadTable.customContextMenuRequested.connect(self._context_menu)
+        self.bondpadTable.itemDoubleClicked.connect(self._double_click_handler)
+        self.bondpadTable.itemClicked.connect(self._select_item)
+
     # view die button
         self.viewDieButton.setText("")
         self.viewDieButton.setIcon(qta.icon('mdi.eye-outline', color='white'))
@@ -160,19 +143,260 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.feedback.setText("")
         self.feedback.setStyleSheet('color: orange')
 
+    @staticmethod
+    def _setup_input_element(element, text, validator):
+        element.blockSignals(True)
+        element.setText(text)
+        element.setValidator(validator)
+        element.blockSignals(False)
 
-    def _action(self):
+    def _set_row_elements(self, elements):
+        self.bondpadTable.setRowCount(self.bondpads.value())
+        num_cols = self.bondpadTable.columnCount()
+        num_rows = self.bondpadTable.rowCount()
+
+        for r in range(num_rows):
+            for c in range(num_cols):
+                item = QtWidgets.QTableWidgetItem(elements[0][c])
+                self.bondpadTable.setItem(r, c, item)
+
+    def _bondpads_changed(self, Bondpads):
+        self.bondpadTable.setRowCount(Bondpads)
+        for i in range(self.bondpadTable.columnCount()):
+            self.bondpadTable.setItem(Bondpads - 1, i, QtWidgets.QTableWidgetItem(DEFAULT_ROW[0][i]))
+
+    def _context_menu(self, point):
+        item = self.bondpadTable.itemAt(point)
+        if item is None:
+            return
+
+        column = item.column()
+
+        pad_type = {PadType.Analog(): self.select_analog_pad_type,
+                    PadType.Digital(): self.select_digital_pad_type,
+                    PadType.Mixed(): self.select_mixed_pad_type,
+                    PadType.Power(): self.select_power_pad_type}
+
+        pad_direction = {PadDirection.Input(): self.select_input_direction,
+                         PadDirection.Output(): self.select_output_direction,
+                         PadDirection.Bidirectional(): self.select_bidirectional_direction}
+        
+        # TODO: is it not enough to edit cells directly from the wanted column
+        if column == PAD_NAME_COLUMN:
+            self.create_menu(pad_type, pad_direction)   
+            return
+
+        if column == PAD_TYPE_COLUMN:  # type
+            self.create_menu(pad_type)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            return
+
+        if column == PAD_DIRECTION_COLUMN:  # direction
+            self.create_menu(pad_direction)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            return
+
+    def _double_click_handler(self, item):
+        column = item.column()
+        if column == PAD_TYPE_COLUMN:
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        elif column == PAD_DIRECTION_COLUMN:
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        else:
+            self._create_checkable_cell(item)
+
+    def _create_checkable_cell(self, item):
+        column = item.column()
+        row = item.row()
+        # set cell widget to qlineEdit widget
+        checkable_widget = QtWidgets.QLineEdit()
+
+        if column == PAD_NAME_COLUMN:
+            checkable_widget.setValidator(self.maskset_name_validator)
+        else:
+            checkable_widget.setValidator(self.positive_integer_validator)
+
+        self.bondpadTable.setCellWidget(row, column, checkable_widget)
+        checkable_widget.editingFinished.connect(lambda row=row, column=column, checkable_widget=checkable_widget:
+                                                 self._edit_cell_done(checkable_widget, row, column))
+
+    def _edit_cell_done(self, checkable_widget, row, column):
+        if self.dieSizeX.text() == '' or self.dieSizeY.text() == '':
+            self.feedback.setText("die size is not set yet")
+            checkable_widget.clear()
+            self._update_row(row)
+            return
+
+        if column == PAD_NAME_COLUMN:
+            # name must be unique
+            self._validate_name(checkable_widget, row, column=0)
+            if not self._check_if_defined_only_once(column=0):
+                item = self.bondpadTable.item(row, 0)
+                self.feedback.setText(f'name: {item.text()} has already been used')
+                item.setText('')
+                self.OKButton.setEnabled(False)
+                self._update_row(row)
+                return
+
+        success = True
+        if column in (POS_X_COLUMN, POS_Y_COLUMN):
+            success = self._handle_pos_cols(checkable_widget, row, column)
+
+        elif column in (SIZE_X_COLUMN, SIZE_Y_COLUMN):
+            success = self._validate_pads_size_references(checkable_widget, row, column)
+
+        self._update_row(row)
+        
+        if success:
+            self.feedback.setText('')
+            self._validate_table(row)
+
+    def _handle_pos_cols(self, checkable_widget, row, column):
+        success = True
+        if column == POS_X_COLUMN:
+            success =  self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeX.text())
+
+        if column == POS_Y_COLUMN:
+            success = self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeY.text())
+
+        if not success:
+            checkable_widget.clear()
+
+        # TODO: prevent interference multiple pads
+        if not self._check_if_defined_only_once(column):
+            item = self.bondpadTable.item(row, column)
+            self.feedback.setText(f'Coordinate "{item.text()}" is already covered')
+            item.setText('')
+            return False
+
+        return success
+
+    def _update_row(self, row):
+        elements = []
+        num_cols = self.bondpadTable.columnCount()
+        for i in range(num_cols):
+            elements.append(self.bondpadTable.item(row, i).text())
+
+        self.bondpadTable.removeRow(row)
+        
+        self.bondpadTable.insertRow(row)
+        for i in range(num_cols):
+            self.bondpadTable.setItem(row, i, QtWidgets.QTableWidgetItem(elements[i]))
+
+    def _validate_table(self, row=0):
+        # check if all cells are filled
+        for r in range(self.rows):
+            for c in range(self.columns):
+                item = self.table_item(r, c)
+                if item.text() == '':
+                    self.OKButton.setEnabled(False)
+                    return
+
+        self.OKButton.setEnabled(True)
+
+    def _select_item(self, item):
+        column = item.column()
+        if column == 0:
+            return
+
+        item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+    @property
+    def rows(self):
+        return self.bondpadTable.rowCount()
+
+    @property
+    def columns(self):
+        return self.bondpadTable.columnCount()
+
+    def table_item(self, row, column):
+        return self.bondpadTable.item(row, column)
+
+    def _check_if_defined_only_once(self, column):
+        pos_list = []
+        for r in range(self.rows):
+            pos_list.append(self.table_item(r, column).text())
+
+        return len(set(pos_list)) == len(pos_list)
+
+    def _validate_name(self, checkable_widget, row, column=0):
+        self.bondpadTable.item(row, column).setText(str(checkable_widget.text()))
+
+    def _validate_pads_size_references(self, checkable_widget, row, column):
+        self.bondpadTable.item(row, column).setText(str(checkable_widget.text()))
+        return True
+
+    def _validate_pads_position_references(self, checkable_widget, row, column, die_size):
+        pad_size = self.bondpadTable.item(row, column + 2).text()
+        if pad_size is None:
+            self.feedback.setText("pad size is not defined")
+            return False
+        
+        if checkable_widget.text() == '':
+            self.feedback.setText("no input value")
+            return False
+
+        pad_pos = int(checkable_widget.text())
+        pad_size = int(pad_size)/2
+        die_size = int(die_size)
+        if not pad_pos + pad_size < die_size:
+            self.feedback.setText(f"rule (pos + size < diesize) does not hold -> ({pad_pos} + {pad_size} < {die_size})")
+            return False
+
+        self.bondpadTable.item(row, column).setText(str(pad_pos))
+
+        return True
+
+    def create_menu(self, *components):
+        menu = QtWidgets.QMenu(self)
+        for index, component in enumerate(components):
+            if index > 0:
+                menu.addSeparator()
+
+            for pd, func in component.items():
+                item = menu.addAction(pd[0])
+                item.triggered.connect(func)
+
+        menu.exec_(QtGui.QCursor.pos())
+
+    def set_pad_selection(self, pad_type, column):
+        for item in [item for item in self.bondpadTable.selectedItems() if item.column() == column]:
+            item.setText(pad_type[0])
+            item.setToolTip(pad_type[1])
+
+    def select_input_direction(self):
+        self.set_pad_selection(PadDirection.Input(), PAD_DIRECTION_COLUMN)
+
+    def select_output_direction(self):
+        self.set_pad_selection(PadDirection.Output(), PAD_DIRECTION_COLUMN)
+
+    def select_bidirectional_direction(self):
+        self.set_pad_selection(PadDirection.Bidirectional(), PAD_DIRECTION_COLUMN)
+
+    def select_analog_pad_type(self):
+        self.set_pad_selection(PadType.Analog(), PAD_TYPE_COLUMN)
+        
+    def select_digital_pad_type(self):
+        self.set_pad_selection(PadType.Digital(), PAD_TYPE_COLUMN)
+
+    def select_mixed_pad_type(self):
+        self.set_pad_selection(PadType.Mixed(), PAD_TYPE_COLUMN)
+
+    def select_power_pad_type(self):
+        self.set_pad_selection(PadType.Power(), PAD_TYPE_COLUMN)
+
+    def _connect_event_handler(self):
         self.masksetName.textChanged.connect(self.nameChanged)
         self.Type.currentTextChanged.connect(self.typeChanged)
         self.customer.textChanged.connect(self.customerChanged)
 
         self.waferDiameter.currentTextChanged.connect(self.waferDiameterChanged)
-        self.bondpads.valueChanged.connect(self.bondpadsChanged)
-        self.dieSizeX.textChanged.connect(self.dieSizeXChanged)
+        self.bondpads.valueChanged.connect(self._bondpads_changed)
+        self.dieSizeX.textChanged.connect(self._die_size_x_changed)
 
-        self.XYFlipButton.clicked.connect(self.XYFlip)
+        self.XYFlipButton.clicked.connect(self.xy_flip)
 
-        self.dieSizeY.textChanged.connect(self.dieSizeYChanged)
+        self.dieSizeY.textChanged.connect(self._die_size_y_changed)
         self.dieRefX.textChanged.connect(self.dieRefXChanged)
         self.dieRefY.textChanged.connect(self.dieRefYChanged)
         self.xOffset.textChanged.connect(self.xOffsetChanged)
@@ -217,35 +441,26 @@ class NewMasksetWizard(QtWidgets.QDialog):
             self.flat.setText(str(Flat))
         self.validate()
 
-    def bondpadsChanged(self, Bondpads):
-        self.bondpadTable.setRowCount(Bondpads)
-        self.validate()
-        
-    def dieSizeXChanged(self, DieSizeX):
-        if DieSizeX != '':
-            DieSizeX = int(DieSizeX)
-            mid = int(DieSizeX)/2
-            if mid-int(mid) == 0:
-                self.dieRefX.setText(str(int(mid)))
+    def _die_size_changed(self, die_size, die_ref):
+        if die_size != '':
+            die_size = int(die_size)
+            mid = int(die_size) / 2
+            if mid - int(mid) == 0:
+                die_ref.setText(str(int(mid)))
             else:
-                self.dieRefX.setText(str(mid))
+                die_ref.setText(str(mid))
         else:
-            self.dieRefX.setText('')
+            die_ref.setText('')
+
         self.validate()
 
-    def dieSizeYChanged(self, DieSizeY):
-        if DieSizeY != '':
-            DieSizeY = int(DieSizeY)
-            mid = int(DieSizeY)/2
-            if mid-int(mid) == 0:
-                self.dieRefY.setText(str(int(mid)))
-            else:
-                self.dieRefY.setText(str(mid))
-        else:
-            self.dieRefY.setText('')
-        self.validate()
+    def _die_size_x_changed(self, die_size_x):
+        self._die_size_changed(die_size_x, self.dieRefX)
 
-    def XYFlip(self):
+    def _die_size_y_changed(self, die_size_y):
+        self._die_size_changed(die_size_y, self.dieRefY)
+
+    def xy_flip(self):
         old_die_size_x = self.DieSizeX.text()
         old_die_size_y = self.DieSizeY.text()
         old_die_ref_x = self.DieRefX.text()
@@ -356,9 +571,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
             if retval != '':
                 self.feedback.setText(retval)
 
-        if self.feedback.text() == "":
-            self.OKButton.setEnabled(True)
-        else:
+        if not self.feedback.text() == "":
             self.OKButton.setEnabled(False)
 
     def editWaferMap(self):
@@ -369,6 +582,22 @@ class NewMasksetWizard(QtWidgets.QDialog):
         print("Die Viewer not yet implemented")
         #TODO: add the die viewer (based ont the table here)
 
+    def serialize_table_data(self):
+        table_infos = {}
+        for r in range(self.rows):
+            data = ()
+            for c in range(self.columns):
+                item = self.bondpadTable.item(r, c)
+                cell_data = item.text()
+                if c in range(1, 5):
+                    cell_data = int(item.text())
+                data += (cell_data,)
+
+            table_infos[r + 1] = data
+
+        print(table_infos)
+        return table_infos
+
     def _get_maskset_definition(self):
         return {'WaferDiameter'       : int(self.waferDiameter.currentText()),
                 'Bondpads'            : self.bondpads.value(),
@@ -378,11 +607,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
                 'Scribe'              : (float(self.scribeX.text()), float(self.scribeY.text())),
                 'Flat'                : float(self.flat.text()),
             
-                # TODO: impl. retreive table component
-                'BondpadTable' : {
-                    1: ('bondpad1name', 100,      100,       90,      90),
-                    2: ('bondpad2name', -100,     -100,      90,      90)                    
-                    }, # implement bondpad table
+                'BondpadTable' : self.serialize_table_data(),
 
                 # TODO: future impl.
                 'Wafermap'     : {

@@ -7,9 +7,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
 
-quali_pc_flow_name = "qualification_PC_flow"
+quali_ac_flow_name = "qualification_AC_flow"
 
-class PCWizard(wizardbase.wizardbase):
+class ACWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
@@ -29,23 +29,23 @@ class PCWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return  quali_pc_flow_name
+        return  quali_ac_flow_name
 
 
-def new_pc_wizard(storage, product: str):
-    dialog = PCWizard({"product": product}, storage)
+def new_ac_wizard(storage, product: str):
+    dialog = ACWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
 
-def edit_pc_wizard(storage, data):
-    dialog = PCWizard(data, storage)
+def edit_ac_wizard(storage, data):
+    dialog = ACWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
 
-def view_pc_wizard(storage, data):
-    dialog = PCWizard(data, storage)
+def view_ac_wizard(storage, data):
+    dialog = ACWizard(data, storage)
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
@@ -56,6 +56,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    dialog = PCWizard(dict(), None)
+    dialog = ACWizard(dict(), None)
     dialog.show()
     sys.exit(app.exec_())

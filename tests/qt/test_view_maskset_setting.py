@@ -19,8 +19,7 @@ def debug_visual(window, qtbot):
     qtbot.stopForInteraction()
 
 
-NOT_VALID_CONFIG = {"pads": 2, "DieSize": ('2', '22')}
-
+NOT_VALID_CONFIG = {"pads": 2, "DieSize": ('2', '22'), "BondpadTable": {1: ("name", 1, 2, 3, 4, 'A', 'I')}}
 
 DEFINITION["Bondpads"] = 2
 DEFINITION["DieSize"] = ('4', '6')
@@ -28,6 +27,7 @@ DEFINITION["DieRef"] = ('2', '3')
 DEFINITION["Scribe"] = ('100', '101') 
 DEFINITION["Offset"] = ('102', '103') 
 DEFINITION["Flat"] = '90'
+DEFINITION["BondpadTable"] = {1: ("name", 1, 2, 3, 4, 'A', 'I')}
 
 MASKSET_NAME = "M1"
 
