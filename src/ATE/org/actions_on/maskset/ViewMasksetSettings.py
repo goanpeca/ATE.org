@@ -1,8 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, uic
 from enum import Enum
 
-from ATE.org.actions_on.maskset.constants import DEFINITION
-from ATE.org.actions_on.maskset.constants import UI_FILE
+from ATE.org.actions_on.maskset.constants import *
 
 
 class ErrorMessage(Enum):
@@ -62,6 +61,20 @@ class ViewMasksetSettings(QtWidgets.QDialog):
                 item = QtWidgets.QTableWidgetItem('')
                 self.bondpadTable.setItem(r, c, item)
                 item.setFlags(QtCore.Qt.NoItemFlags)
+
+        # resize cell columns
+        for c in range(self.bondpadTable.columnCount()):
+            if c == PAD_NAME_COLUMN:
+                self.bondpadTable.setColumnWidth(c, NAME_COL_SIZE)
+
+            elif c in (PAD_POS_X_COLUMN, PAD_POS_Y_COLUMN, PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN, PAD_TYPE_COLUMN):
+                self.bondpadTable.setColumnWidth(c, REF_COL_SIZE)
+
+            elif c == PAD_DIRECTION_COLUMN:
+                self.bondpadTable.setColumnWidth(c, DIR_COL_SIZE)
+
+        self.bondpadTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self.bondpadTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
     @staticmethod
     def is_valid_configuration(maskset_configuration):

@@ -2,22 +2,22 @@
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
-from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
+from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
+from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_flow_name = "qualification_elfr_flow"
-quali_flow_listentry_name = "ELFR"
-quali_flow_tooltip = "Early Life Failure Rate (aka: BurnIn)"
+quali_flow_name = "qualification_RSH_flows"
+quali_flow_listentry_name = "RSH"
+quali_flow_tooltip = "Resistance to Solder Heat"
 
 
-class ELFRWizard(wizardbase.wizardbase):
+class RSHWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
-        return [intparam.IntParam("Duration (hours)", 0, 0, 500),
-                intparam.IntParam("Temperature (°C)", 0, 0, 500),
-                intparam.IntParam("VDD (V)", 0, 0, 500)]
+        return [writeoncetextparam.WriteOnceTextParam("name"),
+                optionparam.OptionParam("Type", ["Reflow", "Bodydip", "Iron Solder"])]
     
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
@@ -28,12 +28,23 @@ class ELFRWizard(wizardbase.wizardbase):
         return quali_flow_name
 
 
-def edit_item(storage, product: str):
-    data = storage.get_unique_data_for_qualifcation_flow(quali_flow_name, product)
-    dialog = ELFRWizard(data, storage)
+def new_item(storage, product: str):
+    dialog = RSHWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
+
+def edit_item(storage, data):
+    dialog = RSHWizard(data, storage)
+    dialog.exec_()
+    del(dialog)
+
+
+def view_item(storage, data):
+    dialog = RSHWizard(data, storage)
+    dialog.set_view_only()
+    dialog.exec_()
+    del(dialog)
 
 if __name__ == '__main__':
     import sys, qdarkstyle
@@ -41,6 +52,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    dialog = ELFRWizard(dict(), None)
+    dialog = RSHWizard(dict(), None)
     dialog.show()
     sys.exit(app.exec_())

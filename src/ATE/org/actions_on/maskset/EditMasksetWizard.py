@@ -17,6 +17,7 @@ class EditMasksetWizard(NewMasksetWizard):
         self.edit_flag = True
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
         ViewMasksetSettings._show(self, self.project_info.get_maskset_definition(maskset_name), maskset_name)
+        self._validate_table()
 
     def OKButtonPressed(self):
         self.project_info.update_maskset(self.masksetName.text(), self._get_maskset_definition())

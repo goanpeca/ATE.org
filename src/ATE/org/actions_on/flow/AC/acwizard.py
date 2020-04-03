@@ -6,8 +6,10 @@ from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
+quali_flow_name = "qualification_AC_flow"
+quali_flow_listentry_name = "AC"
+quali_flow_tooltip = "Autoclav"
 
-quali_ac_flow_name = "qualification_AC_flow"
 
 class ACWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
@@ -29,22 +31,22 @@ class ACWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return  quali_ac_flow_name
+        return quali_flow_name
 
 
-def new_ac_wizard(storage, product: str):
+def new_item(storage, product: str):
     dialog = ACWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
 
-def edit_ac_wizard(storage, data):
+def edit_item(storage, data):
     dialog = ACWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
 
-def view_ac_wizard(storage, data):
+def view_item(storage, data):
     dialog = ACWizard(data, storage)
     dialog.set_view_only()
     dialog.exec_()

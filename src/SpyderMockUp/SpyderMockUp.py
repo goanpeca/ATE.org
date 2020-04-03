@@ -26,6 +26,8 @@ from ATE.org.navigation import project_navigator
 from ATE.org.validation import is_ATE_project
 from SCT.utils.finders import SCT_finder
 
+import ATE.org.actions_on.flow.UIElements.QualiFlowItem
+import ATE.org.actions_on.flow.UIElements.TreeItemWithData
 
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
@@ -543,14 +545,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tree.itemAbove(current_item).setDisabled(False)
 
     def context_menu_manager(self, point):
-        from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
-        from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
-        from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
-        from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
-        from ATE.org.actions_on.flow.AC.acwizard import quali_ac_flow_name
-        from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
-        from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
-
         #https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
         #https://doc.qt.io/qt-5/qtreewidget-members.html
         #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
@@ -771,82 +765,16 @@ class MainWindow(QtWidgets.QMainWindow):
             # delete_test.triggered.connect
             menu.exec_(QtGui.QCursor.pos())
 
-        elif self.node_type == quali_elfr_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            add_flow.triggered.connect(self.edit_elfr)
-            menu.exec_(QtGui.QCursor.pos()) 
+        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.MultiInstanceQualiFlowItem):
+            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
+            self.update_flow_state()
+        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.SingleInstanceQualiFlowItem):
+            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
+        elif isinstance(item, ATE.org.actions_on.flow.UIElements.TreeItemWithData.TreeItemWithData):
+            item.exec_context_menu(self, self.project_info)
+        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.SimpleFlowItem):
+            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
 
-        elif self.node_type == quali_hast_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            add_flow.triggered.connect(self.edit_hast)
-            menu.exec_(QtGui.QCursor.pos())
-        
-        elif self.node_type == quali_htsl_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_flow.triggered.connect(self.new_htsl)
-            menu.exec_(QtGui.QCursor.pos())
-
-        elif self.node_type =="qualification_HTSL_flow_instance":
-            menu = QtWidgets.QMenu(self)
-            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_flow.triggered.connect(lambda: self.edit_htsl(item.get_item_data()[3]))
-
-            view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            view_flow.triggered.connect(lambda: self.view_htsl(item.get_item_data()[3]))
-
-            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
-            menu.exec_(QtGui.QCursor.pos())
-            
-        elif self.node_type == quali_htol_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_flow.triggered.connect(self.new_htol)
-            menu.exec_(QtGui.QCursor.pos())
-
-        elif self.node_type =="qualification_HTOL_flow_instance":
-            menu = QtWidgets.QMenu(self)
-            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_flow.triggered.connect(lambda: self.edit_htol(item.get_item_data()[3]))
-
-            view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            view_flow.triggered.connect(lambda: self.view_htol(item.get_item_data()[3]))
-
-            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
-            menu.exec_(QtGui.QCursor.pos())
-
-        elif self.node_type == quali_ac_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_flow.triggered.connect(self.new_ac)
-            menu.exec_(QtGui.QCursor.pos()) 
-
-        elif self.node_type == "qualification_AC_flow_instance":
-            menu = QtWidgets.QMenu(self)
-            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_flow.triggered.connect(lambda: self.edit_ac(item.get_item_data()[3]))
-
-            view_flow = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            view_flow.triggered.connect(lambda: self.view_ac(item.get_item_data()[3]))
-
-            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            delete_flow.triggered.connect(lambda: self.delete_qualification_flow_instance(item.get_item_data()[3]))
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == quali_tc_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            add_flow.triggered.connect(self.edit_tc)
-            menu.exec_(QtGui.QCursor.pos())
-
-        elif self.node_type == quali_sam_flow_name:
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            add_flow.triggered.connect(self.edit_sam)
-            menu.exec_(QtGui.QCursor.pos())
 
     def testerChanged(self):
         self.active_tester = self.tester_combo.currentText()
@@ -892,138 +820,95 @@ class MainWindow(QtWidgets.QMainWindow):
         return files
 
     def set_flow_state(self, parent):
-
-                from ATE.org.actions_on.flow.ELFR.elfrwizard import quali_elfr_flow_name
-                from ATE.org.actions_on.flow.HAST.hastwizard import quali_hast_flow_name
-                from ATE.org.actions_on.flow.HTOL.htolwizard import quali_htol_flow_name
-                from ATE.org.actions_on.flow.HTSL.htslwizard import quali_htsl_flow_name
-                from ATE.org.actions_on.flow.AC.acwizard import quali_ac_flow_name
-                from ATE.org.actions_on.flow.TC.tcwizard import quali_tc_flow_name
-                from ATE.org.actions_on.flow.SAM.samwizard import quali_sam_flow_name
-
         # sources/flows/production
-                self.production_flow = QtWidgets.QTreeWidgetItem(parent, None)
-                self.production_flow.setText(0, 'production')
-                self.production_flow.setText(1, 'production_flow')
+        self.production_flow = self.make_simple_flow(parent, None, "production", "production_flow")
 
-                self.production_flow.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
+        self.production_flow.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
 
         # HALT vs HASS --> https://www.intertek.com/performance-testing/halt-and-hass/
         # sources/flows/qualification
-                self.qualification_flows = QtWidgets.QTreeWidgetItem(parent, self.production_flow)
-                self.qualification_flows.setText(0, 'qualification')
-                self.qualification_flows.setText(1, 'qualification_flows')
+        self.qualification_flows = QtWidgets.QTreeWidgetItem(parent, self.production_flow)
+        self.qualification_flows.setText(0, 'qualification')
+        self.qualification_flows.setText(1, 'qualification_flows')
 
         # sources/flows/qualification/ZHM
-                self.qualification_ZHM_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, None)
-                self.qualification_ZHM_flows.setToolTip(0, 'Zero Hour Measurements')
-                self.qualification_ZHM_flows.setText(0, 'ZHM')
-                self.qualification_ZHM_flows.setText(1, 'qualification_ZHM_flows')
+        self.qualification_ZHM_flows = self.make_simple_flow(self.qualification_flows, None, "ZHM", "Zero Hour Measurements")
 
         # sources/flows/qualification/HTOL
-                self.qualification_HTOL_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ZHM_flows)
-                self.qualification_HTOL_flows.setToolTip(0, 'High Temperature Operating Life')
-                self.qualification_HTOL_flows.setText(0, 'HTOL')
-                self.qualification_HTOL_flows.setText(1, quali_htol_flow_name)
+        self.qualification_HTOL_flows = self.make_multi_instance_quali_flow(self.qualification_ZHM_flows, "ATE.org.actions_on.flow.HTOL.htolwizard")
 
         # sources/flows/qualification/HAST
-                self.qualification_HAST_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HTOL_flows)
-                self.qualification_HAST_flows.setToolTip(0, 'Highley Accelerated Stress Test')
-                self.qualification_HAST_flows.setText(0, 'HAST')
-                self.qualification_HAST_flows.setText(1, quali_hast_flow_name)
+        self.qualification_HAST_flows = self.make_single_instance_quali_flow(self.qualification_HTOL_flows, "ATE.org.actions_on.flow.HAST.hastwizard")
+
         # sources/flows/qualification/ESD
-                self.qualification_ESD_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HAST_flows)
-                self.qualification_ESD_flows.setToolTip(0, 'Electro Static Discharge')
-                self.qualification_ESD_flows.setText(0, 'ESD')
-                self.qualification_ESD_flows.setText(1, 'qualification_ESD_flows')
+        self.qualification_ESD_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HAST_flows)
+        self.qualification_ESD_flows.setToolTip(0, 'Electro Static Discharge')
+        self.qualification_ESD_flows.setText(0, 'ESD')
+        self.qualification_ESD_flows.setText(1, 'qualification_ESD_flows')
 
         # sources/flows/qualification/HTSL
-                self.qualification_HTSL_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ESD_flows)
-                self.qualification_HTSL_flows.setToolTip(0, 'High Temperature Storage Life')
-                self.qualification_HTSL_flows.setText(0, 'HTSL')
-                self.qualification_HTSL_flows.setText(1, quali_htsl_flow_name)
+        self.qualification_HTSL_flows = self.make_multi_instance_quali_flow(self.qualification_ESD_flows, "ATE.org.actions_on.flow.HTSL.htslwizard")
 
         # sources/flows/qualification/DR
-                self.qualification_DR_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HTSL_flows)
-                self.qualification_DR_flows.setToolTip(0, 'Data Retention')
-                self.qualification_DR_flows.setText(0, 'DR')
-                self.qualification_DR_flows.setText(1, 'qualification_DR_flows')
+        self.qualification_DR_flows = self.make_multi_instance_quali_flow(self.qualification_HTSL_flows, "ATE.org.actions_on.flow.DR.drwizard")
 
         # sources/flows/qualification/EC
-                self.qualification_EC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_DR_flows)
-                self.qualification_EC_flows.setToolTip(0, 'Endurance Cycling')
-                self.qualification_EC_flows.setText(0, 'EC')
-                self.qualification_EC_flows.setText(1, 'qualification_EC_flows')
+        self.qualification_EC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_DR_flows)
+        self.qualification_EC_flows.setToolTip(0, 'Endurance Cycling')
+        self.qualification_EC_flows.setText(0, 'EC')
+        self.qualification_EC_flows.setText(1, 'qualification_EC_flows')
 
         # sources/flows/qualification/ABSMAX
-                self.qualification_ABSMAX_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_EC_flows)
-                self.qualification_ABSMAX_flows.setToolTip(0, 'Absolute Maximum Ratings')
-                self.qualification_ABSMAX_flows.setText(0, 'ABSMAX')
-                self.qualification_ABSMAX_flows.setText(1, 'qualification_ABSMAX_flows')
+        self.qualification_ABSMAX_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_EC_flows)
+        self.qualification_ABSMAX_flows.setToolTip(0, 'Absolute Maximum Ratings')
+        self.qualification_ABSMAX_flows.setText(0, 'ABSMAX')
+        self.qualification_ABSMAX_flows.setText(1, 'qualification_ABSMAX_flows')
 
         # sources/flows/qualification/XRAY
-                self.qualification_XRAY_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ABSMAX_flows)
-                # self.qualification_XRAY_flows.setToolTip(0, 'X-Ray')
-                self.qualification_XRAY_flows.setText(0, 'XRAY')
-                self.qualification_XRAY_flows.setText(1, 'qualification_XRAY_flows')
+        self.qualification_XRAY_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ABSMAX_flows)
+        # self.qualification_XRAY_flows.setToolTip(0, 'X-Ray')
+        self.qualification_XRAY_flows.setText(0, 'XRAY')
+        self.qualification_XRAY_flows.setText(1, 'qualification_XRAY_flows')
 
         # sources/flows/qualification/LI
-                self.qualification_LI_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_XRAY_flows)
-                self.qualification_LI_flows.setToolTip(0, 'Lead Integrity')
-                self.qualification_LI_flows.setText(0, 'LI')
-                self.qualification_LI_flows.setText(1, 'qualification_LI_flows')
+        self.qualification_LI_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_XRAY_flows)
+        self.qualification_LI_flows.setToolTip(0, 'Lead Integrity')
+        self.qualification_LI_flows.setText(0, 'LI')
+        self.qualification_LI_flows.setText(1, 'qualification_LI_flows')
 
         # sources/flows/qualification/ELFR
-                self.qualification_ELFR_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_LI_flows)
-                self.qualification_ELFR_flows.setToolTip(0, 'Early Life Failure Rate (aka: BurnIn)')
-                self.qualification_ELFR_flows.setText(0, 'ELFR')
-                self.qualification_ELFR_flows.setText(1, quali_elfr_flow_name)
+        self.qualification_ELFR_flows = self.make_single_instance_quali_flow(self.qualification_LI_flows, "ATE.org.actions_on.flow.ELFR.elfrwizard")
 
         # sources/flows/qualification/RSH
-                self.qualification_RSH_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ELFR_flows)
-                self.qualification_RSH_flows.setToolTip(0, 'Resistance to Solder Heat')
-                self.qualification_RSH_flows.setText(0, 'RSH')
-                self.qualification_RSH_flows.setText(1, 'qualification_RSH_flows')
+        self.qualification_RSH_flows = self.make_multi_instance_quali_flow(self.qualification_ELFR_flows, "ATE.org.actions_on.flow.RSH.rshwizard")
 
         # sources/flows/qualification/SA
-                self.qualification_SA_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_RSH_flows)
-                self.qualification_SA_flows.setToolTip(0, 'SolderAbility')
-                self.qualification_SA_flows.setText(0, 'SA')
-                self.qualification_SA_flows.setText(1, 'qualification_SA_flows')
+        self.qualification_SA_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_RSH_flows)
+        self.qualification_SA_flows.setToolTip(0, 'SolderAbility')
+        self.qualification_SA_flows.setText(0, 'SA')
+        self.qualification_SA_flows.setText(1, 'qualification_SA_flows')
 
         # sources/flows/qualification/LU
-                self.qualification_LU_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_SA_flows)
-                self.qualification_LU_flows.setToolTip(0, 'Latch-up')
-                self.qualification_LU_flows.setText(0, 'LU')
-                self.qualification_LU_flows.setText(1, 'qualification_LU_flows')
+        self.qualification_LU_flows = self.make_single_instance_quali_flow(self.qualification_SA_flows, "ATE.org.actions_on.flow.LU.luwizard")
 
-    # sources/flows/qualification/AC
-                self.qualification_AC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_LU_flows)
-                self.qualification_AC_flows.setToolTip(0, 'Autoclav')
-                self.qualification_AC_flows.setText(0, 'AC')
-                self.qualification_AC_flows.setText(1, quali_ac_flow_name)
+        # sources/flows/qualification/AC
+        self.qualification_AC_flows = self.make_multi_instance_quali_flow(self.qualification_LU_flows, "ATE.org.actions_on.flow.AC.acwizard")
 
         # sources/flows/qualification/TC
-                self.qualification_TC_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_AC_flows)
-                self.qualification_TC_flows.setToolTip(0, 'Temperature Cycling')
-                self.qualification_TC_flows.setText(0, 'TC')
-                self.qualification_TC_flows.setText(1, quali_tc_flow_name)
+        self.qualification_TC_flows = self.make_single_instance_quali_flow(self.qualification_AC_flows, "ATE.org.actions_on.flow.TC.tcwizard")
+        
+        # sources/flows/qualification/THB
+        self.qualification_THB_flows = self.make_single_instance_quali_flow(self.qualification_TC_flows, "ATE.org.actions_on.flow.THB.thbwizard")
 
         # sources/flows/characterisation
-                self.characterisation_flows = QtWidgets.QTreeWidgetItem(parent, self.qualification_flows)
-                self.characterisation_flows.setText(0, 'characterisation')
-                self.characterisation_flows.setText(1, 'characterisation_flow')
+        self.characterisation_flows = self.make_simple_flow(parent, self.qualification_flows, "characterisation", "characterisation_flow")
 
         # sources/flows/validation
-                self.validation_flow = QtWidgets.QTreeWidgetItem(parent, self.characterisation_flows)
-                self.validation_flow.setText(0, 'validation')
-                self.validation_flow.setText(1, 'validation_flow')
+        self.validation_flow = self.make_simple_flow(parent, self.characterisation_flows, "validation", "validation_flow")
 
         # sources/flows/engineering
-                self.engineering_flow = QtWidgets.QTreeWidgetItem(parent, self.validation_flow)
-                self.engineering_flow.setText(0, 'engineering')
-                self.engineering_flow.setText(1, 'engineering_flow')
-                # stop iteration when done
+        self.engineering_flow = self.make_simple_flow(parent, self.validation_flow, "engineering", "engineering_flow")
+
 
     def update_flow_state(self):
         if self.target_combo.currentText() == '':
@@ -1034,18 +919,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.flows.setDisabled(False)
         self.flows.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.ShowIndicator)
 
-        self.populateQualificationFlow(self.qualification_HTOL_flows)
-        self.populateQualificationFlow(self.qualification_HTSL_flows)
-        self.populateQualificationFlow(self.qualification_AC_flows)
+        self.populateQualificationFlow(self.qualification_HTOL_flows, "ATE.org.actions_on.flow.HTOL.htolwizard")
+        self.populateQualificationFlow(self.qualification_HTSL_flows, "ATE.org.actions_on.flow.HTSL.htslwizard")
+        self.populateQualificationFlow(self.qualification_AC_flows, "ATE.org.actions_on.flow.AC.acwizard")
+        self.populateQualificationFlow(self.qualification_DR_flows, "ATE.org.actions_on.flow.DR.drwizard")
+        
 
-    def populateQualificationFlow(self, item: QtWidgets.QWidget):
-        import UIElements.TreeItemWithData #TODO: move to ATE.org.actions_on.flow !
+
+    def populateQualificationFlow(self, item: QtWidgets.QWidget, moduleName: str):
         item.takeChildren()
         for subflow in self.project_info.get_data_for_qualification_flow(item.text(1), self.target_combo.currentText()):
-            flows = UIElements.TreeItemWithData.TreeItemWithData(item)
+            flows = ATE.org.actions_on.flow.UIElements.TreeItemWithData.TreeItemWithData(item, moduleName, self.delete_qualification_flow_instance)
             flows.setText(0, subflow[0])
             flows.setText(1, f"{item.text(1)}_instance")
             flows.set_item_data(subflow)
+
+    def make_single_instance_quali_flow(self, firstsibling: QtWidgets.QTreeWidgetItem, modulename: str):
+        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.SingleInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
+
+    def make_multi_instance_quali_flow(self, firstsibling: QtWidgets.QTreeWidgetItem, modulename: str):
+        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.MultiInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
+
+    def make_simple_flow(self, parent, firstsibling: QtWidgets.QTreeWidgetItem, name: str, tooltip):
+        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.SimpleFlowItem(parent, firstsibling, name, tooltip)
+
 
     def baseChanged(self):
         self.update_target()
@@ -1181,65 +1078,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.project_info.create_project_database()
 
         self.set_tree()
-    
-    def edit_ac(self, data: dict):
-        from ATE.org.actions_on.flow.AC.acwizard import edit_ac_wizard
-        edit_ac_wizard(self.project_info, data)
-
-    def new_ac(self):
-        from ATE.org.actions_on.flow.AC.acwizard import new_ac_wizard
-        new_ac_wizard(self.project_info, self.target_combo.currentText())
-        self.populateQualificationFlow(self.tree.currentItem())
-
-    def view_ac(self, data:dict):
-        from ATE.org.actions_on.flow.AC.acwizard import view_ac_wizard
-        view_ac_wizard(self.project_info, data)
-
-    def edit_elfr(self):
-        from ATE.org.actions_on.flow.ELFR.elfrwizard import edit_elfr_wizard
-        edit_elfr_wizard(self.project_info, self.target_combo.currentText())
-
-    def edit_hast(self):
-        from ATE.org.actions_on.flow.HAST.hastwizard import edit_hast_wizard
-        edit_hast_wizard(self.project_info, self.target_combo.currentText())
-
-    def edit_sam(self):
-        from ATE.org.actions_on.flow.SAM.samwizard import edit_sam_wizard
-        edit_sam_wizard(self.project_info, self.target_combo.currentText())
-
-    def edit_tc(self):
-        from ATE.org.actions_on.flow.TC.tcwizard import edit_tc_wizard
-        edit_tc_wizard(self.project_info, self.target_combo.currentText())
-
-    def new_htsl(self, checked):
-        from ATE.org.actions_on.flow.HTSL.htslwizard import new_htsl_wizard
-        new_htsl_wizard(self.project_info, self.target_combo.currentText())
-        self.populateQualificationFlow(self.tree.currentItem())
-
-    def edit_htsl(self, data: dict):
-        from ATE.org.actions_on.flow.HTSL.htslwizard import edit_htsl_wizard
-        edit_htsl_wizard(self.project_info, data)
-
-    def view_htsl(self, data: dict):
-        from ATE.org.actions_on.flow.HTSL.htslwizard import view_htsl_wizard
-        view_htsl_wizard(self.project_info, data)
-
-    def new_htol(self, checked):
-        from ATE.org.actions_on.flow.HTOL.htolwizard import new_htol_wizard
-        new_htol_wizard(self.project_info, self.target_combo.currentText())
-        self.populateQualificationFlow(self.tree.currentItem())
-
-    def edit_htol(self, data: dict):
-        from ATE.org.actions_on.flow.HTOL.htolwizard import edit_htol_wizard
-        edit_htol_wizard(self.project_info, data)
-
-    def view_htol(self, data: dict):
-        from ATE.org.actions_on.flow.HTOL.htolwizard import view_htol_wizard
-        view_htol_wizard(self.project_info, data)
 
     def delete_qualification_flow_instance(self, data: dict):
         self.project_info.delete_qualifiaction_flow_instance(data)
-        self.populateQualificationFlow(self.tree.currentItem().parent())
+        self.update_flow_state()
 
     def open_project(self):
         selected_directory = os.path.normpath(

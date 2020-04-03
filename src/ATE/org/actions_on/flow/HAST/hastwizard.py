@@ -6,7 +6,9 @@ from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_hast_flow_name = "qualification_hast_flow"
+quali_flow_name = "qualification_hast_flow"
+quali_flow_listentry_name = "HAST"
+quali_flow_tooltip = "Highley Accelerated Stress Test"
 
 
 class HASTWizard(wizardbase.wizardbase):
@@ -24,11 +26,11 @@ class HASTWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return quali_hast_flow_name
+        return quali_flow_name
 
 
-def edit_hast_wizard(storage, product: str):
-    data = storage.get_unique_data_for_qualifcation_flow(quali_hast_flow_name, product)
+def edit_item(storage, product: str):
+    data = storage.get_unique_data_for_qualifcation_flow(quali_flow_name, product)
     dialog = HASTWizard(data, storage)
     dialog.exec_()
     del(dialog)

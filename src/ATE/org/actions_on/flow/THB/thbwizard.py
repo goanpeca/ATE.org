@@ -6,19 +6,21 @@ from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_flow_name = "qualification_elfr_flow"
-quali_flow_listentry_name = "ELFR"
-quali_flow_tooltip = "Early Life Failure Rate (aka: BurnIn)"
+quali_flow_name = "qualification_thb_flow"
+quali_flow_listentry_name = "THB"
+quali_flow_tooltip = "Temperature Humidity Bias"
 
 
-class ELFRWizard(wizardbase.wizardbase):
+class THBWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
-        return [intparam.IntParam("Duration (hours)", 0, 0, 500),
-                intparam.IntParam("Temperature (°C)", 0, 0, 500),
-                intparam.IntParam("VDD (V)", 0, 0, 500)]
-    
+        return [intparam.IntParam("Testwindow (hours)", 0, 0, 400),
+                intparam.IntParam("Duration (hours)", 0, 0, 10000),
+                intparam.IntParam("Temperature (°C)", 0, 0, 100),
+                intparam.IntParam("Rel. Humidity (%)", 0, 0, 100),
+                intparam.IntParam("VDD (V)", 12, 0, 120)]
+
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
     def _get_wizard_testprogram_slots(self) -> list:
@@ -30,7 +32,7 @@ class ELFRWizard(wizardbase.wizardbase):
 
 def edit_item(storage, product: str):
     data = storage.get_unique_data_for_qualifcation_flow(quali_flow_name, product)
-    dialog = ELFRWizard(data, storage)
+    dialog = THBWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
@@ -41,6 +43,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    dialog = ELFRWizard(dict(), None)
+    dialog = THBWizard(dict(), None)
     dialog.show()
     sys.exit(app.exec_())
