@@ -306,14 +306,15 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if not success:
             checkable_widget.clear()
 
-        if not self._check_if_pos_defined_only_once():  # row also
-            item_x = self.bondpadTable.item(row, PAD_POS_X_COLUMN)
-            item_y = self.bondpadTable.item(row, PAD_POS_Y_COLUMN)
-            self.feedback.setText(f'Positions x = "{item_x.text()}"  and y = "{item_y.text()} are already covered')
-            item_x.setText('')
-            item_y.setText('')
-            return False
-
+        # if not self._check_if_pos_defined_only_once():  # row also
+        #     item_x = self.bondpadTable.item(row, PAD_POS_X_COLUMN)
+        #     item_y = self.bondpadTable.item(row, PAD_POS_Y_COLUMN)
+        #     self.feedback.setText(f'Positions x = "{item_x.text()}"  and y = "{item_y.text()} are already covered')
+        #     item_x.setText('')
+        #     item_y.setText('')
+        #     return False
+        #TODO: this logic is defective, disabled for now, need to be re-done.
+        
         return success
 
     def _check_if_pos_defined_only_once(self):

@@ -1,0 +1,1 @@
+from ATE.org.coding.test_generator import test_generator

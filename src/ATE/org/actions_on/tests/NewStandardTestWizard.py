@@ -49,7 +49,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
     # StandardTestName ComboBox
         self.model = QtGui.QStandardItemModel()
     
-        from ATE.org.actions_on.tests import standard_test_names
+        from ATE.org.coding.standard_tests import names as standard_test_names
         existing_standard_test_names = \
             self.parent.project_info.tests_get_standard_tests(
                 self.ForHardwareSetup.currentText(),
@@ -122,7 +122,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
                       'input_parameters' : {},
                       'output_parameters' : {}}
 
-        self.parent.project_info.test_add(name, hardware, Type, base, definition)        
+        self.parent.project_info.standard_test_add(name, hardware, base)        
         self.accept()
     
 def new_standard_test_dialog(parent):

@@ -85,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.active_project = ''
         self.active_project_path = ''
         self.project_info = None # the project navigator
-        self.active_hw = ''
+        self.active_hardware = ''
 
     # connect the File/New/Project menu
         self.action_quit.triggered.connect(self.quit_event)
@@ -281,17 +281,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if len(hw_list) == 0:
                 hw_list.append('')
-                self.active_hw = ''
+                self.active_hardware = ''
 
-            if self.active_hw not in hw_list:
-                self.active_hw = hw_list[0]
+            if self.active_hardware not in hw_list:
+                self.active_hardware = hw_list[0]
 
             if set(hw_list) != set(old_hw_list):
                 self.hw_combo.blockSignals(True)
                 self.hw_combo.clear()
                 for index, hw in enumerate(hw_list):
                     self.hw_combo.addItem(str(hw))
-                    if hw == self.active_hw:
+                    if hw == self.active_hardware:
                         self.hw_combo.setCurrentIndex(index)
                 self.hw_combo.blockSignals(False)
 
@@ -302,17 +302,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         #     if len(hw_list) == 0:
         #         hw_list.append('')
-        #         self.active_hw = ''
+        #         self.active_hardware = ''
 
-        #     if self.active_hw not in hw_list:
-        #         self.active_hw = hw_list[0]
+        #     if self.active_hardware not in hw_list:
+        #         self.active_hardware = hw_list[0]
 
         #     if set(hw_list) != set(old_hw_list):
         #         self.hw_combo.blockSignals(True)
         #         self.hw_combo.clear()
         #         for index, hw in enumerate(hw_list):
         #             self.hw_combo.addItem(str(hw))
-        #             if hw == self.active_hw:
+        #             if hw == self.active_hardware:
         #                 self.hw_combo.setCurrentIndex(index)
         #         self.hw_combo.blockSignals(False)
 
@@ -347,14 +347,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.base_combo.isEnabled():
             if self.target_label.text() == 'FT':
                 targets = [''] 
-                targets += self.project_info.get_products_for_hardware(self.active_hw)
+                targets += self.project_info.get_products_for_hardware(self.active_hardware)
             elif self.target_label.text() == 'PR':
                 targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hw)
+                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
             else: 
                 targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hw)
-                targets += self.project_info.get_products_for_hardware(self.active_hw)
+                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
+                targets += self.project_info.get_products_for_hardware(self.active_hardware)
             self.target_combo.blockSignals(True)
             self.target_combo.clear()
             self.target_combo.addItems(targets)
@@ -780,7 +780,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.active_tester = self.tester_combo.currentText()
 
     def hardwareChanged(self):
-        self.active_hw = self.hw_combo.currentText()
+        self.active_hardware = self.hw_combo.currentText()
         self.update_base()
         self.update_target()
         self.update_tests()
@@ -810,7 +810,7 @@ class MainWindow(QtWidgets.QMainWindow):
         from os import walk, path
 
         self.tests_directory = path.join(self.workspace_path, self.active_project, 'src',
-                                    'tests', self.active_hw, self.base_combo.currentText())
+                                    'tests', self.active_hardware, self.base_combo.currentText())
 
         files = []
         for _, _, filenames in walk(self.tests_directory):
@@ -1054,7 +1054,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def new_hardwaresetup(self):
         from ATE.org.actions_on.hardwaresetup.NewHardwaresetupWizard import new_hardwaresetup_dialog
         new_hardwaresetup_dialog(self.project_info)
-        self.active_hw = self.project_info.get_latest_hardware_name()
+        self.active_hardware = self.project_info.get_latest_hardware_name()
         self.update_hardware()
         self.update_tree()
 
@@ -1103,19 +1103,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tree.clear()
             self.active_project_path = projectpath
             self.active_project = os.path.split(self.active_project_path)[-1]            
-            self.project_info = project_navigator(self.active_project_path)
+            self.project_info = project_navigator(self, self.active_project_path)
 
             if not os.path.exists(self.project_info.db_file):
                 self.create_project_database()
-
-            self.project_info.create_sql_connection()
 
             available_hardwares =  self.project_info.get_hardwares()
             print(f"{available_hardwares}")
             available_hardwares.sort()
             print(f"{available_hardwares}")
             if len(available_hardwares) > 0:
-                self.active_hw = available_hardwares[-1]
+                self.active_hardware = available_hardwares[-1]
                 
                 self.hw_combo.blockSignals(True)
                 self.hw_combo.clear()
@@ -1129,8 +1127,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.base_combo.setEnabled(True)
                 
                 targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hw)
-                targets += self.project_info.get_products_for_hardware(self.active_hw)
+                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
+                targets += self.project_info.get_products_for_hardware(self.active_hardware)
                 self.target_combo.blockSignals(True)
                 self.target_combo.clear()
                 self.target_combo.addItems(targets)
@@ -1138,7 +1136,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.target_combo.setEnabled(True)
                 self.target_combo.blockSignals(False)
             else:
-                self.active_hw = ''
+                self.active_hardware = ''
 
             self.update_hardware()
 

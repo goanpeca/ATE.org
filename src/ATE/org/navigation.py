@@ -5,28 +5,38 @@ Created on Tue Mar  3 14:08:04 2020
 @author: hoeren
 """
 
-import os
+import os, sys
 import sqlite3
 import pickle
 import shutil
 from pathlib import Path as create_file
 
 
+
+
+
 class project_navigator(object):
     '''
     This class takes care of the project creation/navigation/evolution.
     '''
-    def __init__(self, project_directory):
+    def __init__(self, parent, project_directory):
         print(f"project_directory = {project_directory}")
         self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
         self.project_directory = project_directory
         
-        self.db_file = None
-        self.con = None
-        self.cur = None
-        
-        self.db_file = os.path.join(project_directory, os.path.split(project_directory)[-1]+'.sqlite3')
+        self.db_file = os.path.join(project_directory, 
+                                    os.path.split(project_directory)[-1]+'.sqlite3')
+        self.parent = parent
     
+        if not os.path.exists(self.project_directory): # brand new project, initialize it.
+            self.create_project_structure()
+            self.con = sqlite3.connect(self.db_file)
+            self.cur = self.con.cursor() 
+            self.create_project_database()
+        else: # existing project, connect the db
+            self.con = sqlite3.connect(self.db_file)
+            self.cur = self.con.cursor()
+
     def create_project_structure(self):
         '''
         this method creates a new project (self.project_directroy must *not* 
@@ -43,6 +53,8 @@ class project_navigator(object):
         # .pre-commit-config.yaml ???
     
         # spyder
+        #TODO: once we are integrated in Spyder, we need to get the following
+        #      stuff from Spyder, and no longer from the template directroy.
         pspyd = os.path.join(self.project_directory, '.spyproject')
         os.makedirs(pspyd)
         shutil.copyfile(os.path.join(self.template_directory, 'codestyle.ini'),
@@ -97,10 +109,6 @@ class project_navigator(object):
         os.makedirs(os.path.join(psrcd, 'drawings', 'packages'))
         os.makedirs(os.path.join(psrcd, 'drawings', 'dies'))
 
-    def create_sql_connection(self):
-        self.con = sqlite3.connect(self.db_file)
-        self.cur = self.con.cursor()
-            
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
@@ -133,6 +141,7 @@ class project_navigator(object):
                                           grade=='H' OR
                                           grade=='I'),
 	                           "grade_reference"	TEXT NOT NULL,
+                               "quality"	TEXT NOT NULL,
 	                           "customer"	TEXT NOT NULL,
 
 	                           PRIMARY KEY("name"),
@@ -279,47 +288,55 @@ class project_navigator(object):
         self.cur.execute(update_blob_query, (blob, name))
         self.con.commit()        
 
+    def get_hardwares_info(self):
+        '''
+        This method will return a DICTIONARY with as key all hardware names, 
+        and as key the definition.
+        '''
+        query = '''SELECT name, definition FROM hardwares'''
+        self.cur.execute(query)
+        retval = {}
+        for row in self.cur.fetchall():
+            retval[row[0]] = pickle.loads(row[1])
+        return retval
+
     def get_hardwares(self):
         '''
         This method will return a list of all hardware names available
         '''
-        self.cur.execute("SELECT name FROM hardwares")
-        retval = []
-        for row in self.cur.fetchall():
-            retval.append(row[0])
-        return retval
+        return list(self.get_hardwares_info())
     
-    def get_next_hardware_name(self):
+    def get_next_hardware(self):
         '''
         This method will determine the next available hardware name
         '''
-        available_hardwares = self.get_hardwares()
-        if len(available_hardwares)==0:
-            return "HW1"
+        latest_hardware = self.get_latest_hardware()
+        if latest_hardware == '':
+            return "HW0"
         else:
-            available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
-            return "HW%d" % (max(available_hardwares_)+1)
-                
-    def get_latest_hardware_name(self):
+            latest_hardware_number = int(latest_hardware.replace('HW', ''))
+            return f"HW{latest_hardware_number + 1}"
+
+    def get_latest_hardware(self):
         '''
         This method will determine the latest hardware name and return it
         '''
-        available_hardwares = self.get_hardwares()
+        available_hardwares = sorted(self.get_hardwares())
         if len(available_hardwares)==0:
             return ""
         else:
-            print(f"available_hardwares = {available_hardwares}")
-            available_hardwares_ = [int(i.replace('HW', '')) for i in available_hardwares]
-            return "HW%d" % (max(available_hardwares_))
+            return available_hardwares[-1]
         
     def get_hardware_definition(self, name):
         '''
         this method retreives the hwr_data for hwr_nr.
         if hwr_nr doesn't exist, an empty dictionary is returned
         '''
-        get_blob_query = '''SELECT definition FROM hardwares WHERE name = ?'''
-        self.cur.execute(get_blob_query, (name,))
-        return pickle.loads(self.cur.fetchone()[0])        
+        available_hardwares = self.get_hardwares_info()
+        if name in available_hardwares:
+            return available_hardwares[name]
+        else:
+            return {}
 
     def remove_hardware(self, name):
         '''
@@ -357,36 +374,46 @@ class project_navigator(object):
         self.cur.execute(update_blob_query, (blob, name))
         self.con.commit()        
 
+
+    def get_masksets_info(self):
+        '''
+        this method returns a DICTIONARY with as key all maskset names,
+        and as value the tuple (customer, definition)
+        '''
+        query = '''SELECT name, customer, definition FROM masksets'''
+        self.cur.execute(query)
+        retval = {}
+        for row in self.cur.fetchall():
+            retval[row[0]] = (row[1], pickle.loads(row[2]))
+        return retval
+        
     def get_masksets(self):
         '''
         this method lists all available masksets
         '''
-        query = '''SELECT name FROM masksets'''
-        self.cur.execute(query)
-        retval = []
-        for row in self.cur.fetchall():
-            retval.append(row[0])
-        return retval
-    
+        return list(self.get_masksets_info())
+
     def get_ASIC_masksets(self):
         '''
         this method lists all 'ASIC' masksets
         '''
-        all_masksets = self.get_masksets()
-        ASSP_masksets = self.get_ASSP_masksets()
-        return list(set(all_masksets).difference(ASSP_masksets))
+        all_masksets = self.get_masksets_info()
+        retval = []
+        for maskset in all_masksets:
+            if all_masksets[maskset][0] != '':
+                retval.append(maskset)
+        return retval
         
     def get_ASSP_masksets(self):
         '''
         this method lists all 'ASSP' masksets
         '''
-        query = '''SELECT name FROM masksets WHERE customer == ""'''
-        self.cur.execute(query)
+        all_masksets = self.get_masksets_info()
         retval = []
-        for row in self.cur.fetchall():
-            retval.append(row[0])
+        for maskset in all_masksets:
+            if all_masksets[maskset]['customer'] == '':
+                retval.append(maskset)
         return retval
-        
         
     def get_maskset_definition(self, name):
         '''
@@ -418,7 +445,7 @@ class project_navigator(object):
         '''
         raise NotImplementedError
     
-    def add_die(self, name, hardware, maskset, grade, grade_reference, customer):
+    def add_die(self, name, hardware, maskset, quality, grade, grade_reference, customer):
         '''
         this method will add die 'name' with the given attributes to the database. 
         if 'maskset' or 'hardware' doesn't exist, a KeyError will be raised. 
@@ -454,8 +481,8 @@ class project_navigator(object):
 
         #TODO: implement the other checks (see docstring)
 
-        insert_query = '''INSERT INTO dies(name, hardware, maskset, grade, grade_reference, customer) VALUES (?, ?, ?, ?, ?, ?)'''
-        self.cur.execute(insert_query, (name, hardware, maskset, grade, grade_reference, customer))
+        insert_query = '''INSERT INTO dies(name, hardware, maskset, quality, grade, grade_reference, customer) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+        self.cur.execute(insert_query, (name, hardware, maskset, quality, grade, grade_reference, customer))
         self.con.commit()        
     
     def update_die(self, name, hardware, maskset, grade, customer):
@@ -900,10 +927,22 @@ class project_navigator(object):
             blob = pickle.dumps(definition, 4)
             self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
             self.con.commit()
-        except _ as e:
-            raise e
+        except:
+            raise
         else:
             return rel_path
+    
+    def standard_test_add(self, name, hardware, base):
+        import runpy
+        from ATE.org.coding.standard_tests import names as standard_test_names
+        
+        if name in standard_test_names:
+            temp = runpy.run_path(standard_test_names[name])
+            if not temp['dialog'](self.parent):
+                print(f"... no joy creating standard test '{name}'")
+        else:
+            raise Exception(f"{name} not a standard test ... WTF!")
+    
     
     def add_test(self, name, hardware, base, test_type, definition):
         '''
@@ -1035,13 +1074,281 @@ class project_navigator(object):
         query = '''DELETE from qualification_flow_data WHERE name=? and type=? and product=?'''
         self.cur.execute(query, (quali_flow_data["name"], quali_flow_data["type"], quali_flow_data["product"]))
         self.con.commit()
+
+
+    def get_available_testers(self):
+        #TODO: implement once the pluggy stuff is in place.
+        return ['SCT', 'CT']
+
+    def get_available_instruments(self):
+        #TODO: implement once the pluggy stuff is in place.
+        return {'Keithley' : ['K2000', 'K3000'],
+                'Keysight' : ['x', 'y', 'z']}
+
+    def get_available_equipment(self):
+        #TODO: implement once the pluggy stuff is in place.
+        # what about handlers and probers ? 
+        # maybe best is to add them, and ignore them where not applicalbe ?!?
+        # ... probably this function should ask the TCC what is available ...
+        # needs some more thinking !
+        return {'coildrivers' : {
+                    'STL' : ['DCS1K', 'DCS6K'],
+                    'TDK' : ['SourceControl']},
+                'thermostreamers' : {
+                    'MPI' : ['TA3000A'],
+                    'TempTronic' : ['ATS710', 'XStream4300']}}
+
+class void_navigator(project_navigator):
     
-if __name__ == '__main__':
-    project_test_directory = os.path.join(os.path.dirname(__file__), 'test')
-    navigator = project_navigator(project_test_directory)
+    def __init__(self):
+        import tempfile
+        
+        tempfile.gettempdir() # ~ inititalizing the tempfile module
+        self.tempdir = tempfile.mkdtemp() # obtaining a sandbox directory
+        self.tempproject = os.path.join(self.tempdir, 'dummy')
+        
+        super().__init__(self.tempproject)
 
-    navigator.add_hardware({1:1,"foo":"boe"})
+    def __del__(self):
+        '''
+        The user of mkdtemp() is responsible for deleting the temporary 
+        directory and its contents when done with it.
+        
+        dixit the doc, so we need to remove self.tempdir and it's contentse.
+        '''
+        self.con.close()
+        shutil.rmtree(self.tempdir, ignore_errors=True)
+        
+        
+class dummy_navigator(void_navigator):
+    
+    def __init__(self):
+        super().__init__()
+        self.populate_database()
+        
+    def populate_database(self):
+        pass
 
-    for name in navigator.get_hardwares():
-        print(f"HWR#{name}")
-        print(navigator.get_hardware_definition(name))
+def run_dummy_main(navigator_object, dialog_class=None):
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    import qdarkstyle
+    import qtawesome as qta
+
+    class screenCast(QtWidgets.QLabel):
+
+        def __init(self, parent):
+            super().__init__()
+            self.setPixmap(qta.icon('mdi.video', color='orange').pixmap(16,16))
+            self.state = 'idle'
+            self.parent = parent
+            self.clicked.connect(self.screencast_start_stop)
+            self.rightClicked.connect(self.screencast_settings)
+            self.show()
+            
+        def screencast_start_stop(self):
+            if self.state == 'idle': # start screencasting
+                print("start screencasting")
+            else: # stop screencasting & save
+                print("stop screencasting")
+        
+        def screencast_settings(self): 
+            print("screencast settings")
+        
+    class DummyMainWindow(QtWidgets.QMainWindow):
+        def __init__(self, navigator_object, dialog_class):
+            super().__init__()
+            self.project_info = navigator_object
+            self.setWindowTitle("dummy main window")
+            self.resize(800, 600)
+            self.centralwidget = QtWidgets.QWidget(self)
+            self.centralwidget.setObjectName("centralwidget")
+            self.setCentralWidget(self.centralwidget)
+            
+            toolbar = self.addToolBar('toolbar')
+            toolbar.setMovable(False)
+
+        # hardware
+            hardware_label = QtWidgets.QLabel("Hardware:")
+            hardware_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+            toolbar.addWidget(hardware_label)
+
+            self.hardware = QtWidgets.QComboBox()
+            self.hardware.blockSignals(True)
+            self.hardware.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+            self.hardware.currentTextChanged.connect(self.hardwareChanged)
+            self.hardware.clear()
+            hardware_list = sorted([''] + self.project_info.get_hardwares())
+            self.hardware.addItems(hardware_list)
+            self.hardware.setCurrentText(hardware_list[-1])
+            self.hardware.setEnabled(True)
+            self.hardware.blockSignals(False)
+            toolbar.addWidget(self.hardware)
+            self.active_hardware = self.hardware.currentText()
+            
+        # base
+            base_label = QtWidgets.QLabel("Base:")
+            base_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+            toolbar.addWidget(base_label)
+    
+            self.base = QtWidgets.QComboBox()
+            self.base.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+            self.base.blockSignals(True)
+            self.base.clear()
+            self.base.addItems(['', 'PR', 'FT'])
+            self.base.setCurrentIndex(0)        
+            self.base.currentTextChanged.connect(self.baseChanged)
+            self.base.setEnabled(True)
+            self.base.blockSignals(False)
+            toolbar.addWidget(self.base)
+            self.active_base = self.base.currentText()
+
+        # target
+            self.target_label = QtWidgets.QLabel("Target:")
+            self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+            toolbar.addWidget(self.target_label)
+            
+            self.target = QtWidgets.QComboBox()
+            self.target.blockSignals(True)
+            self.target.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+            self.target.currentTextChanged.connect(self.targetChanged)
+            self.target.setEnabled(True)
+            self.target.clear()
+            self.target.blockSignals(False)
+            toolbar.addWidget(self.target)
+            self.active_target = ''
+            
+        # run button
+            self.run = QtWidgets.QAction(qta.icon('mdi.play-circle-outline', color='orange'), "Run", self)
+            self.run.triggered.connect(self.onRun)
+            self.run.setCheckable(False)
+            toolbar.addAction(self.run)
+
+        # setup the screencaster
+            statusbar = QtWidgets.QStatusBar(self)
+            self.screencaster = screenCast(self) # = QLabel type of thing
+            statusbar.addPermanentWidget(self.screencaster)
+            self.setStatusBar(statusbar)
+
+        # dialog
+            if dialog_class != None:
+                self.dialog = dialog_class(self) #TODO:arg kwarg
+            else:
+                self.dialog = None
+
+        def hardwareChanged(self, selectedHardware):
+            if self.active_base == '':
+                targets = sorted([''] + 
+                                 self.project_info.get_dies_for_hardware(selectedHardware) + 
+                                 self.project_info.get_products_for_hardware(selectedHardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+            elif self.active_base == 'FT':
+                targets = sorted([''] + 
+                                 self.project_info.get_products_for_hardware(selectedHardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+            elif self.active_base == 'PR':
+                targets = sorted([''] + 
+                                 self.project_info.get_dies_for_hardware(selectedHardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+            else:
+                raise Exception("WTF!")
+            self.active_hardware = selectedHardware
+        
+        
+        def baseChanged(self, selectedBase):
+            hardware = self.hardware.currentText()
+
+            if selectedBase == '':
+                targets = sorted([''] + 
+                                 self.project_info.get_dies_for_hardware(hardware) + 
+                                 self.project_info.get_products_for_hardware(hardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+                self.target_label.setText('Target:')
+            elif selectedBase == 'FT':
+                targets = sorted([''] + 
+                                 self.project_info.get_products_for_hardware(hardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+                self.target_label.setText('Product:')
+            elif selectedBase == 'PR':
+                targets = sorted([''] + 
+                                 self.project_info.get_dies_for_hardware(hardware))
+                self.target.blockSignals(True)
+                self.target.clear()
+                self.target.addItems(targets)
+                self.target.setCurrentIndex(0)
+                self.target.blockSignals(False)
+                self.target_label.setText('Die:')
+            else:
+                raise Exception("WTF!")
+            self.active_base = selectedBase
+        
+        def targetChanged(self, selectedTarget):
+            all_dies = self.project_info.get_dies_for_hardware(self.active_hardware)
+            if self.active_base == '': # also need to change the base !
+                if selectedTarget in all_dies: # to PR
+                    targets = sorted([''] + 
+                                     self.project_info.get_dies_for_hardware(self.active_hardware))
+                    self.target.blockSignals(True)
+                    self.target.clear()
+                    self.target.addItems(targets)
+                    self.target.setCurrentText(selectedTarget)
+                    self.target.blockSignals(False)
+                    self.target_label.setText('Die:')
+                    self.base.blockSignals(True)
+                    self.base.setCurrentText('PR')
+                    self.base.blockSignals(False)
+                    self.active_base = 'PR'
+                else: # to FT
+                    targets = sorted([''] + 
+                                     self.project_info.get_products_for_hardware(self.active_hardware))
+                    self.target.blockSignals(True)
+                    self.target.clear()
+                    self.target.addItems(targets)
+                    self.target.setCurrentText(selectedTarget)
+                    self.target.blockSignals(False)
+                    self.target_label.setText('Product:')
+                    self.base.blockSignals(True)
+                    self.base.setCurrentText('FT')
+                    self.base.blockSignals(False)
+                    self.active_base = 'FT'
+            self.active_target = selectedTarget
+        
+        def onRun(self):
+            if self.dialog != None:
+                self.dialog.exec_()
+            else:
+                print("No dialog provided")
+
+        def update_tree(self):
+            pass
+
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    MainWindow = DummyMainWindow(navigator_object, dialog_class)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    navigator_object = project_navigator(r'C:\Users\hoeren\__spyder_workspace__\BROL')
+    run_dummy_main(navigator_object, None)
+    

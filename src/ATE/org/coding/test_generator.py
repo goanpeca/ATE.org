@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Mar 13 11:56:05 2020
+Created on Mon Apr  6 11:37:12 2020
 
 @author: hoeren
-
-This module holds the code that generates:
-    1) a test (class)
-    2) a test program
-    3) the common.py file
-based on the supplied info.
 """
 
 import os
@@ -17,7 +11,7 @@ import getpass
 from ATE.utils.DT import DT
 
 
-def test_generator(project_path, name, hardware, Type, base, definition):
+def test_generator(project_path, name, hardware, base, definition, Type='custom'):
     '''
     This function will generate the actual python test based on the supplied info.
         - project_path : the absolute path to the project root
@@ -35,10 +29,14 @@ def test_generator(project_path, name, hardware, Type, base, definition):
     If the target file already exists, then an Exception is raised, as this
     should not be possible!
     '''
-
     now = DT()
     user = getpass.getuser()
-        
+    domain = str(os.environ.get('USERDNSDOMAIN')) #TODO: maybe move this to 'company specific stuff' later on ?
+    if domain == 'None':
+        user_email = ''
+    else:
+        user_email = f"{user}@{domain}".lower()
+
     rel_path_to_file = os.path.join('src', 'tests', hardware, base, f"{name}.py")
     abs_path_to_file = os.path.join(project_path, rel_path_to_file)
     
@@ -50,8 +48,8 @@ def test_generator(project_path, name, hardware, Type, base, definition):
         tf.write("#!/usr/bin/env conda run -n ATE python\n") 
         tf.write("# -*- coding: utf-8 -*-\n") # not sure if in python 3 this is still necessary, but just in case
         tf.write("'''\n")
-        tf.write(f"Created on {now}\n\n")
-        tf.write(f"@author: {user}\n")
+        tf.write(f"Created on {now}\n")
+        tf.write(f"By @author: {user} ({user_email})\n")
         tf.write(f"\thardware = '{hardware}'\n")
         tf.write(f"\tBase = '{base}'\n")
         tf.write(f"\tType = '{Type}'\n")
@@ -73,18 +71,6 @@ def test_generator(project_path, name, hardware, Type, base, definition):
     
     return rel_path_to_file
 
-def program_generator():
-    pass
-
-def common_generatro(project_path, hardware, base):
-    '''
-    This function will generate the project's base "common.py" file from scratch,
-    then the TE can add things to it.
-    The idea is here that the whole tester initialization (and/or instruments
-    initialization is done here), TCC initialization and so on is done here.
-    each test includes this with "from src import common"
-    '''
-    pass
 
 def tippprint(fd, ip):
     '''
@@ -105,18 +91,3 @@ def toppprint(fd, op):
     pass
 
 
-def pcvpprint(fd, cv):
-    '''
-    Program Call Values Pretty PRINT
-    
-    same principle as tippprint but for test programs and call value
-    '''
-    pass
-
-def ptlpprint(fd, tl):
-    '''
-    Program Test Limits Pretty PRINT
-    
-    same principle as tipprint but for test programs and test limits
-    '''
-    pass
