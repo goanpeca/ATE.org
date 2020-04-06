@@ -19,6 +19,7 @@ class OptionParam(parameter):
         self.name = name
         self.items = items
         self.combobox = QtWidgets.QComboBox()
+ 
         self.combobox.setObjectName(f"cb{name}")
         for itm in items:
             self.combobox.addItem(str(itm), str(itm))
@@ -31,14 +32,18 @@ class OptionParam(parameter):
         
         # Create Label with parameter name
         layout = QtWidgets.QHBoxLayout()
-        
+        layout.setAlignment(QtCore.Qt.AlignLeft)
+
         textField = QtWidgets.QLabel()
         textField.setText(self.name)
+        textField.setMaximumWidth(196)
         layout.addWidget(textField)
         
         # Append combo box
+        self.combobox.setMaximumWidth(256)
         layout.addWidget(self.combobox)
-    
+        layout.insertStretch(1)
+        
         parent_container.addLayout(layout)
         return layout
 

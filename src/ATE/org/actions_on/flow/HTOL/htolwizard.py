@@ -6,7 +6,9 @@ from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_htol_flow_name = "qualification_HTOL_flow"
+quali_flow_name = "qualification_HTOL_flow"
+quali_flow_listentry_name = "HTOL"
+quali_flow_tooltip = "High Temperature Operating Life"
 
 
 class HTOLWizard(wizardbase.wizardbase):
@@ -24,22 +26,22 @@ class HTOLWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return quali_htol_flow_name
+        return quali_flow_name
 
 
-def new_htol_wizard(storage, product: str):
+def new_item(storage, product: str):
     dialog = HTOLWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
 
-def edit_htol_wizard(storage, data):
+def edit_item(storage, data):
     dialog = HTOLWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
 
-def view_htol_wizard(storage, data):
+def view_item(storage, data):
     dialog = HTOLWizard(data, storage)
     dialog.set_view_only()
     dialog.exec_()

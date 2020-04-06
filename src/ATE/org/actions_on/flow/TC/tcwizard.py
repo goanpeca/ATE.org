@@ -6,7 +6,9 @@ from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_tc_flow_name = "qualification_tc_flow"
+quali_flow_name = "qualification_tc_flow"
+quali_flow_listentry_name = "TC"
+quali_flow_tooltip = "Temperature Cycling"
 
 
 class TCWizard(wizardbase.wizardbase):
@@ -24,11 +26,11 @@ class TCWizard(wizardbase.wizardbase):
         return []
 
     def _get_data_type(self) -> str:
-        return quali_tc_flow_name
+        return quali_flow_listentry_name
 
 
-def edit_tc_wizard(storage, product: str):
-    data = storage.get_unique_data_for_qualifcation_flow(quali_tc_flow_name, product)
+def edit_item(storage, product: str):
+    data = storage.get_unique_data_for_qualifcation_flow(quali_flow_listentry_name, product)
     dialog = TCWizard(data, storage)
     dialog.exec_()
     del(dialog)

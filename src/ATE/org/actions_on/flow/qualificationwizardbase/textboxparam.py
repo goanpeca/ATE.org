@@ -2,22 +2,22 @@
 from ATE.org.actions_on.flow.qualificationwizardbase.parameter import parameter
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+
 # The TextBoxParam represents a parameter that has a value
 # and a name. It will generate a lineedit for dataentry
 # end a label to show the name of the parameter. No validation
 # is done on the input, except, that the parameter must not
 # be empty
 class TextBoxParam(parameter):
-    
+
     def __init__(self, name):
         self.name = name
         self.inputBox = QtWidgets.QLineEdit()
         self.inputBox.setObjectName(f"txt{name}")
-    
+
     # This method shall create the ui controls that
     # represent this parameter
     def create_ui_components(self, parent_container, on_change_handler):
-        
         self.inputBox.textChanged.connect(on_change_handler)
         
         # Create Label with parameter name
@@ -33,8 +33,7 @@ class TextBoxParam(parameter):
         self.inputBox.setMaximumWidth(256)
         self.inputBox.setAlignment(QtCore.Qt.AlignLeft)
         layout.addWidget(self.inputBox)
-        
-        # (Create Labels with default values?)
+        layout.insertStretch(1)
         parent_container.addLayout(layout)
         return layout
     

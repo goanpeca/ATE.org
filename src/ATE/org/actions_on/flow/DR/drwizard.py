@@ -2,22 +2,21 @@
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
-from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
+from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
-quali_flow_name = "qualification_elfr_flow"
-quali_flow_listentry_name = "ELFR"
-quali_flow_tooltip = "Early Life Failure Rate (aka: BurnIn)"
+quali_flow_name = "qualification_DR_flows"
+quali_flow_listentry_name = "DR"
+quali_flow_tooltip = "Data Retention"
 
-
-class ELFRWizard(wizardbase.wizardbase):
+class DRWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
-        return [intparam.IntParam("Duration (hours)", 0, 0, 500),
-                intparam.IntParam("Temperature (°C)", 0, 0, 500),
-                intparam.IntParam("VDD (V)", 0, 0, 500)]
+        return [writeoncetextparam.WriteOnceTextParam("name"),
+                intparam.IntParam("Length (hours)", 0, 0, 10000),
+                intparam.IntParam("Temperature (C°)", 0, 0, 100)]
     
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
@@ -28,9 +27,21 @@ class ELFRWizard(wizardbase.wizardbase):
         return quali_flow_name
 
 
-def edit_item(storage, product: str):
-    data = storage.get_unique_data_for_qualifcation_flow(quali_flow_name, product)
-    dialog = ELFRWizard(data, storage)
+def new_item(storage, product: str):
+    dialog = DRWizard({"product": product}, storage)
+    dialog.exec_()
+    del(dialog)
+
+
+def edit_item(storage, data):
+    dialog = DRWizard(data, storage)
+    dialog.exec_()
+    del(dialog)
+
+
+def view_item(storage, data):
+    dialog = DRWizard(data, storage)
+    dialog.set_view_only()
     dialog.exec_()
     del(dialog)
 
@@ -41,6 +52,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    dialog = ELFRWizard(dict(), None)
+    dialog = DRWizard(dict(), None)
     dialog.show()
     sys.exit(app.exec_())
