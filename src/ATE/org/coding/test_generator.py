@@ -90,4 +90,10 @@ def toppprint(fd, op):
     '''
     pass
 
-
+def tdpprint(fd, data):
+    '''
+    Test Data Pretty PRINT
+    
+    similar as in tipprint, but for the referenced data.
+    '''
+    pass

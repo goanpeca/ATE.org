@@ -8,6 +8,8 @@ import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from ATE.org.coding.test_generator import tippprint, toppprint, tdpprint
+
 def generator(parent, definition):
     if definition != {}:
         from ATE.org.coding import test_generator
@@ -36,8 +38,8 @@ class Wizard(QtWidgets.QDialog):
         
     def _setupUI(self):
         self.setWindowTitle('UID')
-        self.base = self.parent.project_info.active_base
-        self.hardware = self.parent.project_info.active_hardware
+        self.base = self.parent.active_base
+        self.hardware = self.parent.active_hardware
         
         if self.base == 'FT':
             my_target = 'device'
@@ -47,16 +49,28 @@ class Wizard(QtWidgets.QDialog):
         self.definition = {
             'doc_string' : [
                 f'The UID (Unique IDentification) test will read out the UID from the {my_target}',
-                f'using {self.hardware} and add it to the STDF in the right place.'],
+                f'using {self.hardware} and add it to the STDF in the right place.'
+                'Note: this is *NOT* a standard logging as in STDF there is a special',
+                '      field foreseen for this! (PRR:PART_ID)'
+                '      file://~/doc/standards/STDF-V4-spec.pdf#40' ],
             'input_parameters' : {},
             'output_parameters' : {},
             'data' : {}
         }
         
+        self.OKButton.clicked.connect(self.OKButtonPressed)
+        
+        
+        
+        self.show()
+        
     def verify(self):
         self.feedback.setText("")
 
     def OKButtonPressed(self):
+        print(f"hardware = '{self.hardware}', base='{self.base}'")
+        
+        
         self.accept()
         return self.definition
 

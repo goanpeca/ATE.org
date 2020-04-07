@@ -474,21 +474,38 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>22</width>
+           <width>30</width>
            <height>22</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>22</width>
+           <width>30</width>
            <height>22</height>
           </size>
          </property>
          <property name="text">
-          <string>°C</string>
+          <string>°C @ </string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBox">
+         <property name="maximum">
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>% samplerate</string>
          </property>
         </widget>
        </item>
@@ -510,7 +527,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="testProgramTab">
         <attribute name="title">

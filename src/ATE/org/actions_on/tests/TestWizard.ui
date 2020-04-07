@@ -1055,15 +1055,15 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <item>
                  <property name="text">
-                  <string>Test Probram 1</string>
+                  <string>TP1</string>
                  </property>
                  <item>
                   <property name="text">
-                   <string>Test 1</string>
+                   <string>IDD</string>
                   </property>
                   <item>
                    <property name="text">
-                    <string>Parameter1</string>
+                    <string>current</string>
                    </property>
                   </item>
                   <item>

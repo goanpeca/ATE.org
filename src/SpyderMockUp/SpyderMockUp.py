@@ -48,6 +48,220 @@ class screenCast(QtWidgets.QLabel):
         else:
             self.clicked.emit()
 
+class SCT_testers(object):
+    '''
+    This class manages the testers via zero-conf
+    #TODO: this should later on move to the SCT plugin
+    '''
+    def __init__(self):
+        self.testers = ["Tom's MiniSCT", "Achim's MiniSCT", "Sigi's MiniSCT", "MaxiSCT in Lab"]
+    
+    def rescan(self):
+        '''
+        this method rescan's the zeroconf network for miniSCT's
+        '''
+    
+    def report(self):
+        '''
+        this method reports the latest list of MiniSCT's
+        '''
+        return self.testers
+
+# file://~/docs/standards/ATE_Fundamentals.pdf#80
+# http://www.google.com
+
+class ATE_toolbar(QtWidgets.QToolBar):
+    
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.__call__(parent)
+
+    def __call__(self, parent):
+        self.parent = parent
+
+        self.clear()
+
+        self.setMovable(False)
+
+        tester_label = QtWidgets.QLabel("Tester:")
+        tester_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        self.addWidget(tester_label)
+
+        self.tester_combo = QtWidgets.QComboBox()
+        self.tester_combo.clear()
+        self.testers = SCT_testers()
+        self.tester_combo.addItems(['']+self.testers.report())
+        self.tester_combo.setCurrentText('')
+        self.active_tester = ''
+        self.tester_combo.currentTextChanged.connect(self.testerChanged)
+        self.tester_combo.setEnabled(True)
+        self.tester_combo.setVisible(True)
+        self.addWidget(self.tester_combo)
+
+        refreshTesters = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Testers", self)
+        refreshTesters.setStatusTip("Refresh the tester list")
+        refreshTesters.triggered.connect(self.rescanTesters)
+        refreshTesters.setCheckable(False)
+        self.addAction(refreshTesters)
+
+        run_action = QtWidgets.QAction(qta.icon('mdi.play-circle-outline', color='orange'), "Run", self)
+        run_action.setStatusTip("Run active module")
+        run_action.triggered.connect(self.onRun)
+        run_action.setCheckable(False)
+        self.addAction(run_action)
+
+        hardware_label = QtWidgets.QLabel("Hardware:")
+        hardware_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        self.addWidget(hardware_label)
+    # HARDWARE
+        self.hardware_combo = QtWidgets.QComboBox()
+        self.hardware_combo.blockSignals(True)
+        self.hardware_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.hardware_combo.clear()
+        if hasattr(self.parent, 'project_info') and isinstance(self.parent.project_info, project_navigator):
+            self.hardware_combo.addItems(self.parent.project_info.get_hardwares())
+            self.active_hardware = self.parent.project_info.get_latest_hardware()
+            self.hardware_combo.setCurrentText(self.active_hardware)        
+        else:
+            self.hardware_combo.addItems([''])
+            self.active_hardware = ''
+            self.hardware_combo.setCurrentText('')
+        self.hardware_combo.currentTextChanged.connect(self.hardwareChanged)
+        self.hardware_combo.setEnabled(True)
+        self.hardware_combo.blockSignals(False)
+        self.addWidget(self.hardware_combo)
+
+        base_label = QtWidgets.QLabel("Base:")
+        base_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        self.addWidget(base_label)
+    # BASE
+        self.base_combo = QtWidgets.QComboBox()
+        self.base_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.base_combo.blockSignals(True)
+        self.base_combo.clear()
+        self.base_combo.addItems(['', 'PR', 'FT'])
+        self.active_base = ''
+        self.base_combo.setCurrentText(self.active_base)        
+        self.base_combo.currentTextChanged.connect(self.baseChanged)
+        self.base_combo.setEnabled(True)
+        self.base_combo.blockSignals(False)
+        self.addWidget(self.base_combo)
+
+        self.target_label = QtWidgets.QLabel("Target:")
+        self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+        self.addWidget(self.target_label)
+    # TARGET
+        self.target_combo = QtWidgets.QComboBox()
+        self.target_combo.blockSignals(True)
+        self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.target_combo.clear()
+        self.target_combo.addItems([''])
+        if hasattr(self.parent, 'project_info') and isinstance(self.parent.project_info, project_navigator):
+            self.target_combo.addItems(self.parent.project_info.get_devices_for_hardware(self.active_hardware)+
+                                       self.parent.project_info.get_dies_for_hardware(self.active_hardware))
+        self.active_target = ''
+        self.target_combo.setCurrentText(self.active_target)
+        self.target_combo.currentTextChanged.connect(self.targetChanged)
+        self.target_combo.setEnabled(True)
+        self.target_combo.blockSignals(False)
+        self.addWidget(self.target_combo)
+
+        info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
+        info_action.setStatusTip("print current information")
+        info_action.triggered.connect(self.infoPressed)
+        info_action.setCheckable(False)
+        self.addAction(info_action)
+
+        settings_action = QtWidgets.QAction(qta.icon('mdi.wrench', color='orange'), "Settings", self)
+        settings_action.setStatusTip("Settings")
+        settings_action.triggered.connect(self.settingsPressed)
+        settings_action.setCheckable(False)
+        self.addAction(settings_action)
+        
+        self.settingsPressed()
+        self.show()
+        
+    def rescanTesters(self):
+        self.tester_combo.blockSignals(True)
+        self.testers.rescan()
+        tester_list = [''] + self.testers.report()
+        self.tester_combo.clear()
+        self.tester_combo.addItems(tester_list)
+        if self.active_tester in tester_list:
+            self.tester_combo.setText(self.active_tester)
+        else:
+            self.tester_combo.setText('')
+        self.tester_combo.blockSignals(False)
+
+    def testerChanged(self, selected_tester):
+        print(f"tester changed to {selected_tester}")
+        self.active_tester = selected_tester
+    
+    def hardwareChanged(self, selected_hardware):
+        print(f"hardware changed to {selected_hardware}")
+        self.active_hardware = selected_hardware
+        if self.active_base == 'FT':
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems([''])
+            if hasattr(self.parent, 'project_info') and isinstance(self.parent.project_info, project_navigator):
+                self.target_combo.addItems(self.parent.project_info.get_devices_for_hardware(self.active_hardware))            
+            self.target_combo.setCurrentText('')
+            self.active_target = ''
+            self.target_combo.blockSignals(False)
+        elif self.active_base == 'PR':
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems([''])
+            if hasattr(self.parent, 'project_info') and isinstance(self.parent.project_info, project_navigator):
+                self.target_combo.addItems(self.parent.project_info.get_dies_for_hardware(self.active_hardware))            
+            self.target_combo.setCurrentText('')
+            self.active_target = ''
+            self.target_combo.blockSignals(False)
+        else: # ''
+            self.target_combo.blockSignals(True)
+            self.target_combo.clear()
+            self.target_combo.addItems([''])
+            if hasattr(self.parent, 'project_info') and isinstance(self.parent.project_info, project_navigator):
+                self.target_combo.addItems(self.parent.project_info.get_devices_for_hardware(self.active_hardware)+
+                                           self.parent.project_info.get_dies_for_hardware(self.active_hardware))
+            self.target_combo.setCurrentText('')
+            self.active_target = ''
+            self.target_combo.blockSignals(False)
+
+    def baseChanged(self, selected_base):
+        print(f"base changed to {selected_base}")
+        self.active_base = selected_base
+        self.hardwareChanged(self.active_hardware)
+
+    def targetChanged(self, selected_target):
+        print(f"target changed to {selected_target}")
+        #TODO: and what when there is no self.parent.project_info ?!?
+        self.active_target = selected_target
+        if self.active_target in self.parent.project_info.get_devices_for_hardware(self.active_hardware):
+            self.base_combo.blockSignals(True)
+            self.base_combo.setCurrentText('FT')
+            self.base_combo.blockSignals(False)
+        elif self.active_target in self.parent.project_info.get_dies_for_hardware(self.active_hardware):
+            self.base_combo.blockSignals(True)
+            self.base_combo.setCurrentText('PR')
+            self.base_combo.blockSignals(False)
+        else:
+            print(f"woops ... what is '{selected_target}' ? FT or PR ?!?")
+            
+    def onRun(self):
+        print("run button pressed")
+
+    def infoPressed(self):
+        print("info button pressed")
+
+    def settingsPressed(self):
+        print("settings button pressed")
+        print(f"active tester = '{self.active_tester}'")
+        print(f"active hardware = '{self.active_hardware}'")
+        print(f"active base = '{self.active_base}'")
+        print(f"active target = '{self.active_target}'")
+
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, app):
@@ -61,6 +275,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if not os.path.exists(my_ui):
             raise Exception("'%s' doesn't exist" % my_ui)
         uic.loadUi(my_ui, self)
+
+        # self.active_hardware = ''
+        # self.active_base = ''
+        # self.active_target = ''
 
     # Initialize the main window
         # ToDo: Reenable this, if we figure that we *really* want SpyderMock to be in front of our debugger
@@ -77,15 +295,18 @@ class MainWindow(QtWidgets.QMainWindow):
         if not os.path.exists(self.workspace_path):
             os.makedirs(self.workspace_path)
 
-        self.tester_finder = SCT_finder()
-        self.tester_list = self.tester_finder.list_testers()
-        self.active_tester = self.tester_list[0] # start with the first in the list
-        print("active_tester =", self.active_tester)
+        # self.tester_finder = SCT_finder()
+        # self.tester_list = self.tester_finder.list_testers()
+        # self.active_tester = self.tester_list[0] # start with the first in the list
+        # print("active_tester =", self.active_tester)
 
-        self.active_project = ''
-        self.active_project_path = ''
-        self.project_info = None # the project navigator
-        self.active_hardware = ''
+        # self.active_project = ''
+        # self.active_project_path = ''
+        # self.project_info = None # the project navigator
+        # self.active_hardware = ''
+
+
+
 
     # connect the File/New/Project menu
         self.action_quit.triggered.connect(self.quit_event)
@@ -109,9 +330,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar().addPermanentWidget(self.screencast)
 
     # setup the toolbar
-        self.toolbar = self.create_toolbar() # sets active_tester, active_project, hwr (and base if necessary)
-        self.update_toolbar()
-        self.update_testers()
+        self.toolbar = ATE_toolbar(self)
+        self.addToolBar(self.toolbar)
+
 
     # TODO: not needed after refactoring .ui file
         self.editorTabs.clear()
@@ -120,6 +341,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.editorTabs.tabCloseRequested.connect(self.close_tab)
 
         self.load_last_project()
+        
         self.show()
 
     def load_last_project(self):
@@ -139,103 +361,103 @@ class MainWindow(QtWidgets.QMainWindow):
     # def closeEvent(self, event=None):
     #     self.close()
 
-    def create_toolbar(self):
-        '''
-        This method will create the toolbar (once, like etention of __init__)
-        '''
-        toolbar = self.addToolBar('toolbar')
-        toolbar.setMovable(False)
+    # def create_toolbar(self):
+    #     '''
+    #     This method will create the toolbar (once, like etention of __init__)
+    #     '''
+    #     toolbar = self.addToolBar('toolbar')
+    #     toolbar.setMovable(False)
 
-        tester_label = QtWidgets.QLabel("Tester:")
-        tester_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(tester_label)
+    #     tester_label = QtWidgets.QLabel("Tester:")
+    #     tester_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+    #     toolbar.addWidget(tester_label)
 
-        self.tester_combo = QtWidgets.QComboBox()
-        self.tester_combo.clear()
-        toolbar.addWidget(self.tester_combo)
+    #     self.tester_combo = QtWidgets.QComboBox()
+    #     self.tester_combo.clear()
+    #     toolbar.addWidget(self.tester_combo)
 
-        refreshTesters = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Testers", self)
-        refreshTesters.setStatusTip("Refresh the tester list")
-        refreshTesters.triggered.connect(self.update_testers)
-        refreshTesters.setCheckable(False)
-        toolbar.addAction(refreshTesters)
+    #     refreshTesters = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Testers", self)
+    #     refreshTesters.setStatusTip("Refresh the tester list")
+    #     refreshTesters.triggered.connect(self.update_testers)
+    #     refreshTesters.setCheckable(False)
+    #     toolbar.addAction(refreshTesters)
 
-        run_action = QtWidgets.QAction(qta.icon('mdi.play-circle-outline', color='orange'), "Run", self)
-        run_action.setStatusTip("Run active module")
-        run_action.triggered.connect(self.onRun)
-        run_action.setCheckable(False)
-        toolbar.addAction(run_action)
+    #     run_action = QtWidgets.QAction(qta.icon('mdi.play-circle-outline', color='orange'), "Run", self)
+    #     run_action.setStatusTip("Run active module")
+    #     run_action.triggered.connect(self.onRun)
+    #     run_action.setCheckable(False)
+    #     toolbar.addAction(run_action)
 
-        hw_label = QtWidgets.QLabel("Hardware:")
-        hw_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(hw_label)
+    #     hw_label = QtWidgets.QLabel("Hardware:")
+    #     hw_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+    #     toolbar.addWidget(hw_label)
 
-        self.hw_combo = QtWidgets.QComboBox()
-        self.hw_combo.blockSignals(True)
-        self.hw_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        self.hw_combo.currentTextChanged.connect(self.hardwareChanged)
-        self.hw_combo.clear()
-        self.hw_combo.setEnabled(False)
-        self.hw_combo.blockSignals(False)
+    #     self.hw_combo = QtWidgets.QComboBox()
+    #     self.hw_combo.blockSignals(True)
+    #     self.hw_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+    #     self.hw_combo.currentTextChanged.connect(self.hardwareChanged)
+    #     self.hw_combo.clear()
+    #     self.hw_combo.setEnabled(False)
+    #     self.hw_combo.blockSignals(False)
         
-        toolbar.addWidget(self.hw_combo)
+    #     toolbar.addWidget(self.hw_combo)
 
-        base_label = QtWidgets.QLabel("Base:")
-        base_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(base_label)
+    #     base_label = QtWidgets.QLabel("Base:")
+    #     base_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+    #     toolbar.addWidget(base_label)
 
-        self.base_combo = QtWidgets.QComboBox()
-        self.base_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        self.base_combo.blockSignals(True)
-        self.base_combo.clear()
-        self.base_combo.addItems(['', 'PR', 'FT'])
-        self.base_combo.setCurrentIndex(0)        
-        self.base_combo.currentIndexChanged.connect(self.baseChanged)
-        self.base_combo.setEnabled(False)
-        self.base_combo.blockSignals(False)
-        toolbar.addWidget(self.base_combo)
+    #     self.base_combo = QtWidgets.QComboBox()
+    #     self.base_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+    #     self.base_combo.blockSignals(True)
+    #     self.base_combo.clear()
+    #     self.base_combo.addItems(['', 'PR', 'FT'])
+    #     self.base_combo.setCurrentIndex(0)        
+    #     self.base_combo.currentIndexChanged.connect(self.baseChanged)
+    #     self.base_combo.setEnabled(False)
+    #     self.base_combo.blockSignals(False)
+    #     toolbar.addWidget(self.base_combo)
 
-        self.target_label = QtWidgets.QLabel("Target:")
-        self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
-        toolbar.addWidget(self.target_label)
+    #     self.target_label = QtWidgets.QLabel("Target:")
+    #     self.target_label.setStyleSheet("background-color: rgba(0,0,0,0%)")
+    #     toolbar.addWidget(self.target_label)
         
-        self.target_combo = QtWidgets.QComboBox()
-        self.target_combo.blockSignals(True)
-        self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-        self.target_combo.currentIndexChanged.connect(self.targetChanged)
-        self.target_combo.setEnabled(False)
-        self.target_combo.clear()
-        self.target_combo.blockSignals(False)
-        toolbar.addWidget(self.target_combo)
+    #     self.target_combo = QtWidgets.QComboBox()
+    #     self.target_combo.blockSignals(True)
+    #     self.target_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+    #     self.target_combo.currentIndexChanged.connect(self.targetChanged)
+    #     self.target_combo.setEnabled(False)
+    #     self.target_combo.clear()
+    #     self.target_combo.blockSignals(False)
+    #     toolbar.addWidget(self.target_combo)
 
 
-        info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
-        info_action.setStatusTip("print current information")
-        info_action.triggered.connect(self.printInfo)
-        info_action.setCheckable(False)
-        toolbar.addAction(info_action)
+    #     info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
+    #     info_action.setStatusTip("print current information")
+    #     info_action.triggered.connect(self.printInfo)
+    #     info_action.setCheckable(False)
+    #     toolbar.addAction(info_action)
 
-        settings_action = QtWidgets.QAction(qta.icon('mdi.wrench', color='orange'), "Settings", self)
-        settings_action.setStatusTip("Settings")
-        settings_action.triggered.connect(self.onSettings)
-        settings_action.setCheckable(False)
-        toolbar.addAction(settings_action)
+    #     settings_action = QtWidgets.QAction(qta.icon('mdi.wrench', color='orange'), "Settings", self)
+    #     settings_action.setStatusTip("Settings")
+    #     settings_action.triggered.connect(self.onSettings)
+    #     settings_action.setCheckable(False)
+    #     toolbar.addAction(settings_action)
 
-        return toolbar
+    #     return toolbar
 
-    def update_testers(self):
-        new_tester_list = list(self.tester_finder.list_testers())
-        old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
-        if set(new_tester_list) != set(old_tester_list):
-            self.tester_combo.blockSignals(True)
-            self.tester_combo.clear()
-            self.tester_combo.addItems(new_tester_list)
-            if self.active_tester in new_tester_list:
-                self.tester_combo.setCurrentIndex(self.tester_list.index(self.active_tester))
-            else:
-                self.tester_combo.setCurrentIndex(0)
-            self.active_tester = self.tester_combo.currentText()
-            self.tester_combo.blockSignals(False)
+    # def update_testers(self):
+    #     new_tester_list = list(self.tester_finder.list_testers())
+    #     old_tester_list = [self.tester_combo.itemText(i) for i in range(self.tester_combo.count())]
+    #     if set(new_tester_list) != set(old_tester_list):
+    #         self.tester_combo.blockSignals(True)
+    #         self.tester_combo.clear()
+    #         self.tester_combo.addItems(new_tester_list)
+    #         if self.active_tester in new_tester_list:
+    #             self.tester_combo.setCurrentIndex(self.tester_list.index(self.active_tester))
+    #         else:
+    #             self.tester_combo.setCurrentIndex(0)
+    #         self.active_tester = self.tester_combo.currentText()
+    #         self.tester_combo.blockSignals(False)
 
     # def update_projects(self):
         
@@ -271,29 +493,29 @@ class MainWindow(QtWidgets.QMainWindow):
         else: # we have an active project
             self.active_project_path = os.path.join(self.workspace_path, self.active_project)
 
-    def update_hardware(self):
-        '''
-        This mentod will update the hardware list in the toolbar's combo box
-        '''
-        if self.active_project != '':
-            hw_list = self.project_info.get_hardwares()
-            old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
+    # def update_hardware(self):
+    #     '''
+    #     This mentod will update the hardware list in the toolbar's combo box
+    #     '''
+    #     if self.active_project != '':
+    #         hw_list = self.project_info.get_hardwares()
+    #         old_hw_list = [self.hw_combo.itemText(i) for i in range(self.hw_combo.count())]
 
-            if len(hw_list) == 0:
-                hw_list.append('')
-                self.active_hardware = ''
+    #         if len(hw_list) == 0:
+    #             hw_list.append('')
+    #             self.active_hardware = ''
 
-            if self.active_hardware not in hw_list:
-                self.active_hardware = hw_list[0]
+    #         if self.active_hardware not in hw_list:
+    #             self.active_hardware = hw_list[0]
 
-            if set(hw_list) != set(old_hw_list):
-                self.hw_combo.blockSignals(True)
-                self.hw_combo.clear()
-                for index, hw in enumerate(hw_list):
-                    self.hw_combo.addItem(str(hw))
-                    if hw == self.active_hardware:
-                        self.hw_combo.setCurrentIndex(index)
-                self.hw_combo.blockSignals(False)
+    #         if set(hw_list) != set(old_hw_list):
+    #             self.hw_combo.blockSignals(True)
+    #             self.hw_combo.clear()
+    #             for index, hw in enumerate(hw_list):
+    #                 self.hw_combo.addItem(str(hw))
+    #                 if hw == self.active_hardware:
+    #                     self.hw_combo.setCurrentIndex(index)
+    #             self.hw_combo.blockSignals(False)
 
 
         # if self.active_project != '':
@@ -316,67 +538,67 @@ class MainWindow(QtWidgets.QMainWindow):
         #                 self.hw_combo.setCurrentIndex(index)
         #         self.hw_combo.blockSignals(False)
 
-    def update_base(self):
-        if self.project_info is None:
-            self.base_combo.blockSignals(True)
-            self.base_combo.setEnabled(False)
-            self.base_combo.setCurrentIndex(0) #empty string
-            self.base_combo.blockSignals(False)
-            return
+    # def update_base(self):
+    #     if self.project_info is None:
+    #         self.base_combo.blockSignals(True)
+    #         self.base_combo.setEnabled(False)
+    #         self.base_combo.setCurrentIndex(0) #empty string
+    #         self.base_combo.blockSignals(False)
+    #         return
 
-        if self.hw_combo.isEnabled():
-            self.base_combo.setEnabled(True)
-            if self.base_combo.currentText() == 'FT':
-                self.target_label.setText('Product:')
-            elif self.base_combo.currentText() == 'PR':
-                self.target_label.setText('Die:')
-            else:
-                self.target_label.setText('Target:')
-        else:
-            self.base_combo.setEnabled(False)
+    #     if self.hw_combo.isEnabled():
+    #         self.base_combo.setEnabled(True)
+    #         if self.base_combo.currentText() == 'FT':
+    #             self.target_label.setText('Product:')
+    #         elif self.base_combo.currentText() == 'PR':
+    #             self.target_label.setText('Die:')
+    #         else:
+    #             self.target_label.setText('Target:')
+    #     else:
+    #         self.base_combo.setEnabled(False)
     
-    def update_target(self):
-        if self.project_info is None:
-            self.target_label.setText('Targets:')
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.setEnabled(False)            
-            return
+    # def update_target(self):
+    #     if self.project_info is None:
+    #         self.target_label.setText('Targets:')
+    #         self.target_combo.blockSignals(True)
+    #         self.target_combo.clear()
+    #         self.target_combo.setEnabled(False)            
+    #         return
 
-        saved_target = self.target_combo.currentText()
-        if self.base_combo.isEnabled():
-            if self.target_label.text() == 'FT':
-                targets = [''] 
-                targets += self.project_info.get_products_for_hardware(self.active_hardware)
-            elif self.target_label.text() == 'PR':
-                targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
-            else: 
-                targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
-                targets += self.project_info.get_products_for_hardware(self.active_hardware)
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.addItems(targets)
-            if saved_target in targets:
-                self.target_combo.setCurrentIndex(self.target_combo.findText(saved_target))
-            else:
-                self.target_combo.setCurrentIndex(0)
-            self.target_combo.setEnabled(True)
-            self.target_combo.blockSignals(False)
-        else:
-            self.target_combo.blockSignals(True)
-            self.target_combo.clear()
-            self.target_combo.setEnabled(False)
-            self.target_combo.blockSignals(False)
+    #     saved_target = self.target_combo.currentText()
+    #     if self.base_combo.isEnabled():
+    #         if self.target_label.text() == 'FT':
+    #             targets = [''] 
+    #             targets += self.project_info.get_products_for_hardware(self.active_hardware)
+    #         elif self.target_label.text() == 'PR':
+    #             targets = [''] 
+    #             targets += self.project_info.get_dies_for_hardware(self.active_hardware)
+    #         else: 
+    #             targets = [''] 
+    #             targets += self.project_info.get_dies_for_hardware(self.active_hardware)
+    #             targets += self.project_info.get_products_for_hardware(self.active_hardware)
+    #         self.target_combo.blockSignals(True)
+    #         self.target_combo.clear()
+    #         self.target_combo.addItems(targets)
+    #         if saved_target in targets:
+    #             self.target_combo.setCurrentIndex(self.target_combo.findText(saved_target))
+    #         else:
+    #             self.target_combo.setCurrentIndex(0)
+    #         self.target_combo.setEnabled(True)
+    #         self.target_combo.blockSignals(False)
+    #     else:
+    #         self.target_combo.blockSignals(True)
+    #         self.target_combo.clear()
+    #         self.target_combo.setEnabled(False)
+    #         self.target_combo.blockSignals(False)
 
-    def update_toolbar(self):
-        '''
-        This method will update the toolbar.
-        '''
-        self.update_hardware()
-        self.update_base()
-        self.update_target()
+    # def update_toolbar(self):
+    #     '''
+    #     This method will update the toolbar.
+    #     '''
+    #     self.update_hardware()
+    #     self.update_base()
+    #     self.update_target()
 
     def set_tree(self):
         if self.project_info is None:
@@ -549,6 +771,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #https://doc.qt.io/qt-5/qtreewidget-members.html
         #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
         #https://cdn.materialdesignicons.com/4.9.95/
+
 
         index = self.tree.indexAt(point)
 
@@ -776,15 +999,15 @@ class MainWindow(QtWidgets.QMainWindow):
             item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
 
 
-    def testerChanged(self):
-        self.active_tester = self.tester_combo.currentText()
+    # def testerChanged(self):
+    #     self.active_tester = self.tester_combo.currentText()
 
-    def hardwareChanged(self):
-        self.active_hardware = self.hw_combo.currentText()
-        self.update_base()
-        self.update_target()
-        self.update_tests()
-        self.update_tree()
+    # def hardwareChanged(self):
+    #     self.active_hardware = self.hw_combo.currentText()
+    #     self.update_base()
+    #     self.update_target()
+    #     self.update_tests()
+    #     self.update_tree()
 
     def update_tests(self):
         if self.base_combo.currentText() == '':
@@ -1097,48 +1320,49 @@ class MainWindow(QtWidgets.QMainWindow):
     def open_project_impl(self, projectpath):
         if is_ATE_project(projectpath):      
             # Store this as the last project
-            f= open(".lastproject","w")
-            f.write(projectpath)
-            f.close()
+            with open(".lastproject","w") as f:
+                f.write(projectpath)
             self.tree.clear()
             self.active_project_path = projectpath
             self.active_project = os.path.split(self.active_project_path)[-1]            
             self.project_info = project_navigator(self, self.active_project_path)
+            self.toolbar(self)
+            
 
-            if not os.path.exists(self.project_info.db_file):
-                self.create_project_database()
+            # if not os.path.exists(self.project_info.db_file):
+            #     self.create_project_database()
 
-            available_hardwares =  self.project_info.get_hardwares()
-            print(f"{available_hardwares}")
-            available_hardwares.sort()
-            print(f"{available_hardwares}")
-            if len(available_hardwares) > 0:
-                self.active_hardware = available_hardwares[-1]
+            # available_hardwares =  self.project_info.get_hardwares()
+            # print(f"{available_hardwares}")
+            # available_hardwares.sort()
+            # print(f"{available_hardwares}")
+            # if len(available_hardwares) > 0:
+            #     self.active_hardware = available_hardwares[-1]
                 
-                self.hw_combo.blockSignals(True)
-                self.hw_combo.clear()
-                self.hw_combo.addItems(available_hardwares)
-                self.hw_combo.setCurrentIndex(len(available_hardwares)-1)
-                self.hw_combo.setEnabled(True)
-                self.hw_combo.blockSignals(False)
+            #     self.hw_combo.blockSignals(True)
+            #     self.hw_combo.clear()
+            #     self.hw_combo.addItems(available_hardwares)
+            #     self.hw_combo.setCurrentIndex(len(available_hardwares)-1)
+            #     self.hw_combo.setEnabled(True)
+            #     self.hw_combo.blockSignals(False)
                 
                 
-                self.base_combo.setCurrentIndex(0) # = nothing selected
-                self.base_combo.setEnabled(True)
+            #     self.base_combo.setCurrentIndex(0) # = nothing selected
+            #     self.base_combo.setEnabled(True)
                 
-                targets = [''] 
-                targets += self.project_info.get_dies_for_hardware(self.active_hardware)
-                targets += self.project_info.get_products_for_hardware(self.active_hardware)
-                self.target_combo.blockSignals(True)
-                self.target_combo.clear()
-                self.target_combo.addItems(targets)
-                self.target_combo.setCurrentIndex(0) # = nothing
-                self.target_combo.setEnabled(True)
-                self.target_combo.blockSignals(False)
-            else:
-                self.active_hardware = ''
+            #     targets = [''] 
+            #     targets += self.project_info.get_dies_for_hardware(self.active_hardware)
+            #     targets += self.project_info.get_products_for_hardware(self.active_hardware)
+            #     self.target_combo.blockSignals(True)
+            #     self.target_combo.clear()
+            #     self.target_combo.addItems(targets)
+            #     self.target_combo.setCurrentIndex(0) # = nothing
+            #     self.target_combo.setEnabled(True)
+            #     self.target_combo.blockSignals(False)
+            # else:
+            #     self.active_hardware = ''
 
-            self.update_hardware()
+            # self.update_hardware()
 
             # set tree once and use "update_tree" function to update if needed
             self.set_tree()
@@ -1333,7 +1557,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screencast.setPixmap(qta.icon('mdi.video', 'fa5s.ban', options=[{'color' : 'orange'},{'color' : 'red'}]).pixmap(16,16))
 
     def printInfo(self):
-        print("info")
+        print(f"hardware = '{self.active_hardware}'")
+        print(f"base = '{self.active_base}'")
+        print(f"target = '{self.active_target}'")
 
     def placeholder(self, event):
         print(type(event))
