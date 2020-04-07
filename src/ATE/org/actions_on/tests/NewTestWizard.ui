@@ -93,7 +93,7 @@
      <item>
       <widget class="QTabWidget" name="testTabs">
        <property name="currentIndex">
-        <number>3</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="descriptionTab">
         <attribute name="title">
@@ -166,6 +166,14 @@ p, li { white-space: pre-wrap; }
              </column>
              <column>
               <property name="text">
+               <string>Shmoo</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </column>
+             <column>
+              <property name="text">
                <string>Min</string>
               </property>
               <property name="toolTip">
@@ -232,6 +240,20 @@ p, li { white-space: pre-wrap; }
              </item>
              <item row="0" column="1">
               <property name="text">
+               <string/>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="checkState">
+               <enum>Checked</enum>
+              </property>
+              <property name="flags">
+               <set>ItemIsUserCheckable</set>
+              </property>
+             </item>
+             <item row="0" column="2">
+              <property name="text">
                <string>-40</string>
               </property>
               <property name="textAlignment">
@@ -241,7 +263,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="0" column="2">
+             <item row="0" column="3">
               <property name="text">
                <string>25</string>
               </property>
@@ -252,7 +274,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="0" column="3">
+             <item row="0" column="4">
               <property name="text">
                <string>+170</string>
               </property>
@@ -260,7 +282,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="0" column="4">
+             <item row="0" column="5">
               <property name="text">
                <string/>
               </property>
@@ -271,7 +293,7 @@ p, li { white-space: pre-wrap; }
                <set>NoItemFlags</set>
               </property>
              </item>
-             <item row="0" column="5">
+             <item row="0" column="6">
               <property name="text">
                <string>°C</string>
               </property>
@@ -295,6 +317,20 @@ p, li { white-space: pre-wrap; }
              </item>
              <item row="1" column="1">
               <property name="text">
+               <string/>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="checkState">
+               <enum>Checked</enum>
+              </property>
+              <property name="flags">
+               <set>ItemIsUserCheckable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="2">
+              <property name="text">
                <string>0.1</string>
               </property>
               <property name="textAlignment">
@@ -304,7 +340,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="1" column="2">
+             <item row="1" column="3">
               <property name="text">
                <string>1</string>
               </property>
@@ -315,7 +351,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="1" column="3">
+             <item row="1" column="4">
               <property name="text">
                <string>2.5</string>
               </property>
@@ -323,7 +359,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="1" column="4">
+             <item row="1" column="5">
               <property name="text">
                <string>m</string>
               </property>
@@ -334,7 +370,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="1" column="5">
+             <item row="1" column="6">
               <property name="text">
                <string>A</string>
               </property>
@@ -352,6 +388,20 @@ p, li { white-space: pre-wrap; }
              </item>
              <item row="2" column="1">
               <property name="text">
+               <string/>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="checkState">
+               <enum>Checked</enum>
+              </property>
+              <property name="flags">
+               <set>ItemIsUserCheckable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="2">
+              <property name="text">
                <string>123.456</string>
               </property>
               <property name="textAlignment">
@@ -361,7 +411,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="2" column="2">
+             <item row="2" column="3">
               <property name="text">
                <string>123.456</string>
               </property>
@@ -372,7 +422,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="2" column="3">
+             <item row="2" column="4">
               <property name="text">
                <string>123.456</string>
               </property>
@@ -380,7 +430,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="2" column="4">
+             <item row="2" column="5">
               <property name="text">
                <string>μ</string>
               </property>
@@ -391,7 +441,7 @@ p, li { white-space: pre-wrap; }
                <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
               </property>
              </item>
-             <item row="2" column="5">
+             <item row="2" column="6">
               <property name="text">
                <string>V</string>
               </property>
@@ -959,7 +1009,7 @@ p, li { white-space: pre-wrap; }
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <layout class="QVBoxLayout" name="verticalLayout_6">
              <item>
               <widget class="QLabel" name="label">
@@ -1063,7 +1113,7 @@ p, li { white-space: pre-wrap; }
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_4">
