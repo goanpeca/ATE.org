@@ -333,7 +333,11 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.actions_on import toolBar
         self.toolbar = toolBar(self)
         self.addToolBar(self.toolbar)
-        self.toolbar.actionTriggered.connect(self.toolbarTrigger)
+        self.toolbar.testerChanged.connect(self.toolbarTrigger)
+        # self.toolbar.hardwareChanged.connect(...)
+        # self.toolbar.baseChanged.connect(...)
+        # self.toolbar.targetChanged.connect(...)
+        # self.toolbar.onRun.connect(...)
 
 
     # TODO: not needed after refactoring .ui file

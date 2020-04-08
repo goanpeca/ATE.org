@@ -4,7 +4,7 @@ Created on Tue Apr  7 18:18:33 2020
 
 @author: hoeren
 """
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 
 import qtawesome as qta
 
@@ -12,6 +12,12 @@ from ATE.testers import SCT_testers
 from ATE.org.navigation import project_navigator
 
 class toolBar(QtWidgets.QToolBar):
+    
+    testerChanged = QtCore.pyqtSignal(str)
+    hardwareChanged = QtCore.pyqtSignal(str)
+    baseChanged = QtCore.pyqtSignal(str)
+    targetChanged = QtCore.pyqtSignal(str)
+    onRun = QtCore.pyqtSignal()
     
     def __init__(self, parent):
         super().__init__(parent)
@@ -34,7 +40,7 @@ class toolBar(QtWidgets.QToolBar):
         self.tester_combo.addItems(['']+self.testers.report())
         self.tester_combo.setCurrentText('')
         self.active_tester = ''
-        self.tester_combo.currentTextChanged.connect(self.testerChanged)
+        self.tester_combo.currentTextChanged.connect(self._testerChanged)
         self.tester_combo.setEnabled(True)
         self.tester_combo.setVisible(True)
         self.addWidget(self.tester_combo)
@@ -47,7 +53,7 @@ class toolBar(QtWidgets.QToolBar):
 
         run_action = QtWidgets.QAction(qta.icon('mdi.play-circle-outline', color='orange'), "Run", self)
         run_action.setStatusTip("Run active module")
-        run_action.triggered.connect(self.onRun)
+        run_action.triggered.connect(self._onRun)
         run_action.setCheckable(False)
         self.addAction(run_action)
 
@@ -67,7 +73,7 @@ class toolBar(QtWidgets.QToolBar):
             self.hardware_combo.addItems([''])
             self.active_hardware = ''
             self.hardware_combo.setCurrentText('')
-        self.hardware_combo.currentTextChanged.connect(self.hardwareChanged)
+        self.hardware_combo.currentTextChanged.connect(self._hardwareChanged)
         self.hardware_combo.setEnabled(True)
         self.hardware_combo.blockSignals(False)
         self.addWidget(self.hardware_combo)
@@ -83,7 +89,7 @@ class toolBar(QtWidgets.QToolBar):
         self.base_combo.addItems(['', 'PR', 'FT'])
         self.active_base = ''
         self.base_combo.setCurrentText(self.active_base)        
-        self.base_combo.currentTextChanged.connect(self.baseChanged)
+        self.base_combo.currentTextChanged.connect(self._baseChanged)
         self.base_combo.setEnabled(True)
         self.base_combo.blockSignals(False)
         self.addWidget(self.base_combo)
@@ -102,24 +108,24 @@ class toolBar(QtWidgets.QToolBar):
                                        self.parent.project_info.get_dies_for_hardware(self.active_hardware))
         self.active_target = ''
         self.target_combo.setCurrentText(self.active_target)
-        self.target_combo.currentTextChanged.connect(self.targetChanged)
+        self.target_combo.currentTextChanged.connect(self._targetChanged)
         self.target_combo.setEnabled(True)
         self.target_combo.blockSignals(False)
         self.addWidget(self.target_combo)
 
         info_action = QtWidgets.QAction(qta.icon('mdi.information-outline', color='orange'), "Information", self)
         info_action.setStatusTip("print current information")
-        info_action.triggered.connect(self.infoPressed)
+        info_action.triggered.connect(self._infoPressed)
         info_action.setCheckable(False)
         self.addAction(info_action)
 
         settings_action = QtWidgets.QAction(qta.icon('mdi.wrench', color='orange'), "Settings", self)
         settings_action.setStatusTip("Settings")
-        settings_action.triggered.connect(self.settingsPressed)
+        settings_action.triggered.connect(self._settingsPressed)
         settings_action.setCheckable(False)
         self.addAction(settings_action)
         
-        self.settingsPressed()
+        self._settingsPressed()
         self.show()
         
     def rescanTesters(self):
@@ -134,11 +140,12 @@ class toolBar(QtWidgets.QToolBar):
             self.tester_combo.setText('')
         self.tester_combo.blockSignals(False)
 
-    def testerChanged(self, selected_tester):
+    def _testerChanged(self, selected_tester):
         print(f"tester changed to {selected_tester}")
         self.active_tester = selected_tester
+        self.testerChanged.emit(selected_tester)
     
-    def hardwareChanged(self, selected_hardware):
+    def _hardwareChanged(self, selected_hardware):
         print(f"hardware changed to {selected_hardware}")
         self.active_hardware = selected_hardware
         if self.active_base == 'FT':
@@ -169,13 +176,15 @@ class toolBar(QtWidgets.QToolBar):
             self.target_combo.setCurrentText('')
             self.active_target = ''
             self.target_combo.blockSignals(False)
-
-    def baseChanged(self, selected_base):
+        self.hardwareChanged.emit(selected_hardware)
+        
+    def _baseChanged(self, selected_base):
         print(f"base changed to {selected_base}")
         self.active_base = selected_base
         self.hardwareChanged(self.active_hardware)
+        self.baseChanged.emit(selected_base)
 
-    def targetChanged(self, selected_target):
+    def _targetChanged(self, selected_target):
         print(f"target changed to {selected_target}")
         # the fact that we have a target to change to, means that there is a navigator ... no?
         self.active_target = selected_target
@@ -189,14 +198,16 @@ class toolBar(QtWidgets.QToolBar):
             self.base_combo.blockSignals(False)
         else:
             print(f"woops ... what is '{selected_target}' ? FT or PR ?!?")
+        self.targetChanged.emit(selected_target)
             
-    def onRun(self):
+    def _onRun(self):
         print("run button pressed")
+        self.onRun.emit()
 
-    def infoPressed(self):
+    def _infoPressed(self):
         print("info button pressed")
 
-    def settingsPressed(self):
+    def _settingsPressed(self):
         print("settings button pressed")
         print(f"active tester = '{self.active_tester}'")
         print(f"active hardware = '{self.active_hardware}'")
