@@ -333,12 +333,13 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.actions_on import toolBar
         self.toolbar = toolBar(self)
         self.addToolBar(self.toolbar)
-        self.toolbar.testerChanged.connect(self.toolbarTrigger)
-        # self.toolbar.hardwareChanged.connect(...)
-        # self.toolbar.baseChanged.connect(...)
-        # self.toolbar.targetChanged.connect(...)
-        # self.toolbar.onRun.connect(...)
-
+        self.toolbar.updateTreeModel.connect(self.update_tree)
+        # Other signals from the toolbar :
+        # self.toolbar.testerChanged.connect(...) -> str
+        # self.toolbar.hardwareChanged.connect(...) -> str
+        # self.toolbar.baseChanged.connect(...) -> str
+        # self.toolbar.targetChanged.connect(...) -> str
+        # self.toolbar.onRun.connect(...) -> None
 
     # TODO: not needed after refactoring .ui file
         self.editorTabs.clear()

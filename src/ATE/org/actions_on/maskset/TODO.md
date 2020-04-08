@@ -1,10 +1,23 @@
-# Context menus
+# Context menus on tree-view
+
+## masksets
+
+    - Add
+
+## maskset
+
+    - View
+    - Edit
+    - Trace
+    - Make obsolete <--- instead of delete ;-)
+
+# context menus on 'MasksetWizard'
 The table needs to have context menus ;
 
 ## Context menu on the 'Direction' column 
-    - input --> I
-    - output --> O
-    - bidirectional --> IO
+    - Input --> I
+    - Output --> O
+    - Bidirectional --> IO
     
 ## Context menu on the 'Type' column
     - Digital --> D
@@ -13,19 +26,21 @@ The table needs to have context menus ;
     - Power --> P
     
 ## Context menu on the 'Name' column = convenience
-    - Digital
-    - Analog
-    - Mixed
-    - Power
+    - Digital --> makes all selected rows 'Digital' in the Type column
+    - Analog --> makes all selected rows 'Analog' in the Type column
+    - Mixed --> makes all selcted rows 'Mixed' in the Type column
+    - Power --> makes all selected rows 'Power' in the Type column
     <separator>
-    - input
-    - output
-    - bidirectional
+    - input --> makes all selected rows 'Input' in the Direction column
+    - output --> makes all selected rows 'Output' in the Direction column
+    - bidirectional --> makes all selected rows 'Bidirectional' in the Direction column
     
 Note: if multiple rows (or parts of rows) are selected, the action should
 apply to all selected rows !
 
 # Validator on 'PosX', 'PosY', 'SizeX' and 'SizeY'
+
+TBD
 
 ## Validator type
 The 4 above mentioned columns can only hold POSETIVE integers to start off with.

@@ -1,11 +1,11 @@
 # context menus on tree-view
 
-## context menus on dies
+## context menus on products
 
     - Add
     - Clone from
-    
-## context menus on die
+
+## context menus on product
 
     - View
     - Edit

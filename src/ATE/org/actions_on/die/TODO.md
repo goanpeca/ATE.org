@@ -1,3 +1,20 @@
+# context menus on tree-view
+
+## context menus on dies
+
+    - Add
+
+## context menus on die
+
+    - View
+    - Edit
+    - Trace
+    - <sep>
+    - Delete (no 'make obsolete here')
+
+
+# logic on 'DieWizard'
+
 When a Maskset is selected, the wizard needs to collect all A grade DIES for 
 that maskset.
     - if there is none, then the grade dropdown box needs to gray out

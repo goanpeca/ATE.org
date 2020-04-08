@@ -14,9 +14,13 @@ from ATE.org.navigation import project_navigator
 class toolBar(QtWidgets.QToolBar):
     
     testerChanged = QtCore.pyqtSignal(str)
+
     hardwareChanged = QtCore.pyqtSignal(str)
     baseChanged = QtCore.pyqtSignal(str)
     targetChanged = QtCore.pyqtSignal(str)
+
+    updateTreeModel = QtCore.pyqtSignal()
+
     onRun = QtCore.pyqtSignal()
     
     def __init__(self, parent):
@@ -177,12 +181,14 @@ class toolBar(QtWidgets.QToolBar):
             self.active_target = ''
             self.target_combo.blockSignals(False)
         self.hardwareChanged.emit(selected_hardware)
+        self.updateTreeModel.emit()
         
     def _baseChanged(self, selected_base):
         print(f"base changed to {selected_base}")
         self.active_base = selected_base
-        self.hardwareChanged(self.active_hardware)
+        self._hardwareChanged(self.active_hardware)
         self.baseChanged.emit(selected_base)
+        self.updateTreeModel.emit()
 
     def _targetChanged(self, selected_target):
         print(f"target changed to {selected_target}")
@@ -199,7 +205,8 @@ class toolBar(QtWidgets.QToolBar):
         else:
             print(f"woops ... what is '{selected_target}' ? FT or PR ?!?")
         self.targetChanged.emit(selected_target)
-            
+        self.updateTreeModel.emit()
+        
     def _onRun(self):
         print("run button pressed")
         self.onRun.emit()
