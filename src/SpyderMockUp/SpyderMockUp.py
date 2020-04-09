@@ -333,7 +333,7 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.actions_on import toolBar
         self.toolbar = toolBar(self)
         self.addToolBar(self.toolbar)
-        self.toolbar.updateTreeModel.connect(self.update_tree)
+        self.toolbar.updateTreeModel.connect(self.test_the_toolbar)
         # Other signals from the toolbar :
         # self.toolbar.testerChanged.connect(...) -> str
         # self.toolbar.hardwareChanged.connect(...) -> str
@@ -350,6 +350,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.load_last_project()
         
         self.show()
+
+    def test_the_toolbar(self, a, b, c):
+        print(f"toolbar signal received {a}, {b}, {c}")
 
     def toolbarTrigger(self, action):
         print(f"toolbar triggered with action '{action}'")
@@ -1306,10 +1309,10 @@ class MainWindow(QtWidgets.QMainWindow):
         new_project_dialog(self)
         self.tree.clear()
 
-        self.project_info = project_navigator(self.active_project_path)
-        self.project_info.create_project_structure()
-        self.project_info.create_sql_connection()
-        self.project_info.create_project_database()
+        self.project_info = project_navigator(self, self.active_project_path)
+        # self.project_info.create_project_structure()
+        # self.project_info.create_sql_connection()
+        # self.project_info.create_project_database()
 
         self.set_tree()
 

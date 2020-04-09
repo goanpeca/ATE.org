@@ -3,9 +3,7 @@ Things that belong here :
     - probers (drivers)
     - handler (drivers)
     - TCC (Test Cell Controller)
-    - thermostreams (drivers)
-    - coildrivers (drivers)
-    - ...
+  
     
 We organize the contents per MANUFACTURER of the equipment
 WE are also a manufacturer in a sense, but this applies only to TCC

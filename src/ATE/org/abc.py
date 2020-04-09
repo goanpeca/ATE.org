@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 24 Oct 2016
 
@@ -132,7 +133,7 @@ class testABC(object):
         fp, pathname, description = imp.find_module(self.name, [self.test_dir])
         module = imp.load_module(self.name, fp, pathname, description)
         for member in inspect.getmembers(module):
-            print member
+            print(member)
 
 
     def _get_method_source(self, method):
@@ -146,15 +147,15 @@ class testABC(object):
         for member in inspect.getmembers(module, inspect.isclass):
             if member[0] == self.name:
                 class_of_interest = member[1]
-        print method
-        print class_of_interest
+        print(method)
+        print(class_of_interest)
         if class_of_interest is not None:
             method_of_interest = None
             for member in inspect.getmembers(class_of_interest, inspect.ismethod):
-                print member
+                print(member)
                 if member[0] == method:
                     method_of_interest = member[1]
-            print method_of_interest
+            print(method_of_interest)
             retval = inspect.getsource(method_of_interest)
         return retval
 
@@ -221,7 +222,6 @@ class testABC(object):
                         pass
 
 
-                    print "%d : %s" % (indent, code_line)
         else:
             raise Exception("'_get_if_elif_structure' only applies to 'pre_do' and 'post_do'")
 

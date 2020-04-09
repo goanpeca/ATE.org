@@ -19,7 +19,7 @@ class toolBar(QtWidgets.QToolBar):
     baseChanged = QtCore.pyqtSignal(str)
     targetChanged = QtCore.pyqtSignal(str)
 
-    updateTreeModel = QtCore.pyqtSignal()
+    updateTreeModel = QtCore.pyqtSignal(str, str, str)
 
     onRun = QtCore.pyqtSignal()
     
@@ -181,14 +181,14 @@ class toolBar(QtWidgets.QToolBar):
             self.active_target = ''
             self.target_combo.blockSignals(False)
         self.hardwareChanged.emit(selected_hardware)
-        self.updateTreeModel.emit()
+        self.updateTreeModel.emit(self.active_hardware, self.active_base, self.active_target)
         
     def _baseChanged(self, selected_base):
         print(f"base changed to {selected_base}")
         self.active_base = selected_base
         self._hardwareChanged(self.active_hardware)
         self.baseChanged.emit(selected_base)
-        self.updateTreeModel.emit()
+        self.updateTreeModel.emit(self.active_hardware, self.active_base, self.active_target)
 
     def _targetChanged(self, selected_target):
         print(f"target changed to {selected_target}")
@@ -220,3 +220,7 @@ class toolBar(QtWidgets.QToolBar):
         print(f"active hardware = '{self.active_hardware}'")
         print(f"active base = '{self.active_base}'")
         print(f"active target = '{self.active_target}'")
+
+
+class dummyMain():
+    pass
