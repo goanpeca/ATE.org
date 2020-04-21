@@ -33,22 +33,36 @@ This is a council that formulates guidelines for [different aspects](http://www.
 - [AEC-Q100-009-Rev-B](AEC-Q100-009-Rev-B.pdf) : Electrical Distribution Assessment
 - [AEC-Q100-010-Rev-A](AEC-Q100-010-Rev-A.pdf) : Solder Ball Shear Test
 - [AEC-Q100-011-Rev-D](AEC-Q100-011-Rev-D.pdf) : Charged Device Model (CDM) Electrostatic Discharge Test
-- [AEC-Q100-012-Rev-A](AEC-Q100-012-Rev-A.pdf) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
+- [AEC-Q100-012-Rev-](AEC-Q100-012-Rev-.pdf) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
 
 #### AEC-Q101: Failure Mechanism Based Stress Test Qualification for **Discrete** Semiconductors
 - [AEC-Q101-Rev-D1](AEC-Q101-Rev-D1.pdf) : Base Document
 - [AEC-Q101-001-Rev-A](AEC-Q101-001-Rev-A.pdf) : Human Body Model (HBM) Electrostatic Discharge Test
 - ~AEC-Q101-002-Rev-A : Machine Model (MM) Electrostatic Discharge Test~
 - [AEC-Q101-003-Rev-A](AEC-Q101-003-Rev-A.pdf) : Wire Bond Shear Test
-- [AEC-Q101-004-Rev-A](AEC-Q101-004-Rev-A) : Miscellaneous Test Methods
-- [AEC-Q101-005-Rev-A](AEC-Q101-005-Rev-A) : Charged Device Model (CDM) Electrostatic Discharge Test
-- [AEC-Q101-006-Rev-A](AEC-Q101-006-Rev-A) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
+- [AEC-Q101-004-Rev-](AEC-Q101-004-Rev-.pdf) : Miscellaneous Test Methods
+- [AEC-Q101-005-Rev-A](AEC-Q101-005-Rev-A.pdf) : Charged Device Model (CDM) Electrostatic Discharge Test
+- [AEC-Q101-006-Rev-](AEC-Q101-006-Rev-.pdf) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
 
 #### AEC-Q102: Failure Mechanism Based Stress Test Qualification for **Discrete Optoelectronic** Semiconductors in Automotive Applications
+- [AEC-Q102-Rev-](AEC-Q102-Rev-.pdf) : Failure Mechanism Based Stress Test Qualification for Discrete Optoelectronic Semiconductors in Automotive Applications
 
 #### AEC-Q103: Failure Mechanism Based Stress Test Qualification for **Sensors** in Automotive Applications
+- [AEC-Q103-002-Rev-](AEC-Q103-002-Rev-.pdf) : Failure Mechanism Based Stress Test Qualification for Micro Electro-Mechanical System (MEMS) Pressure Sensor Devices
+- [AEC-Q103-003-Rev-](AEC-Q103-003-Rev-.pdf) : Failure Mechanism Based Stress Test Qualification for MEMS Microphone Devices
 
 #### AEC-Q104: Failure Mechanism Based Stress Test Qualification for **Multichip Modules (MCM)** In Automotive Applications
+- [AEC-Q104-Rev-](AEC-Q104-Rev-.pdf) : Failure Mechanism Based Stress Test Qualification For Multichip Modules (MCM) In Automotive Applications
 
 #### AEC-Q200: Stress Test Qualification for **Passive Components** 
+- [AEC-Q200-Rev-D](AEC-Q200-Rev-D.pdf) : Base Document
+- [AEC-Q200-001-Rev-B](AEC-Q200-001-Rev-B.pdf) : Flame Retardance Test
+- [AEC-Q200-002-Rev-B](AEC-Q200-002-Rev-B.pdf) : Human Body Model (HBM) Electrostatic Discharge Test
+- [AEC-Q200-003-Rev-B](AEC-Q200-003-Rev-B.pdf) : Beam Load (Break Strength) Test
+- [AEC-Q200-004-Rev-A](AEC-Q200-004-Rev-A.pdf) : Measurement Procedures for Resettable Fuses
+- [AEC-Q200-005-Rev-A](AEC-Q200-005-Rev-A.pdf) : Board Flex / Terminal Bond Strength Test
+- [AEC-Q200-006-Rev-A](AEC-Q200-006-Rev-A.pdf) : Terminal Strength (SMD) / Shear Stress Test
+- [AEC-Q200-007-Rev-A](AEC-Q200-007-Rev-A.pdf) : Voltage Surge Test
+
+
 
