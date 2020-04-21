@@ -79,6 +79,9 @@ ATE.org provides some actuators, but it has no 'crystal ball', so any plugin
 can add acctuators to ATE.org. (actually on the long run Actuators should be
 pushed-out of ATE.org)
 
+> Note: for now 'actuators' live in "ATE.org/src/ATE/actuators" and are organized
+>       in directories based on the actuator type.
+
 5. Equipment
 
 With 'Equipment' we basically mean Handlers and Probers. In any setup we need
@@ -88,6 +91,10 @@ A hook allows us to push out (in a later stage) the Equipment to 3th parties
 (maybe the manufacturers of these things?!?) and it allows for example a specific
 company to handle their equipment themselves.
 
+> Note: for now 'equipment' lives in "ATE.org/src/ATE/equipment" and are orginized
+>       in derectores based on the equipment type (hander or prober),
+>       then the manufacturer, and then the 'machine'.
+
 6. Instruments
 
 Instruments are basically electronical measurement devices (like you find in 
@@ -95,6 +102,9 @@ any electronic lab). For now ATE.org holds some such instruments to get started,
 but similarly to Equipment we want to push this out on the long run, on the other 
 hand, ATE.org is tester/instrument agnostic system, meaning that we do need to 
 tell ATE.org sooner or later what 'insturments' are used, thus : plugin!
+
+> Note: for now the 'instruments' live in "ATE.org/src/ATE/instruments" and are 
+>       organized in directories by manufacturer, and then model.
 
 7. Testers
 
