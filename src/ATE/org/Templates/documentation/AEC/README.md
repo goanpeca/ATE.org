@@ -23,8 +23,11 @@ This is a council that formulates guidelines for [different aspects](http://www.
 #### AEC-Q100: Failure Mechanism Based Stress Test Qualification for **Integrated Circuits**
 - [AEC-Q100-Rev-H](AEC-Q100-Rev-H.pdf)
 - [AEC-Q100-001C-Rev-C](AEC-Q100-001C-Rev-C.pdf) : Wire Bond Shear Test
-
-
+- [AEC-Q100-002-Rev-E](AEC-Q100-002-Rev-E.pdf) : Human Body Model (HBM) Electrostatic Discharge Test
+- ~AEC-Q100-003-Rev-E : Machine Model (MM) Electrostatic Discharge Test~
+- [AEC-Q100-004-Rev-D](AEC-Q100-004-Rev-D.pdf) : IC Latch-Up Test
+- [AEC-Q100-005-Rev-D1](AEC-Q100-005-Rev-D1.pdf) : Non-Volatile Memory Program/Erase Endurance, Data Retention, and Operational Life Test
+- ~AEC-Q100-006-Rev-D : Electro-Thermally Induced Parasitic Gate Leakage Test (GL)~
 
 
 
