@@ -30,9 +30,9 @@ This is a council that formulates guidelines for [different aspects](http://www.
 - ~AEC-Q100-006-Rev-D : Electro-Thermally Induced Parasitic Gate Leakage Test (GL)~
 - [AEC-Q100-007-Rev-B](AEC-Q100-007-Rev-B.pdf) : Fault Simulation and Test Grading
 - [AEC-Q100-008-Rev-A](AEC-Q100-008-Rev-A.pdf) : Early Life Failure Rate (ELFR)
-- [AEC-Q100-009-Rev-B](AEC-Q100-009-Rev-B) : Electrical Distribution Assessment
+- [AEC-Q100-009-Rev-B](AEC-Q100-009-Rev-B.pdf) : Electrical Distribution Assessment
 - [AEC-Q100-010-Rev-A](AEC-Q100-010-Rev-A.pdf) : Solder Ball Shear Test
-- [AEC-Q100-011-Rev-D](AEC-Q100-011-Rev-D) : Charged Device Model (CDM) Electrostatic Discharge Test
+- [AEC-Q100-011-Rev-D](AEC-Q100-011-Rev-D.pdf) : Charged Device Model (CDM) Electrostatic Discharge Test
 - [AEC-Q100-012-Rev-A](AEC-Q100-012-Rev-A.pdf) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
 
 #### AEC-Q101: Failure Mechanism Based Stress Test Qualification for **Discrete** Semiconductors
