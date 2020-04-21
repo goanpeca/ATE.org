@@ -26,7 +26,9 @@ implementers is available :-)
 Also note that in the case of a 'plugin' the above could become:
 
     from foo.bar.jefke import K2000
-   
+
+and still the ATE.org system can past this in ! :tada:
+
 now ... the point is that we can't maintain all implementations of everybody
 in the TDK group ... so we will need to work with plug-in's (as we do anyway
 for the 'import' stuff) OK, but when for example IC-Sense makes a test program
