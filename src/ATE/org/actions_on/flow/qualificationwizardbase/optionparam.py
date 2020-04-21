@@ -47,12 +47,16 @@ class OptionParam(parameter):
         parent_container.addLayout(layout)
         return layout
 
+    def get_selection(self) -> str:
+        return self.combobox.currentText()
 
     # The validate method shall yield true, if the
     # data entered in the parameters fields is correct
     def validate(self) -> bool:
         return self.combobox.currentIndex() >= 0
 
+    def disable_ui_components(self):
+        self.combobox.setEnabled(False)
 
     def store_values(self, dst: dict):
         dst[self.name] = self.combobox.currentText()

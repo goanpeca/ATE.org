@@ -142,7 +142,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
             elif c == PAD_DIRECTION_COLUMN:
                 self.bondpadTable.setColumnWidth(c, DIR_COL_SIZE)
 
-        self.bondpadTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self.bondpadTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.bondpadTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
     # view die button
@@ -291,6 +291,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
         self._update_row(row)
         
+        
         if success:
             self.feedback.setText('')
             self._validate_table(row)
@@ -349,10 +350,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
     def _select_item(self, item):
         if not self.is_table_enabled:
             return
-
-        # column = item.column()
-        # if column == 0:
-        #     return
 
         item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
@@ -713,7 +710,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
 def new_maskset_dialog(parent):
     newMasksetWizard = NewMasksetWizard(parent)
-
     newMasksetWizard.exec_()
     del(newMasksetWizard)
 

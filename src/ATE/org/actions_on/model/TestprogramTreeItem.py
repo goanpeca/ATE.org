@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import qtawesome as qta
 
-
+# ToDo, SPYD11: Fix this to conform with model based tree!
 class TestprogramTreeItem(QtWidgets.QTreeWidgetItem):
     def __init__(self, parent, implmodule, delfunc):
         super(QtWidgets.QTreeWidgetItem, self).__init__(parent, None)

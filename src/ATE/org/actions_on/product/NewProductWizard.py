@@ -11,8 +11,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 class NewProductWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, project_info, active_hardware):
+        self.project_info = project_info
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -22,15 +22,13 @@ class NewProductWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
 
-        self.existing_hardwares = self.parent.project_info.get_hardwares()
+        self.existing_hardwares = self.project_info.get_hardwares()
         if len(self.existing_hardwares)==0:
             self.existing_hardwares = ['']
-        print(f"self.parent.active_hw = {self.parent.active_hw}")
-        self.existing_devices = [''] + self.parent.project_info.get_devices_for_hardware(self.parent.active_hw)
-        print(f"existing_devices = {self.existing_devices}")
-        self.existing_products = self.parent.project_info.get_products_for_hardware(self.parent.active_hw)
+
+        self.existing_devices = [''] + self.project_info.get_devices_for_hardware(active_hardware)
+        self.existing_products = self.project_info.get_products_for_hardware(active_hardware)
 
         from ATE.org.validation import valid_product_name_regex
         rxProductName = QtCore.QRegExp(valid_product_name_regex)
@@ -43,7 +41,7 @@ class NewProductWizard(QtWidgets.QDialog):
         self.WithHardware.clear()
         for index, hardware in enumerate(self.existing_hardwares):
             self.WithHardware.addItem(hardware)
-            if hardware == self.parent.active_hw:
+            if hardware == active_hardware:
                 self.WithHardware.setCurrentIndex(index)
         self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
         self.WithHardware.blockSignals(False)
@@ -71,9 +69,11 @@ class NewProductWizard(QtWidgets.QDialog):
         at the parent level is also changed and that the new device list
         (for the new hardware) is loaded.
         '''
-        self.parent.active_hw = self.WithHardware.currentText()
-        self.existing_devices = [''] + self.parent.project_info.get_devices_for_hardware(self.parent.active_hw)
-        self.existing_products = self.parent.project_info.get_products_for_hardware(self.parent.active_hw)
+        # TODO: find an other way to do this
+        # self.parent.active_hardware = self.WithHardware.currentText()
+
+        self.existing_devices = [''] + self.project_info.get_devices_for_hardware(self.active_hardware)
+        self.existing_products = self.project_info.get_products_for_hardware(self.active_hardware)
 
     def verify(self):
         if self.ProductName.text() in self.existing_products:
@@ -95,11 +95,11 @@ class NewProductWizard(QtWidgets.QDialog):
         device = self.FromDevice.currentText()
         hardware = self.WithHardware.currentText()
 
-        self.parent.project_info.add_product(name, device, hardware)
+        self.project_info.add_product(name, device, hardware)
         self.accept()
 
-def new_product_dialog(parent):
-    newProductWizard = NewProductWizard(parent)
+def new_product_dialog(project_info, active_hardware):
+    newProductWizard = NewProductWizard(project_info, active_hardware)
     newProductWizard.exec_()
     del(newProductWizard)
 

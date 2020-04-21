@@ -13,8 +13,8 @@ from ATE.org.validation import valid_die_name_regex
 
 class NewDieWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent, fixed=True):
-        self.parent = parent
+    def __init__(self, project_info, active_hardware, fixed=True):
+        self.project_info = project_info
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -24,13 +24,12 @@ class NewDieWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
 
     # hardware
         self.withHardware.blockSignals(True)
         self.withHardware.clear()
-        self.withHardware.addItems(self.parent.project_info.get_hardwares())        
-        self.withHardware.setCurrentText(self.parent.active_hw)
+        self.withHardware.addItems(self.project_info.get_hardwares())        
+        self.withHardware.setCurrentText(active_hardware)
         if fixed:
             self.withHardware.setEnabled(False)
         self.withHardware.currentTextChanged.connect(self.hardwareChanged)
@@ -42,10 +41,10 @@ class NewDieWizard(QtWidgets.QDialog):
         self.dieName.setText("")
         self.dieName.setValidator(DieName_validator)
         self.dieName.textChanged.connect(self.verify)
-        self.existing_dies = self.parent.project_info.get_dies()
+        self.existing_dies = self.project_info.get_dies()
    
     # maskset    
-        self.existing_masksets = [''] + self.parent.project_info.get_masksets()
+        self.existing_masksets = [''] + self.project_info.get_masksets()
         self.fromMaskset.blockSignals(True)
         self.fromMaskset.clear()
         self.fromMaskset.addItems(self.existing_masksets)
@@ -133,7 +132,7 @@ class NewDieWizard(QtWidgets.QDialog):
             self.customer.setHidden(True)
             self.customer.blockSignals(True)
         else:
-            ASIC_masksets = self.parent.project_info.get_ASIC_masksets()
+            ASIC_masksets = self.project_info.get_ASIC_masksets()
             if SelectedMaskset in ASIC_masksets:
                 print("ASIC")
                 self.gradeLabel.setDisabled(False)
@@ -148,7 +147,7 @@ class NewDieWizard(QtWidgets.QDialog):
                 self.Type.blockSignals(False)
                 self.customerLabel.setHidden(False)
                 self.customerLabel.setDisabled(True)
-                Customer = self.parent.project_info.get_maskset_customer(SelectedMaskset)
+                Customer = self.project_info.get_maskset_customer(SelectedMaskset)
                 self.customer.blockSignals(True)
                 self.customer.setText(Customer)
                 self.customer.setHidden(False)
@@ -258,16 +257,18 @@ class NewDieWizard(QtWidgets.QDialog):
         else: #ASSP
             customer = ''
         
-        self.parent.project_info.add_die(name, hardware, maskset, grade, grade_reference, customer)
+        # TODO: quality need to be defined
+        quality = ''
+
+        self.project_info.add_die(name, hardware, maskset, quality, grade, grade_reference, customer)
         
-        self.parent.update_tree()
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
 
-def new_die_dialog(parent):
-    newDieWizard = NewDieWizard(parent)
+def new_die_dialog(project_info, active_hardware):
+    newDieWizard = NewDieWizard(project_info, active_hardware)
     newDieWizard.exec_()
     del(newDieWizard)
 

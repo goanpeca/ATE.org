@@ -7,14 +7,35 @@
     <x>0</x>
     <y>0</y>
     <width>804</width>
-    <height>663</height>
+    <height>459</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>804</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>804</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>SomeWizard</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -28,13 +49,6 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QGroupBox" name="grpTestsprogram">
-     <property name="title">
-      <string>GroupBox</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="enabled">
       <bool>true</bool>

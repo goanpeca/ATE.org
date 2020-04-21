@@ -15,7 +15,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 class NewPackageWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, project_info):
         super(NewPackageWizard, self).__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -25,7 +25,7 @@ class NewPackageWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
+        self.project_info = project_info
         
     # create a temporary directory to store the drawing(s)
         self.temp_dir = tempfile.mkdtemp()
@@ -34,7 +34,7 @@ class NewPackageWizard(QtWidgets.QDialog):
     # name        
         rxPackageName = QtCore.QRegExp(valid_package_name_regex)
         PackageName_validator = QtGui.QRegExpValidator(rxPackageName, self)
-        self.existing_packages = self.parent.project_info.packages_get()
+        self.existing_packages = self.project_info.packages_get()
         self.packageName.blockSignals(True)
         self.packageName.setValidator(PackageName_validator)
         self.packageName.textChanged.connect(self.validate)
@@ -123,16 +123,15 @@ class NewPackageWizard(QtWidgets.QDialog):
         name = self.packageName.text()
         leads = self.leads.value()
         
-        self.parent.project_info.package_add(name, leads)
+        self.project_info.package_add(name, leads)
 
-        self.parent.update_tree()
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
 
-def new_package_dialog(parent):
-    newPackageWizard = NewPackageWizard(parent)
+def new_package_dialog(project_info):
+    newPackageWizard = NewPackageWizard(project_info)
     newPackageWizard.exec_()
     del(newPackageWizard)
 

@@ -12,7 +12,7 @@ class wizardbase(QtWidgets.QDialog):
     def __init__(self, datasource: dict, storage):
         super().__init__()
         self.__load_ui()
-        self.__setup_parameters()
+        self.setup_parameters()
 
         # The dialog always works on a given set of data.
         # This can be either new data (in this case datasource
@@ -42,20 +42,20 @@ class wizardbase(QtWidgets.QDialog):
         saveButton.setEnabled(False)
         for p in self.wizard_parameters:
             p.disable_ui_components()
-        for p in self.wizard_testprograms:
-            p.disable_ui_components()
+
+    def get_ui_file(self) -> str:
+        return __file__.replace('.py', '.ui')
 
     def __load_ui(self):
-        my_ui = __file__.replace('.py', '.ui')
+        my_ui = self.get_ui_file()
         if not os.path.exists(my_ui):
             raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', self.__class__.__name__)))
     
-    def __setup_parameters(self):
+    def setup_parameters(self):
         self.wizard_parameters = self._get_wizard_parameters()
-        self.wizard_testprograms = self._get_wizard_testprogram_slots()
 
         # Create controls for wizard parameters
         self.grpParams.setTitle("Parameters")
@@ -65,18 +65,11 @@ class wizardbase(QtWidgets.QDialog):
         self.grpParams.setLayout(layout)
 
         layout.insertStretch(len(self.wizard_parameters), 0)
-        
-        # Create controls for wizard testprograms
-        if len(self.wizard_testprograms) > 0:
-            self.grpTestsprogram.setTitle("Testprograms")
-            layout = QtWidgets.QVBoxLayout()
-            for p in self.wizard_testprograms:
-                p.create_ui_components(layout, self.__on_any_parameter_change)
-            self.grpTestsprogram.setLayout(layout)
-            layout.insertStretch(len(self.wizard_testprograms), 0)
-        else:
-            self.grpTestsprogram.setVisible(False)
-        
+
+        self._custom_parameter_setup()
+
+    def _custom_parameter_setup(self):
+        pass
 
     # The edit functions of all parameters are wired to this cb.
     # We use the cb to validate the whole form, i.e.: Check that all
@@ -85,18 +78,12 @@ class wizardbase(QtWidgets.QDialog):
     def __on_any_parameter_change(self):
         allgood = True
         allgood = all(x.validate() for x in self.wizard_parameters)
-        allgood = allgood & all(x.validate() for x in self.wizard_testprograms)
         saveButton = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         saveButton.setEnabled(allgood and self.enable_save)
     
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
-        return []
-    
-    # This function shall return a list of testprogram slots
-    # Note: We expect a list of TextBoxParams here
-    def _get_wizard_testprogram_slots(self) -> list:
         return []
 
     # This function is called after all defined parameters
@@ -130,8 +117,6 @@ class wizardbase(QtWidgets.QDialog):
 
         for x in self.wizard_parameters:
             x.store_values(self.datasource)
-        for x in self.wizard_testprograms:
-            x.store_values(self.datasource)
 
         self._custom_store_data(self.datasource)
 
@@ -141,16 +126,5 @@ class wizardbase(QtWidgets.QDialog):
     def __load_data(self, src: dict):
         for x in self.wizard_parameters:
             x.load_values(src)
-        for x in self.wizard_testprograms:
-            x.load_values(src)
         self._custom_load_data(src)
 
-# if __name__ == '__main__':
-#     import sys, qdarkstyle
-
-#     app = QtWidgets.QApplication(sys.argv)
-#     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-#     dialog = wizardbase()
-#     dialog.show()
-#     sys.exit(app.exec_())

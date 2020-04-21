@@ -23,7 +23,8 @@ def debug_visual(window, qtbot):
 AVAILABE_TESTS = ["test1", "test2"]
 def setup_method(test_path="./tests/test"):
     def setup(test_func):
-        def wrap(qtbot):
+        def wrap(qtbot, mocker):
+            mocker.patch.object(NewProgramWizard, '_setup')
             window = NewProgramWizard(test_path=test_path)
             qtbot.addWidget(window)
 

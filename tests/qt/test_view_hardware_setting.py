@@ -35,9 +35,8 @@ DB_FILE = "./tests/qt/test.sqlite5"
 def setup_method(configuration=None):
     def setup(test_func):
         def wrap(qtbot):
-            proj_nav = project_navigator("./tests/qt/")
+            proj_nav = project_navigator(None, "./tests/qt/")
             proj_nav.db_file = ""
-            proj_nav.create_sql_connection()
             window = ViewHardwaresetupSettings(configuration, HW_NAME)
             window()
             qtbot.addWidget(window)
