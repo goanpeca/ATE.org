@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['src\\SpyderMockUp\\SpyderMockUp.py', 'src\\ATE\\org\\actions_on\\hardwaresetup\\HardwareWizard.py', 'src\\ATE\\org\\navigation.py', 'src\\ATE\\org\\actions_on\\__init__.py', 'src\\ATE\\org\\coding\\standard_tests\\__init__.py', 'src\\ATE\\org\\coding\\standard_tests\\UID\\UID.py', 'src\\ATE\\org\\abc.py', '..\\..\\AppData\\Local\\Continuum\\anaconda3\\envs\\py37\\lib\\os.py']
+recent_files = ['src\\SpyderMockUp\\SpyderMockUp.py', 'src\\SpyderMockUp\\ScreenCasting\\ScreenCastSettings.py']
 
