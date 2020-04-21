@@ -332,7 +332,7 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.toolbar import toolBar
         self.toolbar = toolBar(self)
         self.addToolBar(self.toolbar)
-        self.toolbar.updateTreeModel.connect(self.test_the_toolbar)
+        # self.toolbar.updateTreeModel.connect(self.test_the_toolbar)
         # Other signals from the toolbar :
         # self.toolbar.testerChanged.connect(...) -> str
         # self.toolbar.hardwareChanged.connect(...) -> str
