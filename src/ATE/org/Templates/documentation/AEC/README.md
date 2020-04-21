@@ -21,6 +21,12 @@ This is a council that formulates guidelines for [different aspects](http://www.
 - [AEC-Q006-Rev-A](AEC-Q006-Rev-A.pdf)
 
 #### AEC-Q100: Failure Mechanism Based Stress Test Qualification for **Integrated Circuits**
+- [AEC-Q100-Rev-H](AEC-Q100-Rev-H.pdf)
+- [AEC-Q100-001C-Rev-C : Wire Bond Shear Test](AEC-Q100-001C-Rev-C.pdf)
+
+
+
+
 
 #### AEC-Q101: Failure Mechanism Based Stress Test Qualification for **Discrete** Semiconductors
 
