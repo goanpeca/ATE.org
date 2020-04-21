@@ -298,17 +298,17 @@
          </item>
          <item>
           <property name="text">
-           <string>Automotive</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>Commercial</string>
           </property>
          </item>
          <item>
           <property name="text">
            <string>Industrial</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Automotive</string>
           </property>
          </item>
          <item>
