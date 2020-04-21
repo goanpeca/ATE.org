@@ -43,9 +43,8 @@ HW_NAME = "HW1"
 def setup_method():
     def setup(test_func):
         def wrap(qtbot):
-            proj_nav = project_navigator("./tests/qt/")
+            proj_nav = project_navigator(None, "./tests/qt/")
             proj_nav.db_file = DB_FILE
-            proj_nav.create_sql_connection()
             return test_func(proj_nav, qtbot)
         return wrap
     return setup

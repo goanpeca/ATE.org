@@ -11,31 +11,57 @@ import pickle
 import shutil
 from pathlib import Path as create_file
 
+from PyQt5.QtCore import QObject, pyqtSignal
+
+from ATE.org.constants import TableIds as TableId
 
 
-
-
-class project_navigator(object):
+class project_navigator(QObject):
     '''
     This class takes care of the project creation/navigation/evolution.
     '''
+    # The parameter contains the type of the dbchange (i.e. which table was altered)
+    database_changed = pyqtSignal(['int'])
+    active_project_changed = pyqtSignal()
+    active_hardware_changed = pyqtSignal()
+    active_product_changed = pyqtSignal()
+    active_base_changed = pyqtSignal()
+    hardware_added = pyqtSignal(['QString'])
+
     def __init__(self, parent, project_directory):
+        super().__init__()
         print(f"project_directory = {project_directory}")
         self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
         self.project_directory = project_directory
-        
+
         self.db_file = os.path.join(project_directory, 
                                     os.path.split(project_directory)[-1]+'.sqlite3')
         self.parent = parent
-    
+
         if not os.path.exists(self.project_directory): # brand new project, initialize it.
             self.create_project_structure()
             self.con = sqlite3.connect(self.db_file)
-            self.cur = self.con.cursor() 
+            self.cur = self.con.cursor()
             self.create_project_database()
-        else: # existing project, connect the db
+        else:
             self.con = sqlite3.connect(self.db_file)
             self.cur = self.con.cursor()
+
+        self.activeProduct = None
+        self.activeHardware = None
+        self.activeBase = None
+
+    def set_active_hardware(self, active_hardware):
+        self.activeHardware = active_hardware
+        self.active_hardware_changed.emit()
+
+    def set_active_base(self, active_base):
+        self.activeBase = active_base
+        self.active_base_changed.emit()
+
+    def set_active_product(self, active_product):
+        self.activeProduct = active_product
+        self.active_product_changed.emit()
 
     def create_project_structure(self):
         '''
@@ -243,11 +269,14 @@ class project_navigator(object):
         this method adds a hardware setup (defined in 'definition') and returns
         the name for this.
         '''
-        new_hardware = self.get_next_hardware_name()
+        new_hardware = self.get_next_hardware()
         blob = pickle.dumps(definition, 4)
         query = '''INSERT INTO hardwares(name, definition) VALUES (?, ?)'''
         self.cur.execute(query, (new_hardware, blob))
         self.con.commit()
+        # Attention, this might be dangerous in the long run
+        # -> we might have to do this after the whole create file stuff.
+        self.database_changed.emit(TableId.Hardware())
 
         os.makedirs(os.path.join(self.project_directory, 'src', 'patterns', new_hardware))
         create_file(os.path.join(self.project_directory, 'src', 'patterns', new_hardware, '__init__.py')).touch()        
@@ -273,6 +302,7 @@ class project_navigator(object):
         os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR'))
         create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR', '__init__.py')).touch()
         
+        self.hardware_added.emit(new_hardware)
         return new_hardware
     
     def update_hardware(self, name, definition):
@@ -361,6 +391,7 @@ class project_navigator(object):
         blob = pickle.dumps(definition, 4)
         self.cur.execute(insert_query, (name, customer, blob))
         self.con.commit()        
+        self.database_changed.emit(TableId.Maskset())
     
     def update_maskset(self, name, definition):
         '''
@@ -483,7 +514,8 @@ class project_navigator(object):
 
         insert_query = '''INSERT INTO dies(name, hardware, maskset, quality, grade, grade_reference, customer) VALUES (?, ?, ?, ?, ?, ?, ?)'''
         self.cur.execute(insert_query, (name, hardware, maskset, quality, grade, grade_reference, customer))
-        self.con.commit()        
+        self.con.commit()
+        self.database_changed.emit(TableId.Die())
     
     def update_die(self, name, hardware, maskset, grade, customer):
         '''
@@ -657,7 +689,8 @@ class project_navigator(object):
             raise KeyError(f"package '{name}' already exists")
         query = '''INSERT INTO packages(name, leads) VALUES (?, ?)'''
         self.cur.execute(query, (name, leads))
-        self.con.commit()        
+        self.con.commit()
+        self.database_changed.emit(TableId.Package())
 
     def package_update(self, name, new_name, new_leads):
         '''
@@ -725,6 +758,7 @@ class project_navigator(object):
         blob = pickle.dumps(definition, 4)
         self.cur.execute(insert_query, (name, hardware, package, blob))
         self.con.commit()
+        self.database_changed.emit(TableId.Device())
     
     def update_device(self, name, package, definition):
         self.update_device_package(name, package)
@@ -833,6 +867,7 @@ class project_navigator(object):
         query = '''INSERT INTO products(name, device, hardware) VALUES (?, ?, ?)'''
         self.cur.execute(query, (name, device, hardware))
         self.con.commit()        
+        self.database_changed.emit(TableId.Product())
     
     def update_product(self, name):
         pass
@@ -927,6 +962,7 @@ class project_navigator(object):
             blob = pickle.dumps(definition, 4)
             self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
             self.con.commit()
+            self.database_changed.emit(TableId.Flow())
         except:
             raise
         else:
@@ -938,7 +974,8 @@ class project_navigator(object):
         
         if name in standard_test_names:
             temp = runpy.run_path(standard_test_names[name])
-            if not temp['dialog'](self.parent):
+            # TODO: fix this
+            if not temp['dialog'](name, hardware, base):
                 print(f"... no joy creating standard test '{name}'")
         else:
             raise Exception(f"{name} not a standard test ... WTF!")
@@ -956,7 +993,8 @@ class project_navigator(object):
         query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path) VALUES (?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
         self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path))
-        self.con.commit() 
+        self.con.commit()
+        self.database_changed.emit(TableId.Test()) 
 
     def update_test(self, name):
         pass
@@ -1057,7 +1095,6 @@ class project_navigator(object):
         else:
             raise Exception("Multiple items for qualification flow, where only one is allowed")
 
-
     def add_or_update_qualification_flow_data(self, quali_flow_data):
         '''
             Inserts a given set of qualification flow data into the database,
@@ -1069,11 +1106,13 @@ class project_navigator(object):
         blob = pickle.dumps(quali_flow_data, 4)
         self.cur.execute(query, (quali_flow_data["name"], quali_flow_data["type"], quali_flow_data["product"], blob))
         self.con.commit()
+        self.database_changed.emit(TableId.Flow())
 
     def delete_qualifiaction_flow_instance(self, quali_flow_data):
         query = '''DELETE from qualification_flow_data WHERE name=? and type=? and product=?'''
         self.cur.execute(query, (quali_flow_data["name"], quali_flow_data["type"], quali_flow_data["product"]))
         self.con.commit()
+        self.database_changed.emit(TableId.Flow())
 
 
     def get_available_testers(self):

@@ -33,6 +33,14 @@ class TextBoxParam(parameter):
         self.inputBox.setMaximumWidth(256)
         self.inputBox.setAlignment(QtCore.Qt.AlignLeft)
         layout.addWidget(self.inputBox)
+
+        self.unitTextField = QtWidgets.QLabel()
+        self.unitTextField.setAlignment(QtCore.Qt.AlignRight)
+        self.unitTextField.setMinimumWidth(64)
+        self.unitTextField.setMaximumWidth(64)
+        self.unitTextField.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        layout.addWidget(self.unitTextField)
+
         layout.insertStretch(1)
         parent_container.addLayout(layout)
         return layout
@@ -49,13 +57,13 @@ class TextBoxParam(parameter):
         else:
             self.inputBox.setStyleSheet('color: white')
         return good
-    
+
     def _validate_impl(self) -> bool:
         return self.inputBox.text() != ""
-    
+
     def store_values(self, dst: dict):
         dst[self.name] = self.inputBox.text()
-        
+
     def load_values(self, src):
         if not self.name in src:
             self.inputBox.setText("")

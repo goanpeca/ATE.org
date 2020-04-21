@@ -18,8 +18,7 @@ minimal_description_length = 80
 
 class NewTestWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent, fixed=True):
-        self.parent = parent
+    def __init__(self, project_info, fixed=True):
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -29,24 +28,31 @@ class NewTestWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
+        self.project_info = project_info
 
     # ForHardwareSetup
-        existing_hardwares = self.parent.project_info.get_hardwares()
+        existing_hardwares = self.project_info.get_hardwares()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(existing_hardwares)
-        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.parent.hw_combo.currentText()))
-        self.ForHardwareSetup.setDisabled(fixed)
-        #TODO: no connect ?!? (in case fixed=False!!!)
+        # TODO: fix this
+        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.activeHardware))
+        # self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.hw_combo.currentText()))
+        # self.ForHardwareSetup.setDisabled(fixed)
+        self.ForHardwareSetup.setDisabled(False)
+
+        # TODO: no connect ?!? (in case fixed=False!!!)
         self.ForHardwareSetup.blockSignals(False)
-        
+
     # WithBase
         self.WithBase.blockSignals(True)
         self.WithBase.clear()
         self.WithBase.addItems(['PR', 'FT'])
-        self.WithBase.setCurrentIndex(self.WithBase.findText(self.parent.base_combo.currentText()))
-        self.WithBase.setDisabled(fixed)
+        # TODO: fix this
+        self.WithBase.setCurrentIndex(self.WithBase.findText(self.project_info.activeBase))
+        # self.WithBase.setCurrentIndex(self.WithBase.findText(self.base_combo.currentText()))
+        # self.WithBase.setDisabled(fixed)
+        self.WithBase.setDisabled(False)
         self.WithBase.blockSignals(False)
 
         from ATE.org.validation import valid_test_name_regex
@@ -704,7 +710,7 @@ class NewTestWizard(QtWidgets.QDialog):
         
         # 7. Check if the test name already exists
         if self.Feedback.text() == "":
-            existing_tests = self.parent.project_info.get_tests_from_files(
+            existing_tests = self.project_info.get_tests_from_files(
                 self.ForHardwareSetup.currentText(),
                 self.WithBase.currentText())
             if self.TestName.text() in existing_tests:
@@ -731,8 +737,6 @@ class NewTestWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(False)
 
     def CancelButtonPressed(self):
-        print(f"description={self.description.toPlainText()}")
-        
         self.accept()
 
     def OKButtonPressed(self):
@@ -741,12 +745,13 @@ class NewTestWizard(QtWidgets.QDialog):
         base = self.WithBase.currentText()
         test_data = {'input_parameters' : {},
                      'output_parameters' : {}}
+        test_type = "custom"
 
-        self.parent.project_info.add_test(name, hardware, base, test_data)        
+        self.project_info.add_test(name, hardware, base, test_type, test_data)        
         self.accept()
 
-def new_test_dialog(parent):
-    newTestWizard = NewTestWizard(parent)
+def new_test_dialog(project_info):
+    newTestWizard = NewTestWizard(project_info)
     newTestWizard.exec_()
     del(newTestWizard)
 

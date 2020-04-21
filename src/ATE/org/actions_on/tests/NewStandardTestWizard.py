@@ -14,8 +14,7 @@ import qtawesome as qta
 
 class NewStandardTestWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent, fixed=True):
-        self.parent = parent
+    def __init__(self, project_info, fixed=True):
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -25,15 +24,18 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
+        self.project_info = project_info
 
     # ForHardwareSetup ComboBox
-        self.existing_hardwaresetups = self.parent.project_info.get_hardwares()
+        self.existing_hardwaresetups = self.project_info.get_hardwares()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(self.existing_hardwaresetups)
-        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.parent.hw_combo.currentText()))
-        self.ForHardwareSetup.setDisabled(fixed)
+        # TODO: fix this
+        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.activeHardware))
+        # TODO: 
+        # self.ForHardwareSetup.setDisabled(fixed)
+        self.ForHardwareSetup.setDisabled(False)
         self.ForHardwareSetup.currentTextChanged.connect(self.verify)
         self.ForHardwareSetup.blockSignals(False)
         
@@ -41,8 +43,10 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.WithBase.blockSignals(True)
         self.WithBase.clear()
         self.WithBase.addItems(['PR', 'FT'])
-        self.WithBase.setCurrentIndex(self.WithBase.findText(self.parent.base_combo.currentText()))
-        self.WithBase.setDisabled(fixed)
+        # TODO: fix this
+        self.WithBase.setCurrentIndex(self.WithBase.findText(self.project_info.activeBase))
+        # self.WithBase.setDisabled(fixed)
+        self.WithBase.setDisabled(False)
         self.WithBase.currentTextChanged.connect(self.verify)
         self.WithBase.blockSignals(False)
 
@@ -51,7 +55,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
     
         from ATE.org.coding.standard_tests import names as standard_test_names
         existing_standard_test_names = \
-            self.parent.project_info.tests_get_standard_tests(
+            self.project_info.tests_get_standard_tests(
                 self.ForHardwareSetup.currentText(),
                 self.WithBase.currentText())
 
@@ -116,17 +120,18 @@ class NewStandardTestWizard(QtWidgets.QDialog):
     def OKButtonPressed(self):
         name = self.StandardTestName.currentText()
         hardware = self.ForHardwareSetup.currentText()
-        Type = 'standard'
+        type = 'standard'
         base = self.WithBase.currentText()
-        definition = {'doc_string' : [], #list of lines
-                      'input_parameters' : {},
-                      'output_parameters' : {}}
+        definition = {'doc_string': [], # list of lines
+                      'input_parameters': {},
+                      'output_parameters': {}}
 
-        self.parent.project_info.standard_test_add(name, hardware, base)        
+        self.project_info.standard_test_add(name, hardware, base)
         self.accept()
-    
-def new_standard_test_dialog(parent):
-    newStandardTestWizard = NewStandardTestWizard(parent)
+
+
+def new_standard_test_dialog(project_info):
+    newStandardTestWizard = NewStandardTestWizard(project_info)
     newStandardTestWizard.exec_()
     del(newStandardTestWizard)
 

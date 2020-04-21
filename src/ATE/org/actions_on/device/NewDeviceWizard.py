@@ -15,10 +15,8 @@ import qtawesome as qta
 from ATE.org.validation import valid_device_name_regex
 
 class NewDeviceWizard(QtWidgets.QDialog):
-
-
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, project_info, active_hardware):
+        self.project_info = project_info
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -28,14 +26,12 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.parent = parent
-
     # hardware
-        self.existing_hardwares = self.parent.project_info.get_hardwares()
+        self.existing_hardwares = self.project_info.get_hardwares()
         self.hardware.blockSignals(True)
         self.hardware.clear()
         self.hardware.addItems(self.existing_hardwares)
-        self.hardware.setCurrentText(self.parent.active_hw)
+        self.hardware.setCurrentText(active_hardware)
 
         # if fixed:
         #     self.hardware.setEnabled(False)
@@ -51,10 +47,10 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.deviceName.setText('')
         self.deviceName.textChanged.connect(self.verify)
         self.deviceName.blockSignals(False)
-        self.existing_devices = self.parent.project_info.get_devices_for_hardware(self.hardware.currentText())
+        self.existing_devices = self.project_info.get_devices_for_hardware(self.hardware.currentText())
     
     # packages
-        self.existing_packages = self.parent.project_info.packages_get()
+        self.existing_packages = self.project_info.packages_get()
         self.package.blockSignals(True)
         self.package.clear()
         self.package.addItems([''] + self.existing_packages + ['Naked Die'])
@@ -69,7 +65,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         else:
             self.tabWidget.setEnabled(True)
             self.pins.setEnabled(False)
-            self.available_dies = self.parent.project_info.get_dies_for_hardware(self.hardware.currentText())
+            self.available_dies = self.project_info.get_dies_for_hardware(self.hardware.currentText())
         self.dies_in_device = []
         
     # available dies
@@ -123,9 +119,11 @@ class NewDeviceWizard(QtWidgets.QDialog):
         at the parent level is also changed, the dies in device list is cleared,
         and the available dies is reloaded.
         '''
-        self.parent.active_hw = self.hardware.currentText()
+        # TODO: must be done elsewhere
+        # self.parent.active_hardware = self.hardware.currentText()
+
         self.diesInDevice.clear()
-        self.existing_dies = self.parent.project_info.get_dies_for_hardware(self.parent.active_hw)
+        self.existing_dies = self.project_info.get_dies_for_hardware(self.project_info.active_hardware)
         self.availableDies.blockSignals(True)
         self.availableDies.clear()
         self.availableDies.addItems(self.existing_dies)
@@ -145,7 +143,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
             self.pinsTable.setRowCount(0)
         else: # normal package
             self.pins.setVisible(True)
-            packages_info = self.parent.project_info.packages_get_info()
+            packages_info = self.project_info.packages_get_info()
             pins_in_package = packages_info[self.package.currentText()]
             self.pinsTable.setRowCount(pins_in_package)
     
@@ -272,11 +270,11 @@ class NewDeviceWizard(QtWidgets.QDialog):
                       'is_dual_die' : self.dualDie.checkState(),
                       'pin_names' : {}}
             
-        self.parent.project_info.add_device(name, hardware, package, definition)    
+        self.project_info.add_device(name, hardware, package, definition)    
         self.accept()
 
-def new_device_dialog(parent):
-    newDeviceWizard = NewDeviceWizard(parent)
+def new_device_dialog(project_info, active_hardware):
+    newDeviceWizard = NewDeviceWizard(project_info, active_hardware)
     newDeviceWizard.exec_()
     del(newDeviceWizard)
 

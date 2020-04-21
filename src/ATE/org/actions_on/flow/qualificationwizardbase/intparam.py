@@ -21,10 +21,7 @@ class IntParam(TextBoxParam):
         
     def create_ui_components(self, parent_container, on_change_handler):
         layout = super(IntParam, self).create_ui_components(parent_container, on_change_handler)
-        textField = QtWidgets.QLabel();
-        textField.setText(f"[{self.min}..{self.max}]")
-        textField.setAlignment(QtCore.Qt.AlignRight)
-        layout.addWidget(textField)
+        self.unitTextField.setText(f"[{self.min}..{self.max}]")
         return layout
           
     # The validate method shall yield true, if the

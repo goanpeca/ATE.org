@@ -1,6 +1,5 @@
 from PyQt5 import  QtGui, QtCore, QtWidgets, QtSql
 from PyQt5 import uic
-import qtawesome as qta
 import  sys, os, re
 from enum import Enum
 
@@ -111,17 +110,25 @@ class NewProgramWizard(QtWidgets.QDialog):
 
         self.RightButton.setToolTip("select")
 
-    def _view(self):
-        # button setup
-        self.UpButton.setIcon(QtGui.QIcon(qta.icon('mdi.arrow-collapse-up', color='orange')))
+        from ATE.org.actions_on.program.Actions import ACTIONS
+        icon_up = QtGui.QIcon(ACTIONS['arrow-up'])
+        self.UpButton.setIcon(icon_up)
         self.UpButton.setText("")
-        self.DownButton.setIcon(QtGui.QIcon(qta.icon('mdi.arrow-collapse-down', color='orange')))
+
+        icon_down = QtGui.QIcon(ACTIONS['arrow-down'])
+        self.DownButton.setIcon(icon_down)
         self.DownButton.setText("")
-        self.LeftButton.setIcon(QtGui.QIcon(qta.icon('mdi.arrow-collapse-left', color='orange')))
+        
+        icon_left = QtGui.QIcon(ACTIONS['arrow-left'])
+        self.LeftButton.setIcon(icon_left)
         self.LeftButton.setText("")
-        self.RightButton.setIcon(QtGui.QIcon(qta.icon('mdi.arrow-collapse-right', color='orange')))
+
+        icon_right = QtGui.QIcon(ACTIONS['arrow-right'])
+        self.RightButton.setIcon(icon_right)
         self.RightButton.setText("")
 
+    def _view(self):
+        # button setup
         # feedback text
         self.Feedback.setText('')
         # self.Feedback.setStyleSheet('')
@@ -219,7 +226,7 @@ class NewProgramWizard(QtWidgets.QDialog):
             return
 
         for item in self.AvailableTests.selectedItems():
-            self.SelectedTests.addItem(f'{item.text()}');
+            self.SelectedTests.addItem(f'{item.text()}')
 
         self._update_view()
 

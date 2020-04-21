@@ -29,7 +29,7 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, False)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.hardware_name = self.project_info.get_next_hardware_name()
+        self.hardware_name = self.project_info.get_next_hardware()
         self.HardwareSetup.setText(self.hardware_name)
         self.HardwareSetup.setEnabled(False)
 

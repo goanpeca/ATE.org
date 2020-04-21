@@ -26,8 +26,9 @@ from ATE.org.navigation import project_navigator
 from ATE.org.validation import is_ATE_project
 #from SCT.utils.finders import SCT_finder
 
-import ATE.org.actions_on.flow.UIElements.QualiFlowItem
-import ATE.org.actions_on.flow.UIElements.TreeItemWithData
+# import UIElements.QualiFlowItem
+# import UIElements.TreeItemWithData
+
 
 homedir = os.path.expanduser("~")
 workspace_path = os.path.join(homedir, "__spyder_workspace__")
@@ -314,11 +315,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_open_project.triggered.connect(self.open_project)
 
     # setup the project explorer
-        self.tree.clear()
         self.tree.setHeaderHidden(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.context_menu_manager)
-        self.tree.itemDoubleClicked.connect(self.edit_test)
 
     # setup the screencaster
         self.screencast = screenCast()
@@ -330,7 +329,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar().addPermanentWidget(self.screencast)
 
     # setup the toolbar
-        from ATE.org.actions_on import toolBar
+        from ATE.org.toolbar import toolBar
         self.toolbar = toolBar(self)
         self.addToolBar(self.toolbar)
         self.toolbar.updateTreeModel.connect(self.test_the_toolbar)
@@ -348,11 +347,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.editorTabs.tabCloseRequested.connect(self.close_tab)
 
         self.load_last_project()
-        
-        self.show()
 
-    def test_the_toolbar(self, a, b, c):
-        print(f"toolbar signal received {a}, {b}, {c}")
+        self.show()
 
     def toolbarTrigger(self, action):
         print(f"toolbar triggered with action '{action}'")
@@ -615,6 +611,14 @@ class MainWindow(QtWidgets.QMainWindow):
     #     self.update_target()
 
     def set_tree(self):
+        from ATE.org.actions_on.model.TreeModel import TreeModel
+        self.model = TreeModel(self.project_info, parent=self)
+        self.model.edit_file.connect(self.edit_test)
+        self.model.delete_file.connect(self.delete_test)
+        self.tree.setModel(self.model)
+        self.tree.doubleClicked.connect(self.item_double_clicked)
+        return
+
         if self.project_info is None:
             return
 
@@ -633,14 +637,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.documentation = QtWidgets.QTreeWidgetItem(self.project)
         self.documentation.setText(0, 'documentation')
         self.documentation.setText(1, 'documentation')
-        doc_root = os.path.join(self.active_project_path, 'doc')
+        section_root = os.path.join(self.active_project_path, 'doc')
 
         self.standards_documentation = QtWidgets.QTreeWidgetItem(self.documentation, None)
         self.standards_documentation.setText(0, 'standards')
         self.standards_documentation.setText(1, 'standards_dir')
 
-        tmp = os.listdir(os.path.join(doc_root, 'standards'))
-        std_docs = [f for f in tmp if os.path.isfile(os.path.join(doc_root, 'standards', f))]
+        tmp = os.listdir(os.path.join(section_root, 'standards'))
+        std_docs = [f for f in tmp if os.path.isfile(os.path.join(section_root, 'standards', f))]
         previous = None
         for doc_name in std_docs:
             doc =  QtWidgets.QTreeWidgetItem(self.standards_documentation, previous)
@@ -650,13 +654,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         #TODO: doc structure should follow the directory structure
 
-        # sources
-        self.sources = QtWidgets.QTreeWidgetItem(self.project, self.documentation)
-        self.sources.setText(0, 'sources')
-        self.sources.setText(1, 'sources')
-
         # sources/definitions
-        self.definitions = QtWidgets.QTreeWidgetItem(self.sources)
+        self.definitions = QtWidgets.QTreeWidgetItem(self.project)
         self.definitions.setText(0, 'definitions')
         self.definitions.setText(1, 'definitions')
 
@@ -688,8 +687,15 @@ class MainWindow(QtWidgets.QMainWindow):
         is_disabled = False
         # sources/definitions/hardwaresetup
         is_disabled = set_tree_element(self.hardwaresetups, 'hardwaresetups', 'hardwaresetup', self.project_info.get_hardwares(), is_disabled)
+
+
         # sources/definitions/masksets
-        is_disabled = set_tree_element(self.masksets, 'masksets', 'maskset', self.project_info.get_masksets(), is_disabled)
+        # is_disabled = set_tree_element(self.masksets, 'masksets', 'maskset', self.project_info.get_masksets(), is_disabled)
+        # from ATE.org.actions_on.maskset.MasksetMenu import MasksetItem
+        # self.maskset = MasksetItem(self)
+
+
+
         # sources/definitions/dies
         is_disabled = set_tree_element(self.dies, 'dies', 'die', self.project_info.get_dies(), is_disabled)
         # sources/definitions/packages
@@ -699,8 +705,13 @@ class MainWindow(QtWidgets.QMainWindow):
         # sources/definitions/products
         is_disabled = set_tree_element(self.products, 'products', 'product', self.project_info.get_products(), is_disabled)
 
+        # sources
+        self.sources = QtWidgets.QTreeWidgetItem(self.project)
+        self.sources.setText(0, 'sources')
+        self.sources.setText(1, 'sources')
+
         # sources/registermaps
-        self.registermaps = QtWidgets.QTreeWidgetItem(self.sources, self.definitions)
+        self.registermaps = QtWidgets.QTreeWidgetItem(self.sources)
         self.registermaps.setText(0, 'register maps')
         self.registermaps.setText(1, 'registermaps')
         #TODO: cycle through the directory and add the registermaps
@@ -737,6 +748,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tests.setText(1, 'tests')
         self.tests.setDisabled(True)
         self.tests.setChildIndicatorPolicy(QtWidgets.QTreeWidgetItem.DontShowIndicator)
+
+
 
     def update_tree(self):
         '''
@@ -785,243 +798,254 @@ class MainWindow(QtWidgets.QMainWindow):
         #https://doc.qt.io/qt-5/qtreewidget-members.html
         #https://www.qtcentre.org/threads/18929-QTreeWidgetItem-have-contextMenu
         #https://cdn.materialdesignicons.com/4.9.95/
-
-
-        index = self.tree.indexAt(point)
-
-        if not index.isValid():
+        indexes = self.tree.selectedIndexes()
+        if indexes is None:
             return
 
-        item = self.tree.itemAt(point)
-        if item.isDisabled():
+        model_index = self.tree.indexAt(point)
+        item = self.model.itemFromIndex(model_index)
+        if item is None:
             return
 
-        self.node_name = item.text(0)
-        self.node_type = item.text(1)
-        self.node_data = item.text(2)
+        # if item.is_hidden():
+        #     return
 
-        print("name = '%s' type = '%s', data = '%s'" % (self.node_name, self.node_type, self.node_data))
+        item.exec_context_menu(self.toolbar.active_hardware, self.toolbar.active_base, self.toolbar.active_target)
 
-        if self.node_type == 'project':
-            menu = QtWidgets.QMenu(self)
-            audit = menu.addAction(qta.icon("mdi.incognito", color='orange') ,"audit")
-            audit.triggered.connect(self.placeholder)
-            pack = menu.addAction(qta.icon("mdi.gift-outline", color='orange'), "pack")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'docs_root' :
-            menu = QtWidgets.QMenu(self)
-            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
-            new_folder.triggered.connect(self.new_folder)
-            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
-            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'docs':
-            menu = QtWidgets.QMenu(self)
-            new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
-            rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
-            import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
-            menu.addSeparator()
-            delete_folder = menu.addAction(qta.icon("mdi.folder-remove-outline", color='orange'), "Delete Folder")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'doc':
-            menu = QtWidgets.QMenu(self)
-            open_file = menu.addAction(qta.icon("mdi.file-edit-outline", color='orange'), "Open")
-            rename_file = menu.addAction(qta.icon("mdi.lead-pencil", color='orange'), "Rename")
-            menu.addSeparator()
-            delete_file = menu.addAction(qta.icon("mdi.eraser", color='orange'), "Delete")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'hardwaresetups':
-            menu = QtWidgets.QMenu(self)
-            new_hardwaresetup = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            new_hardwaresetup.triggered.connect(self.new_hardwaresetup)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'hardwaresetup':
-            menu = QtWidgets.QMenu(self)
-            activate_hardwaresetup = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
-            activate_hardwaresetup.triggered.connect(self.activate_hardwaresetup)
-            show_hardwaresetup = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            show_hardwaresetup.triggered.connect(self.display_hardwaresetup)
-            edit_hardwaresetup = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_hardwaresetup.triggered.connect(self.edit_hardwaresetup)
-            delete_hardwaresetup = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'masksets':
-            menu = QtWidgets.QMenu(self)
-            add_maskset = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_maskset.triggered.connect(self.new_maskset)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'maskset':
-            menu = QtWidgets.QMenu(self)
-            view_maskset = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            view_maskset.triggered.connect(self.display_maskset)
-            edit_maskset = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_maskset.triggered.connect(self.edit_maskset)
-            delete_maskset = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_maskset.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'dies':
-            menu = QtWidgets.QMenu(self)
-            add_die = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_die.triggered.connect(self.new_die)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'die':
-            menu = QtWidgets.QMenu(self)
-            edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_die.triggered.connect
-            delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_die.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'packages':
-            menu = QtWidgets.QMenu(self)
-            add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_package.triggered.connect(self.new_package)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'package':
-            menu = QtWidgets.QMenu(self)
-            edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_package.triggered.connect
-            delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_package.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'patterns':
-            menu = QtWidgets.QMenu(self)
-            add_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_pattern.triggered.connect ...
-            import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
-            #import_pattern.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'pattern':
-            menu = QtWidgets.QMenu(self)
-            edit_pattern = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
-            # edit_pattern.triggered.connect ...
-            delete_pattern = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_pattern.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'protocols':
-            menu = QtWidgets.QMenu(self)
-            add_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")      
-            # add_protocol.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())        
-        elif self.node_type == 'protocol':
-            menu = QtWidgets.QMenu(self)
-            edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
-            # edit_protocol.triggered.connect ...
-            delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_protocol.triggered.connect ...
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'devices':
-            menu = QtWidgets.QMenu(self)
-            add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_device.triggered.connect(self.new_device)
-            menu.exec_(QtGui.QCursor.pos())
-            #TODO: update the base filter to 'FT' if needed !
+        # index = self.tree.indexAt(point)
 
-        elif self.node_type == 'device':
-            menu = QtWidgets.QMenu(self)
-            edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_device.triggered.connect
-            delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_device.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'products':
-            menu = QtWidgets.QMenu(self)
-            add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_product.triggered.connect(self.new_product)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'product':
-            menu = QtWidgets.QMenu(self)
-            edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_product.triggered.connect
-            delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_product.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'flows':
-            menu = QtWidgets.QMenu(self)
-            add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            # add_flow.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'flow':
-            menu = QtWidgets.QMenu(self)
-            edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_flow.triggered.connect
-            delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_flow.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'production_flow':
-            menu = QtWidgets.QMenu(self)
-            add_program = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            add_program.triggered.connect(self.new_testprogram)
-            menu.exec_(QtGui.QCursor.pos())
+        # if not index.isValid():
+        #     return
 
-        elif self.node_type == 'registermaps':
-            menu = QtWidgets.QMenu(self)
-            add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_registermap.triggered.connect
-            import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
-            # import_registermap.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'registermap':
-            menu = QtWidgets.QMenu(self)
-            edit_registermap = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_registermap.triggered.connect
-            delete_registermap = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_registermap.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'states':
-            menu = QtWidgets.QMenu(self)
-            add_state = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
-            #add_state.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'state':
-            menu = QtWidgets.QMenu(self)
-            view_state = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
-            # view_state.triggered.connect
-            edit_state = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            # edit_state.triggered.connect
-            delete_state = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_state.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'tests':
-            menu = QtWidgets.QMenu(self)
-            add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add Test")
-            add_test.triggered.connect(self.add_test)
-            add_standard_test = menu.addAction(qta.icon('mdi.plus-box-outline', color='orange'), "Add Standard Test")
-            add_standard_test.triggered.connect(self.add_standard_test)
-            clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
-            clone_from_test.triggered.connect(self.clone_from_test)
-            menu.exec_(QtGui.QCursor.pos())
-        elif self.node_type == 'test':
-            menu = QtWidgets.QMenu(self)
-            edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
-            edit_test.triggered.connect(self.edit_test)
-            clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
-            # clone_to_test.triggered.connect
-            trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
-            # trace_test.triggered.connect
-            delete_test = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
-            # delete_test.triggered.connect
-            menu.exec_(QtGui.QCursor.pos())
+        # item = self.tree.itemAt(point)
+        # if item.isDisabled():
+        #     return
 
-        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.MultiInstanceQualiFlowItem):
-            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
-            self.update_flow_state()
-        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.SingleInstanceQualiFlowItem):
-            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
-        elif isinstance(item, ATE.org.actions_on.flow.UIElements.TreeItemWithData.TreeItemWithData):
-            item.exec_context_menu(self, self.project_info)
-        elif isinstance(item, ATE.org.actions_on.flow.UIElements.QualiFlowItem.SimpleFlowItem):
-            item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
+        # self.node_name = item.text(0)
+        # self.node_type = item.text(1)
+        # self.node_data = item.text(2)
 
+        # print("name = '%s' type = '%s', data = '%s'" % (self.node_name, self.node_type, self.node_data))
+
+        # if self.node_type == 'project':
+        #     menu = QtWidgets.QMenu(self)
+        #     audit = menu.addAction(qta.icon("mdi.incognito", color='orange') ,"audit")
+        #     audit.triggered.connect(self.placeholder)
+        #     pack = menu.addAction(qta.icon("mdi.gift-outline", color='orange'), "pack")
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'docs_root' :
+        #     menu = QtWidgets.QMenu(self)
+        #     new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
+        #     new_folder.triggered.connect(self.new_folder)
+        #     rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
+        #     import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'docs':
+        #     menu = QtWidgets.QMenu(self)
+        #     new_folder = menu.addAction(qta.icon("mdi.folder-plus-outline", color='orange'), "New Folder")
+        #     rename_folder = menu.addAction(qta.icon("mdi.folder-edit-outline", color='orange'), "Rename Folder")
+        #     import_document = menu.addAction(qta.icon("mdi.folder-download-outline", color='orange'), "Import Document")
+        #     menu.addSeparator()
+        #     delete_folder = menu.addAction(qta.icon("mdi.folder-remove-outline", color='orange'), "Delete Folder")
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'doc':
+        #     menu = QtWidgets.QMenu(self)
+        #     open_file = menu.addAction(qta.icon("mdi.file-edit-outline", color='orange'), "Open")
+        #     rename_file = menu.addAction(qta.icon("mdi.lead-pencil", color='orange'), "Rename")
+        #     menu.addSeparator()
+        #     delete_file = menu.addAction(qta.icon("mdi.eraser", color='orange'), "Delete")
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'hardwaresetups':
+        #     menu = QtWidgets.QMenu(self)
+        #     new_hardwaresetup = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     new_hardwaresetup.triggered.connect(self.new_hardwaresetup)
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'hardwaresetup':
+        #     menu = QtWidgets.QMenu(self)
+        #     activate_hardwaresetup = menu.addAction(qta.icon('mdi.check', color='orange'), "Activate")
+        #     activate_hardwaresetup.triggered.connect(self.activate_hardwaresetup)
+        #     show_hardwaresetup = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+        #     show_hardwaresetup.triggered.connect(self.display_hardwaresetup)
+        #     edit_hardwaresetup = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     edit_hardwaresetup.triggered.connect(self.edit_hardwaresetup)
+        #     delete_hardwaresetup = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     menu.exec_(QtGui.QCursor.pos())
+
+
+
+        # #if self.maskset.exec_context_menu(self.node_type):
+        # #    return
+
+        # # elif self.node_type == 'masksets':
+        # #     self.maskset.exec_parent_context_menu(self.node_type)
+        # #     self.update_tree()
+
+
+        # # elif self.node_type == 'maskset':
+        # #     self.maskset.name = self.node_name
+        # #     self.maskset.exec_child_context_menu()
+        # #     self.update_tree()
+
+
+
+        # elif self.node_type == 'dies':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_die = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     add_die.triggered.connect(self.new_die)
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'die':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_die = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_die.triggered.connect
+        #     delete_die = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_die.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'packages':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_package = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     add_package.triggered.connect(self.new_package)
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'package':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_package = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_package.triggered.connect
+        #     delete_package = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_package.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'patterns':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_pattern = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     #add_pattern.triggered.connect ...
+        #     import_pattern = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+        #     #import_pattern.triggered.connect ...
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'pattern':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_pattern = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+        #     # edit_pattern.triggered.connect ...
+        #     delete_pattern = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_pattern.triggered.connect ...
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'protocols':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_protocol = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")      
+        #     # add_protocol.triggered.connect ...
+        #     menu.exec_(QtGui.QCursor.pos())        
+        # elif self.node_type == 'protocol':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_protocol = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")      
+        #     # edit_protocol.triggered.connect ...
+        #     delete_protocol = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_protocol.triggered.connect ...
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'devices':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_device = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     add_device.triggered.connect(self.new_device)
+        #     menu.exec_(QtGui.QCursor.pos())
+        #     #TODO: update the base filter to 'FT' if needed !
+
+        # elif self.node_type == 'device':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_device = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_device.triggered.connect
+        #     delete_device = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_device.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'products':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_product = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     add_product.triggered.connect(self.new_product)
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'product':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_product = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_product.triggered.connect
+        #     delete_product = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_product.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'flows':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_flow = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     # add_flow.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'flow':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_flow = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_flow.triggered.connect
+        #     delete_flow = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_flow.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'production_flow':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_program = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     add_program.triggered.connect(self.new_testprogram)
+        #     menu.exec_(QtGui.QCursor.pos())
+
+        # elif self.node_type == 'registermaps':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_registermap = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     #add_registermap.triggered.connect
+        #     import_registermap = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Import")
+        #     # import_registermap.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'registermap':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_registermap = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_registermap.triggered.connect
+        #     delete_registermap = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_registermap.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'states':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_state = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add")
+        #     #add_state.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'state':
+        #     menu = QtWidgets.QMenu(self)
+        #     view_state = menu.addAction(qta.icon('mdi.eye-outline', color='orange'), "View")
+        #     # view_state.triggered.connect
+        #     edit_state = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     # edit_state.triggered.connect
+        #     delete_state = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_state.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'tests':
+        #     menu = QtWidgets.QMenu(self)
+        #     add_test = menu.addAction(qta.icon('mdi.plus', color='orange'), "Add Test")
+        #     add_test.triggered.connect(self.add_test)
+        #     add_standard_test = menu.addAction(qta.icon('mdi.plus-box-outline', color='orange'), "Add Standard Test")
+        #     add_standard_test.triggered.connect(self.add_standard_test)
+        #     clone_from_test = menu.addAction(qta.icon('mdi.application-import', color='orange'), "Clone from ...")
+        #     clone_from_test.triggered.connect(self.clone_from_test)
+        #     menu.exec_(QtGui.QCursor.pos())
+        # elif self.node_type == 'test':
+        #     menu = QtWidgets.QMenu(self)
+        #     edit_test = menu.addAction(qta.icon('mdi.lead-pencil', color='orange'), "Edit")
+        #     edit_test.triggered.connect(self.edit_test)
+        #     clone_to_test = menu.addAction(qta.icon('mdi.application-export', color='orange'), "Clone to ...")
+        #     # clone_to_test.triggered.connect
+        #     trace_test = menu.addAction(qta.icon('mdi.share-variant', color='orange'), "Trace usage")
+        #     # trace_test.triggered.connect
+        #     delete_test = menu.addAction(qta.icon('mdi.minus', color='orange'), "Delete")
+        #     # delete_test.triggered.connect
+        #     menu.exec_(QtGui.QCursor.pos())
+
+        # elif isinstance(item, UIElements.QualiFlowItem.MultiInstanceQualiFlowItem):
+        #     item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
+        #     self.update_flow_state()
+        # elif isinstance(item, UIElements.QualiFlowItem.SingleInstanceQualiFlowItem):
+        #     item.exec_context_menu(self, self.project_info, self.target_combo.currentText())
+        # elif isinstance(item, UIElements.TreeItemWithData.TreeItemWithData):
+        #     item.exec_context_menu(self, self.project_info)
 
     # def testerChanged(self):
     #     self.active_tester = self.tester_combo.currentText()
 
     # def hardwareChanged(self):
     #     self.active_hardware = self.hw_combo.currentText()
-    #     self.update_base()
-    #     self.update_target()
-    #     self.update_tests()
-    #     self.update_tree()
+    #    self.update_base()
+	# self.model.update(self.active_hw, self.base_combo.currentText(), self.target_combo.currentText())
 
     def update_tests(self):
         if self.base_combo.currentText() == '':
@@ -1058,7 +1082,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def set_flow_state(self, parent):
         # sources/flows/production
-        self.production_flow = self.make_simple_flow(parent, None, "production", "production_flow")
+        self.production_flow = QtWidgets.QTreeWidgetItem(parent, None)
+        self.production_flow.setText(0, 'production')
+        self.production_flow.setText(1, 'production_flow')
 
         self.production_flow.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
 
@@ -1069,7 +1095,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.qualification_flows.setText(1, 'qualification_flows')
 
         # sources/flows/qualification/ZHM
-        self.qualification_ZHM_flows = self.make_simple_flow(self.qualification_flows, None, "ZHM", "Zero Hour Measurements")
+        self.qualification_ZHM_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, None)
+        self.qualification_ZHM_flows.setToolTip(0, 'Zero Hour Measurements')
+        self.qualification_ZHM_flows.setText(0, 'ZHM')
+        self.qualification_ZHM_flows.setText(1, 'qualification_ZHM_flows')
 
         # sources/flows/qualification/HTOL
         self.qualification_HTOL_flows = self.make_multi_instance_quali_flow(self.qualification_ZHM_flows, "ATE.org.actions_on.flow.HTOL.htolwizard")
@@ -1078,10 +1107,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.qualification_HAST_flows = self.make_single_instance_quali_flow(self.qualification_HTOL_flows, "ATE.org.actions_on.flow.HAST.hastwizard")
 
         # sources/flows/qualification/ESD
-        self.qualification_ESD_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_HAST_flows)
-        self.qualification_ESD_flows.setToolTip(0, 'Electro Static Discharge')
-        self.qualification_ESD_flows.setText(0, 'ESD')
-        self.qualification_ESD_flows.setText(1, 'qualification_ESD_flows')
+        self.qualification_ESD_flows = self.make_multi_instance_quali_flow(self.qualification_HAST_flows, "ATE.org.actions_on.flow.ESD.esdwizard")
 
         # sources/flows/qualification/HTSL
         self.qualification_HTSL_flows = self.make_multi_instance_quali_flow(self.qualification_ESD_flows, "ATE.org.actions_on.flow.HTSL.htslwizard")
@@ -1117,7 +1143,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.qualification_ELFR_flows = self.make_single_instance_quali_flow(self.qualification_LI_flows, "ATE.org.actions_on.flow.ELFR.elfrwizard")
 
         # sources/flows/qualification/RSH
-        self.qualification_RSH_flows = self.make_multi_instance_quali_flow(self.qualification_ELFR_flows, "ATE.org.actions_on.flow.RSH.rshwizard")
+        self.qualification_RSH_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_ELFR_flows)
+        self.qualification_RSH_flows.setToolTip(0, 'Resistance to Solder Heat')
+        self.qualification_RSH_flows.setText(0, 'RSH')
+        self.qualification_RSH_flows.setText(1, 'qualification_RSH_flows')
 
         # sources/flows/qualification/SA
         self.qualification_SA_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_RSH_flows)
@@ -1126,7 +1155,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.qualification_SA_flows.setText(1, 'qualification_SA_flows')
 
         # sources/flows/qualification/LU
-        self.qualification_LU_flows = self.make_single_instance_quali_flow(self.qualification_SA_flows, "ATE.org.actions_on.flow.LU.luwizard")
+        self.qualification_LU_flows = QtWidgets.QTreeWidgetItem(self.qualification_flows, self.qualification_SA_flows)
+        self.qualification_LU_flows.setToolTip(0, 'Latch-up')
+        self.qualification_LU_flows.setText(0, 'LU')
+        self.qualification_LU_flows.setText(1, 'qualification_LU_flows')
 
         # sources/flows/qualification/AC
         self.qualification_AC_flows = self.make_multi_instance_quali_flow(self.qualification_LU_flows, "ATE.org.actions_on.flow.AC.acwizard")
@@ -1138,14 +1170,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.qualification_THB_flows = self.make_single_instance_quali_flow(self.qualification_TC_flows, "ATE.org.actions_on.flow.THB.thbwizard")
 
         # sources/flows/characterisation
-        self.characterisation_flows = self.make_simple_flow(parent, self.qualification_flows, "characterisation", "characterisation_flow")
+        self.characterisation_flows = QtWidgets.QTreeWidgetItem(parent, self.qualification_flows)
+        self.characterisation_flows.setText(0, 'characterisation')
+        self.characterisation_flows.setText(1, 'characterisation_flow')
 
         # sources/flows/validation
-        self.validation_flow = self.make_simple_flow(parent, self.characterisation_flows, "validation", "validation_flow")
+        self.validation_flow = QtWidgets.QTreeWidgetItem(parent, self.characterisation_flows)
+        self.validation_flow.setText(0, 'validation')
+        self.validation_flow.setText(1, 'validation_flow')
 
         # sources/flows/engineering
-        self.engineering_flow = self.make_simple_flow(parent, self.validation_flow, "engineering", "engineering_flow")
-
+        self.engineering_flow = QtWidgets.QTreeWidgetItem(parent, self.validation_flow)
+        self.engineering_flow.setText(0, 'engineering')
+        self.engineering_flow.setText(1, 'engineering_flow')
+        
 
     def update_flow_state(self):
         if self.target_combo.currentText() == '':
@@ -1160,35 +1198,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.populateQualificationFlow(self.qualification_HTSL_flows, "ATE.org.actions_on.flow.HTSL.htslwizard")
         self.populateQualificationFlow(self.qualification_AC_flows, "ATE.org.actions_on.flow.AC.acwizard")
         self.populateQualificationFlow(self.qualification_DR_flows, "ATE.org.actions_on.flow.DR.drwizard")
+        self.populateQualificationFlow(self.qualification_ESD_flows, "ATE.org.actions_on.flow.ESD.esdwizard")
         
-
 
     def populateQualificationFlow(self, item: QtWidgets.QWidget, moduleName: str):
         item.takeChildren()
         for subflow in self.project_info.get_data_for_qualification_flow(item.text(1), self.target_combo.currentText()):
-            flows = ATE.org.actions_on.flow.UIElements.TreeItemWithData.TreeItemWithData(item, moduleName, self.delete_qualification_flow_instance)
+            flows = UIElements.TreeItemWithData.TreeItemWithData(item, moduleName, self.delete_qualification_flow_instance)
             flows.setText(0, subflow[0])
             flows.setText(1, f"{item.text(1)}_instance")
             flows.set_item_data(subflow)
 
     def make_single_instance_quali_flow(self, firstsibling: QtWidgets.QTreeWidgetItem, modulename: str):
-        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.SingleInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
+        return UIElements.QualiFlowItem.SingleInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
 
     def make_multi_instance_quali_flow(self, firstsibling: QtWidgets.QTreeWidgetItem, modulename: str):
-        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.MultiInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
-
-    def make_simple_flow(self, parent, firstsibling: QtWidgets.QTreeWidgetItem, name: str, tooltip):
-        return ATE.org.actions_on.flow.UIElements.QualiFlowItem.SimpleFlowItem(parent, firstsibling, name, tooltip)
-
+        return UIElements.QualiFlowItem.MultiInstanceQualiFlowItem(self.qualification_flows, firstsibling, modulename)
 
     def baseChanged(self):
+        self.update_base()
         self.update_target()
-        self.update_flow_state()
-        self.update_tests()
+        self.update_hardware()
+        self.model.update(self.active_hw, self.base_combo.currentText(), self.target_combo.currentText())
 
     def targetChanged(self):
-        self.update_flow_state()
-        self.update_tests()
+        self.update_base()
+        self.update_target()
+        self.update_hardware()
+        self.model.update(self.active_hw, self.base_combo.currentText(), self.target_combo.currentText())
 
     def active_project_changed(self):
         self.active_project = self.comboBox.currentText()
@@ -1307,12 +1344,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def new_project(self):
         from ATE.org.actions_on.project.NewProjectWizard import new_project_dialog
         new_project_dialog(self)
-        self.tree.clear()
 
         self.project_info = project_navigator(self, self.active_project_path)
-        # self.project_info.create_project_structure()
-        # self.project_info.create_sql_connection()
-        # self.project_info.create_project_database()
 
         self.set_tree()
 
@@ -1336,12 +1369,13 @@ class MainWindow(QtWidgets.QMainWindow):
             # Store this as the last project
             with open(".lastproject","w") as f:
                 f.write(projectpath)
-            self.tree.clear()
+            # self.tree.clear()
             self.active_project_path = projectpath
             self.active_project = os.path.split(self.active_project_path)[-1]            
             self.project_info = project_navigator(self, self.active_project_path)
             self.toolbar(self)
             
+
 
             # if not os.path.exists(self.project_info.db_file):
             #     self.create_project_database()
@@ -1579,58 +1613,14 @@ class MainWindow(QtWidgets.QMainWindow):
         print(type(event))
         print(event)
 
-    def activate_hardwaresetup(self):
-        available_hardwares =  self.project_info.get_hardwares()
-        index = available_hardwares.index(self.tree.currentItem().text(0))
-        self.hw_combo.setCurrentIndex(index)
+    def edit_test(self, path):
+        selected_file = os.path.basename(path)
+        index = self._get_tab_index(selected_file)
+        if not index == -1:
+            self.editorTabs.setCurrentIndex(index)
+            return
 
-    def edit_hardwaresetup(self):
-        from ATE.org.actions_on.hardwaresetup.EditHardwaresetupWizard import edit_hardwaresetup_dialog
-
-        hw_name = self.tree.currentItem().text(0)
-        edit_hardwaresetup_dialog(self.project_info, hw_name)
-
-    def display_hardwaresetup(self):
-        from ATE.org.actions_on.hardwaresetup.ViewHardwaresetupSettings import display_hardware_settings_dialog
-
-        hw_name = self.tree.currentItem().text(0)
-        configuration = self.project_info.get_hardware_definition(hw_name)
-        display_hardware_settings_dialog(configuration, hw_name)
-
-    def edit_maskset(self):
-        from ATE.org.actions_on.maskset.EditMasksetWizard import edit_maskset_dialog
-
-        maskset_name = self.tree.currentItem().text(0)
-        edit_maskset_dialog(self.project_info, maskset_name)
-
-    def display_maskset(self):
-        from ATE.org.actions_on.maskset.ViewMasksetSettings import display_maskset_settings_dialog
-
-        maskset_name = self.tree.currentItem().text(0)
-        configuration = self.project_info.get_maskset_definition(maskset_name)
-        display_maskset_settings_dialog(configuration, maskset_name)
-
-    def delete_maskset(self):
-        self.project_info.delete_hardwaresetup()
-		
-    def edit_test(self, item=None):
-        if isinstance(item, QtWidgets.QTreeWidgetItem):
-            if not item.text(1) == 'test':
-                return
-
-        tabs = self.editorTabs.count()
-
-        if self.editorTabs.tabText(0) == 'Tab':
-            self.editorTabs.removeTab(0)
-
-        selected_file = self.tree.currentItem().text(0)
-        for index in range(tabs):
-            if selected_file == self.editorTabs.tabText(index):
-                self.editorTabs.setCurrentIndex(index)
-                return
-
-        file_path = os.path.join(self.tests_directory, selected_file + '.py')
-        with open(file_path) as f:
+        with open(path) as f:
             content = f.read()
 
         text_editor = QtWidgets.QTextEdit('')
@@ -1645,11 +1635,40 @@ class MainWindow(QtWidgets.QMainWindow):
             text_editor = QtWidgets.QTextEdit('')
             self.editorTabs.addTab(text_editor, 'Tab')
 
+    def delete_test(self, path):
+        selected_file = os.path.basename(path)
+        index = self._get_tab_index(selected_file)
+        if index == -1:
+            return
+
+        self.close_tab(index)
+
+    def _get_tab_index(self, selected_file):
+        tabs = self.editorTabs.count()
+
+        if self.editorTabs.tabText(0) == 'Tab':
+            self.editorTabs.removeTab(0)
+
+        for index in range(tabs):
+            if selected_file == self.editorTabs.tabText(index):
+                return index
+
+        return -1
+
+    def item_double_clicked(self, index):
+        item = self.tree.selectedIndexes()[0]
+        model_item = item.model().itemFromIndex(index)
+        from ATE.org.actions_on.tests.TestItem import TestItemChild
+        if isinstance(model_item, TestItemChild):
+            self.edit_test(model_item.path)
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     window = MainWindow(app)
     window.show()
-    sys.exit(app.exec_())
+    res = app.exec_()
+    window.model.doc_observer.stop_observer()
 
+    sys.exit(res)
