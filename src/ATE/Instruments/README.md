@@ -22,6 +22,10 @@ it will live one level up, so we can also do :
     
 if one wants the "unified" implementation and still the shit from other 
 implementers is available :-)
+
+Also note that in the case of a 'plugin' the above could become:
+
+    from foo.bar.jefke import K2000
    
 now ... the point is that we can't maintain all implementations of everybody
 in the TDK group ... so we will need to work with plug-in's (as we do anyway
