@@ -21,7 +21,7 @@ This is a council that formulates guidelines for [different aspects](http://www.
 - [AEC-Q006-Rev-A](AEC-Q006-Rev-A.pdf)
 
 #### AEC-Q100: Failure Mechanism Based Stress Test Qualification for **Integrated Circuits**
-- [AEC-Q100-Rev-H](AEC-Q100-Rev-H.pdf)
+- [AEC-Q100-Rev-H](AEC-Q100-Rev-H.pdf) : Base Document
 - [AEC-Q100-001C-Rev-C](AEC-Q100-001C-Rev-C.pdf) : Wire Bond Shear Test
 - [AEC-Q100-002-Rev-E](AEC-Q100-002-Rev-E.pdf) : Human Body Model (HBM) Electrostatic Discharge Test
 - ~AEC-Q100-003-Rev-E : Machine Model (MM) Electrostatic Discharge Test~
@@ -36,6 +36,13 @@ This is a council that formulates guidelines for [different aspects](http://www.
 - [AEC-Q100-012-Rev-A](AEC-Q100-012-Rev-A.pdf) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
 
 #### AEC-Q101: Failure Mechanism Based Stress Test Qualification for **Discrete** Semiconductors
+- [AEC-Q101-Rev-D1](AEC-Q101-Rev-D1.pdf) : Base Document
+- [AEC-Q101-001-Rev-A](AEC-Q101-001-Rev-A.pdf) : Human Body Model (HBM) Electrostatic Discharge Test
+- ~AEC-Q101-002-Rev-A : Machine Model (MM) Electrostatic Discharge Test~
+- [AEC-Q101-003-Rev-A](AEC-Q101-003-Rev-A.pdf) : Wire Bond Shear Test
+- [AEC-Q101-004-Rev-A](AEC-Q101-004-Rev-A) : Miscellaneous Test Methods
+- [AEC-Q101-005-Rev-A](AEC-Q101-005-Rev-A) : Charged Device Model (CDM) Electrostatic Discharge Test
+- [AEC-Q101-006-Rev-A](AEC-Q101-006-Rev-A) : Short Circuit Reliability Characterization of Smart Power Devices for 12V Systems
 
 #### AEC-Q102: Failure Mechanism Based Stress Test Qualification for **Discrete Optoelectronic** Semiconductors in Automotive Applications
 
