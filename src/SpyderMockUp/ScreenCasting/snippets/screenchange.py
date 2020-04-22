@@ -16,10 +16,13 @@ import qdarkstyle
 buttonx = 100
 buttony = 32
 
+def printQRect(message, QRect):
+    print(f'{message} : ({QRect.x()}, {QRect.y()}) ({QRect.width()}x{QRect.height()})')
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        QtWidgets.QMainWindow.__init__(self)
+
+    def __init__(self,  *args, **kwargs):
+        QtWidgets.QMainWindow.__init__(self,  *args, **kwargs)
 
         self.setMinimumSize(QtCore.QSize(buttonx, buttony))
         self.setWindowTitle("Main Window") 
@@ -27,10 +30,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button = QtWidgets.QPushButton('Center', self)
         self.button.clicked.connect(self.center)
         self.button.resize(buttonx, buttony)
-
+        
     def center(self):
         print('center the main window')
-        print(f"{self.size().width()}x{self.size().height()}")
+        screenRect = QtWidgets.QDesktopWidget().availableGeometry(self)
+        printQRect(f'screen#{QtWidgets.QDesktopWidget().screenNumber(self)}', screenRect)
+        windowRect = self.frameGeometry()
+        printQRect('window', windowRect)
+        self.move(int((screenRect.width()-windowRect.width())/2)+screenRect.x(), 
+                  int((screenRect.height()-windowRect.height())/2)+screenRect.y())
 
     def resizeEvent(self, event):
         print('main window is resized')
@@ -39,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
                          int((self.size().height()-buttony)/2))        
 
     def moveEvent(self, event):
-        print('main window is moved')
+        print(f'main window is moved (screen={QtWidgets.QDesktopWidget().screenNumber(self)})')
         QtWidgets.QMainWindow.moveEvent(self, event)
 
     def closeEvent(self, event):
@@ -54,15 +62,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 print('main window is maximized')
             elif self.isMinimized():
                 print('main window is minimized')
-                
-        
-        
-        
-
-    def screenchange(self):
-        print('main window changed screen')
-
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
