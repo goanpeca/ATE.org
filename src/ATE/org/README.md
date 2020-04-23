@@ -34,6 +34,8 @@
 
 - If one selects a `Target` from the list, also the `Base` that belongs to the selected `Target` is set correctly.
 
+# Project tree view
+
 ## documentation (skip the 's' at the end !)
 
 The tree view under `documentation` follows the structure under project_root\documentation.
