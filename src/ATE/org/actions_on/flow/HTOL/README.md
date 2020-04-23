@@ -1,2 +1,2 @@
 
-[HTOL](HTOL-Wizard.png)
+ ![HTOL](HTOL-Wizard.png)
