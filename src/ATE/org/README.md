@@ -42,23 +42,48 @@ there is at least **ONE** 'device' defined under `devices`
 
 ## flows
 
-The `flows` section is **ONLY** enabled for the context menu **IF** a `Base` is defined (PR or FT)
-In other workds, if `Base` is the **empty** string, then `flows` is disabled for the context menu.
+The `flows` section is **directly** related to a `Target`.
+As long as no `Target` is selected, the `flows` will be disabled for the context menu.
 
-- flows case Nr1: `Base` = '' 
+- `flows` in case `Target` = '' 
 
-    → flow is not enabled for the context menu
+    `flows` is not enabled for the context menu
+
+- `flows` in case `Target` is selected and `Base` is 'PR'
+
+    `flows` is enabled for the context menu, but there is **NO** `qualification` section !
+    Ah, yes, we do `qualification` only on what we sell, and we only sell `products` !
+    We do however have the `production`, `engineering`, `validation`, and `characterisation` flows !
     
-- flows case Nr2: `Base` = FT and no `Target` is selected
+- `flows` in case `Target` is selected and `Base` is 'FT'
 
-- flows case Nr3: `Base` = FT and a `Target` is selected
+    `flows` is enabled for the context menu **AND** the `qualification` section is available, however
+    based on the associated `package` we have a slightly different outline of the `qualification` section.
 
-- flows case Nr4: `Base` = PR and no `Target` is selected
-
-- flows case Nr5: `Base` = PR and a `Target` is selected
-
-
-
-
+        1. The `device` of the selected `Target` is associated with the 'naked die' `package`
+        
+            So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
+            It also means that some sections in the full `qualification` section are not applicable,
+            Notably everything to do with ... the package :wink:
+        
+        2. The `device` of the selected `Target` is **not** associated with the 'naked die' `package`
+            
+            So, we have a real package, and thus the full `qualification` section is available.     
 
 ## tests
+
+Similar as `flows`, the `tests` section is **directly** related to a `Target`,
+so again as long as no `Target` is selected the `tests` will be disabled for the context menu.
+
+- `tests` in case `Target` == ''
+
+    `tests` is not enabled for the context menu
+
+- `tests` in case a `Target` is selected and `Base` is 'FT'
+
+
+- `tests` in case a `Target` is selected and `Base` is 'PR'
+
+
+
+
