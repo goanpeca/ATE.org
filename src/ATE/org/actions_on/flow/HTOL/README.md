@@ -37,4 +37,4 @@ Note:
 
 ---
 
-# Please use .ui files as base of a wiward, doing this by hand is too time-consuming !!!
+# Please use .ui files as base of a wizard, doing this by hand is too time-consuming !!!
