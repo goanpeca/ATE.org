@@ -12,6 +12,7 @@ Then the Wizard to make a new HTOL 'group' should open:
 Note that :
 
 1. A `HTOL group` must have also a `Reference` (above the reference is the Zero Hour Measurements)
+
     The list in the comboBox is 'ZMH' and all other 'HTOL-groups' that currently exist.
 2. A `HTOL group` must have a Temperature
 3. Minimum duration is 1 hour, maximum is 8760 (=1year!)
