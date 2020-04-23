@@ -58,7 +58,8 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 - `flows` in case `Target` is selected and `Base` is 'FT'
 
     `flows` is enabled for the context menu **AND** the `qualification` section is available, however
-    based on the associated `package` we have a slightly different outline of the `qualification` section.
+    based on the `package` that is associated to the `Target` (over `device`) we have a slightly 
+    different outline of the `qualification` section.
 
         1. The `device` of the selected `Target` is associated with the 'naked die' `package`
         
