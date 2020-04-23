@@ -88,6 +88,13 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 
     So, we have a real package, and thus the full `qualification` section is available.     
 
+
+
+
+
+
+
+
 ## tests section
 
 Similar as `flows`, the `tests` section is **directly** related to a `Target`,
@@ -101,8 +108,20 @@ so again as long as no `Target` is selected the `tests` will be disabled for the
 
     `tests` is enabled for the context menu, ofcourse with respect to the indicated `Base` ('PR' or 'FT')
 
+The context menu on the `tests` is as follows:
 
+- 'New Test'
+- 'New Standard Test'
+- 'Import Test'
 
+## context menu on the items under 'tests' 
 
+The context menu on the individual `test` is as follows:
+
+- 'Open' --> open the associated `.py` file, same as double-right-click
+- 'Edit' --> open the wizard, using the prior given info as a starting point.
+- 'Trace' --> see where this test is used (flows/testprograms)
+- 'Delete' --> delete the `.py` file, and the info from the database, as well as
+removing the tests from the testprograms that use them !!!
 
 
