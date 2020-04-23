@@ -46,7 +46,7 @@ If on `spyder|project|open` we see that the project has no `documentation` subdi
 this function is part of the `spyder|new|project` suit of functions that create a **new project**.
 In our usecase this function is 'touching up' a project that lost his documentation directory. :smirk:
 
-## definitions
+## definitions section
 
 The `definitions` section in the project tree structure **ONLY** looks at the `hardware` of the toolbar !
 
@@ -57,7 +57,7 @@ The `definitions` section in the project tree structure **ONLY** looks at the `h
 - `devices` is **ONLY** available for the context menu if (for the selected hardware in the toolbar) there is at least **ONE** 'die' defined under `dies`.
 - `products` is **ONLY** available for the conext menu if (for the selected hardware in the toolbar) there is at least **ONE** 'device' defined under `devices`
 
-## flows
+## flows section
 
 The `flows` section is **directly** related to a `Target`.
 As long as no `Target` is selected, the `flows` will be disabled for the context menu.
@@ -88,7 +88,7 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 
     So, we have a real package, and thus the full `qualification` section is available.     
 
-## tests
+## tests section
 
 Similar as `flows`, the `tests` section is **directly** related to a `Target`,
 so again as long as no `Target` is selected the `tests` will be disabled for the context menu.
