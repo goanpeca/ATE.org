@@ -63,13 +63,13 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 
 1. The `device` of the selected `Target` is associated with the 'naked die' `package`
 
-So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
-It also means that some sections in the full `qualification` section are not applicable,
-Notably everything to do with ... the package :wink:
+    So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
+    It also means that some sections in the full `qualification` section are not applicable,
+    Notably everything to do with ... the package :wink:
 
 2. The `device` of the selected `Target` is **not** associated with the 'naked die' `package`
 
-So, we have a real package, and thus the full `qualification` section is available.     
+    So, we have a real package, and thus the full `qualification` section is available.     
 
 ## tests
 
