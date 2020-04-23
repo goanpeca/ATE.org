@@ -38,7 +38,7 @@
 
 ## documentation section
 
-Note : Skip the 's' at the end, I know it makes sense as we also have 'definition**s**', 'flow**s**' and 'test**s**', but 'documentation**s**' is simply not a correct english word :unamused:
+Note : Skip the '**s**' at the end, I know it makes sense as we also have 'definition**s**', 'flow**s**' and 'test**s**', but 'documentation**s**' is simply not a correct english word :unamused:
 
 The tree view under `documentation` follows the structure under project_root\documentation.
 
