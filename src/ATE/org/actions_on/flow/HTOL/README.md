@@ -35,3 +35,6 @@ Note:
 
 2. Maybe there should also be an `export` button to export this table to an XLSX file ?!? (for later)
 
+---
+
+# Please use .ui files as base of a wiward, doing this by hand is too time-consuming !!!
