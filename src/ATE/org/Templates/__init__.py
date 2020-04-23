@@ -18,6 +18,19 @@ project_structure = {
     './sources/definitions/patterns'  : ('patterns_root',     [('dunder_init.py', '__init__.py', 'text')]),
     }
 
+
+
+def documentation_templating(project_path):
+    '''
+    this function will copy **EVERYTHING** from ./documentation/ to 
+    project_path/documentation/*
+
+    usecases :
+        1. creating at new project
+        2. touching up a project where the documentation directory is lost
+    '''
+
+
 def translation_template(project_path):
     '''
     given the project_path, this function will return a translation_template,
