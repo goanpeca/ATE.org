@@ -33,7 +33,7 @@ are to be executed.
 
 Note: 
 
-1. It depends on the `Reference` if movement is possible at all, but even if it is not, we have a nice overview of the HTOL-Group. (above we see that the VDD of `4032h` is wrong)
+1. It depends on the `Reference` if movement is possible at all, but even if it is not, we have a nice overview of the HTOL-Group. (above we see that the VDD of `4032h` is wrong as an example)
 
 2. Maybe there should also be an `export` button to export this table to an XLSX file ?!? (for later)
 
