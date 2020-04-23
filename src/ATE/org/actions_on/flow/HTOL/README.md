@@ -43,6 +43,13 @@ The HTOL Tree View for the XLSX example of HATC would look like this:
 
  ![HTOL-TreeView](HTOL-TreeView.png)
 
+Notes:
+
+1. It would be interesting if a 'multi-line-tooltip' would work, as we could present the information on a `HTOL-group` in the tooltip :heart_eyes:
+
+2. In the above picture, the 'test programa' are denoted as the `user_text`, this is interesting, but the format should be more like 
+`BLAHBLAHBLA (F3LHH)` where 'BLAHBLAHBLA' is the real program name (given by ATE.org!)
+
 ---
 
 # Please use .ui files as base of a wizard, doing this by hand is too time-consuming !!!
