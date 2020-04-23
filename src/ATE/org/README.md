@@ -59,17 +59,17 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 
     `flows` is enabled for the context menu **AND** the `qualification` section is available, however
     based on the `package` that is associated to the `Target` (over `device`) we have a slightly 
-    different outline of the `qualification` section.
+    different outline of the `qualification` section:
 
-        1. The `device` of the selected `Target` is associated with the 'naked die' `package`
-        
-            So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
-            It also means that some sections in the full `qualification` section are not applicable,
-            Notably everything to do with ... the package :wink:
-        
-        2. The `device` of the selected `Target` is **not** associated with the 'naked die' `package`
-            
-            So, we have a real package, and thus the full `qualification` section is available.     
+1. The `device` of the selected `Target` is associated with the 'naked die' `package`
+
+So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
+It also means that some sections in the full `qualification` section are not applicable,
+Notably everything to do with ... the package :wink:
+
+2. The `device` of the selected `Target` is **not** associated with the 'naked die' `package`
+
+So, we have a real package, and thus the full `qualification` section is available.     
 
 ## tests
 
