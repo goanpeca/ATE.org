@@ -1,20 +1,38 @@
 # Toolbar
 
-If in the toolbar, no Base is selected, the Target will list **ALL** targets for PR and FT, in
-other words :**all** dies and **all** products. 
+## Hardware
 
-If one selects a Target, the `Base` of the selected `Target` is updated.
+- Upon project opening, the most recent available hardware is 'enabled'.
 
-If one selects another `Base`, the corresponging `Targets` are updated. If the previously
-selected `Target` is in the new `Target` list, that one is selected. If the previously
-selected `target` is no longer in the new `Target` list, then the **empty** string (=first item)
-is enabled.
+- If another `hardware` is selected, `Base` and `Target` are set to the **empty string**
 
+## Base
 
-On any change in the toolbar, the tree is updated.
+- Upon project opening, the `Base` is set to the **empty string**
 
+- The rest of the `Base` list is 'PR' and 'FT'
 
-# project tree view
+- If one selects another `Base`, the `Target` list is updated accordingly! This means:
+
+1. `Base` == ''
+
+    The `Target` list is the union of **empty string**, **all** `products` and **all** `dies` for the selected `hardware`.
+
+2. `Base` == 'PR'
+
+    The `Target` list is the union of **empty string** and **all** `products` for the selected `hardware`
+
+3. `Base` == 'FT'
+
+    The `Target` list is the union of **empty string** and **all** `dies` for the selected `hardware`
+
+## Target
+
+- Upon project opening, the `Target` is set to the **empty string**
+
+- The rest of the `Target` list is the union of **all** `products` and **all** `dies` for the selected `hardware` (see case Nr1 above)
+
+- If one selects a `Target` from the list, also the `Base` that belongs to the selected `Target` is set correctly.
 
 ## documentation (skip the 's' at the end !)
 
@@ -63,9 +81,9 @@ As long as no `Target` is selected, the `flows` will be disabled for the context
 
 1. The `device` of the selected `Target` is associated with the 'naked die' `package`
 
-    So, the package is 'virtual', this is the way we implement if we sell 'naked die' products.
+    So, the `package` is 'virtual', this is the way we implement if we sell 'naked die' products.
     It also means that some sections in the full `qualification` section are not applicable,
-    Notably everything to do with ... the package :wink:
+    Notably everything to do with ... the package :stuck_out_tongue_winking_eye:
 
 2. The `device` of the selected `Target` is **not** associated with the 'naked die' `package`
 
@@ -80,10 +98,11 @@ so again as long as no `Target` is selected the `tests` will be disabled for the
 
     `tests` is not enabled for the context menu
 
-- `tests` in case a `Target` is selected and `Base` is 'FT'
+- `tests` in case a `Target` is selected
+
+    `tests` is enabled for the context menu, ofcourse with respect to the indicated `Base` ('PR' or 'FT')
 
 
-- `tests` in case a `Target` is selected and `Base` is 'PR'
 
 
 
