@@ -17,10 +17,10 @@ Note that :
 2. A `HTOL group` must have a Temperature
 3. Minimum duration is 1 hour, maximum is 8760 (=1year!)
 4. Validation window is minimum 12 hours, and maximum 168 hours (=7days !!!)
-5. Minimum VDD is 1.8V, maximum 48V
+5. Minimum VDD is 1.8V, maximum 72V
 6. Minimum Temperature is 40°C, and maximum is 200°C
 
-Then we get the '1008h' HTOL group, and on a group one can use the Edit context menu
+With the above wizard we will get the '1008h' `HTOL-group`, and on a group one can use the Edit context menu
 
  ![HTOL-ContextMenuEditGroup](HTOL-ContextMenuEditGroup.png)
  
@@ -36,6 +36,12 @@ Note:
 1. It depends on the `Reference` if movement is possible at all, but even if it is not, we have a nice overview of the HTOL-Group.
 
 2. Maybe there should also be an `export` button to export this table to an XLSX file ?!? (for later)
+
+---
+
+The HTOL Tree View for the XLSX example of HATC would look like this:
+
+ ![HTOL-TreeView](HTOL-TreeView.png)
 
 ---
 
