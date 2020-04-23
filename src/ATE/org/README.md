@@ -36,12 +36,13 @@
 
 # Project tree view
 
-## documentation (skip the 's' at the end !)
+## documentation section
+
+Note : Skip the 's' at the end, I know it makes sense as we also have 'definition**s**', 'flow**s**' and 'test**s**', but 'documentation**s**' is simply not a correct english word :unamused:
 
 The tree view under `documentation` follows the structure under project_root\documentation.
 
-If on `spyder|project|open` we see that the project has no `documentation` subdirectory,
-we call the function `ATE.org.templates.documentation_templating(project_root)`, 
+If on `spyder|project|open` we see that the project has no `documentation` subdirectory, we call the function `ATE.org.templates.documentation_templating(project_root)`, 
 this function is part of the `spyder|new|project` suit of functions that create a **new project**.
 In our usecase this function is 'touching up' a project that lost his documentation directory. :smirk:
 
