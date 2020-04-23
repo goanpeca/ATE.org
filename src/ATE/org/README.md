@@ -36,27 +36,23 @@
 
 ## documentation (skip the 's' at the end !)
 
-The tree view under `documentation` follows the structure under <project>\documentation.
+The tree view under `documentation` follows the structure under project_root\documentation.
 
-If on spyder|project|open we see that the project has no `documentation` subdirectory,
-we call the function `ATE.org.templates.documentation_templating(project_dir)`, 
-this function is part of the spyder|new|project suit of functions that create a new project.
-In our usecase this function is 'touching up' a project that lost his documentation directory.
+If on `spyder|project|open` we see that the project has no `documentation` subdirectory,
+we call the function `ATE.org.templates.documentation_templating(project_root)`, 
+this function is part of the `spyder|new|project` suit of functions that create a **new project**.
+In our usecase this function is 'touching up' a project that lost his documentation directory. :smirk:
 
 ## definitions
 
-The `definitions` section in the project tree structure **ONLY** looks at
-the `hardware` of the toolbar !
+The `definitions` section in the project tree structure **ONLY** looks at the `hardware` of the toolbar !
 
-`hardwaresetups` is **ALWAYS** enabled for the context menu 
-`masksets` is **ALWAYS** enabled for the context menu
-`dies` is **ONLY** available for the context menu if (for the selected hardware in the toolbar) 
-there is at least one `maskset` defined.
-`packages` is **ALWAYS** available for the context menu
-`devices` is **ONLY** available for the context menu if (for the selected hardware in the toolbar)
-there is at least **ONE** 'die' defined under `dies`.
-`products` is **ONLY** available for the conext menu if (for the selected hardware in the toolbar)
-there is at least **ONE** 'device' defined under `devices`
+- `hardwaresetups` is **ALWAYS** enabled for the context menu 
+- `masksets` is **ALWAYS** enabled for the context menu
+- `dies` is **ONLY** available for the context menu if (for the selected hardware in the toolbar) there is at least one `maskset` defined.
+- `packages` is **ALWAYS** available for the context menu
+- `devices` is **ONLY** available for the context menu if (for the selected hardware in the toolbar) there is at least **ONE** 'die' defined under `dies`.
+- `products` is **ONLY** available for the conext menu if (for the selected hardware in the toolbar) there is at least **ONE** 'device' defined under `devices`
 
 ## flows
 
