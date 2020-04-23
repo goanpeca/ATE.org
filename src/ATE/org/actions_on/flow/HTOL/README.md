@@ -48,7 +48,8 @@ Notes:
 1. It would be interesting if a 'multi-line-tooltip' would work, as we could present the information on a `HTOL-group` in the tooltip :heart_eyes:
 
 2. In the above picture, the 'test programs' are denoted as the `user_text`, this is interesting, but the format should be more like 
-`BLAHBLAHBLA (F3LHH)` where 'BLAHBLAHBLA' is the real program name (given by ATE.org!)
+`BLAHBLAHBLA (F3LHH)` where 'BLAHBLAHBLA' is the real program name (given by ATE.org!), and the `user_text` in the program would be `F3LHH`
+'BLAHBLAHBLA' would probably (needs defining) resolve to something like `HATC_XXX_Q_HTOL_1008h_1` where 'XXX' would be the `Target` :yum:
 
 ---
 
