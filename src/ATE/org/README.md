@@ -45,7 +45,8 @@ there is at least **ONE** 'device' defined under `devices`
 The `flows` section is **ONLY** enabled for the context menu **IF** a `Base` is defined (PR or FT)
 In other workds, if `Base` is the **empty** string, then `flows` is disabled for the context menu.
 
-- flows case Nr1: `Base` = ''
+- flows case Nr1: `Base` = '' 
+
     → flow is not enabled for the context menu
     
 - flows case Nr2: `Base` = FT and no `Target` is selected
