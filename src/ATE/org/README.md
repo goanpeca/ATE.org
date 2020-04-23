@@ -45,11 +45,15 @@ is enabled.
 
 On any change in the toolbar, the tree is updated.
 
-### flows case Nr1: `Base` = ''
+- flows case Nr1: `Base` = ''
 
-### flows case Nr2: `Base` = FT
+- flows case Nr2: `Base` = FT and no `Target` is selected
 
-### flows case Nr3: `Base` = FT and 
+- flows case Nr3: `Base` = FT and a `Target` is selected
+
+- flows case Nr4: `Base` = PR and no `Target` is selected
+
+- flows case Nr5: `Base` = PR and a `Target` is selected
 
 
 
