@@ -1624,6 +1624,8 @@ class MainWindow(QtWidgets.QMainWindow):
             content = f.read()
 
         text_editor = QtWidgets.QTextEdit('')
+        text_editor.setFontFamily('Courier')
+        text_editor.setFontPointSize(8)
         text_editor.insertPlainText(content)
         self.editorTabs.addTab(text_editor, selected_file)
         self.editorTabs.setCurrentIndex(self.editorTabs.count() - 1)

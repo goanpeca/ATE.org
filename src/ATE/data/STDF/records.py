@@ -33,7 +33,6 @@ from mimetypes import guess_type
 import time
 import datetime
 
-
 if sys.version_info[0] < 3:
     raise Exception("The STDF library is made for Python 3")
 

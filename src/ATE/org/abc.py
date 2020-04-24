@@ -285,6 +285,19 @@ class testABC(object):
                     setup_states.append(code_line)
         self.end_state = (self.end_state, setup_states)
 
+    def _my_targets(self):
+        '''
+        this method will return a dictionary with as key XXX where XXX comes
+        from all the do_XXX methods, and as value a 2 element tuple as follows
+        (`boolian`, `hash`)
+            - `boolean` indicates if the target uses the default (iow if returns self.do()) = True or a custom implementation  = False
+            - `hash` the hash of the code (after .strip())
+        Note:
+            Also the default do() function must have an entry in the dictionary, however there is no 'XXX' there, the XXX=DEFAULT (with capitals)
+        '''
+        retval = {}
+        return retval
+        
     def sanity_check(self):
         if not self.ran_before:
             # sanity check on the (test) class name and module
