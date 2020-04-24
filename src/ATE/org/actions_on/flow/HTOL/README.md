@@ -52,5 +52,3 @@ Notes:
 'BLAHBLAHBLA' would probably (needs defining) resolve to something like `HATC_XXX_Q_HTOL_1008h_1` where 'XXX' would be the `Target` :yum:
 
 ---
-
-# Please use .ui files as base of a wizard, doing this by hand is too time-consuming !!!
