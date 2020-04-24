@@ -16,6 +16,12 @@ class testABC(abc.ABC):
         pass
     
     def _my_targets(self):
+        '''
+        this method returns a dictionary with as key the 'do' and 'do_' methods defined,
+        and as value a tuple (sha512_hash_of_method_source, default) where default
+        indicates if the 'do' function is called or not.
+        Note that of course the 'do' method itself is always 'default'🙂
+        '''
         import inspect, hashlib
         my_members = inspect.getmembers(self)
         retval = {}
@@ -53,11 +59,13 @@ class A(testABC):
         return retval
                 
     def do_target2(self):
+        # some comment
         return self.do()
     
+    def do_target3(self):
+        return self.do()
 
 if __name__ == '__main__':
-    import inspect, hashlib
     
     a = A()
     targets = a._my_targets()
