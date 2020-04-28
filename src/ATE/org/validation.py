@@ -13,11 +13,13 @@ valid_maskset_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_device_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_package_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_test_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
+valid_test_parameter_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_testprogram_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_project_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_positive_integer_regex = r"^[+]?\d*"
 valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
+valid_float_regex = "[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?"
 
 def is_Spyder_project(project_directory):
     '''

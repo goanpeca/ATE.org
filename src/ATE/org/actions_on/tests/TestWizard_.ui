@@ -143,7 +143,275 @@ p, li { white-space: pre-wrap; }
          <item row="0" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QTableView" name="inputParameterView"/>
+            <widget class="QTableWidget" name="inputParameterTable">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <row>
+              <property name="text">
+               <string>1</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>2</string>
+              </property>
+             </row>
+             <row>
+              <property name="text">
+               <string>3</string>
+              </property>
+             </row>
+             <column>
+              <property name="text">
+               <string>Name</string>
+              </property>
+              <property name="toolTip">
+               <string>Give the input parameter a name</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Min</string>
+              </property>
+              <property name="toolTip">
+               <string>Minimum value for the parameter</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Default</string>
+              </property>
+              <property name="toolTip">
+               <string>Default value for the parameter</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Max</string>
+              </property>
+              <property name="toolTip">
+               <string>Maximum value for the parameter</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>10˟</string>
+              </property>
+              <property name="toolTip">
+               <string>Multiplier for Min, Default, Max (and later the Value)</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Unit</string>
+              </property>
+              <property name="toolTip">
+               <string>Unit of the parameter</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignLeading|AlignVCenter</set>
+              </property>
+             </column>
+             <item row="0" column="0">
+              <property name="text">
+               <string>Temperature</string>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="checkState">
+               <enum>Checked</enum>
+              </property>
+              <property name="flags">
+               <set>NoItemFlags</set>
+              </property>
+             </item>
+             <item row="0" column="1">
+              <property name="text">
+               <string>-40</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="0" column="2">
+              <property name="text">
+               <string>25</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="0" column="3">
+              <property name="text">
+               <string>+170</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="0" column="4">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>NoItemFlags</set>
+              </property>
+             </item>
+             <item row="0" column="5">
+              <property name="text">
+               <string>°C</string>
+              </property>
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="flags">
+               <set>NoItemFlags</set>
+              </property>
+             </item>
+             <item row="1" column="0">
+              <property name="text">
+               <string>a</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="1">
+              <property name="text">
+               <string>0.1</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="2">
+              <property name="text">
+               <string>1</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="3">
+              <property name="text">
+               <string>2.5</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="4">
+              <property name="text">
+               <string>m</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="1" column="5">
+              <property name="text">
+               <string>A</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="0">
+              <property name="text">
+               <string>b</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="1">
+              <property name="text">
+               <string>123.456</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="2">
+              <property name="text">
+               <string>123.456</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="3">
+              <property name="text">
+               <string>123.456</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="4">
+              <property name="text">
+               <string>μ</string>
+              </property>
+              <property name="textAlignment">
+               <set>AlignTrailing|AlignVCenter</set>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+             <item row="2" column="5">
+              <property name="text">
+               <string>V</string>
+              </property>
+              <property name="flags">
+               <set>ItemIsSelectable|ItemIsEditable|ItemIsEnabled</set>
+              </property>
+             </item>
+            </widget>
            </item>
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_3">

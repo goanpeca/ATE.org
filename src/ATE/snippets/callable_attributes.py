@@ -64,9 +64,15 @@ class A(testABC):
     
     def do_target3(self):
         return self.do()
+    
+    def do_target4(self):
+         # foo
+        pass
+        pass
 
 if __name__ == '__main__':
     
     a = A()
+    # a._add_target('target4')
     targets = a._my_targets()
     print(targets)
