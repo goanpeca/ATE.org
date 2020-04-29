@@ -45,9 +45,9 @@ if __name__ == '__main__':
         os.remove(root_readme)
 
     with open(root_readme, 'w') as fd:
-        fd.write("TODO.md files :\n")
+        fd.write("TODO.md files :\n\n")
         for todo_file in items['TODO-Files']:
-            fd.write(f"[{todo_file}]({todo_file})\n")
+            fd.write(f"- [{todo_file}]({todo_file})\n")
         
         
         
