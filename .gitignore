@@ -56,3 +56,4 @@ MANIFEST
 # Per-project virtualenvs
 .venv*/
 .lastproject
+.spyproject/config/backups/workspace.ini.bak
