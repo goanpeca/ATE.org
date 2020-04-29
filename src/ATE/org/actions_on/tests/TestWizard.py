@@ -6,6 +6,7 @@ Created on Mon Dec  2 18:56:05 2019
 """
 import os
 import re
+import copy
 
 from ATE.org.validation import (is_valid_test_name, is_valid_python_class_name, 
                                 valid_float_regex, valid_test_parameter_name_regex, 
@@ -101,7 +102,7 @@ class TestWizard(QtWidgets.QDialog):
             pass
         #TODO: fix this 
         self.description_length = 0
-        self.description.textChanged.connect(self.setDescriptionLength)
+        self.description.textChanged.connect(self.descriptionLength)
         self.description.blockSignals(False)
         
     # Delegators
@@ -129,72 +130,59 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterDelete.setToolTip('Delete selected parameter')
         self.inputParameterDelete.clicked.connect(self.deleteInputParameter)
 
-        self.inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit']
+        inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit']
         self.inputParameterModel = QtGui.QStandardItemModel()
         self.inputParameterModel.setObjectName('inputParameters')
-        self.inputParameterModel.setHorizontalHeaderLabels(self.inputParameterHeaderLabels)
+        self.inputParameterModel.setHorizontalHeaderLabels(inputParameterHeaderLabels)
+        self.inputParameterModel.itemChanged.connect(self.inputParameterItemChanged) 
+
+        self.inputParameterView.horizontalHeader().setVisible(True)
+        self.inputParameterView.verticalHeader().setVisible(True)
         self.inputParameterView.setModel(self.inputParameterModel)
+        self.inputParameterView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems) # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionBehavior-enum
+        self.inputParameterView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection) # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionMode-enum
+        self.inputParameterView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu) # https://doc.qt.io/qt-5/qt.html#ContextMenuPolicy-enum
+        self.inputParameterView.customContextMenuRequested.connect(self.inputParameterTableContextMenu)
+        self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged) # https://doc.qt.io/qt-5/qitemselectionmodel.html
         self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
         self.inputParameterView.setItemDelegateForColumn(1, self.floatDelegator)
         self.inputParameterView.setItemDelegateForColumn(2, self.floatDelegator)
         self.inputParameterView.setItemDelegateForColumn(3, self.floatDelegator)
 
-        name_item = QtGui.QStandardItem()
-        self.inputParameterModel.appendRow(name_item)
+        name_item = QtGui.QStandardItem() # https://doc.qt.io/qt-5/qstandarditem.html
+        self.inputParameterModel.appendRow(name_item) # makes a hole row
 
-        # https://stackoverflow.com/questions/25943153/how-to-access-data-stored-in-qmodelindex
-        name_index = self.inputParameterModel.index(0, 0)
-        # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
-        self.inputParameterModel.setData(name_index, 'Temperature', QtCore.Qt.DisplayRole)
+        name_index = self.inputParameterModel.index(0, 0) # https://stackoverflow.com/questions/25943153/how-to-access-data-stored-in-qmodelindex
+        self.inputParameterModel.setData(name_index, 'Temperature', QtCore.Qt.DisplayRole) # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
         self.inputParameterModel.setData(name_index, 'Real', QtCore.Qt.ToolTipRole)
-        # https://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum
-        self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        # https://doc.qt.io/qt-5/qt.html#CheckState-enum
-        self.inputParameterModel.setData(name_index, QtCore.Qt.Checked, QtCore.Qt.CheckStateRole) 
-        # https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
-        self.inputParameterModel.item(0, 0).setFlags(QtCore.Qt.NoItemFlags)
-
+        self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole) # https://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum
+        self.inputParameterModel.setData(name_index, QtCore.Qt.Checked, QtCore.Qt.CheckStateRole) # https://doc.qt.io/qt-5/qt.html#CheckState-enum
+        self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.NoItemFlags) # https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
 
         min_index = self.inputParameterModel.index(0, 1)
         self.inputParameterModel.setData(min_index, '-40', QtCore.Qt.DisplayRole)
         self.inputParameterModel.setData(min_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.item(0, 1).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+        self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
         default_index = self.inputParameterModel.index(0, 2)
         self.inputParameterModel.setData(default_index, '+25', QtCore.Qt.DisplayRole)
         self.inputParameterModel.setData(default_index, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.item(0, 2).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+        self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
         max_index = self.inputParameterModel.index(0, 3)
         self.inputParameterModel.setData(max_index, '+170', QtCore.Qt.DisplayRole)
         self.inputParameterModel.setData(max_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.item(0, 3).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+        self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
         multiplier_index = self.inputParameterModel.index(0, 4)
         self.inputParameterModel.setData(multiplier_index, '', QtCore.Qt.DisplayRole)
         self.inputParameterModel.setData(multiplier_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.item(0, 4).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+        self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.NoItemFlags)
 
         unit_index = self.inputParameterModel.index(0, 5)
         self.inputParameterModel.setData(unit_index, '°C', QtCore.Qt.DisplayRole)
         self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.item(0, 5).setFlags(QtCore.Qt.NoItemFlags)
-
-        # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionBehavior-enum
-        self.inputParameterView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
-        # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionMode-enum
-        self.inputParameterView.setSelectionMode(QtWidgets.QAbstractItemView.ContiguousSelection |
-                                                 QtWidgets.QAbstractItemView.ExtendedSelection)
-
-        self.inputParameterView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.inputParameterView.customContextMenuRequested.connect(self.inputParameterTableContextMenu)
-        self.inputParameterModel.itemChanged.connect(self.inputParameterItemChanged) 
-        self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged)
-
-        self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
-        self.inputParameterView.setItemDelegateForColumn(1, self.floatDelegator)
-        self.inputParameterView.setItemDelegateForColumn(2, self.floatDelegator)
-        self.inputParameterView.setItemDelegateForColumn(3, self.floatDelegator)
+        self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.NoItemFlags)
 
     # OutputParametersTab
         self.outputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
@@ -228,26 +216,27 @@ class TestWizard(QtWidgets.QDialog):
         available_width = TableView.geometry().width()
         TableView.setColumnWidth(0, available_width-width-TableView.verticalHeader().width()-columns)
     
-    def unitContextMenu(self):
+    def unitContextMenu(self, setter):
+        print(f"unitContexMenu(setter='{setter}')")
         menu = QtWidgets.QMenu(self)
         # unitContextMenu
         #    reference to SI : https://en.wikipedia.org/wiki/International_System_of_Units
         #    reference to unicode : https://en.wikipedia.org/wiki/List_of_Unicode_characters
         base_units = [
             ('s (time - second)', 
-             lambda: self.setInputParameterUnit('s','time - second')),
+             lambda: setter('s','time - second')),
             ('m (length - meter)', 
-             lambda: self.setInputParameterUnit('m', 'length - meter')),
+             lambda: setter('m', 'length - meter')),
             ('kg (mass - kilogram)', 
-             lambda: self.setInputParameterUnit('kg', 'mass - kilogram')),
+             lambda: setter('kg', 'mass - kilogram')),
             ('A (electric current - ampères)', 
-             lambda: self.setInputParameterUnit('A', 'electric current - ampères')),
+             lambda: setter('A', 'electric current - ampères')),
             ('K (temperature - Kelvin)', 
-             lambda: self.setInputParameterUnit('K', 'temperature - Kelvin')),
+             lambda: setter('K', 'temperature - Kelvin')),
             ('mol (amount of substance - mole)', 
-             lambda: self.setInputParameterUnit('mol', 'amount of substance - mole')),
+             lambda: setter('mol', 'amount of substance - mole')),
             ('cd (luminous intensity - candela)', 
-             lambda: self.setInputParameterUnit('cd', 'luminous intensity - candela'))]
+             lambda: setter('cd', 'luminous intensity - candela'))]
         for unit in base_units:
             item = menu.addAction(unit[0])
             item.triggered.connect(unit[1])
@@ -313,51 +302,51 @@ class TestWizard(QtWidgets.QDialog):
             item.triggered.connect(unit[1])
         return menu
     
-    def multiplierContextMenu(self):
+    def multiplierContextMenu(self, multiplierSetter):
         menu = QtWidgets.QMenu(self)
         normal_multipliers = [
             ('y (yocto=10⁻²⁴)', 
-             lambda: self.setInputParameterMultiplier('y', 'yocto=10⁻²⁴')),
+             lambda: multiplierSetter('y', 'yocto=10⁻²⁴')),
             ('z (zepto=10⁻²¹)', 
-             lambda: self.setInputParameterMultiplier('z', 'zepto=10⁻²¹')),
+             lambda: multiplierSetter('z', 'zepto=10⁻²¹')),
             ('a (atto=10⁻¹⁸)', 
-             lambda: self.setInputParameterMultiplier('a', 'atto=10⁻¹⁸')),
+             lambda: multiplierSetter('a', 'atto=10⁻¹⁸')),
             ('f (femto=10⁻¹⁵)', 
-             lambda: self.setInputParameterMultiplier('f', 'femto=10⁻¹⁵')),
+             lambda: multiplierSetter('f', 'femto=10⁻¹⁵')),
             ('p (pico=10⁻¹²)', 
-             lambda: self.setInputParameterMultiplier('p', 'pico=10⁻¹²')),
+             lambda: multiplierSetter('p', 'pico=10⁻¹²')),
             ('η (nano=10⁻⁹)', 
-             lambda: self.setInputParameterMultiplier('η', 'nano=10⁻⁹')),
+             lambda: multiplierSetter('η', 'nano=10⁻⁹')),
             ('μ (micro=10⁻⁶)', 
-             lambda: self.setInputParameterMultiplier('μ', 'micro=10⁻⁶')),
+             lambda: multiplierSetter('μ', 'micro=10⁻⁶')),
             ('m (mili=10⁻³)', 
-             lambda: self.setInputParameterMultiplier('m', 'mili=10⁻³')),
+             lambda: multiplierSetter('m', 'mili=10⁻³')),
             ('c (centi=10⁻²)', 
-             lambda: self.setInputParameterMultiplier('c', 'centi=10⁻²')),
+             lambda: multiplierSetter('c', 'centi=10⁻²')),
             ('d (deci=10⁻¹)', 
-             lambda: self.setInputParameterMultiplier('d', 'deci=10⁻¹')),
+             lambda: multiplierSetter('d', 'deci=10⁻¹')),
             ('˽ (no scaling=10⁰)', 
-             lambda: self.setInputParameterMultiplier('', 'no scaling=10⁰')),
+             lambda: multiplierSetter('', 'no scaling=10⁰')),
             ('㍲ (deca=10¹)', 
-             lambda: self.setInputParameterMultiplier('㍲', 'deca=10¹')),
+             lambda: multiplierSetter('㍲', 'deca=10¹')),
             ('h (hecto=10²)', 
-             lambda: self.setInputParameterMultiplier('h', 'hecto=10²')),
+             lambda: multiplierSetter('h', 'hecto=10²')),
             ('k (kilo=10³)', 
-             lambda: self.setInputParameterMultiplier('k', 'kilo=10³')),
+             lambda: multiplierSetter('k', 'kilo=10³')),
             ('M (mega=10⁶)', 
-             lambda: self.setInputParameterMultiplier('M', 'mega=10⁶')),
+             lambda: multiplierSetter('M', 'mega=10⁶')),
             ('G (giga=10⁹)', 
-             lambda: self.setInputParameterMultiplier('G', 'giga=10⁹')),
+             lambda: multiplierSetter('G', 'giga=10⁹')),
             ('T (tera=10¹²)', 
-             lambda: self.setInputParameterMultiplier('T', 'tera=10¹²')),
+             lambda: multiplierSetter('T', 'tera=10¹²')),
             ('P (peta=10¹⁵)', 
-             lambda: self.setInputParameterMultiplier('P', 'peta=10¹⁵)')),
+             lambda: multiplierSetter('P', 'peta=10¹⁵)')),
             ('E (exa=10¹⁸)', 
-             lambda: self.setInputParameterMultiplier('E', 'exa=10¹⁸')),
+             lambda: multiplierSetter('E', 'exa=10¹⁸')),
             ('Z (zetta=10²¹)', 
-             lambda: self.setInputParameterMultiplier('Z', 'zetta=10²¹')),
+             lambda: multiplierSetter('Z', 'zetta=10²¹')),
             ('ϒ (yotta=10²⁴)', 
-             lambda: self.setInputParameterMultiplier('ϒ', 'yotta=10²⁴'))]
+             lambda: multiplierSetter('ϒ', 'yotta=10²⁴'))]
         for multiplier in normal_multipliers:
             item = menu.addAction(multiplier[0])
             item.triggered.connect(multiplier[1])
@@ -365,15 +354,15 @@ class TestWizard(QtWidgets.QDialog):
 
         dimensionless_multipliers = [
             ('ppm (parts per million=ᴺ/₁․₀₀₀․₀₀₀)', 
-             lambda: self.setInputParameterMultiplier('ppm', 'parts per million=ᴺ/₁․₀₀₀․₀₀₀')),
+             lambda: multiplierSetter('ppm', 'parts per million=ᴺ/₁․₀₀₀․₀₀₀')),
             ('‰ (promille=ᴺ/₁․₀₀₀)', 
-             lambda: self.setInputParameterMultiplier('‰', 'promille=ᴺ/₁․₀₀₀')),
+             lambda: multiplierSetter('‰', 'promille=ᴺ/₁․₀₀₀')),
             ('% (percent=ᴺ/₁₀₀)', 
-             lambda: self.setInputParameterMultiplier('%', 'percent=ᴺ/₁₀₀')),
+             lambda: multiplierSetter('%', 'percent=ᴺ/₁₀₀')),
             ('dB (decibel=10·log[P/Pref])', 
-             lambda: self.setInputParameterMultiplier('dB', 'decibel=10·log[P/Pref]')), 
+             lambda: multiplierSetter('dB', 'decibel=10·log[P/Pref]')), 
             ('dBV (decibel=20·log[V/Vref])', 
-             lambda: self.setInputParameterMultiplier('dBV', 'decibel=20·log[V/Vref]'))]
+             lambda: multiplierSetter('dBV', 'decibel=20·log[V/Vref]'))]
         for multiplier in dimensionless_multipliers:
             item = menu.addAction(multiplier[0])
             item.triggered.connect(multiplier[1])
@@ -385,22 +374,34 @@ class TestWizard(QtWidgets.QDialog):
         based on the column where we activated the context menu on, and 
         dispatch to the appropriate context menu.
         '''
+        
+        
+        
         index = self.inputParameterView.indexAt(point)
+        objectName = index.model().objectName()
+        if objectName == 'inputParameters':
+            typeSetter = self.setInputParameterType
+            valueSetter = self.setInputParameterValue
+            multiplierSetter = self.setInputParameterMultiplier
+            unitSetter = self.setInputParameterUnit
+        elif objectName == 'outputParameters':
+            pass
+        else:
+            print(f"What the fuck is '{objectName}'?")
         
         
-        
-        print(f"({point.x()}, {point.y()})-->[{index.row()}, {index.column()}]")
+        print(f"{objectName}({point.x()}, {point.y()})-->[{index.row()}, {index.column()}]")
 
         if index.column() == 0: # Name
             if index.row() != 0: # not for temperature
                 menu = QtWidgets.QMenu(self)
                 # http://www.cplusplus.com/reference/cstdio/fprintf/
                 parameter_types =[
-                    ("Real", lambda: self.setParameterType(Real),
-                    ("Integer (Decimal - '123...')", lambda: self.setParameterType(Decimal)),
-                    ("Integer (Hexadecimal - '0xFE...')", self.setParameterHexadecimal),
-                    ("Integer (Octal - '0o87...')", self.setParameterOctal),
-                    ("Integer (Binary - '0b10...')", self.setParameterBinary)]
+                    ("Real", lambda: typeSetter('Real')),
+                    ("Integer (Decimal - '123...')", lambda: typeSetter('Decimal')),
+                    ("Integer (Hexadecimal - '0xFE...')", lambda: typeSetter('Hexadecimal')),
+                    ("Integer (Octal - '0o87...')", lambda: typeSetter('Octal')),
+                    ("Integer (Binary - '0b10...')", lambda: typeSetter('Binary'))]
                 
                 check = qta.icon('mdi.check', color='orange')
                 
@@ -419,9 +420,9 @@ class TestWizard(QtWidgets.QDialog):
             if index.row() != 0: # not for temperature
                 menu = QtWidgets.QMenu(self)
                 special_values = [
-                    ('+∞', lambda: self.setInputParameterValue('+∞')),
-                    ('0', lambda: self.setInputParameterValue('0')), 
-                    ('-∞', lambda: self.setInputParameterValue('-∞'))]
+                    ('+∞', lambda: valueSetter('+∞')),
+                    ('0', lambda: valueSetter('0')), 
+                    ('-∞', lambda: valueSetter('-∞'))]
                 for special_value in special_values:
                     item = menu.addAction(special_value[0])
                     item.triggered.connect(special_value[1])
@@ -429,16 +430,14 @@ class TestWizard(QtWidgets.QDialog):
 
         elif index.column() == 4: # multiplier --> reference = STDF V4.pdf @ page 50 & https://en.wikipedia.org/wiki/Order_of_magnitude
             if index.row() != 0: # temperature
-                menu = self.multiplierContextMenu()
+                menu = self.multiplierContextMenu(multiplierSetter)
                 menu.exec_(QtGui.QCursor.pos())
 
         elif index.column() == 5: # Unit
             if index.row() != 0: # not temperature
-                menu = self.unitContextMenu()
+                menu = self.unitContextMenu(unitSetter)
                 menu.exec_(QtGui.QCursor.pos())
                 
-            
-
     def inputParameterItemChanged(self, item=None):
         '''
         if one of the cells in self.inputParameterModel is changed, this 
@@ -482,17 +481,50 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterModel.blockSignals(False) 
 
     def inputParameterSelectionChanged(self, selected, deselected):
-        #https://doc.qt.io/qt-5/qabstractitemview.html#selectionChanged
-        print('selection changed')
-        # selected_items = len(self.inputParameterTable.selectedItems())
-        # if selected_items == 0:
-        #     self.inputParameterUnselect.setDisabled(True)
-        # else:
-        #     self.inputParameterUnselect.setEnabled(True)
+        print(f'inputParameterSelectionChanged.selected.indexes() = {selected.indexes()}')
         
 
+
+
+        # #https://doc.qt.io/qt-5/qabstractitemview.html#selectionChanged
+        # max_rows = self.inputParameterModel.rowCount()
+        # selected_rows = []
+        # for index in selected.indexes():
+        #     selected_rows.append(copy.copy(index.row()))
+
+        # number_of_selected_rows = len(selected_rows)
+
+        # print(f"max_rows = {max_rows}")
+        # print(f"selected_rows = {selected_rows}")
+        # print(f"number_of_selected_rows = {number_of_selected_rows}")
+
+        # if number_of_selected_rows == 1:
+        #     selected_row = selected_rows[0]
+        #     if selected_row == 0:
+        #         self.inputParameterMoveUp.setDisabled(True)
+        #         self.inputParameterMoveDown.setDisabled(True)
+        #         self.inputParameterDelete.setDisabled(True)
+        #     else:
+        #         self.inputParameterDelete.setEnabled(True)
+        #         if selected_row > 1:
+        #             self.inputParameterMoveUp.setEnabled(True)
+        #         else:
+        #             self.inputParameterMoveUp.setDisabled(True)
+        #         if selected_row < max_rows:
+        #             self.inputParameterMoveDown.setEnabled(True)
+        #         else:
+        #             self.inputParameterMoveDown.setDisabled(True)
+        # else:
+        #     print('more than 2 rows selected')
+        #     self.inputParameterMoveUp.setDisabled(True)
+        #     self.inputParameterMoveDown.setDisabled(True)
+        #     self.inputParameterDelete.setDisabled(True)
+
     def setInputParameterType(self, Type):
-        pass
+        selection = self.inputParameterView.selectedIndexes()
+
+        for index in selection:
+            pass
 
     # def setUnitReal(self):
     #     self.setUnit('𝓡', 'unitless real number')
@@ -556,34 +588,40 @@ class TestWizard(QtWidgets.QDialog):
                                                                 QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
 
     def setInputParameterMultiplier(self, text, tooltip):
-        for index in self.inputParameterView.selectedIndexes():
-            if index.column() == 4:
+        selection = self.inputParameterView.selectedIndexes()
+        
+        for index in selection:
+            if index.column() == 4: # multipliers are located in column#4
                 self.inputParameterModel.setData(index, text, QtCore.Qt.DisplayRole)
                 self.inputParameterModel.setData(index, tooltip, QtCore.Qt.ToolTipRole)
 
     def setInputParameterUnit(self, text, tooltip):
-        for index in self.inputParameterView.selectedIndexes():
-            if index.column() == 5:
+        selection = self.inputParameterView.selectedIndexes()
+        
+        for index in selection:
+            if index.column() == 5: # units are located in column#5
                 self.inputParameterModel.setData(index, text, QtCore.Qt.DisplayRole)
                 self.inputParameterModel.setData(index, tooltip, QtCore.Qt.ToolTipRole)
 
     def moveInputParameterUp(self):
-        selected_items = self.inputParameterTable.selectedItems()
+        selection = self.inputParameterView.selectedIndexes()
+
         selected_rows = []
-        for item in selected_items:
-            if item.row() not in selected_rows:
-                selected_rows.append(item.row())
+        for index in selection:
+            if index.row() not in selected_rows:
+                selected_rows.append(index.row())
+
+        #TODO: fix me
         if len(selected_rows) == 1: # can move only one row up at a time!
             selected_row = selected_rows[0]
             if selected_row == 0: # temperature
                 print(f"Can not move-up 'Temperature' any further!")
             elif selected_row == 1:
-                pname = self.inputParameterTable.item(selected_row, 0).text()
-                print(f"Can not move-up '{pname}' any further as 'Temperature' is always the first input parameter!")
+                print(f"Can not move-up 'pname' any further as 'Temperature' is always the first input parameter!")
             else:
                 print(f"move row {selected_row} one place up")
         else:
-            print(f"Can move-up only one row at a time.")
+            print(f"Can move-up only one row at a time.") # the move up button should already be de-activated!
 
     def addInputParameter(self):
         new_row = self.inputParameterModel.rowCount()
@@ -621,7 +659,7 @@ class TestWizard(QtWidgets.QDialog):
         if reply == QtWidgets.QMessageBox.Yes:
             
             name_item = QtGui.QStandardItem()
-            self.inputParameterModel.appendRow(name_item) #TODO: if selection, insert after last selected row
+            self.inputParameterModel.appendRow(name_item)
     
             name_index = self.inputParameterModel.indexFromItem(name_item)
             self.inputParameterModel.setData(name_index, f'new_parameter{new_parameter_index}', QtCore.Qt.DisplayRole)
@@ -668,7 +706,7 @@ class TestWizard(QtWidgets.QDialog):
                                                                         QtCore.Qt.ItemIsEnabled)
 
     def unselectInputParameter(self):
-        self.inputParameterTable.clearSelection()
+        self.inputParameterView.clearSelection()
 
     def deleteInputParameter(self):
         selected_items = self.inputParameterTable.selectedItems()
@@ -709,12 +747,14 @@ class TestWizard(QtWidgets.QDialog):
         pass
     
     
+    
+    
+    
 
-    def setDescriptionLength(self):
-        self.description_length = len(self.description.toPlainText().replace(' ','').replace('\n', '').replace('\t', ''))
-        print(f"{self.description_length}/{minimal_description_length}")
-        self.verify()
-
+    def descriptionLength(self):
+        retval = len(self.description.toPlainText().replace(' ','').replace('\n', '').replace('\t', ''))
+        # print(f"{self.description_length}/{minimal_description_length}")
+        return retval
 
     def verify(self):
         self.Feedback.setText("")
