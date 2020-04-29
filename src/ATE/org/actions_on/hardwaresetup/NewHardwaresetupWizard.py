@@ -70,7 +70,7 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
         self.MultiSiteLoadboard.textChanged.connect(self.verify)
 
     def _load_ui(self):
-        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
+        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)), UI_FILE)
         if not os.path.exists(my_ui):
             raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
