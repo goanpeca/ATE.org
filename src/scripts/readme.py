@@ -73,7 +73,7 @@ if __name__ == '__main__':
         fd.write("\n# Strange files\n\n")
         for code_file in items['Strange-Files']:
             File = code_file.replace(os.path.sep, '/')
-            fd.write(f"- [{File}]({File})")
+            fd.write(f"- [{File}]({File})\n")
             
         fd.write('---\n')
         fd.write(f'auto generated on {now}')
