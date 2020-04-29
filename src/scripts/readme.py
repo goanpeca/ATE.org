@@ -49,12 +49,15 @@ if __name__ == '__main__':
 
 
     with open(root_readme, 'w') as fd:
-        fd.write("# `TODO.md` files :\n\n")
+        fd.write("# `TODO.md` files\n\n")
         for todo_file in items['TODO-Files']:
             File = todo_file.replace(os.path.sep, '/')
             fd.write(f"- [{File}]({File})\n")
         
-        
+        fd.write("\n# `README.md` files\n\n")
+        for readme_file in items['README-Files']:
+            File = readme_file.replace(os.path.sep, '/')
+            fd.write(f"- [{File}({File})\n")
         
         fd.write('---\n')
         fd.write(f'auto generated : {now}')
