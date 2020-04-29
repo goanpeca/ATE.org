@@ -104,6 +104,10 @@ class TestWizard(QtWidgets.QDialog):
         self.description.textChanged.connect(self.setDescriptionLength)
         self.description.blockSignals(False)
         
+    # Delegators
+        self.floatDelegator = Delegator(valid_float_regex, self) #TODO: add '∞' to the regex ... and Inf ? Inf auto to '∞'
+        self.nameDelegator = Delegator(valid_test_parameter_name_regex, self)
+        
     # InputParametersTab
         self.inputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
         self.inputParameterMoveUp.setToolTip('Move selected parameter Up')
@@ -125,11 +129,9 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterDelete.setToolTip('Delete selected parameter')
         self.inputParameterDelete.clicked.connect(self.deleteInputParameter)
 
-        self.floatDelegator = Delegator(valid_float_regex, self)
-        self.nameDelegator = Delegator(valid_test_parameter_name_regex, self)
-
         self.inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit']
         self.inputParameterModel = QtGui.QStandardItemModel()
+        self.inputParameterModel.setObjectName('inputParameters')
         self.inputParameterModel.setHorizontalHeaderLabels(self.inputParameterHeaderLabels)
         self.inputParameterView.setModel(self.inputParameterModel)
         self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
@@ -178,11 +180,21 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
         self.inputParameterModel.item(0, 5).setFlags(QtCore.Qt.NoItemFlags)
 
+        # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionBehavior-enum
+        self.inputParameterView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionMode-enum
+        self.inputParameterView.setSelectionMode(QtWidgets.QAbstractItemView.ContiguousSelection |
+                                                 QtWidgets.QAbstractItemView.ExtendedSelection)
+
         self.inputParameterView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.inputParameterView.customContextMenuRequested.connect(self.inputParameterTableContextMenu)
         self.inputParameterModel.itemChanged.connect(self.inputParameterItemChanged) 
         self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged)
 
+        self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
+        self.inputParameterView.setItemDelegateForColumn(1, self.floatDelegator)
+        self.inputParameterView.setItemDelegateForColumn(2, self.floatDelegator)
+        self.inputParameterView.setItemDelegateForColumn(3, self.floatDelegator)
 
     # OutputParametersTab
         self.outputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
@@ -373,43 +385,19 @@ class TestWizard(QtWidgets.QDialog):
         based on the column where we activated the context menu on, and 
         dispatch to the appropriate context menu.
         '''
-        self.index = self.inputParameterView.indexAt(point)
-        self.col = self.index.column()
-        self.row = self.index.row()
+        index = self.inputParameterView.indexAt(point)
+        
+        
+        
+        print(f"({point.x()}, {point.y()})-->[{index.row()}, {index.column()}]")
 
-        print(f"({point.x()}, {point.y()})-->[{self.row}, {self.col}]")
-
-        if self.col == 5: # Unit
-            if self.row != 0: # not temperature
-                menu = self.unitContextMenu()
-                menu.exec_(QtGui.QCursor.pos())
-                
-        elif self.col == 4: # multiplier --> reference = STDF V4.pdf @ page 50 & https://en.wikipedia.org/wiki/Order_of_magnitude
-            if self.row != 0: # temperature
-                menu = self.multiplierContextMenu()
-                menu.exec_(QtGui.QCursor.pos())
-            
-        elif self.col >= 1 and self.col <= 3: # Min, Default, Max
-            if self.row != 0: # not for temperature
-                menu = QtWidgets.QMenu(self)
-    
-                special_values = [
-                    ('+∞', self.setValuePlusInfinite), 
-                    ('<clear>', self.setValueClear), 
-                    ('-∞', self.setValueMinusInfinite)]
-                for special_value in special_values:
-                    item = menu.addAction(special_value[0])
-                    item.triggered.connect(special_value[1])
-    
-                menu.exec_(QtGui.QCursor.pos())
-            
-        elif self.col == 0: # Name
-            if self.row != 0: # not for temperature
+        if index.column() == 0: # Name
+            if index.row() != 0: # not for temperature
                 menu = QtWidgets.QMenu(self)
                 # http://www.cplusplus.com/reference/cstdio/fprintf/
                 parameter_types =[
-                    ("Real", self.setParameterReal),
-                    ("Integer (Decimal - '123...')", self.setParameterDecimal),
+                    ("Real", lambda: self.setParameterType(Real),
+                    ("Integer (Decimal - '123...')", lambda: self.setParameterType(Decimal)),
                     ("Integer (Hexadecimal - '0xFE...')", self.setParameterHexadecimal),
                     ("Integer (Octal - '0o87...')", self.setParameterOctal),
                     ("Integer (Binary - '0b10...')", self.setParameterBinary)]
@@ -425,8 +413,31 @@ class TestWizard(QtWidgets.QDialog):
                     else:
                         item = menu.addAction(type_option[0])
                     item.triggered.connect(type_option[1])
-    
                 menu.exec_(QtGui.QCursor.pos())
+
+        elif index.column() >= 1 and index.column() <= 3: # Min, Default, Max
+            if index.row() != 0: # not for temperature
+                menu = QtWidgets.QMenu(self)
+                special_values = [
+                    ('+∞', lambda: self.setInputParameterValue('+∞')),
+                    ('0', lambda: self.setInputParameterValue('0')), 
+                    ('-∞', lambda: self.setInputParameterValue('-∞'))]
+                for special_value in special_values:
+                    item = menu.addAction(special_value[0])
+                    item.triggered.connect(special_value[1])
+                menu.exec_(QtGui.QCursor.pos())
+
+        elif index.column() == 4: # multiplier --> reference = STDF V4.pdf @ page 50 & https://en.wikipedia.org/wiki/Order_of_magnitude
+            if index.row() != 0: # temperature
+                menu = self.multiplierContextMenu()
+                menu.exec_(QtGui.QCursor.pos())
+
+        elif index.column() == 5: # Unit
+            if index.row() != 0: # not temperature
+                menu = self.unitContextMenu()
+                menu.exec_(QtGui.QCursor.pos())
+                
+            
 
     def inputParameterItemChanged(self, item=None):
         '''
@@ -505,22 +516,44 @@ class TestWizard(QtWidgets.QDialog):
     #     print("self.setParameterBinary")
 
     def setInputParameterValue(self, value):
-        pass        
-
-    # def setValuePlusInfinite(self):
-    #     for item in self.inputParameterTable.selectedItems():
-    #         if item.column()==3 and item.row()!=0: # the only the maximum value can be set to +Inf, but not the temperature!
-    #             item.setText('+∞')
-
-    # def setValueClear(self):
-    #     for item in self.inputParameterTable.selectedItems():
-    #         if item.column() in [1,2,3] and item.row()!=0: # values can be cleared in bulk, but not for temperature
-    #             item.setText('')
-                
-    # def setValueMinusInfinite(self):
-    #     for item in self.inputParameterTable.selectedItems():
-    #         if item.column()==1 and item.row()!=0: # the only the minimum value can be set to -Inf, but not the temperature!
-    #             item.setText('-∞')
+        selection = self.inputParameterView.selectedIndexes()
+        
+        for index in selection:
+            if value == '+∞': # only the max column can have +∞
+                if index.row() != 0: # not for 'Temperature'
+                    if index.column() == 3: # max column
+                        self.inputParameterModel.itemFromIndex(index).setData('+∞', QtCore.Qt.DisplayRole)
+                        name_item = self.inputParameterModel.item(index.row(), 0)
+                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
+                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                QtCore.Qt.ItemIsEditable | 
+                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
+            elif value == '-∞': # only the min column can have -∞
+                if index.row() != 0: # not for 'Temperature'
+                    if index.column() == 1: # min column
+                        self.inputParameterModel.itemFromIndex(index).setData('-∞', QtCore.Qt.DisplayRole)
+                        name_item = self.inputParameterModel.item(index.row(), 0)
+                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
+                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                QtCore.Qt.ItemIsEditable | 
+                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
+            elif value == '0': # for name, min, default, max, multiplier AND unit
+                if index.row() != 0: # not for 'Temperature'
+                    self.inputParameterModel.itemFromIndex(index).setData('', QtCore.Qt.DisplayRole)
+                    name_item = self.inputParameterModel.item(index.row(), 0)
+                    name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
+                    name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                            QtCore.Qt.ItemIsEditable | 
+                                                            QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
+            else: # for min, default, max
+                if index.row() != 0: # not for 'Temperature'
+                    if index.column in [1, 2, 3]: # for min, default and max columns
+                        self.inputParameterModel.itemFromIndex(index).setData(value, QtCore.Qt.DisplayRole)
+                        name_item = self.inputParameterModel.item(index.row(), 0)
+                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
+                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                QtCore.Qt.ItemIsEditable | 
+                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
 
     def setInputParameterMultiplier(self, text, tooltip):
         for index in self.inputParameterView.selectedIndexes():
@@ -595,33 +628,44 @@ class TestWizard(QtWidgets.QDialog):
             self.inputParameterModel.setData(name_index, 'Real', QtCore.Qt.ToolTipRole)
             self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
             self.inputParameterModel.setData(name_index, QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole) 
-            self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | 
-                                                                        QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                        QtCore.Qt.ItemIsEditable | 
+                                                                        QtCore.Qt.ItemIsEnabled)
 
             min_index = self.inputParameterModel.index(name_index.row(), 1)
             self.inputParameterModel.setData(min_index, '-∞', QtCore.Qt.DisplayRole)
             self.inputParameterModel.setData(min_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                       QtCore.Qt.ItemIsEditable | 
+                                                                       QtCore.Qt.ItemIsEnabled)
 
             default_index = self.inputParameterModel.index(name_index.row(), 2)
             self.inputParameterModel.setData(default_index, '0', QtCore.Qt.DisplayRole)
             self.inputParameterModel.setData(default_index, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                           QtCore.Qt.ItemIsEditable | 
+                                                                           QtCore.Qt.ItemIsEnabled)
             
             max_index = self.inputParameterModel.index(name_index.row(), 3)
             self.inputParameterModel.setData(max_index, '+∞', QtCore.Qt.DisplayRole)
             self.inputParameterModel.setData(max_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                       QtCore.Qt.ItemIsEditable | 
+                                                                       QtCore.Qt.ItemIsEnabled)
 
             multiplier_index = self.inputParameterModel.index(name_index.row(), 4)
             self.inputParameterModel.setData(multiplier_index, '', QtCore.Qt.DisplayRole)
             self.inputParameterModel.setData(multiplier_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                              QtCore.Qt.ItemIsEditable | 
+                                                                              QtCore.Qt.ItemIsEnabled)
 
             unit_index = self.inputParameterModel.index(name_index.row(), 5)
             self.inputParameterModel.setData(unit_index, '?', QtCore.Qt.DisplayRole)
             self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                        QtCore.Qt.ItemIsEditable | 
+                                                                        QtCore.Qt.ItemIsEnabled)
 
     def unselectInputParameter(self):
         self.inputParameterTable.clearSelection()
