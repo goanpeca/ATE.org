@@ -57,7 +57,9 @@ if __name__ == '__main__':
         fd.write("\n# `README.md` files\n\n")
         for readme_file in items['README-Files']:
             File = readme_file.replace(os.path.sep, '/')
-            fd.write(f"- [{File}({File})\n")
+            if File == 'README.md':
+                continue
+            fd.write(f"- [{File}]({File})\n")
         
         fd.write('---\n')
         fd.write(f'auto generated : {now}')
