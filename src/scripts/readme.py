@@ -61,6 +61,15 @@ if __name__ == '__main__':
                 continue
             fd.write(f"- [{File}]({File})\n")
         
+        fd.write("\n # `TODO` items\n\n")
+        for code_file, itemdict in items['TODO-Items']:
+            File = code_file.replace(os.path.sep, '/')
+            fd.write(f"- [{File}]({File})\n")
+            for line_nr in itemdict:
+                fd.write(f"\t{line_nr} : [{itemdict[line_nr]}]({File}#{line_nr})\n")
+            
+            
+            
         fd.write('---\n')
         fd.write(f'auto generated : {now}')
         
