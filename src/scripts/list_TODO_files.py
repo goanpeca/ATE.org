@@ -14,5 +14,5 @@ if __name__ == '__main__':
     source_root = os.path.split(os.path.dirname(__file__))[0]
     for root, _, files in os.walk(source_root):
         for File in files:
-            if File == 'TODO.md':
+            if File == 'TODO.md' or File == 'README.md':
                 print(f"{os.path.join(root, File)}")
