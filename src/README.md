@@ -531,11 +531,7 @@
 
 - [scripts/readme.py](scripts/readme.py)
 
-	34 : [probably there is a unicode thing inside, need to strip it out](scripts/readme.py#L35)
-
-	37 : [' in line_contents:](scripts/readme.py#L38)
-
-	38 : [')[1].strip()](scripts/readme.py#L39)
+	35 : [probably there is a unicode thing inside, need to strip it out](scripts/readme.py#L36)
 
 	39 : [' in line_contents:](scripts/readme.py#L40)
 
@@ -544,6 +540,10 @@
 	41 : [' in line_contents:](scripts/readme.py#L42)
 
 	42 : [')[1].strip()](scripts/readme.py#L43)
+
+	43 : [' in line_contents:](scripts/readme.py#L44)
+
+	44 : [')[1].strip()](scripts/readme.py#L45)
 
 - [SCT/elements/physical/ElevATE.py](SCT/elements/physical/ElevATE.py)
 
@@ -601,5 +601,8 @@
 
 	384 : [how to move the](SpyderMockUp/ScreenCasting/QtScreenCast.py#L385)
 
----
-auto generated : Wednesday, April 29 2020 @ 13:26:15 (Q2 20183)
+
+# Strange files
+
+- [ATE/org/actions_on/tests/NewTestWizard.py](ATE/org/actions_on/tests/NewTestWizard.py)- [ATE/org/actions_on/tests/TestWizard.py](ATE/org/actions_on/tests/TestWizard.py)- [ATE/org/actions_on/tests/TestWizard_.py](ATE/org/actions_on/tests/TestWizard_.py)- [ATE/snippets/strVSbytes.py](ATE/snippets/strVSbytes.py)---
+auto generated on Wednesday, April 29 2020 @ 13:44:38 (Q2 20183)

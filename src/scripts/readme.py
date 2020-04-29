@@ -17,7 +17,8 @@ if __name__ == '__main__':
     root_readme = os.path.join(source_root, 'README.md')
     items = {'TODO-Files' : [],
               'README-Files' : [],
-              'TODO-Items' : []}
+              'TODO-Items' : [],
+              'Strange-Files' : []}
     now = DT()
 
     for root, _, files in os.walk(source_root):
@@ -33,6 +34,7 @@ if __name__ == '__main__':
                     except:
                         print(f"something strange going on in file {os.path.join(root, File)}")
                         #TODO: probably there is a unicode thing inside, need to strip it out
+                        items['Strange-Files'].append(os.path.join(root, File).replace(source_root+os.path.sep, ''))
                     items_in_file = {}
                     for line_nr, line_contents in enumerate(content):
                         if 'TODO:' in line_contents:
@@ -68,9 +70,12 @@ if __name__ == '__main__':
             for line_nr in itemdict:
                 fd.write(f"\t{line_nr} : [{itemdict[line_nr]}]({File}#L{line_nr+1})\n\n")
             
-            
+        fd.write("\n# Strange files\n\n")
+        for code_file in items['Strange-Files']:
+            File = code_file.replace(os.path.sep, '/')
+            fd.write(f"- [{File}]({File})")
             
         fd.write('---\n')
-        fd.write(f'auto generated : {now}')
+        fd.write(f'auto generated on {now}')
         
         
