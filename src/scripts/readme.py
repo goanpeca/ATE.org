@@ -41,8 +41,8 @@ if __name__ == '__main__':
                             items_in_file[line_nr] = line_contents.split('ToDo:')[1].strip()
                         if 'todo:' in line_contents:
                             items_in_file[line_nr] = line_contents.split('todo:')[1].strip()
-
-                items['TODO-Items'].append((os.path.join(root, File).replace(source_root+os.path.sep, ''), items_in_file))
+                if items_in_file != {}:
+                    items['TODO-Items'].append((os.path.join(root, File).replace(source_root+os.path.sep, ''), items_in_file))
 
     if os.path.exists(root_readme):
         os.remove(root_readme)

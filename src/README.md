@@ -31,16 +31,6 @@
 
  # `TODO` items
 
-- [ATE/__init__.py](ATE/__init__.py)
-
-- [ATE/actuators/__init__.py](ATE/actuators/__init__.py)
-
-- [ATE/actuators/acceleration/__init__.py](ATE/actuators/acceleration/__init__.py)
-
-- [ATE/actuators/light/__init__.py](ATE/actuators/light/__init__.py)
-
-- [ATE/actuators/magnetic_field/__init__.py](ATE/actuators/magnetic_field/__init__.py)
-
 - [ATE/actuators/magnetic_field/STL/DCS1K.py](ATE/actuators/magnetic_field/STL/DCS1K.py)
 
 	11 : [add the communication 'datasheet' to the doc tree](ATE/actuators/magnetic_field/STL/DCS1K.py#11)
@@ -49,19 +39,9 @@
 
 	11 : [add the communication 'datasheet' to the doc tree](ATE/actuators/magnetic_field/STL/DCS6K.py#11)
 
-- [ATE/actuators/magnetic_field/STL/__init__.py](ATE/actuators/magnetic_field/STL/__init__.py)
-
-- [ATE/actuators/magnetic_field/TDK/SourceControl.py](ATE/actuators/magnetic_field/TDK/SourceControl.py)
-
-- [ATE/actuators/magnetic_field/TDK/__init__.py](ATE/actuators/magnetic_field/TDK/__init__.py)
-
-- [ATE/actuators/temperature/__init__.py](ATE/actuators/temperature/__init__.py)
-
 - [ATE/actuators/temperature/MPI/TA3000A.py](ATE/actuators/temperature/MPI/TA3000A.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/actuators/temperature/MPI/TA3000A.py#12)
-
-- [ATE/actuators/temperature/MPI/__init__.py](ATE/actuators/temperature/MPI/__init__.py)
 
 - [ATE/actuators/temperature/TempTronic/ATS710.py](ATE/actuators/temperature/TempTronic/ATS710.py)
 
@@ -71,31 +51,9 @@
 
 	11 : [add the communication 'datasheet' to the doc tree](ATE/actuators/temperature/TempTronic/XStream4300.py#11)
 
-- [ATE/actuators/temperature/TempTronic/__init__.py](ATE/actuators/temperature/TempTronic/__init__.py)
-
 - [ATE/apps/auto_script.py](ATE/apps/auto_script.py)
 
 	141 : [only one master is supported for now](ATE/apps/auto_script.py#141)
-
-- [ATE/apps/launch_control.py](ATE/apps/launch_control.py)
-
-- [ATE/apps/launch_handler.py](ATE/apps/launch_handler.py)
-
-- [ATE/apps/launch_master.py](ATE/apps/launch_master.py)
-
-- [ATE/apps/launch_testapp.py](ATE/apps/launch_testapp.py)
-
-- [ATE/apps/__init__.py](ATE/apps/__init__.py)
-
-- [ATE/apps/common/configuration_reader.py](ATE/apps/common/configuration_reader.py)
-
-- [ATE/apps/common/connection_handler.py](ATE/apps/common/connection_handler.py)
-
-- [ATE/apps/common/logger.py](ATE/apps/common/logger.py)
-
-- [ATE/apps/common/__init__.py](ATE/apps/common/__init__.py)
-
-- [ATE/apps/controlApp/control_application.py](ATE/apps/controlApp/control_application.py)
 
 - [ATE/apps/controlApp/control_connection_handler.py](ATE/apps/controlApp/control_connection_handler.py)
 
@@ -109,23 +67,15 @@
 
 	186 : [handle status messages](ATE/apps/controlApp/control_connection_handler.py#186)
 
-- [ATE/apps/controlApp/__init__.py](ATE/apps/controlApp/__init__.py)
-
-- [ATE/apps/handlerApp/handler_application.py](ATE/apps/handlerApp/handler_application.py)
-
 - [ATE/apps/handlerApp/handler_connection_handler.py](ATE/apps/handlerApp/handler_connection_handler.py)
 
 	76 : [should master have an explicit id](ATE/apps/handlerApp/handler_connection_handler.py#76)
 
 	94 : [should master be the only app who communication with the handler](ATE/apps/handlerApp/handler_connection_handler.py#94)
 
-- [ATE/apps/handlerApp/handler_message_generator.py](ATE/apps/handlerApp/handler_message_generator.py)
-
 - [ATE/apps/handlerApp/handler_statemachine_component.py](ATE/apps/handlerApp/handler_statemachine_component.py)
 
 	31 : [error states](ATE/apps/handlerApp/handler_statemachine_component.py#31)
-
-- [ATE/apps/handlerApp/__init__.py](ATE/apps/handlerApp/__init__.py)
 
 - [ATE/apps/integration_tests/test_integrate.py](ATE/apps/integration_tests/test_integrate.py)
 
@@ -157,8 +107,6 @@
 
 	1167 : [Check ATE-82 against actual requiremens.](ATE/apps/integration_tests/test_integrate.py#1167)
 
-- [ATE/apps/integration_tests/util_timeout_ex.py](ATE/apps/integration_tests/util_timeout_ex.py)
-
 - [ATE/apps/masterApp/master_application.py](ATE/apps/masterApp/master_application.py)
 
 	221 : [properly limit source states to valid states where usersettings are allowed to be modified](ATE/apps/masterApp/master_application.py#221)
@@ -185,31 +133,9 @@
 
 	641 : [the default value of the static file path (here and config template) should](ATE/apps/masterApp/master_application.py#641)
 
-- [ATE/apps/masterApp/master_connection_handler.py](ATE/apps/masterApp/master_connection_handler.py)
-
-- [ATE/apps/masterApp/master_webservice.py](ATE/apps/masterApp/master_webservice.py)
-
-- [ATE/apps/masterApp/sequence_container.py](ATE/apps/masterApp/sequence_container.py)
-
 - [ATE/apps/masterApp/stdf_aggregator.py](ATE/apps/masterApp/stdf_aggregator.py)
 
 	47 : [SDR](ATE/apps/masterApp/stdf_aggregator.py#47)
-
-- [ATE/apps/masterApp/transition_sequence.py](ATE/apps/masterApp/transition_sequence.py)
-
-- [ATE/apps/masterApp/user_settings.py](ATE/apps/masterApp/user_settings.py)
-
-- [ATE/apps/masterApp/__init__.py](ATE/apps/masterApp/__init__.py)
-
-- [ATE/apps/masterApp/parameter_parser/filesystem_data_source.py](ATE/apps/masterApp/parameter_parser/filesystem_data_source.py)
-
-- [ATE/apps/masterApp/parameter_parser/parser_factory.py](ATE/apps/masterApp/parameter_parser/parser_factory.py)
-
-- [ATE/apps/masterApp/parameter_parser/static_data_source.py](ATE/apps/masterApp/parameter_parser/static_data_source.py)
-
-- [ATE/apps/masterApp/parameter_parser/xml_parameter_parser.py](ATE/apps/masterApp/parameter_parser/xml_parameter_parser.py)
-
-- [ATE/apps/masterApp/parameter_parser/__init__.py](ATE/apps/masterApp/parameter_parser/__init__.py)
 
 - [ATE/apps/testApp/thetestzip_mock.py](ATE/apps/testApp/thetestzip_mock.py)
 
@@ -251,8 +177,6 @@
 
 	613 : [use job related info here (e.g. from Master/job topic or passed in some other way with the loadTest command)](ATE/apps/testApp/thetest_application.py#613)
 
-- [ATE/apps/testApp/__init__.py](ATE/apps/testApp/__init__.py)
-
 - [ATE/data/measurements.py](ATE/data/measurements.py)
 
 	43 : [complete the list of 'similar' python libraries, go trugh them to see what is usefull and what is shit.](ATE/data/measurements.py#43)
@@ -262,8 +186,6 @@
 	82 : [move this one to be the first to be checked, as this will be the most common one!](ATE/data/metis.py#82)
 
 	141 : [add more ...](ATE/data/metis.py#141)
-
-- [ATE/data/__init__.py](ATE/data/__init__.py)
 
 - [ATE/data/register_map/register_map_abc.py](ATE/data/register_map/register_map_abc.py)
 
@@ -275,25 +197,9 @@
 
 	386 : [think about this ... can't we support positive values ?!?](ATE/data/register_map/register_map_abc.py#386)
 
-- [ATE/data/register_map/__init__.py](ATE/data/register_map/__init__.py)
-
 - [ATE/data/register_map/utils/varia.py](ATE/data/register_map/utils/varia.py)
 
 	57 : [add more checkings](ATE/data/register_map/utils/varia.py#57)
-
-- [ATE/data/register_map/utils/__init__.py](ATE/data/register_map/utils/__init__.py)
-
-- [ATE/data/register_map/utils/regedit/MainWindow.py](ATE/data/register_map/utils/regedit/MainWindow.py)
-
-- [ATE/data/register_map/utils/regedit/regedit.py](ATE/data/register_map/utils/regedit/regedit.py)
-
-- [ATE/data/register_map/utils/regedit/__init__.py](ATE/data/register_map/utils/regedit/__init__.py)
-
-- [ATE/data/SEDF/records.py](ATE/data/SEDF/records.py)
-
-- [ATE/data/SEDF/utils.py](ATE/data/SEDF/utils.py)
-
-- [ATE/data/SEDF/__init__.py](ATE/data/SEDF/__init__.py)
 
 - [ATE/data/STDF/records.py](ATE/data/STDF/records.py)
 
@@ -351,25 +257,15 @@
 
 	1688 : [implement hashing](ATE/data/STDF/utils.py#1688)
 
-- [ATE/data/STDF/__init__.py](ATE/data/STDF/__init__.py)
-
-- [ATE/equipment/__init__.py](ATE/equipment/__init__.py)
-
-- [ATE/equipment/handlers/__init__.py](ATE/equipment/handlers/__init__.py)
-
 - [ATE/equipment/handlers/Geringer/G2G.py](ATE/equipment/handlers/Geringer/G2G.py)
 
 	11 : [protocol is multiple multi-site ... got something from Ulf, need to](ATE/equipment/handlers/Geringer/G2G.py#11)
 
 	14 : [add the communication 'datasheet' to the doc tree](ATE/equipment/handlers/Geringer/G2G.py#14)
 
-- [ATE/equipment/handlers/Geringer/__init__.py](ATE/equipment/handlers/Geringer/__init__.py)
-
 - [ATE/equipment/handlers/Ismeca/NY32.py](ATE/equipment/handlers/Ismeca/NY32.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/handlers/Ismeca/NY32.py#12)
-
-- [ATE/equipment/handlers/Ismeca/__init__.py](ATE/equipment/handlers/Ismeca/__init__.py)
 
 - [ATE/equipment/handlers/MultiTest/MT9510.py](ATE/equipment/handlers/MultiTest/MT9510.py)
 
@@ -379,8 +275,6 @@
 
 	11 : [add the communication datasheet to the document tree](ATE/equipment/handlers/MultiTest/MT9928.py#11)
 
-- [ATE/equipment/handlers/MultiTest/__init__.py](ATE/equipment/handlers/MultiTest/__init__.py)
-
 - [ATE/equipment/handlers/Rasco/SO1000.py](ATE/equipment/handlers/Rasco/SO1000.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/handlers/Rasco/SO1000.py#12)
@@ -388,16 +282,6 @@
 - [ATE/equipment/handlers/Rasco/SO2000.py](ATE/equipment/handlers/Rasco/SO2000.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/handlers/Rasco/SO2000.py#12)
-
-- [ATE/equipment/handlers/Rasco/__init__.py](ATE/equipment/handlers/Rasco/__init__.py)
-
-- [ATE/equipment/handlers/TDK/ELMA.py](ATE/equipment/handlers/TDK/ELMA.py)
-
-- [ATE/equipment/handlers/TDK/MQCheck.py](ATE/equipment/handlers/TDK/MQCheck.py)
-
-- [ATE/equipment/handlers/TDK/__init__.py](ATE/equipment/handlers/TDK/__init__.py)
-
-- [ATE/equipment/probers/__init__.py](ATE/equipment/probers/__init__.py)
 
 - [ATE/equipment/probers/Accretech/PM90.py](ATE/equipment/probers/Accretech/PM90.py)
 
@@ -407,8 +291,6 @@
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/probers/Accretech/UF200R.py#12)
 
-- [ATE/equipment/probers/Accretech/__init__.py](ATE/equipment/probers/Accretech/__init__.py)
-
 - [ATE/equipment/probers/TEL/P8XL.py](ATE/equipment/probers/TEL/P8XL.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/probers/TEL/P8XL.py#12)
@@ -416,26 +298,6 @@
 - [ATE/equipment/probers/TEL/PrecioOcto.py](ATE/equipment/probers/TEL/PrecioOcto.py)
 
 	12 : [add the communication 'datasheet' to the doc tree](ATE/equipment/probers/TEL/PrecioOcto.py#12)
-
-- [ATE/equipment/probers/TEL/__init__.py](ATE/equipment/probers/TEL/__init__.py)
-
-- [ATE/equipment/TCC/__init__.py](ATE/equipment/TCC/__init__.py)
-
-- [ATE/equipment/TCC/client/__init__.py](ATE/equipment/TCC/client/__init__.py)
-
-- [ATE/equipment/TCC/server/__init__.py](ATE/equipment/TCC/server/__init__.py)
-
-- [ATE/Instruments/__init__.py](ATE/Instruments/__init__.py)
-
-- [ATE/Instruments/Keithley/__init__.py](ATE/Instruments/Keithley/__init__.py)
-
-- [ATE/Instruments/Keysight/__init__.py](ATE/Instruments/Keysight/__init__.py)
-
-- [ATE/Instruments/Lecroy/__init__.py](ATE/Instruments/Lecroy/__init__.py)
-
-- [ATE/Instruments/Tektronix/__init__.py](ATE/Instruments/Tektronix/__init__.py)
-
-- [ATE/Instruments/TTi/__init__.py](ATE/Instruments/TTi/__init__.py)
 
 - [ATE/org/abc.py](ATE/org/abc.py)
 
@@ -473,10 +335,6 @@
 
 	724 : [Implement the unit tests here ...](ATE/org/abc.py#724)
 
-- [ATE/org/constants.py](ATE/org/constants.py)
-
-- [ATE/org/listings.py](ATE/org/listings.py)
-
 - [ATE/org/navigation.py](ATE/org/navigation.py)
 
 	81 : [once we are integrated in Spyder, we need to get the following](ATE/org/navigation.py#81)
@@ -501,41 +359,15 @@
 
 	180 : [remove hack](ATE/org/toolbar.py#180)
 
-- [ATE/org/validation.py](ATE/org/validation.py)
-
-- [ATE/org/__init__.py](ATE/org/__init__.py)
-
-- [ATE/org/actions_on/__init__.py](ATE/org/actions_on/__init__.py)
-
-- [ATE/org/actions_on/device/DeviceItem.py](ATE/org/actions_on/device/DeviceItem.py)
-
 - [ATE/org/actions_on/device/NewDeviceWizard.py](ATE/org/actions_on/device/NewDeviceWizard.py)
 
 	101 : [also add the Type = ['ASSP' or 'ASIC']](ATE/org/actions_on/device/NewDeviceWizard.py#101)
 
 	121 : [must be done elsewhere](ATE/org/actions_on/device/NewDeviceWizard.py#121)
 
-- [ATE/org/actions_on/device/__init__.py](ATE/org/actions_on/device/__init__.py)
-
-- [ATE/org/actions_on/die/DieItem.py](ATE/org/actions_on/die/DieItem.py)
-
-- [ATE/org/actions_on/die/DieWizard.py](ATE/org/actions_on/die/DieWizard.py)
-
 - [ATE/org/actions_on/die/NewDieWizard.py](ATE/org/actions_on/die/NewDieWizard.py)
 
 	259 : [quality need to be defined](ATE/org/actions_on/die/NewDieWizard.py#259)
-
-- [ATE/org/actions_on/die/__init__.py](ATE/org/actions_on/die/__init__.py)
-
-- [ATE/org/actions_on/documentation/BaseDocumentationItem.py](ATE/org/actions_on/documentation/BaseDocumentationItem.py)
-
-- [ATE/org/actions_on/documentation/Constants.py](ATE/org/actions_on/documentation/Constants.py)
-
-- [ATE/org/actions_on/documentation/DocumentationItem.py](ATE/org/actions_on/documentation/DocumentationItem.py)
-
-- [ATE/org/actions_on/documentation/DocumentationObserver.py](ATE/org/actions_on/documentation/DocumentationObserver.py)
-
-- [ATE/org/actions_on/documentation/FileIcon.py](ATE/org/actions_on/documentation/FileIcon.py)
 
 - [ATE/org/actions_on/flow/NewFlowWizard.py](ATE/org/actions_on/flow/NewFlowWizard.py)
 
@@ -544,74 +376,6 @@
 	103 : [implement the whole flow thing](ATE/org/actions_on/flow/NewFlowWizard.py#103)
 
 	134 : [add the whole flow stuff here](ATE/org/actions_on/flow/NewFlowWizard.py#134)
-
-- [ATE/org/actions_on/flow/__init__.py](ATE/org/actions_on/flow/__init__.py)
-
-- [ATE/org/actions_on/flow/AC/acwizard.py](ATE/org/actions_on/flow/AC/acwizard.py)
-
-- [ATE/org/actions_on/flow/AC/__init__.py](ATE/org/actions_on/flow/AC/__init__.py)
-
-- [ATE/org/actions_on/flow/DR/drwizard.py](ATE/org/actions_on/flow/DR/drwizard.py)
-
-- [ATE/org/actions_on/flow/DR/__init__.py](ATE/org/actions_on/flow/DR/__init__.py)
-
-- [ATE/org/actions_on/flow/ELFR/elfrwizard.py](ATE/org/actions_on/flow/ELFR/elfrwizard.py)
-
-- [ATE/org/actions_on/flow/ELFR/__init__.py](ATE/org/actions_on/flow/ELFR/__init__.py)
-
-- [ATE/org/actions_on/flow/ESD/esdwizard.py](ATE/org/actions_on/flow/ESD/esdwizard.py)
-
-- [ATE/org/actions_on/flow/ESD/__init__.py](ATE/org/actions_on/flow/ESD/__init__.py)
-
-- [ATE/org/actions_on/flow/HAST/hastwizard.py](ATE/org/actions_on/flow/HAST/hastwizard.py)
-
-- [ATE/org/actions_on/flow/HAST/__init__.py](ATE/org/actions_on/flow/HAST/__init__.py)
-
-- [ATE/org/actions_on/flow/HTOL/htolwizard.py](ATE/org/actions_on/flow/HTOL/htolwizard.py)
-
-- [ATE/org/actions_on/flow/HTOL/__init__.py](ATE/org/actions_on/flow/HTOL/__init__.py)
-
-- [ATE/org/actions_on/flow/HTSL/htslwizard.py](ATE/org/actions_on/flow/HTSL/htslwizard.py)
-
-- [ATE/org/actions_on/flow/HTSL/__init__.py](ATE/org/actions_on/flow/HTSL/__init__.py)
-
-- [ATE/org/actions_on/flow/LU/luwizard.py](ATE/org/actions_on/flow/LU/luwizard.py)
-
-- [ATE/org/actions_on/flow/LU/__init__.py](ATE/org/actions_on/flow/LU/__init__.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/intparam.py](ATE/org/actions_on/flow/qualificationwizardbase/intparam.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/optionparam.py](ATE/org/actions_on/flow/qualificationwizardbase/optionparam.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/parameter.py](ATE/org/actions_on/flow/qualificationwizardbase/parameter.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/textboxparam.py](ATE/org/actions_on/flow/qualificationwizardbase/textboxparam.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/wizardbase.py](ATE/org/actions_on/flow/qualificationwizardbase/wizardbase.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/writeoncetextparam.py](ATE/org/actions_on/flow/qualificationwizardbase/writeoncetextparam.py)
-
-- [ATE/org/actions_on/flow/qualificationwizardbase/__init__.py](ATE/org/actions_on/flow/qualificationwizardbase/__init__.py)
-
-- [ATE/org/actions_on/flow/RSH/rshwizard.py](ATE/org/actions_on/flow/RSH/rshwizard.py)
-
-- [ATE/org/actions_on/flow/RSH/__init__.py](ATE/org/actions_on/flow/RSH/__init__.py)
-
-- [ATE/org/actions_on/flow/SAM/samwizard.py](ATE/org/actions_on/flow/SAM/samwizard.py)
-
-- [ATE/org/actions_on/flow/SAM/__init__.py](ATE/org/actions_on/flow/SAM/__init__.py)
-
-- [ATE/org/actions_on/flow/TC/tcwizard.py](ATE/org/actions_on/flow/TC/tcwizard.py)
-
-- [ATE/org/actions_on/flow/TC/__init__.py](ATE/org/actions_on/flow/TC/__init__.py)
-
-- [ATE/org/actions_on/flow/THB/thbwizard.py](ATE/org/actions_on/flow/THB/thbwizard.py)
-
-- [ATE/org/actions_on/flow/THB/__init__.py](ATE/org/actions_on/flow/THB/__init__.py)
-
-- [ATE/org/actions_on/hardwaresetup/constants.py](ATE/org/actions_on/hardwaresetup/constants.py)
-
-- [ATE/org/actions_on/hardwaresetup/EditHardwaresetupWizard.py](ATE/org/actions_on/hardwaresetup/EditHardwaresetupWizard.py)
 
 - [ATE/org/actions_on/hardwaresetup/HardwaresetupItem.py](ATE/org/actions_on/hardwaresetup/HardwaresetupItem.py)
 
@@ -633,18 +397,6 @@
 
 	236 : [implement a bit more verification](ATE/org/actions_on/hardwaresetup/HardwareWizard.py#236)
 
-- [ATE/org/actions_on/hardwaresetup/NewHardwaresetupWizard.py](ATE/org/actions_on/hardwaresetup/NewHardwaresetupWizard.py)
-
-- [ATE/org/actions_on/hardwaresetup/ViewHardwaresetupSettings.py](ATE/org/actions_on/hardwaresetup/ViewHardwaresetupSettings.py)
-
-- [ATE/org/actions_on/hardwaresetup/__init__.py](ATE/org/actions_on/hardwaresetup/__init__.py)
-
-- [ATE/org/actions_on/maskset/constants.py](ATE/org/actions_on/maskset/constants.py)
-
-- [ATE/org/actions_on/maskset/EditMasksetWizard.py](ATE/org/actions_on/maskset/EditMasksetWizard.py)
-
-- [ATE/org/actions_on/maskset/MasksetItem.py](ATE/org/actions_on/maskset/MasksetItem.py)
-
 - [ATE/org/actions_on/maskset/NewMasksetWizard.py](ATE/org/actions_on/maskset/NewMasksetWizard.py)
 
 	316 : [this logic is defective, disabled for now, need to be re-done.](ATE/org/actions_on/maskset/NewMasksetWizard.py#316)
@@ -659,23 +411,13 @@
 
 	698 : [add the company specific plugins here](ATE/org/actions_on/maskset/NewMasksetWizard.py#698)
 
-- [ATE/org/actions_on/maskset/ViewMasksetSettings.py](ATE/org/actions_on/maskset/ViewMasksetSettings.py)
-
-- [ATE/org/actions_on/maskset/__init__.py](ATE/org/actions_on/maskset/__init__.py)
-
-- [ATE/org/actions_on/model/Actions.py](ATE/org/actions_on/model/Actions.py)
-
 - [ATE/org/actions_on/model/BaseItem.py](ATE/org/actions_on/model/BaseItem.py)
 
 	32 : [at some point we are not going to need parameters any more, remove them](ATE/org/actions_on/model/BaseItem.py#32)
 
-- [ATE/org/actions_on/model/Constants.py](ATE/org/actions_on/model/Constants.py)
-
 - [ATE/org/actions_on/model/FlowItem.py](ATE/org/actions_on/model/FlowItem.py)
 
 	68 : [Display all testprogramms associated with this flow here.](ATE/org/actions_on/model/FlowItem.py#68)
-
-- [ATE/org/actions_on/model/TestprogramTreeItem.py](ATE/org/actions_on/model/TestprogramTreeItem.py)
 
 - [ATE/org/actions_on/model/TreeModel.py](ATE/org/actions_on/model/TreeModel.py)
 
@@ -683,31 +425,15 @@
 
 	211 : [Move this class to its own file.](ATE/org/actions_on/model/TreeModel.py#211)
 
-- [ATE/org/actions_on/model/__init__.py](ATE/org/actions_on/model/__init__.py)
-
-- [ATE/org/actions_on/model/UIElements/__init__.py](ATE/org/actions_on/model/UIElements/__init__.py)
-
 - [ATE/org/actions_on/package/NewPackageWizard.py](ATE/org/actions_on/package/NewPackageWizard.py)
 
 	77 : [Implement 'FindOnFileSystem'](ATE/org/actions_on/package/NewPackageWizard.py#77)
 
 	97 : [Implement, save the file in self.temp_dir under the name of the package !!!](ATE/org/actions_on/package/NewPackageWizard.py#97)
 
-- [ATE/org/actions_on/package/PackageItem.py](ATE/org/actions_on/package/PackageItem.py)
-
-- [ATE/org/actions_on/package/__init__.py](ATE/org/actions_on/package/__init__.py)
-
-- [ATE/org/actions_on/patterns/__init__.py](ATE/org/actions_on/patterns/__init__.py)
-
 - [ATE/org/actions_on/product/NewProductWizard.py](ATE/org/actions_on/product/NewProductWizard.py)
 
 	71 : [find an other way to do this](ATE/org/actions_on/product/NewProductWizard.py#71)
-
-- [ATE/org/actions_on/product/ProductItem.py](ATE/org/actions_on/product/ProductItem.py)
-
-- [ATE/org/actions_on/product/__init__.py](ATE/org/actions_on/product/__init__.py)
-
-- [ATE/org/actions_on/program/Actions.py](ATE/org/actions_on/program/Actions.py)
 
 - [ATE/org/actions_on/program/ConfigureTest.py](ATE/org/actions_on/program/ConfigureTest.py)
 
@@ -728,32 +454,6 @@
 	352 : [disable temperature view](ATE/org/actions_on/program/NewProgramWizard.py#352)
 
 	363 : [disable current view](ATE/org/actions_on/program/NewProgramWizard.py#363)
-
-- [ATE/org/actions_on/program/ProgramItem.py](ATE/org/actions_on/program/ProgramItem.py)
-
-- [ATE/org/actions_on/program/__init__.py](ATE/org/actions_on/program/__init__.py)
-
-- [ATE/org/actions_on/program/test/test1.py](ATE/org/actions_on/program/test/test1.py)
-
-- [ATE/org/actions_on/program/test/test2.py](ATE/org/actions_on/program/test/test2.py)
-
-- [ATE/org/actions_on/program/test/testABC.py](ATE/org/actions_on/program/test/testABC.py)
-
-- [ATE/org/actions_on/program/test/__init__.py](ATE/org/actions_on/program/test/__init__.py)
-
-- [ATE/org/actions_on/project/NewProjectWizard.py](ATE/org/actions_on/project/NewProjectWizard.py)
-
-- [ATE/org/actions_on/project/ProjectWizard.py](ATE/org/actions_on/project/ProjectWizard.py)
-
-- [ATE/org/actions_on/project/__init__.py](ATE/org/actions_on/project/__init__.py)
-
-- [ATE/org/actions_on/protocol/NewProtocolWizard.py](ATE/org/actions_on/protocol/NewProtocolWizard.py)
-
-- [ATE/org/actions_on/protocol/__init__.py](ATE/org/actions_on/protocol/__init__.py)
-
-- [ATE/org/actions_on/registermap/__init__.py](ATE/org/actions_on/registermap/__init__.py)
-
-- [ATE/org/actions_on/states/__init__.py](ATE/org/actions_on/states/__init__.py)
 
 - [ATE/org/actions_on/tests/NewStandardTestWizard.py](ATE/org/actions_on/tests/NewStandardTestWizard.py)
 
@@ -783,137 +483,17 @@
 
 	43 : [remove this after update toolbar class](ATE/org/actions_on/tests/TestItem.py#43)
 
-- [ATE/org/actions_on/tests/TestsObserver.py](ATE/org/actions_on/tests/TestsObserver.py)
-
-- [ATE/org/actions_on/tests/TestWizard.py](ATE/org/actions_on/tests/TestWizard.py)
-
-- [ATE/org/actions_on/tests/TestWizard_.py](ATE/org/actions_on/tests/TestWizard_.py)
-
-- [ATE/org/actions_on/tests/__init__.py](ATE/org/actions_on/tests/__init__.py)
-
 - [ATE/org/actions_on/utils/FileSystemOperator.py](ATE/org/actions_on/utils/FileSystemOperator.py)
 
 	20 : [what if file exists already !??](ATE/org/actions_on/utils/FileSystemOperator.py#20)
-
-- [ATE/org/actions_on/utils/MenuDialog.py](ATE/org/actions_on/utils/MenuDialog.py)
-
-- [ATE/org/actions_on/utils/ObserverBase.py](ATE/org/actions_on/utils/ObserverBase.py)
-
-- [ATE/org/actions_on/utils/Util.py](ATE/org/actions_on/utils/Util.py)
-
-- [ATE/org/actions_on/utils/__init__.py](ATE/org/actions_on/utils/__init__.py)
-
-- [ATE/org/coding/common_generator.py](ATE/org/coding/common_generator.py)
-
-- [ATE/org/coding/program_generator.py](ATE/org/coding/program_generator.py)
-
-- [ATE/org/coding/standard_test_generator.py](ATE/org/coding/standard_test_generator.py)
 
 - [ATE/org/coding/test_generator.py](ATE/org/coding/test_generator.py)
 
 	33 : [maybe move this to 'company specific stuff' later on ?](ATE/org/coding/test_generator.py#33)
 
-- [ATE/org/coding/__init__.py](ATE/org/coding/__init__.py)
-
-- [ATE/org/coding/standard_tests/__init__.py](ATE/org/coding/standard_tests/__init__.py)
-
-- [ATE/org/coding/standard_tests/Contact/Contact.py](ATE/org/coding/standard_tests/Contact/Contact.py)
-
-- [ATE/org/coding/standard_tests/Contact/__init__.py](ATE/org/coding/standard_tests/Contact/__init__.py)
-
-- [ATE/org/coding/standard_tests/IDD/IDD.py](ATE/org/coding/standard_tests/IDD/IDD.py)
-
-- [ATE/org/coding/standard_tests/IDD/__init__.py](ATE/org/coding/standard_tests/IDD/__init__.py)
-
-- [ATE/org/coding/standard_tests/IDDq/IDDq.py](ATE/org/coding/standard_tests/IDDq/IDDq.py)
-
-- [ATE/org/coding/standard_tests/IDDq/__init__.py](ATE/org/coding/standard_tests/IDDq/__init__.py)
-
-- [ATE/org/coding/standard_tests/IIH/IIH.py](ATE/org/coding/standard_tests/IIH/IIH.py)
-
-- [ATE/org/coding/standard_tests/IIH/__init__.py](ATE/org/coding/standard_tests/IIH/__init__.py)
-
-- [ATE/org/coding/standard_tests/IIL/IIL.py](ATE/org/coding/standard_tests/IIL/IIL.py)
-
-- [ATE/org/coding/standard_tests/IIL/__init__.py](ATE/org/coding/standard_tests/IIL/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOH/IOH.py](ATE/org/coding/standard_tests/IOH/IOH.py)
-
-- [ATE/org/coding/standard_tests/IOH/__init__.py](ATE/org/coding/standard_tests/IOH/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOHMAX/IOHMAX.py](ATE/org/coding/standard_tests/IOHMAX/IOHMAX.py)
-
-- [ATE/org/coding/standard_tests/IOHMAX/__init__.py](ATE/org/coding/standard_tests/IOHMAX/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOL/IOL.py](ATE/org/coding/standard_tests/IOL/IOL.py)
-
-- [ATE/org/coding/standard_tests/IOL/__init__.py](ATE/org/coding/standard_tests/IOL/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOLMAX/IOLMAX.py](ATE/org/coding/standard_tests/IOLMAX/IOLMAX.py)
-
-- [ATE/org/coding/standard_tests/IOLMAX/__init__.py](ATE/org/coding/standard_tests/IOLMAX/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOS/IOS.py](ATE/org/coding/standard_tests/IOS/IOS.py)
-
-- [ATE/org/coding/standard_tests/IOS/__init__.py](ATE/org/coding/standard_tests/IOS/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOZ/IOZ.py](ATE/org/coding/standard_tests/IOZ/IOZ.py)
-
-- [ATE/org/coding/standard_tests/IOZ/__init__.py](ATE/org/coding/standard_tests/IOZ/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOZH/IOZH.py](ATE/org/coding/standard_tests/IOZH/IOZH.py)
-
-- [ATE/org/coding/standard_tests/IOZH/__init__.py](ATE/org/coding/standard_tests/IOZH/__init__.py)
-
-- [ATE/org/coding/standard_tests/IOZL/IOZL.py](ATE/org/coding/standard_tests/IOZL/IOZL.py)
-
-- [ATE/org/coding/standard_tests/IOZL/__init__.py](ATE/org/coding/standard_tests/IOZL/__init__.py)
-
-- [ATE/org/coding/standard_tests/TDR/TDR.py](ATE/org/coding/standard_tests/TDR/TDR.py)
-
-- [ATE/org/coding/standard_tests/TDR/__init__.py](ATE/org/coding/standard_tests/TDR/__init__.py)
-
-- [ATE/org/coding/standard_tests/UID/UID.py](ATE/org/coding/standard_tests/UID/UID.py)
-
-- [ATE/org/coding/standard_tests/UID/__init__.py](ATE/org/coding/standard_tests/UID/__init__.py)
-
-- [ATE/org/coding/standard_tests/VIH/VIH.py](ATE/org/coding/standard_tests/VIH/VIH.py)
-
-- [ATE/org/coding/standard_tests/VIH/__init__.py](ATE/org/coding/standard_tests/VIH/__init__.py)
-
-- [ATE/org/coding/standard_tests/VIL/VIL.py](ATE/org/coding/standard_tests/VIL/VIL.py)
-
-- [ATE/org/coding/standard_tests/VIL/__init__.py](ATE/org/coding/standard_tests/VIL/__init__.py)
-
-- [ATE/org/coding/standard_tests/VOH/VOH.py](ATE/org/coding/standard_tests/VOH/VOH.py)
-
-- [ATE/org/coding/standard_tests/VOH/__init__.py](ATE/org/coding/standard_tests/VOH/__init__.py)
-
-- [ATE/org/coding/standard_tests/VOL/VOL.py](ATE/org/coding/standard_tests/VOL/VOL.py)
-
-- [ATE/org/coding/standard_tests/VOL/__init__.py](ATE/org/coding/standard_tests/VOL/__init__.py)
-
 - [ATE/org/plugins/__init__.py](ATE/org/plugins/__init__.py)
 
 	34 : [complete the 'masksetStructure' once the UI is stabilized.](ATE/org/plugins/__init__.py#34)
-
-- [ATE/org/plugins/icsense/__init__.py](ATE/org/plugins/icsense/__init__.py)
-
-- [ATE/org/plugins/invensense/__init__.py](ATE/org/plugins/invensense/__init__.py)
-
-- [ATE/org/plugins/micronas/micronas.py](ATE/org/plugins/micronas/micronas.py)
-
-- [ATE/org/plugins/micronas/settings.py](ATE/org/plugins/micronas/settings.py)
-
-- [ATE/org/plugins/micronas/__init__.py](ATE/org/plugins/micronas/__init__.py)
-
-- [ATE/org/plugins/micronas/importers/__init__.py](ATE/org/plugins/micronas/importers/__init__.py)
-
-- [ATE/org/plugins/micronas/standard_tests/__init__.py](ATE/org/plugins/micronas/standard_tests/__init__.py)
-
-- [ATE/org/sequencers/DevelopmentSequencer.py](ATE/org/sequencers/DevelopmentSequencer.py)
-
-- [ATE/org/sequencers/FixedTemperatureSequencer.py](ATE/org/sequencers/FixedTemperatureSequencer.py)
 
 - [ATE/org/sequencers/Sequencers.py](ATE/org/sequencers/Sequencers.py)
 
@@ -922,96 +502,6 @@
 	65 : [verify that the test_class is a child from ATE.Testing.test](ATE/org/sequencers/Sequencers.py#65)
 
 	186 : [implement console progress feedback](ATE/org/sequencers/Sequencers.py#186)
-
-- [ATE/org/sequencers/VariableTemperatureSequencer.py](ATE/org/sequencers/VariableTemperatureSequencer.py)
-
-- [ATE/org/sequencers/__init__.py](ATE/org/sequencers/__init__.py)
-
-- [ATE/org/Templates/dunder_main.py](ATE/org/Templates/dunder_main.py)
-
-- [ATE/org/Templates/init_hardware.py](ATE/org/Templates/init_hardware.py)
-
-- [ATE/org/Templates/model_for_a_test.py](ATE/org/Templates/model_for_a_test.py)
-
-- [ATE/org/Templates/__init__.py](ATE/org/Templates/__init__.py)
-
-- [ATE/resources/__init__.py](ATE/resources/__init__.py)
-
-- [ATE/resources/icons/__init__.py](ATE/resources/icons/__init__.py)
-
-- [ATE/scripts/deflate.py](ATE/scripts/deflate.py)
-
-- [ATE/scripts/inflate.py](ATE/scripts/inflate.py)
-
-- [ATE/scripts/setup.py](ATE/scripts/setup.py)
-
-- [ATE/scripts/skeleton.py](ATE/scripts/skeleton.py)
-
-- [ATE/scripts/__init__.py](ATE/scripts/__init__.py)
-
-- [ATE/snippets/argskwargs.py](ATE/snippets/argskwargs.py)
-
-- [ATE/snippets/callable_attributes.py](ATE/snippets/callable_attributes.py)
-
-- [ATE/snippets/call_by_reference.py](ATE/snippets/call_by_reference.py)
-
-- [ATE/snippets/delegate.py](ATE/snippets/delegate.py)
-
-- [ATE/snippets/ItemBasedTable.py](ATE/snippets/ItemBasedTable.py)
-
-- [ATE/snippets/ModelBasedLists.py](ATE/snippets/ModelBasedLists.py)
-
-- [ATE/snippets/ModelBasedTable.py](ATE/snippets/ModelBasedTable.py)
-
-- [ATE/snippets/ModelBasedTree.py](ATE/snippets/ModelBasedTree.py)
-
-- [ATE/snippets/packunpack.py](ATE/snippets/packunpack.py)
-
-- [ATE/snippets/PandasModelBasedTable.py](ATE/snippets/PandasModelBasedTable.py)
-
-- [ATE/snippets/platform.py](ATE/snippets/platform.py)
-
-- [ATE/snippets/PrivatelyManagedAttributes.py](ATE/snippets/PrivatelyManagedAttributes.py)
-
-- [ATE/snippets/PyQt5cleanClose.py](ATE/snippets/PyQt5cleanClose.py)
-
-- [ATE/snippets/pythonversion.py](ATE/snippets/pythonversion.py)
-
-- [ATE/snippets/QComboBox.py](ATE/snippets/QComboBox.py)
-
-- [ATE/snippets/QFileDialog.py](ATE/snippets/QFileDialog.py)
-
-- [ATE/snippets/QListWidget.py](ATE/snippets/QListWidget.py)
-
-- [ATE/snippets/QtConsole.py](ATE/snippets/QtConsole.py)
-
-- [ATE/snippets/regex.py](ATE/snippets/regex.py)
-
-- [ATE/snippets/strVSbytes.py](ATE/snippets/strVSbytes.py)
-
-- [ATE/snippets/TableWidgetItem.py](ATE/snippets/TableWidgetItem.py)
-
-- [ATE/snippets/toolbar.py](ATE/snippets/toolbar.py)
-
-- [ATE/snippets/uC.py](ATE/snippets/uC.py)
-
-- [ATE/snippets/__init__.py](ATE/snippets/__init__.py)
-
-- [ATE/snippets/MockUp/mockup.py](ATE/snippets/MockUp/mockup.py)
-
-- [ATE/snippets/MockUp/__init__.py](ATE/snippets/MockUp/__init__.py)
-
-- [ATE/snippets/SceenRecording/QScreen.py](ATE/snippets/SceenRecording/QScreen.py)
-
-- [ATE/snippets/SceenRecording/ScreenRecorder1.py](ATE/snippets/SceenRecording/ScreenRecorder1.py)
-
-- [ATE/snippets/SceenRecording/ScreenRecorder2.py](ATE/snippets/SceenRecording/ScreenRecorder2.py)
-
-- [ATE/snippets/SceenRecording/ScreenRecorder3.py](ATE/snippets/SceenRecording/ScreenRecorder3.py)
-
-- [ATE/snippets/SceenRecording/screenshot1.py](ATE/snippets/SceenRecording/screenshot1.py)
-
-- [ATE/snippets/SceenRecording/screenshot2.py](ATE/snippets/SceenRecording/screenshot2.py)
 
 - [ATE/testers/__init__.py](ATE/testers/__init__.py)
 
@@ -1025,23 +515,9 @@
 
 	458 : [Implement](ATE/utils/DT.py#458)
 
-- [ATE/utils/hashing.py](ATE/utils/hashing.py)
-
-- [ATE/utils/magicnumber.py](ATE/utils/magicnumber.py)
-
-- [ATE/utils/varia.py](ATE/utils/varia.py)
-
-- [ATE/utils/__init__.py](ATE/utils/__init__.py)
-
-- [scripts/accounting.py](scripts/accounting.py)
-
-- [scripts/clean.py](scripts/clean.py)
-
 - [scripts/list_GPL_lines.py](scripts/list_GPL_lines.py)
 
 	29 : [probably there is a unicode thing inside, need to strip it out](scripts/list_GPL_lines.py#29)
-
-- [scripts/list_TODO_files.py](scripts/list_TODO_files.py)
 
 - [scripts/list_TODO_items.py](scripts/list_TODO_items.py)
 
@@ -1069,47 +545,11 @@
 
 	42 : [')[1].strip()](scripts/readme.py#42)
 
-- [scripts/__init__.py](scripts/__init__.py)
-
-- [SCT/__init__.py](SCT/__init__.py)
-
-- [SCT/elements/__init__.py](SCT/elements/__init__.py)
-
-- [SCT/elements/logical/AD8330.py](SCT/elements/logical/AD8330.py)
-
-- [SCT/elements/logical/ADG5206.py](SCT/elements/logical/ADG5206.py)
-
-- [SCT/elements/logical/ARTIX.py](SCT/elements/logical/ARTIX.py)
-
-- [SCT/elements/logical/Jupiter.py](SCT/elements/logical/Jupiter.py)
-
-- [SCT/elements/logical/pedistal.py](SCT/elements/logical/pedistal.py)
-
-- [SCT/elements/logical/Saturn.py](SCT/elements/logical/Saturn.py)
-
-- [SCT/elements/logical/__init__.py](SCT/elements/logical/__init__.py)
-
-- [SCT/elements/physical/AD5372.py](SCT/elements/physical/AD5372.py)
-
-- [SCT/elements/physical/AD7766.py](SCT/elements/physical/AD7766.py)
-
-- [SCT/elements/physical/AD7770.py](SCT/elements/physical/AD7770.py)
-
-- [SCT/elements/physical/AD9963.py](SCT/elements/physical/AD9963.py)
-
-- [SCT/elements/physical/ADG5419.py](SCT/elements/physical/ADG5419.py)
-
 - [SCT/elements/physical/ElevATE.py](SCT/elements/physical/ElevATE.py)
 
 	83 : [think about this ... can't we support posetive values ?!?](SCT/elements/physical/ElevATE.py#83)
 
 	92 : [some checking ...](SCT/elements/physical/ElevATE.py#92)
-
-- [SCT/elements/physical/GPIO.py](SCT/elements/physical/GPIO.py)
-
-- [SCT/elements/physical/MAX5459.py](SCT/elements/physical/MAX5459.py)
-
-- [SCT/elements/physical/Power.py](SCT/elements/physical/Power.py)
 
 - [SCT/elements/physical/__init__.py](SCT/elements/physical/__init__.py)
 
@@ -1120,34 +560,6 @@
 	41 : [implement](SCT/elements/physical/__init__.py#41)
 
 	383 : [think about this ... can't we support positive values ?!?](SCT/elements/physical/__init__.py#383)
-
-- [SCT/instruments/AWG.py](SCT/instruments/AWG.py)
-
-- [SCT/instruments/DIG.py](SCT/instruments/DIG.py)
-
-- [SCT/instruments/ID.py](SCT/instruments/ID.py)
-
-- [SCT/instruments/PEM.py](SCT/instruments/PEM.py)
-
-- [SCT/instruments/References.py](SCT/instruments/References.py)
-
-- [SCT/instruments/RLC.py](SCT/instruments/RLC.py)
-
-- [SCT/instruments/__init__.py](SCT/instruments/__init__.py)
-
-- [SCT/scripts/setup.py](SCT/scripts/setup.py)
-
-- [SCT/scripts/__init__.py](SCT/scripts/__init__.py)
-
-- [SCT/snippets/__init__.py](SCT/snippets/__init__.py)
-
-- [SCT/utils/config.py](SCT/utils/config.py)
-
-- [SCT/utils/debugger.py](SCT/utils/debugger.py)
-
-- [SCT/utils/finders.py](SCT/utils/finders.py)
-
-- [SCT/utils/__init__.py](SCT/utils/__init__.py)
 
 - [SpyderMockUp/SpyderMockUp.py](SpyderMockUp/SpyderMockUp.py)
 
@@ -1177,8 +589,6 @@
 
 	1246 : [look in the directories](SpyderMockUp/SpyderMockUp.py#1246)
 
-- [SpyderMockUp/__init__.py](SpyderMockUp/__init__.py)
-
 - [SpyderMockUp/ScreenCasting/QtScreenCast.py](SpyderMockUp/ScreenCasting/QtScreenCast.py)
 
 	70 : [check on mac if this works](SpyderMockUp/ScreenCasting/QtScreenCast.py#70)
@@ -1191,13 +601,5 @@
 
 	384 : [how to move the](SpyderMockUp/ScreenCasting/QtScreenCast.py#384)
 
-- [SpyderMockUp/ScreenCasting/snippets/screenchange.py](SpyderMockUp/ScreenCasting/snippets/screenchange.py)
-
-- [SpyderMockUp/ScreenCasting/snippets/splash.py](SpyderMockUp/ScreenCasting/snippets/splash.py)
-
-- [SpyderMockUp/ScreenCasting/snippets/splash_example.py](SpyderMockUp/ScreenCasting/snippets/splash_example.py)
-
-- [SpyderMockUp/ScreenCasting/snippets/__init__.py](SpyderMockUp/ScreenCasting/snippets/__init__.py)
-
 ---
-auto generated : Wednesday, April 29 2020 @ 13:16:39 (Q2 20183)
+auto generated : Wednesday, April 29 2020 @ 13:18:28 (Q2 20183)
