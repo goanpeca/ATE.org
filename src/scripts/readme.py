@@ -49,8 +49,7 @@ if __name__ == '__main__':
 
 
     with open(root_readme, 'w') as fd:
-        fd.write("auto generated :\n\n")
-        fd.write("TODO.md files :\n\n")
+        fd.write("# `TODO.md` files :\n\n")
         for todo_file in items['TODO-Files']:
             File = todo_file.replace(os.path.sep, '/')
             fd.write(f"- [{File}]({File})\n")
