@@ -12,35 +12,43 @@ import os
 
 if __name__ == '__main__':
     source_root = os.path.split(os.path.dirname(__file__))[0]
-    issues = {'TODO.md' : [],
-              'README.md' : [],
-              'TODO' : []}
+    root_readme = os.path.join(source_root, 'README.md')
+    items = {'TODO-Files' : [],
+              'README-Files' : [],
+              'TODO-Items' : []}
     
     for root, _, files in os.walk(source_root):
         for File in files:
             if File == 'TODO.md':
-                pass
-                # issues['TODO.md'] = []
-                
+                items['TODO-Files'].append(os.path.join(root, File).replace(source_root+os.path.sep, ''))
             if File == 'README.md':
-                issues['README.md'].append(os.path.join(root, File))
+                items['README-Files'].append(os.path.join(root, File).replace(source_root+os.path.sep, ''))
             if File.upper().endswith('.PY'):
-                
-                
-            if File.upper().endswith('.PY'):
-                report = {}
                 with open(os.path.join(root, File), 'r') as fd:
                     try:
                         content = fd.readlines()
                     except:
                         print(f"something strange going on in file {os.path.join(root, File)}")
                         #TODO: probably there is a unicode thing inside, need to strip it out
-                for line_nr, line_contents in enumerate(content):
-                    if '#TODO:' in line_contents:
-                        report[line_nr] = line_contents.split('#TODO:')[1].strip()
-                if report != {}:
-                    print(f"{os.path.join(root, File)} :")
-                    for line_nr in report:
-                        print(f"   {line_nr} : {report[line_nr]}")
-                
+                    items_in_file = {}
+                    for line_nr, line_contents in enumerate(content):
+                        if 'TODO:' in line_contents:
+                            items_in_file[line_nr] = line_contents.split('TODO:')[1].strip()
+                        if 'ToDo:' in line_contents:
+                            items_in_file[line_nr] = line_contents.split('ToDo:')[1].strip()
+                        if 'todo:' in line_contents:
+                            items_in_file[line_nr] = line_contents.split('todo:')[1].strip()
 
+                items['TODO-Items'].append((os.path.join(root, File).replace(source_root+os.path.sep, ''), items_in_file))
+
+    if os.path.exists(root_readme):
+        os.remove(root_readme)
+
+    with open(root_readme, 'w') as fd:
+        fd.write("TODO.md files :\n")
+        for todo_file in items['TODO-Files']:
+            fd.write(f"[{todo_file}]({todo_file})\n")
+        
+        
+        
+        
