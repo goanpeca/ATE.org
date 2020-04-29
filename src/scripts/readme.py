@@ -10,13 +10,16 @@ This script assembles all TODO's and README's into a top level README.md
 
 import os
 
+from ATE.utils.DT import DT
+
 if __name__ == '__main__':
     source_root = os.path.split(os.path.dirname(__file__))[0]
     root_readme = os.path.join(source_root, 'README.md')
     items = {'TODO-Files' : [],
               'README-Files' : [],
               'TODO-Items' : []}
-    
+    now = DT()
+
     for root, _, files in os.walk(source_root):
         for File in files:
             if File == 'TODO.md':
@@ -44,13 +47,17 @@ if __name__ == '__main__':
     if os.path.exists(root_readme):
         os.remove(root_readme)
 
+
     with open(root_readme, 'w') as fd:
         fd.write("auto generated :\n\n")
         fd.write("TODO.md files :\n\n")
         for todo_file in items['TODO-Files']:
             File = todo_file.replace(os.path.sep, '/')
-            fd.write(f"- [{todo_file}]({todo_file})\n")
+            fd.write(f"- [{File}]({File})\n")
         
         
+        
+        fd.write('---\n')
+        fd.write(f'auto generated : {now}')
         
         
