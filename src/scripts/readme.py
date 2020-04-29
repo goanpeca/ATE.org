@@ -66,7 +66,7 @@ if __name__ == '__main__':
             File = code_file.replace(os.path.sep, '/')
             fd.write(f"- [{File}]({File})\n\n")
             for line_nr in itemdict:
-                fd.write(f"\t{line_nr} : [{itemdict[line_nr]}]({File}#{line_nr})\n\n")
+                fd.write(f"\t{line_nr} : [{itemdict[line_nr]}]({File}#L{line_nr})\n\n")
             
             
             
