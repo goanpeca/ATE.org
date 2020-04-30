@@ -2,9 +2,6 @@
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
-from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
 
 quali_flow_name = "qualification_thb_flow"
 quali_flow_listentry_name = "THB"
@@ -35,14 +32,3 @@ def edit_item(storage, product: str):
     dialog = THBWizard(data, storage)
     dialog.exec_()
     del(dialog)
-
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    dialog = THBWizard(dict(), None)
-    dialog.show()
-    sys.exit(app.exec_())

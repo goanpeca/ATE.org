@@ -20,12 +20,13 @@ class MainWindowMock():
 
 def test_create_parent_child_node(mocker):
     mocker.patch.object(MasksetItem, '_get_children_names', return_value=['abs', 'sba'])
-
     mocker.patch.object(MasksetItemChild, '_get_children_names', return_value=[])
+    mocker.patch.object(MasksetItemChild, '_get_dependant_objects')
+    mocker.patch.object(MasksetItemChild, '_get_definition')
+    mocker.patch.object(MasksetItemChild, 'is_enabled')
 
-    main = MainWindowMock()
     parent_name = "maskset"
-    maskset = MasksetItem(main, parent_name)
+    maskset = MasksetItem(None, parent_name)
     assert parent_name == maskset.text()
     assert len(maskset.child_set) == 2
     assert maskset.rowCount() == 2

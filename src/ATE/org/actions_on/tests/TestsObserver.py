@@ -13,13 +13,15 @@ class EventHandler(EventHandlerBase):
             return
 
         base_name = os.path.basename(path)
-        self.section_root.add_file_item(base_name, os.path.dirname(path))
+        if self.section_root.get_child(base_name) is None:
+            self.section_root.add_file_item(base_name, os.path.dirname(path))
 
     def _on_deleted(self, path):
         if not self._is_python_file(path):
             return
 
         file_name = os.path.basename(path)
+
         self.section_root.remove_child(os.path.splitext(file_name)[0])
 
     def _on_moved(self, path, dest_path):

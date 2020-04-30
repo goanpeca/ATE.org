@@ -37,9 +37,14 @@ class TreeModel(QtGui.QStandardItemModel):
         self._connect_action_handler()
         self.update(self.hardware, self.base, self.target)
 
+    @QtCore.pyqtSlot(int)
     def on_db_change(self, table_id):
         if table_id == TableIds.Flow():
             self.flows.update()
+
+        if table_id == TableIds.Die() or \
+           table_id == TableIds.Device():
+            self.project_info.update_target.emit()
 
         # Note: This will basically rebuild the complete "definitions"
         # subtree. We might get performance problems here, if we ever
@@ -57,60 +62,62 @@ class TreeModel(QtGui.QStandardItemModel):
     def _connect_action_handler(self):
         self.itemChanged.connect(lambda item: self._update(item, self.hardware, self.base, self.target))
         self.project_info.database_changed.connect(self.on_db_change)
-        self.project_info.active_product_changed.connect(self.apply_toolbar_change)
-        self.project_info.active_base_changed.connect(self.apply_toolbar_change)
-        self.project_info.active_hardware_changed.connect(self.apply_toolbar_change)
+        self.project_info.toolbar_changed.connect(self.apply_toolbar_change)
 
-    def apply_toolbar_change(self):
-        self.base = self.project_info.activeBase
-        self.target = self.project_info.activeProduct
-        self.hardware = self.project_info.activeHardware
+    @QtCore.pyqtSlot(str, str, str)
+    def apply_toolbar_change(self, hardware, base, target):
+        self.hardware = hardware
+        self.base = base
+        self.target = target
 
         self.flows.update()
         self._update_tests()
         self.update(self.hardware, self.base, self.target)
 
     def _setup(self):
-        self.root_item = SectionItem(self.project_info, "project_name")
+        project_name = self.project_info.project_name
+        if project_name is None or '':
+            project_name = "No Project"
+
+        self.root_item = SectionItem(self.project_info, project_name)
         self._setup_definitions()
         self._setup_documentations()
         self._setup_flow_items(self.project_info)
         self._setup_tests()
         self.appendRow(self.root_item)
 
-    def _setup_flow_items(self, parent):
-        self.flows = FlowItem.FlowItem(parent, "flows")
-        self.production_flows = BaseItem(self.flows, "production")
+    def _setup_flow_items(self, project_info):
+        self.flows = FlowItem.FlowItem(project_info, "flows")
+        self.production_flows = FlowItem.SimpleFlowItem(project_info, "production")
         self.flows.appendRow(self.production_flows)
-        self.engineering_flows = BaseItem(self.flows, "engineering")
+        self.engineering_flows = FlowItem.SimpleFlowItem(project_info, "engineering")
         self.flows.appendRow(self.engineering_flows)
-        self.validation_flows = BaseItem(self.flows, "validation")
+        self.validation_flows = FlowItem.SimpleFlowItem(project_info, "validation")
         self.flows.appendRow(self.validation_flows)
-        self.characterisation_flows = BaseItem(self.flows, "characterisation")
+        self.characterisation_flows = FlowItem.SimpleFlowItem(project_info, "characterisation")
         self.flows.appendRow(self.characterisation_flows)
 
-        self.quali_flows = FlowItem.FlowItem(self.project_info, "qualification", self.flows)
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "ZHM", "Zero Hour Measurements", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "EC", "Endurance Cycling", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "ABSMAX", "Absolute Maximum Ratings", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "XRAY", "", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "LI", "Lead Integrity", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "RSH", "Resistance to Solder Heat", None))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(parent, "SA", "SolderAbility", None))
+        self.quali_flows = FlowItem.FlowItem(project_info, "qualification", self.flows)
+        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ZHM", "Zero Hour Measurements"))
+        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ABSMAX", "Absolute Maximum Ratings"))
 
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.ESD.esdwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.HTOL.htolwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.HTSL.htslwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.DR.drwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.RSH.rshwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.AC.acwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.EC.ecwizard"))
 
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.HAST.hastwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.ELFR.elfrwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.LU.luwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.TC.tcwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.THB.thbwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(parent, "ATE.org.actions_on.flow.LU.luwizard"))
+        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "RSH", "Resistance to Solder Heat"))
+
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ESD.esdwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTOL.htolwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTSL.htslwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.DR.drwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.RSH.rshwizard"))
+        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.AC.acwizard"))
+
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HAST.hastwizard"))
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ELFR.elfrwizard"))
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.LU.luwizard"))
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.TC.tcwizard"))
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.THB.thbwizard"))
+        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.LU.luwizard"))
 
         self.flows.appendRow(self.quali_flows)
         self.root_item.appendRow(self.flows)
@@ -207,6 +214,17 @@ class TreeModel(QtGui.QStandardItemModel):
 
     def _update_tests(self):
         self.tests_section.update()
+
+    def set_tree_items_state(self, name, dependency_list, enabled):
+        for key, elements in dependency_list.items():
+            if key == 'devices' or \
+               key == 'dies' or \
+               key == 'products':
+                self.definition_section.get_child(key)._set_node_state(elements, enabled)
+            if key == 'tests':
+                self.tests_section._set_node_state(elements, enabled)
+            if key == 'programs':
+                pass
 
 
 # ToDo: Move this class to its own file.

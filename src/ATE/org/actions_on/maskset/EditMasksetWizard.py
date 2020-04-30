@@ -12,11 +12,10 @@ UI_FILE = "MasksetWizard.ui"
 
 class EditMasksetWizard(NewMasksetWizard):
     def __init__(self, project_info, maskset_name):
-        super().__init__(project_info)
+        super().__init__(project_info, read_only=True)
 
-        self.edit_flag = True
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-        ViewMasksetSettings._show(self, self.project_info.get_maskset_definition(maskset_name), maskset_name)
+        ViewMasksetSettings._setup_dialog_fields(self, self.project_info.get_maskset_definition(maskset_name), maskset_name)
         self._validate_table()
 
     def OKButtonPressed(self):

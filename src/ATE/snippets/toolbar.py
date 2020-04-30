@@ -56,7 +56,7 @@ class Menu(QtWidgets.QMainWindow):
 
         settings_action = QtWidgets.QAction(qta.icon('mdi.wrench', color='orange'), "Settings", self)
         settings_action.setStatusTip("Settings")
-        settings_action.triggered.connect(self.onSettings)
+        settings_action.triggered.connect(self.on_settings)
         settings_action.setCheckable(True)
         toolbar.addAction(settings_action)
 
@@ -67,7 +67,7 @@ class Menu(QtWidgets.QMainWindow):
     def onRun(self):
         print("run")
 
-    def onSettings(self):
+    def on_settings(self):
         print("settings")
 
 if __name__ == '__main__':

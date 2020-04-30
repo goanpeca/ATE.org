@@ -58,6 +58,7 @@ class NewProgramWizard(QtWidgets.QDialog):
         self._load_ui()
         self._setup()
         self._view()
+        self.result = None
         self._connect_event_handler()
 
     def __call__(self):
@@ -111,19 +112,19 @@ class NewProgramWizard(QtWidgets.QDialog):
         self.RightButton.setToolTip("select")
 
         from ATE.org.actions_on.program.Actions import ACTIONS
-        icon_up = QtGui.QIcon(ACTIONS['arrow-up'])
+        icon_up = QtGui.QIcon(ACTIONS['arrow-up'][0])
         self.UpButton.setIcon(icon_up)
         self.UpButton.setText("")
 
-        icon_down = QtGui.QIcon(ACTIONS['arrow-down'])
+        icon_down = QtGui.QIcon(ACTIONS['arrow-down'][0])
         self.DownButton.setIcon(icon_down)
         self.DownButton.setText("")
         
-        icon_left = QtGui.QIcon(ACTIONS['arrow-left'])
+        icon_left = QtGui.QIcon(ACTIONS['arrow-left'][0])
         self.LeftButton.setIcon(icon_left)
         self.LeftButton.setText("")
 
-        icon_right = QtGui.QIcon(ACTIONS['arrow-right'])
+        icon_right = QtGui.QIcon(ACTIONS['arrow-right'][0])
         self.RightButton.setIcon(icon_right)
         self.RightButton.setText("")
 
@@ -233,6 +234,11 @@ class NewProgramWizard(QtWidgets.QDialog):
     def _save_configuration(self):
         # self.parent.project_info.add_program()  # store configuration in database
         # generate main program
+
+        #To Do: The Testprogram name needs to be set in order to
+        # attach the program to a node. Replace this, as soon as 
+        # the rest works!
+        self.result = "ProgramName"
         self.accept()
 
     def _cancel(self):
@@ -371,10 +377,12 @@ class NewProgramWizard(QtWidgets.QDialog):
         self.TempVal.setText(str(self.temperature["Default"]))
 
 
-def new_program_dialog(parent):
+def new_program_dialog(parent) -> str:
     newProgramWizard = NewProgramWizard(parent)
     newProgramWizard.exec_()
+    result = newProgramWizard.result
     del newProgramWizard
+    return result
 
 
 if __name__ == '__main__':

@@ -54,28 +54,26 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
         self.Feedback.setStyleSheet('color: orange')
 
         self.OKButton.setEnabled(False)
-
         self.CancelButton.setEnabled(True)
-
         self.blockSignals(False)
 
     def _connect_event_handler(self):
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.Parallelism.currentTextChanged.connect(self.ParallelismChanged)
-        self.MultiSiteDIB.textChanged.connect(self.verify)
-        self.SingleSiteDIB.textChanged.connect(self.verify)
-        self.ProbeCard.textChanged.connect(self.verify)
-        self.SingleSiteLoadboard.textChanged.connect(self.verify)
-        self.MultiSiteLoadboard.textChanged.connect(self.verify)
+        self.MultiSiteDIB.textChanged.connect(self._verify)
+        self.SingleSiteDIB.textChanged.connect(self._verify)
+        self.ProbeCard.textChanged.connect(self._verify)
+        self.SingleSiteLoadboard.textChanged.connect(self._verify)
+        self.MultiSiteLoadboard.textChanged.connect(self._verify)
 
     def _load_ui(self):
-        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)), UI_FILE)
+        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\\{UI_FILE}"
         if not os.path.exists(my_ui):
             raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
 
-    def verify(self):
+    def _verify(self):
         if self.parallelism == 1:
             SingleSiteDIB = self.SingleSiteDIB.text()
             if is_valid_pcb_name(SingleSiteDIB):
@@ -119,8 +117,8 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
             else:
                 self.Feedback.setText("invalid Singel Site LoadBoard Name")
 
-        if self.Feedback.text()=="":
-            if SingleSiteLoadboardName!="":
+        if self.Feedback.text() == "":
+            if SingleSiteLoadboardName != "":
                 self.OKButton.setEnabled(True)
             else:
                 self.OKButton.setEnabled(False)
@@ -135,17 +133,17 @@ class NewHardwaresetupWizard(QtWidgets.QDialog):
             self.MultiSiteDIB.setEnabled(True)
         self.update()
 
-    def _get_actual_definition(self):
-        return {'SingleSiteLoadboard' : self.SingleSiteLoadboard.text(),
-                'SingleSiteDIB' : self.SingleSiteDIB.text(),
-                'MultiSiteLoadboard' : self.MultiSiteLoadboard.text(),
-                'MultiSiteDIB' : self.MultiSiteDIB.text(),
-                'ProbeCard' : self.ProbeCard.text(),
-                'Parallelism' : self.parallelism}
+    def _get_current_configuration(self):
+        return {'SingleSiteLoadboard': self.SingleSiteLoadboard.text(),
+                'SingleSiteDIB': self.SingleSiteDIB.text(),
+                'MultiSiteLoadboard': self.MultiSiteLoadboard.text(),
+                'MultiSiteDIB': self.MultiSiteDIB.text(),
+                'ProbeCard': self.ProbeCard.text(),
+                'Parallelism': self.parallelism}
 
     def OKButtonPressed(self):
         name = self.HardwareSetup.text()
-        new_name = self.project_info.add_hardware(self._get_actual_definition())
+        new_name = self.project_info.add_hardware(self._get_current_configuration())
         if name != new_name:
             raise Exception(f"Woops, something wrong with the name !!! '{name}'<->'{new_name}'")
 

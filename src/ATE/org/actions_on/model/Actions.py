@@ -18,4 +18,6 @@ ACTIONS = {MenuActionTypes.Edit(): (qta.icon('mdi.lead-pencil', color='orange'),
            MenuActionTypes.AddStandardTest(): (qta.icon('mdi.plus-box-outline', color='orange'), "Add Standard Test"),
            MenuActionTypes.Rename(): (qta.icon('mdi.file-edit', color='orange'), "Rename"),
            MenuActionTypes.Move(): (qta.icon('mdi.file-move', color='orange'), "Move"),
-           MenuActionTypes.DeleteFile(): (qta.icon('mdi.file-remove', color='orange'), "Remove")}
+           MenuActionTypes.DeleteFile(): (qta.icon('mdi.file-remove', color='orange'), "Remove"),
+           MenuActionTypes.Obsolete(): (qta.icon('mdi.block-helper', color='orange'), "Obsolete"),
+           MenuActionTypes.Enable(): (qta.icon('mdi.check', color='orange'), "Activate")}

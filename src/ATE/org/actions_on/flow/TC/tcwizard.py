@@ -2,8 +2,7 @@
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
-from ATE.org.actions_on.flow.qualificationwizardbase import textboxparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets
 
 
 quali_flow_name = "qualification_tc_flow"

@@ -13,12 +13,10 @@ class BaseItem(QtGui.QStandardItem):
         self.hidden_children = []
         self._is_hidden = False
 
-        self.menu = QtWidgets.QMenu()
-        self._init_menu()
-
         self._append_children()
 
-    def _init_menu(self):
+    def exec_context_menu(self):
+        self.menu = QtWidgets.QMenu()
         from ATE.org.actions_on.model.Actions import ACTIONS
 
         for action_type in self._get_menu_items():
@@ -29,13 +27,6 @@ class BaseItem(QtGui.QStandardItem):
             action = ACTIONS[action_type]
             action = self.menu.addAction(action[0], action[1])
             action.triggered.connect(getattr(self, action_type))
-
-    # TODO: at some point we are not going to need parameters any more, remove them
-    def exec_context_menu(self, active_hardware, active_base, active_target):
-        # dirty hack
-        self.active_hardware = active_hardware
-        self.base = active_base
-        self.target = active_target
 
         if self.is_hidden():
             return
@@ -50,6 +41,9 @@ class BaseItem(QtGui.QStandardItem):
         return self.rowCount()
 
     def new_item(self):
+        pass
+
+    def trace_item(self):
         pass
 
     def edit_item(self):
@@ -112,7 +106,19 @@ class BaseItem(QtGui.QStandardItem):
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def has_children(self):
-        return self.rowCount() > 0
+        # return self.rowCount() > 0
+        count = 0
+        for child in self._get_children_names():
+            item = self.get_child(child)
+            if item is None:
+                continue
+
+            # if not item.is_enabled():
+            #     continue
+
+            count += 1
+
+        return count > 0
 
     def is_hidden(self):
         return self._is_hidden
@@ -128,3 +134,17 @@ class BaseItem(QtGui.QStandardItem):
     def remove_child(self, name):
         child_item = self.get_child(name)
         self.removeRow(child_item.row())
+
+    def _set_node_state(self, dependency_list, enabled):
+        for index in range(self.rowCount()):
+            item = self.child(index)
+            if item.text() not in dependency_list:
+                continue
+
+            item._set_state(enabled)
+
+    def _append_children(self):
+        children = self._get_children_names()
+        for child in children:
+            child_item = self._create_child(child, self)
+            self.appendRow(child_item)

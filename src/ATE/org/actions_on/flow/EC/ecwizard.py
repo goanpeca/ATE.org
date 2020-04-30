@@ -5,20 +5,19 @@ from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 
 
-quali_flow_name = "qualification_HTOL_flow"
-quali_flow_listentry_name = "HTOL"
-quali_flow_tooltip = "High Temperature Operating Life"
+quali_flow_name = "qualification_ec_flow"
+quali_flow_listentry_name = "EC"
+quali_flow_tooltip = "Endurance Cylcing"
 
 
-class HTOLWizard(wizardbase.wizardbase):
+class ECWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
         return [writeoncetextparam.WriteOnceTextParam("name"),
-                intparam.IntParam("Temperature (°C)", 0, 0, 200),
-                intparam.IntParam("Length (hours)", 0, 0, 10000),
-                intparam.IntParam("Testwindow (hours)", 0, 0, 500),
-                intparam.IntParam("Vdd (V)", 12, 0, 240)]
+                intparam.IntParam("Cylces", 0, 0, 1000),
+                intparam.IntParam("Temperature (°C)", 0, 0, 200)
+                ]
 
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
@@ -30,19 +29,19 @@ class HTOLWizard(wizardbase.wizardbase):
 
 
 def new_item(storage, product: str):
-    dialog = HTOLWizard({"product": product}, storage)
+    dialog = ECWizard({"product": product}, storage)
     dialog.exec_()
     del(dialog)
 
 
 def edit_item(storage, data):
-    dialog = HTOLWizard(data, storage)
+    dialog = ECWizard(data, storage)
     dialog.exec_()
     del(dialog)
 
 
 def view_item(storage, data):
-    dialog = HTOLWizard(data, storage)
+    dialog = ECWizard(data, storage)
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)

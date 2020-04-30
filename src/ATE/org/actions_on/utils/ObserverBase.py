@@ -10,12 +10,12 @@ from watchdog.events import FileDeletedEvent, DirDeletedEvent
 
 
 class EventHandlerBase(PatternMatchingEventHandler, QtCore.QObject):
-    file_created = QtCore.pyqtSignal(['QString'])
-    dir_created = QtCore.pyqtSignal(['QString'])
-    deleted = QtCore.pyqtSignal(['QString'])
-    moved = QtCore.pyqtSignal(['QString', 'QString'])
-    file_modified = QtCore.pyqtSignal(['QString'])
-    dir_modified = QtCore.pyqtSignal(['QString'])
+    file_created = QtCore.pyqtSignal(str)
+    dir_created = QtCore.pyqtSignal(str)
+    deleted = QtCore.pyqtSignal(str)
+    moved = QtCore.pyqtSignal(str, str)
+    file_modified = QtCore.pyqtSignal(str)
+    dir_modified = QtCore.pyqtSignal(str)
 
     def __init__(self, section_root):
         super().__init__()

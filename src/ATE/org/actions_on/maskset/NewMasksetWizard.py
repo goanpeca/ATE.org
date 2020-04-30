@@ -20,21 +20,23 @@ standard_scribe = 100 # um
 
 
 class NewMasksetWizard(QtWidgets.QDialog):
-    def __init__(self, project_info):
+    def __init__(self, project_info, read_only=False):
         super().__init__()
+        self.prev_item = None
 
-        self.edit_flag = False
+        self.selected_cell = None
+        self.read_only = read_only
+        self.is_active = True
         self.project_info = project_info
         self._load_ui()
         self._setup()
         self._connect_event_handler()
 
     def _load_ui(self):
-        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
+        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\\{UI_FILE}"
         uic.loadUi(my_ui, self)
 
     def _setup(self):
-        ##  self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         from ATE.org.validation import valid_positive_integer_regex
@@ -50,42 +52,30 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.maskset_name_validator = QtGui.QRegExpValidator(rxMaskSetName, self)
 
     # maskset
-        self.masksetName.blockSignals(True)
         self.existing_masksets = self.project_info.get_masksets()
 
         self.masksetName.setText("")
         self.masksetName.setValidator(self.maskset_name_validator)
-        self.masksetName.blockSignals(False)
 
     # Type & Customer
-        self.Type.blockSignals(True)
         self.Type.setCurrentText('ASSP')
-        self.Type.blockSignals(False)
         self.customerLabel.setVisible(False)
-        self.customer.blockSignals(True)
         self.customer.setText('')
         self.customer.setVisible(False)
-        self.customer.blockSignals(False)
         self.customer.setValidator(self.maskset_name_validator)
 
     # wafer diameter
-        self.waferDiameter.blockSignals(True)
         self.waferDiameter.setCurrentIndex(self.waferDiameter.findText('200'))
-        self.waferDiameter.blockSignals(False)
-    
+
     # bondpads
-        self.bondpads.blockSignals(True)
         self.bondpads.setMinimum(2)
         self.bondpads.setMaximum(99)
         self.bondpads.setValue(2)
-        self.bondpads.blockSignals(False)
         self._set_row_elements(DEFAULT_ROW)
 
     # XY Flip Button
-        self.XYFlipButton.blockSignals(True)
         self.XYFlipButton.setText("")
         self.XYFlipButton.setIcon(qta.icon('mdi.arrow-up-down', color='white'))
-        self.XYFlipButton.blockSignals(False)
 
     # die size X
         NewMasksetWizard._setup_input_element(self.dieSizeX, "", self.positive_integer_validator)
@@ -110,7 +100,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if Flat - int(Flat) == 0:
             self.flat.setText(str(int(Flat)))
         else:
-            self.flat.setText(str(Flat))    
+            self.flat.setText(str(Flat))
 
     # bondpad table
         self.bondpadTable.setRowCount(self.bondpads.value())
@@ -118,6 +108,8 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.bondpadTable.customContextMenuRequested.connect(self._context_menu)
         self.bondpadTable.itemDoubleClicked.connect(self._double_click_handler)
         self.bondpadTable.itemClicked.connect(self._select_item)
+        self.bondpadTable.itemSelectionChanged.connect(self._table_clicked)
+
         self.pad_type = {PadType.Analog(): self.select_analog_pad_type,
                          PadType.Digital(): self.select_digital_pad_type,
                          PadType.Mixed(): self.select_mixed_pad_type,
@@ -149,14 +141,14 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.viewDieButton.setText("")
         self.viewDieButton.setIcon(qta.icon('mdi.eye-outline', color='white'))
         self.viewDieButton.clicked.connect(self.viewDie)
-        
+
     # import For
         companies = ['', 'Micronas', 'InvenSense', 'IC-Sense', '...']
         self.importFor.clear()
         self.importFor.addItems(companies)
-        self.importFor.setCurrentIndex(0) # empty string
+        self.importFor.setCurrentIndex(0)  # empty string
 
-    # feedback    
+    # feedback
         self.feedback.setText("")
         self.feedback.setStyleSheet('color: orange')
 
@@ -249,11 +241,22 @@ class NewMasksetWizard(QtWidgets.QDialog):
         else:
             self._create_checkable_cell(item)
 
+        self.selected_cell = item
+
+    def _table_clicked(self):
+        # update cell dispite no changes have been done
+        if self.selected_cell is None:
+            return
+
+        self._update_row(self.selected_cell.row())
+        self.selected_cell = None
+
     def _create_checkable_cell(self, item):
         column = item.column()
         row = item.row()
         # set cell widget to qlineEdit widget
         checkable_widget = QtWidgets.QLineEdit()
+        checkable_widget.setText(item.text())
 
         if column == PAD_NAME_COLUMN:
             checkable_widget.setValidator(self.maskset_name_validator)
@@ -274,7 +277,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if column == PAD_NAME_COLUMN:
             # name must be unique
             self._validate_name(checkable_widget, row, column=0)
-            if not self._check_if_name_defined_only_once(column=0):
+            if not self._is_defined_only_once(column=0):
                 item = self.bondpadTable.item(row, 0)
                 self.feedback.setText(f'name: {item.text()} has already been used')
                 item.setText('')
@@ -290,8 +293,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
             success = self._validate_pads_size_references(checkable_widget, row, column)
 
         self._update_row(row)
-        
-        
+
         if success:
             self.feedback.setText('')
             self._validate_table(row)
@@ -299,7 +301,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
     def _handle_pos_cols(self, checkable_widget, row, column):
         success = True
         if column == PAD_POS_X_COLUMN:
-            success =  self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeX.text())
+            success = self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeX.text())
 
         if column == PAD_POS_Y_COLUMN:
             success = self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeY.text())
@@ -307,15 +309,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if not success:
             checkable_widget.clear()
 
-        # if not self._check_if_pos_defined_only_once():  # row also
-        #     item_x = self.bondpadTable.item(row, PAD_POS_X_COLUMN)
-        #     item_y = self.bondpadTable.item(row, PAD_POS_Y_COLUMN)
-        #     self.feedback.setText(f'Positions x = "{item_x.text()}"  and y = "{item_y.text()} are already covered')
-        #     item_x.setText('')
-        #     item_y.setText('')
-        #     return False
-        #TODO: this logic is defective, disabled for now, need to be re-done.
-        
         return success
 
     def _check_if_pos_defined_only_once(self):
@@ -332,7 +325,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
             elements.append(self.bondpadTable.item(row, i).text())
 
         self.bondpadTable.removeRow(row)
-        
         self.bondpadTable.insertRow(row)
         self._set_cells_content(row, elements)
 
@@ -350,7 +342,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
     def _select_item(self, item):
         if not self.is_table_enabled:
             return
-
         item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     @property
@@ -364,12 +355,14 @@ class NewMasksetWizard(QtWidgets.QDialog):
     def table_item(self, row, column):
         return self.bondpadTable.item(row, column)
 
-    def _check_if_name_defined_only_once(self, column):
+    def _is_defined_only_once(self, column):
         pos_list = []
         for r in range(self.rows):
             pos_list.append(self.table_item(r, column).text())
 
-        return len(set(pos_list)) == len(pos_list)
+        availabe_items = [x for x in pos_list if x]
+
+        return len(set(availabe_items)) == len(availabe_items)
 
     def _validate_name(self, checkable_widget, row, column=0):
         self.bondpadTable.item(row, column).setText(str(checkable_widget.text()))
@@ -383,13 +376,13 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if pad_size is None:
             self.feedback.setText("pad size is not defined")
             return False
-        
+
         if checkable_widget.text() == '':
             self.feedback.setText("no input value")
             return False
 
         pad_pos = int(checkable_widget.text())
-        pad_size = int(pad_size)/2
+        pad_size = int(pad_size) / 2
         die_size = int(die_size)
         if not pad_pos + pad_size < die_size:
             self.feedback.setText(f"rule (pos + size < diesize) does not hold -> ({pad_pos} + {pad_size} < {die_size})")
@@ -442,6 +435,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
     def _connect_event_handler(self):
         self.masksetName.textChanged.connect(self.nameChanged)
+
         self.Type.currentTextChanged.connect(self.typeChanged)
         self.customer.textChanged.connect(self.customerChanged)
 
@@ -466,7 +460,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
 
-
     def nameChanged(self, MaskSetName):
         self.validate(MaskSetName)
 
@@ -477,22 +470,22 @@ class NewMasksetWizard(QtWidgets.QDialog):
             self.customer.setText('')
             self.customer.setVisible(False)
             self.customer.blockSignals(False)
-        else: # 'ASIC'
+        else:  # 'ASIC'
             self.customerLabel.setVisible(True)
             self.customer.blockSignals(True)
             self.customer.setText('')
             self.customer.setVisible(True)
             self.customer.blockSignals(False)
-        
+
         self.validate()
 
     def customerChanged(self, Customer):
         self.validate()
-    
+
     def waferDiameterChanged(self, WaferDiameter):
         WaferDiameter = int(WaferDiameter)
-        Flat = (WaferDiameter/2) - standard_flat_height
-        if Flat-int(Flat) == 0:
+        Flat = (WaferDiameter / 2) - standard_flat_height
+        if (Flat - int(Flat)) == 0:
             self.flat.setText(str(int(Flat)))
         else:
             self.flat.setText(str(Flat))
@@ -519,15 +512,15 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self._die_size_changed(die_size_y, self.dieRefY)
 
     def xy_flip(self):
-        old_die_size_x = self.DieSizeX.text()
-        old_die_size_y = self.DieSizeY.text()
-        old_die_ref_x = self.DieRefX.text()
-        old_die_ref_y = self.DieRefY.text()
-        
-        self.DieSizeX.setText(old_die_size_y)
-        self.DieSizeY.setText(old_die_size_x)
-        self.DieRefX.setText(old_die_ref_y)
-        self.DieRefY.setText(old_die_ref_x)
+        old_die_size_x = self.dieSizeX.text()
+        old_die_size_y = self.dieSizeY.text()
+        old_die_ref_x = self.dieRefX.text()
+        old_die_ref_y = self.dieRefY.text()
+
+        self.dieSizeX.setText(old_die_size_y)
+        self.dieSizeY.setText(old_die_size_x)
+        self.dieRefX.setText(old_die_ref_y)
+        self.dieRefY.setText(old_die_ref_x)
 
         # self.validate() # ?!?
 
@@ -539,13 +532,13 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
     def xOffsetChanged(self, XOffset):
         pass
-    
+
     def yOffsetChanged(self, YOffset):
         pass
 
     def scribeXChanged(self, ScribeX):
         pass
-    
+
     def scribeYChanged(self, ScribeY):
         pass
 
@@ -564,18 +557,18 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if everything is ok, an empty string is returned.
         '''
         retval = ''
-        #TODO: Implement the validation of the table
+        # TODO: Implement the validation of the table
         return retval
 
     def validate(self, MaskSetName=''):
         self.feedback.setText('')
         # MasksetName
-        if MaskSetName=='':
+        if MaskSetName == '':
             MaskSetName = self.masksetName.text()
         if MaskSetName == '':
             self.feedback.setText("Supply a MaskSet name")
         else:
-            if not self.edit_flag and MaskSetName in self.existing_masksets:
+            if not self.read_only and MaskSetName in self.existing_masksets:
                 self.feedback.setText("MaskSet name already defined")
             if not is_valid_maskset_name(MaskSetName):
                 self.feedback.setText("Invalid MaskSet name")
@@ -583,7 +576,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if self.feedback.text() == '':
             if self.dieSizeX.text() == '':
                 self.feedback.setText("Supply a Die Size X value")
-        
+
         # DieSizeY
         if self.feedback.text() == '':
             if self.dieSizeY.text() == '':
@@ -631,7 +624,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
             return
 
         # enable table
-        self._set_table_flags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled  | QtCore.Qt.ItemIsEditable)
+        self._set_table_flags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
         self.is_table_enabled = True
         self._validate_table()
 
@@ -643,11 +636,11 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
     def editWaferMap(self):
         print("Wafer Map Editor not yet implemented")
-        #TODO: add the wafer map editor here
+        # TODO: add the wafer map editor here
 
     def viewDie(self):
         print("Die Viewer not yet implemented")
-        #TODO: add the die viewer (based ont the table here)
+        # TODO: add the die viewer (based ont the table here)
 
     def serialize_table_data(self):
         table_infos = {}
@@ -665,46 +658,41 @@ class NewMasksetWizard(QtWidgets.QDialog):
         return table_infos
 
     def _get_maskset_definition(self):
-        return {'WaferDiameter'       : int(self.waferDiameter.currentText()),
-                'Bondpads'            : self.bondpads.value(),
-                'DieSize'             : (int(self.dieSizeX.text()), int(self.dieSizeY.text())),
-                'DieRef'              : (float(self.dieRefX.text()), float(self.dieRefY.text())),
-                'Offset'              : (int(self.xOffset.text()), int(self.yOffset.text())),
-                'Scribe'              : (float(self.scribeX.text()), float(self.scribeY.text())),
-                'Flat'                : float(self.flat.text()),
-            
-                'BondpadTable' : self.serialize_table_data(),
+        return {'WaferDiameter': int(self.waferDiameter.currentText()),
+                'Bondpads': self.bondpads.value(),
+                'DieSize': (int(self.dieSizeX.text()), int(self.dieSizeY.text())),
+                'DieRef': (float(self.dieRefX.text()), float(self.dieRefY.text())),
+                'Offset': (int(self.xOffset.text()), int(self.yOffset.text())),
+                'Scribe': (float(self.scribeX.text()), float(self.scribeY.text())),
+                'Flat': float(self.flat.text()),
+                'BondpadTable': self.serialize_table_data(),
 
                 # TODO: future impl.
-                'Wafermap'     : {
-                    'rim' : [(100, 80), (-80, -100)], # list of x- and y- coordinates of dies that are not to be tested (belong to rim)
-                    'blank' : [(80, 80)], # list of x- and y- coordinates of dies that don't exist (blank silicon)
-                    'test_insert' : [], # list of x- and y- coodinates of dies that don't exist (test inserts)
-                    'unused' : [] # list of x- and y- coordinates of dies taht are not used (probing optimization ?)                     
-                    }  # implement wafermap
+                'Wafermap': {'rim': [(100, 80), (-80, -100)],  # list of x- and y- coordinates of dies that are not to be tested (belong to rim)
+                             'blank': [(80, 80)],  # list of x- and y- coordinates of dies that don't exist (blank silicon)
+                             'test_insert': [],  # list of x- and y- coodinates of dies that don't exist (test inserts)
+                             'unused': []  # list of x- and y- coordinates of dies taht are not used (probing optimization ?)
+                             }  # implement wafermap
                 }
-                
+
     def OKButtonPressed(self):
-        if self.OKButton.text() == 'OK': 
+        if self.OKButton.text() == 'OK':
             name = self.masksetName.text()
             if self.Type.currentText() == 'ASSP':
                 customer = ''
-            else: # 'ASIC' so need a customer !
+            else:  # 'ASIC' so need a customer !
                 customer = self.customer.text()
-    
             self.project_info.add_maskset(name, customer, self._get_maskset_definition())
             self.accept()
 
-        else: # Import stuff
-            #TODO: add the company specific plugins here
+        else:  # Import stuff
+            # TODO: add the company specific plugins here
             print("Import stuff not implemented yet")
-            
             self.importFor.setCurrentIndex(0)
             self.OKButton.setText("OK")
             self.validate()
-            
-    def CancelButtonPressed(self):
 
+    def CancelButtonPressed(self):
         self.reject()
 
 
@@ -712,6 +700,7 @@ def new_maskset_dialog(parent):
     newMasksetWizard = NewMasksetWizard(parent)
     newMasksetWizard.exec_()
     del(newMasksetWizard)
+
 
 if __name__ == '__main__':
     import sys, qdarkstyle

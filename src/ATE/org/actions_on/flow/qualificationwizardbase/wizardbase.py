@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import os, re
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import qtawesome as qta
+import os
+import re
+from PyQt5 import QtCore, QtWidgets, uic
 
 
 # wizardbase is the baseclass for qualification wizards.
@@ -53,7 +53,7 @@ class wizardbase(QtWidgets.QDialog):
         uic.loadUi(my_ui, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', self.__class__.__name__)))
-    
+
     def setup_parameters(self):
         self.wizard_parameters = self._get_wizard_parameters()
 
@@ -80,7 +80,7 @@ class wizardbase(QtWidgets.QDialog):
         allgood = all(x.validate() for x in self.wizard_parameters)
         saveButton = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         saveButton.setEnabled(allgood and self.enable_save)
-    
+
     # This function shall return a list of parameters, that
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
@@ -102,11 +102,11 @@ class wizardbase(QtWidgets.QDialog):
 
     def _get_data_type(self) -> str:
         return self.__class__.__name__
-    
+
     def __store_data(self):
         # Note: Most qflows have only a single instance per
         #       project per product (?). In these cases we can
-        #       generate a name based on the wizard type, 
+        #       generate a name based on the wizard type,
         #       that we put into the data here.
         #       QFlows that have multiple instances and
         #       allow free naming shall overwrite the
@@ -122,9 +122,8 @@ class wizardbase(QtWidgets.QDialog):
 
         self.storage.add_or_update_qualification_flow_data(self.datasource)
         self.accept()
-            
+
     def __load_data(self, src: dict):
         for x in self.wizard_parameters:
             x.load_values(src)
         self._custom_load_data(src)
-

@@ -3,8 +3,6 @@
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
 
 quali_flow_name = "qualification_HTSL_flow"
 quali_flow_listentry_name = "HTSL"
@@ -20,7 +18,7 @@ class HTSLWizard(wizardbase.wizardbase):
                 intparam.IntParam("Temperature (°C)", 0, 0, 240),
                 intparam.IntParam("Testwindow (hours)", 0, 0, 500)
                 ]
-    
+
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
     def _get_wizard_testprogram_slots(self) -> list:
@@ -47,13 +45,3 @@ def view_item(storage, data):
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    dialog = HTSLWizard(dict(), None)
-    dialog.show()
-    sys.exit(app.exec_())

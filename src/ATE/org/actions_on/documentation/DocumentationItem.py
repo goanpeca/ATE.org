@@ -4,7 +4,7 @@ from ATE.org.actions_on.utils.FileSystemOperator import FileSystemOperator
 from ATE.org.actions_on.documentation.BaseDocumentationItem import BaseDocumentationItem
 import os
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 
 class DocumentationItem(BaseDocumentationItem):
@@ -80,12 +80,24 @@ class DocumentationItem(BaseDocumentationItem):
                 None,
                 MenuActionTypes.DeleteFile()]
 
-    def _init_menu(self):
+    def exec_context_menu(self):
+        self.menu = QtWidgets.QMenu()
         self.menu.addMenu(self._generate_new_menu_actions(self.menu))
         self.menu.addMenu(self._generate_import_menu_actions(self.menu))
 
         if self._is_editable:
-            super()._init_menu()
+            from ATE.org.actions_on.model.Actions import ACTIONS
+
+            for action_type in self._get_menu_items():
+                if not action_type:
+                    self.menu.addSeparator()
+                    continue
+
+                action = ACTIONS[action_type]
+                action = self.menu.addAction(action[0], action[1])
+                action.triggered.connect(getattr(self, action_type))
+
+        self.menu.exec_(QtGui.QCursor.pos())
 
     def _generate_new_menu_actions(self, parent):
         new_menu = QtWidgets.QMenu('New', parent)

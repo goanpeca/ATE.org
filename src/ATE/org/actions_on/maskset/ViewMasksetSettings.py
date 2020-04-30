@@ -22,7 +22,7 @@ class ViewMasksetSettings(QtWidgets.QDialog):
         self._load_ui()
         self._setup(self.maskset_name)
         self._connect_event_handler()
-        ViewMasksetSettings._show(self, self.maskset_configuration, self.maskset_name)
+        ViewMasksetSettings._setup_dialog_fields(self, self.maskset_configuration, self.maskset_name)
 
     def _load_ui(self):
         import os
@@ -84,46 +84,46 @@ class ViewMasksetSettings(QtWidgets.QDialog):
         return True
 
     @staticmethod
-    def _show(owner, maskset_configuration, maskset_name):
+    def _setup_dialog_fields(dialog, maskset_configuration, maskset_name):
         if not ViewMasksetSettings.is_valid_configuration(maskset_configuration):
-            owner.feedback.setText(ErrorMessage.InvalidConfigurationElements())
-            owner.feedback.setStyleSheet('color: red')
+            dialog.feedback.setText(ErrorMessage.InvalidConfigurationElements())
+            dialog.feedback.setStyleSheet('color: red')
             return
 
-        owner.feedback.setText('')
-        owner.feedback.setStyleSheet('')
+        dialog.feedback.setText('')
+        dialog.feedback.setStyleSheet('')
 
-        index = owner.waferDiameter.findText(str(maskset_configuration["WaferDiameter"]), QtCore.Qt.MatchFixedString)
+        index = dialog.waferDiameter.findText(str(maskset_configuration["WaferDiameter"]), QtCore.Qt.MatchFixedString)
         if index >= 0:
-            owner.waferDiameter.setCurrentIndex(index)
+            dialog.waferDiameter.setCurrentIndex(index)
 
-        owner.masksetName.setText(maskset_name)
-        owner.masksetName.setEnabled(False)
+        dialog.masksetName.setText(maskset_name)
+        dialog.masksetName.setEnabled(False)
 
-        owner.bondpads.setValue((maskset_configuration["Bondpads"]))
+        dialog.bondpads.setValue((maskset_configuration["Bondpads"]))
 
-        owner.dieSizeX.setText(str(maskset_configuration["DieSize"][0])) # tuple
-        owner.dieSizeY.setText(str(maskset_configuration["DieSize"][1]))
+        dialog.dieSizeX.setText(str(maskset_configuration["DieSize"][0])) # tuple
+        dialog.dieSizeY.setText(str(maskset_configuration["DieSize"][1]))
 
-        owner.dieRefX.setText(str(maskset_configuration["DieRef"][0])) # tuple
-        owner.dieRefY.setText(str(maskset_configuration["DieRef"][1]))
+        dialog.dieRefX.setText(str(maskset_configuration["DieRef"][0])) # tuple
+        dialog.dieRefY.setText(str(maskset_configuration["DieRef"][1]))
 
-        owner.scribeX.setText(str(maskset_configuration["Scribe"][0])) # tuple
-        owner.scribeY.setText(str(maskset_configuration["Scribe"][1]))
+        dialog.scribeX.setText(str(maskset_configuration["Scribe"][0])) # tuple
+        dialog.scribeY.setText(str(maskset_configuration["Scribe"][1]))
 
-        owner.xOffset.setText(str(maskset_configuration["Offset"][0])) # tuple
-        owner.yOffset.setText(str(maskset_configuration["Offset"][1]))
+        dialog.xOffset.setText(str(maskset_configuration["Offset"][0])) # tuple
+        dialog.yOffset.setText(str(maskset_configuration["Offset"][1]))
 
-        owner.flat.setText(str(maskset_configuration["Flat"]))
+        dialog.flat.setText(str(maskset_configuration["Flat"]))
 
         table_infos = maskset_configuration["BondpadTable"]
-        owner.bondpadTable.setRowCount(len(table_infos))
-        row = owner.bondpadTable.rowCount()
-        column = owner.bondpadTable.columnCount()
+        dialog.bondpadTable.setRowCount(len(table_infos))
+        row = dialog.bondpadTable.rowCount()
+        column = dialog.bondpadTable.columnCount()
 
         for r in range(row):
             for c in range(column):
-                owner.bondpadTable.item(r, c).setText(str(table_infos[r + 1][c]))
+                dialog.bondpadTable.item(r, c).setText(str(table_infos[r + 1][c]))
 
 
 def display_maskset_settings_dialog(maskset_configuration, maskset_name):
