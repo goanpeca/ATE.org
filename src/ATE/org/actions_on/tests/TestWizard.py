@@ -3,23 +3,34 @@
 Created on Mon Dec  2 18:56:05 2019
 
 @author: hoeren
+
+References:
+    http://www.cplusplus.com/reference/cstdio/fprintf/
+    https://docs.python.org/3/library/functions.html#float
+    https://docs.python.org/3.6/library/string.html#format-specification-mini-language
+    
 """
 import os
 import re
-import copy
 
 import numpy as np
 
-from ATE.org.validation import (is_valid_test_name, is_valid_python_class_name, 
-                                valid_float_regex, valid_test_parameter_name_regex, 
-                                valid_test_name_regex)
+from ATE.org.validation import (is_valid_test_name, 
+                                is_valid_python_class_name, 
+                                
+                                valid_test_parameter_name_regex, 
+                                valid_test_name_regex,
+                                
+                                valid_min_float_regex,
+                                valid_default_float_regex,
+                                valid_max_float_regex)
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import qdarkstyle
 import qtawesome as qta
 
-minimal_description_length = 80 #TODO: exclude white spaces from the count 😈
+minimal_description_length = 80 
 
 class Delegator(QtWidgets.QStyledItemDelegate):
 
@@ -31,6 +42,10 @@ class Delegator(QtWidgets.QStyledItemDelegate):
         line_edit = QtWidgets.QLineEdit(parent)
         line_edit.setValidator(self.validator)
         return line_edit
+
+    #bookmark: afdadf
+    
+
 
 class TestWizard(QtWidgets.QDialog):
 
@@ -108,7 +123,9 @@ class TestWizard(QtWidgets.QDialog):
         self.description.blockSignals(False)
         
     # Delegators
-        self.floatDelegator = Delegator(valid_float_regex, self) #TODO: add '∞' to the regex ... and Inf ? Inf auto to '∞'
+        self.minDelegator = Delegator(valid_min_float_regex, self)
+        self.maxDelegator = Delegator(valid_max_float_regex, self)
+        self.defaultDelegator = Delegator(valid_default_float_regex, self)
         self.nameDelegator = Delegator(valid_test_parameter_name_regex, self)
         
     # InputParametersTab
@@ -132,7 +149,7 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterDelete.setToolTip('Delete selected parameter')
         self.inputParameterDelete.clicked.connect(self.deleteInputParameter)
 
-        inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit']
+        inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit', 'fmt']
         self.inputParameterModel = QtGui.QStandardItemModel()
         self.inputParameterModel.setObjectName('inputParameters')
         self.inputParameterModel.setHorizontalHeaderLabels(inputParameterHeaderLabels)
@@ -147,52 +164,18 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterView.customContextMenuRequested.connect(self.inputParameterTableContextMenu)
         self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged) # https://doc.qt.io/qt-5/qitemselectionmodel.html
         self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
-        self.inputParameterView.setItemDelegateForColumn(1, self.floatDelegator)
-        self.inputParameterView.setItemDelegateForColumn(2, self.floatDelegator)
-        self.inputParameterView.setItemDelegateForColumn(3, self.floatDelegator)
-
-        name_item = QtGui.QStandardItem() # https://doc.qt.io/qt-5/qstandarditem.html
-        self.inputParameterModel.appendRow(name_item) # makes a hole row
-
-        name_index = self.inputParameterModel.index(0, 0) # https://stackoverflow.com/questions/25943153/how-to-access-data-stored-in-qmodelindex
-        self.inputParameterModel.setData(name_index, 'Temperature', QtCore.Qt.DisplayRole) # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
-        self.inputParameterModel.setData(name_index, 'Real', QtCore.Qt.ToolTipRole)
-        self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole) # https://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum
-        self.inputParameterModel.setData(name_index, QtCore.Qt.Checked, QtCore.Qt.CheckStateRole) # https://doc.qt.io/qt-5/qt.html#CheckState-enum
-        self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.NoItemFlags) # https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
-
-        min_index = self.inputParameterModel.index(0, 1)
-        self.inputParameterModel.setData(min_index, '-40', QtCore.Qt.DisplayRole)
-        self.inputParameterModel.setData(min_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
-
-        default_index = self.inputParameterModel.index(0, 2)
-        self.inputParameterModel.setData(default_index, '+25', QtCore.Qt.DisplayRole)
-        self.inputParameterModel.setData(default_index, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
-
-        max_index = self.inputParameterModel.index(0, 3)
-        self.inputParameterModel.setData(max_index, '+170', QtCore.Qt.DisplayRole)
-        self.inputParameterModel.setData(max_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
-
-        multiplier_index = self.inputParameterModel.index(0, 4)
-        self.inputParameterModel.setData(multiplier_index, '', QtCore.Qt.DisplayRole)
-        self.inputParameterModel.setData(multiplier_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.NoItemFlags)
-
-        unit_index = self.inputParameterModel.index(0, 5)
-        self.inputParameterModel.setData(unit_index, '°C', QtCore.Qt.DisplayRole)
-        self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-        self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.NoItemFlags)
+        self.inputParameterView.setItemDelegateForColumn(1, self.minDelegator)
+        self.inputParameterView.setItemDelegateForColumn(2, self.defaultDelegator)
+        self.inputParameterView.setItemDelegateForColumn(3, self.maxDelegator)
 
     # OutputParametersTab
         self.outputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
         self.outputParameterMoveDown.setIcon(qta.icon('mdi.arrow-down-bold-box-outline', color='orange'))
         self.outputParameterAdd.setIcon(qta.icon('mdi.plus-box-outline', color='orange'))
         self.outputParameterDelete.setIcon(qta.icon('mdi.minus-box-outline', color='orange'))
-        #Idea: limit the number of output parameters to 9, so we have a decade per test-number,
-        #      and the '0' is the FTR 🙂
+        #TODO: Idea:
+        #   limit the number of output parameters to 9, so we have a decade per test-number,
+        #   and the '0' is the FTR 🙂
 
     # buttons
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
@@ -202,8 +185,15 @@ class TestWizard(QtWidgets.QDialog):
         self.verify()
         self.show()
 
-        self.inputParameterSelectionChanged()
-        self.inputParameterItemChanged()
+    # need to come after a show()
+        T = {'Shmoo' : True, 'Min' : -40, 'Default' : 25, 'Max' : 170, '10ᵡ' : '', 'Unit' : '°C', 'fmt' : '.0f'}        
+        self.setInputParameter('Temperature', T)
+
+
+
+
+
+
 
     def resizeEvent(self, event):
         QtWidgets.QWidget.resizeEvent(self, event)
@@ -598,76 +588,218 @@ class TestWizard(QtWidgets.QDialog):
                 self.inputParameterModel.setData(index, text, QtCore.Qt.DisplayRole)
                 self.inputParameterModel.setData(index, tooltip, QtCore.Qt.ToolTipRole)
 
-    input_parameters = {'T' : {'shmoo' : True,  'Min' : -40, 'Max' : 170, 'Default' : 25,  'Unit' : '°C'}, # Obligatory !
-                        'i' : {'shmoo' : False, 'Min' : 0.1, 'Max' : 2.5, 'Default' : 1.0, 'Unit' : 'mA'}}
 
     def setInputParameter(self, name, attributes, row=None):
-        if row == None: # append
-            name_item = QtGui.QStandardItem()
-            self.inputParameterModel.appendRow(name_item)
-        else:
-            if row > self.inputParameterModel.rowCount():
-                raise Exception(f"row({row}) > rowCount({self.inputParameterModel.rowCount()})")
-            name_item = self.inputParameterModel.item(row, 0)
-
-
-
+        '''
+        sets the inputParameter name and it's attribues
+        if row==None, append to the list.
+        if row is given, it **must** already exist!
         
-        if name == 'Temperature':
-            if row!=0:
-                raise Exception("'Temperature' **MUST** be in row 0 !")
-            pass
+        Structure (of all input parameters):
+        
+        input_parameters = {                          # https://docs.python.org/3.6/library/string.html#format-specification-mini-language
+            'Temperature' : {'Shmoo' : True,  'Min' :     -40, 'Default' : 25, 'Max' :     170, '10ᵡ' :  '', 'Unit' : '°C', 'fmt' : '.0f'}, # Obligatory !
+            'i'           : {'Shmoo' : False, 'Min' : -np.inf, 'Default' :  0, 'Max' : +np.inf, '10ᵡ' : 'μ', 'Unit' :  'A', 'fmt' : '.3f'},
+            'j'           : {'Shmoo' : False, 'Min' :    '-∞', 'Default' :  0, 'Max' :    '+∞', '10ᵡ' : 'μ', 'Unit' :  'A', 'fmt' : '.3f'}}
+        
+        References:
+            https://doc.qt.io/qt-5/qt.html#CheckState-enum
+            https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
+            https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
+            https://doc.qt.io/qt-5/qstandarditem.html
+        '''
+        rowCount = self.inputParameterModel.rowCount()
+        if name == 'Temperature': # must be at row 0, regardless what row says
+            if rowCount == 0: # make first entry
+                self.inputParameterModel.appendRow([QtGui.QStandaardItem() for i in range(7)])
+            item_row = 0
         else:
-    
-            name_index = self.inputParameterModel.indexFromItem(name_item)
-            self.inputParameterModel.setData(name_index, f'new_parameter{new_parameter_index}', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(name_index, 'Real', QtCore.Qt.ToolTipRole)
-            self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.setData(name_index, QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole) 
-            self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                        QtCore.Qt.ItemIsEditable | 
-                                                                        QtCore.Qt.ItemIsEnabled)
+            if row == None: # append
+                self.inputParameterModel.appendRow([QtGui.QStandaardItem() for i in range(7)])
+                item_row = rowCount
+            else: # update
+                if row > rowCount:
+                    raise Exception(f"row({row}) > rowCount({rowCount})")
+                name_item = self.inputParameterModel.item(row, 0)
+                item_row = row
 
-            min_index = self.inputParameterModel.index(name_index.row(), 1)
-            self.inputParameterModel.setData(min_index, '-∞', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(min_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                       QtCore.Qt.ItemIsEditable | 
-                                                                       QtCore.Qt.ItemIsEnabled)
+        name_item = self.inputParameterModel.item(item_row, 0)
+        min_item = self.inputParameterModel.item(item_row, 1)
+        default_item = self.inputParameterModel.item(item_row, 2)
+        max_item = self.inputParameterModel.item(item_row, 3)
+        multiplier_item = self.inputParameterModel.item(item_row, 4)
+        unit_item = self.inputParameterModel.item(item_row, 5)
+        fmt_item = self.inputParameterModel.item(item_row, 6)               
 
-            default_index = self.inputParameterModel.index(name_index.row(), 2)
-            self.inputParameterModel.setData(default_index, '0', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(default_index, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                           QtCore.Qt.ItemIsEditable | 
-                                                                           QtCore.Qt.ItemIsEnabled)
-            
-            max_index = self.inputParameterModel.index(name_index.row(), 3)
-            self.inputParameterModel.setData(max_index, '+∞', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(max_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                       QtCore.Qt.ItemIsEditable | 
-                                                                       QtCore.Qt.ItemIsEnabled)
+    # fmt
+        if name == 'Temperature':
+            Fmt = '.0f'
+            fmt_item.setData(Fmt, QtCore.Qt.DisplayRole)
+            fmt_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            fmt_item.setFlags(QtCore.Qt.NoItemFlags)
+        else:
+            if 'fmt' not in attributes:
+                Fmt = '.3f'
+            else:
+                Fmt = attributes['fmt']
+            fmt_item.setData(Fmt, QtCore.Qt.DisplayRole)
+            fmt_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            fmt_item.setFlags(QtCore.Qt.ItemIsSelectable, QtCore.Qt.ItemIsEditable, QtCore.Qt.ItemIsEnabled)
 
-            multiplier_index = self.inputParameterModel.index(name_index.row(), 4)
-            self.inputParameterModel.setData(multiplier_index, '', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(multiplier_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                              QtCore.Qt.ItemIsEditable | 
-                                                                              QtCore.Qt.ItemIsEnabled)
+    # Min
+        if name == 'Temperature':
+            if isinstance(attributes['Min'], str):
+                if '∞' in attributes['Min']: # forget about it --> -60
+                    Min = -60.0
+                else:
+                    Min = float(attributes['Min'])
+                    if Min < -60.0: Min = -60.0
+            elif isinstance(attributes['Min'], (float, int)):
+                Min = float(attributes['Min'])
+                if Min < -60.0: Min = -60.0
+            else:
+                raise Exception("type(attribute['Min']) = {type(attribute['Min'])}, which is not (str, float or int) ... WTF?!?")
+            min_item.setData(f"{Min:{Fmt}}", QtCore.Qt.DisplayRole)
+        else:
+            if isinstance(attributes['Min'], str):
+                if '∞' in attributes['Min']:
+                    Min = -np.inf
+                    min_item.setData('-∞', QtCore.Qt.DisplayRole)
+                else:
+                    Min = float(attributes['Min'])
+                    min_item.setData(f"{Min:{Fmt}}", QtCore.Qt.DisplayRole)
+            elif isinstance(attributes['Min'], (float, int)):
+                if attributes['Min'] == -np.inf:
+                    Min = -np.inf
+                    min_item.setData('-∞', QtCore.Qt.DisplayRole)
+                else:
+                    Min = float(attributes['Min'])
+                    min_item.setData(f"{Min:{Fmt}}", QtCore.Qt.DisplayRole)
+            else:
+                raise Exception("type(attribute['Min']) = {type(attribute['Min'])}, which is not (str, float or int) ... WTF?!?")
+            min_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        min_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
-            unit_index = self.inputParameterModel.index(name_index.row(), 5)
-            self.inputParameterModel.setData(unit_index, '?', QtCore.Qt.DisplayRole)
-            self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
-            self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                        QtCore.Qt.ItemIsEditable | 
-                                                                        QtCore.Qt.ItemIsEnabled)
+    # Max
+        if name == 'Temperature':
+            if isinstance(attributes['Max'], str):
+                if '∞' in attributes['Max']: # forget about it --> 200
+                    Max = 200.0
+                else:
+                    Max = float(attributes['Max'])
+                    if Max > 200.0: Max = 200.0
+            elif isinstance(attributes['Max'], (float, int)):
+                Max = float(attributes['Max'])
+                if Max > 200.0: Max = 200.0
+            else:
+                raise Exception("type(attribute['Max']) = {type(attribute['Max'])}, which is not (str, float or int) ... WTF?!?")
+            max_item.setData(f"{Max:{Fmt}}", QtCore.Qt.DisplayRole)
+        else:
+            if isinstance(attributes['Max'], str):
+                if '∞' in attributes['Max']:
+                    Max = np.inf
+                    max_item.setData('+∞', QtCore.Qt.DisplayRole)
+                else:
+                    Max = float(attributes['Max'])
+                    max_item.setData(f"{Max:{Fmt}}", QtCore.Qt.DisplayRole)
+            elif isinstance(attributes['Max'], (float, int)):
+                if attributes['Max'] == np.inf:
+                    Max = np.inf
+                    max_item.setData('+∞', QtCore.Qt.DisplayRole)
+                else:
+                    Max = float(attributes['Max'])
+                    max_item.setData(f"{Max:{Fmt}}", QtCore.Qt.DisplayRole)
+            else:
+                raise Exception("type(attribute['Max']) = {type(attribute['Max'])}, which is not (str, float or int) ... WTF?!?")
+            max_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        max_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+
+    # Default
+        if name == 'Temperature':
+            if isinstance(attributes['Default'], str):
+                if '∞' in attributes['Default']: # forget about it --> 25
+                    Default = 25.0
+                else:
+                    Default = float(attributes['Default'])
+                    if Default > Max or Default < Min: Default = 25.0
+            elif isinstance(attributes['Default'], (float, int)):
+                Default = float(attributes['Default'])
+                if Default > Max or Default < Min: Default = 25.0
+            else:
+                raise Exception("type(attribute['Default']) = {type(attribute['Default'])}, which is not (str, float or int) ... WTF?!?")
+        else:
+            if isinstance(attributes['Default'], str):
+               if attributes['Default'] == '-∞' : Default = -np.inf
+               elif attributes['Default'] in ['∞', '+∞']: Default = np.inf
+               else: Default = float(attributes['Default'])
+            elif isinstance(attributes['Default'], (float, int)):
+                Default = float(attributes['Default'])
+            else:
+                raise Exception("type(attribute['Default']) = {type(attribute['Default'])}, which is not (str, float or int) ... WTF?!?")
+            if Min == -np.inf and Max == np.inf:
+                if Default == -np.inf: Default = 0
+                if Default == np.inf: Default = 0
+            elif Min == -np.inf:
+                if Default > Max: Default = Max
+                if Default == -np.inf: Default = Max
+            elif Max == np.inf:
+                if Default < Min: Default = Min
+                if Default == np.inf: Default = Min
+            else:
+                if Default > Max: Default = Max
+                if Default < Min: Default = Min
+        default_item.setData(f"{Default:{Fmt}}", QtCore.Qt.DisplayRole)
+        default_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        default_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+
+    # name
+        name_item.setData(name, QtCore.Qt.DisplayRole) # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
+        name_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        if name == 'Temperature': # Shmoo is always enabled, user can not change
+            name_item.setData(QtCore.Qt.Checked, QtCore.Qt.CheckStateRole) # https://doc.qt.io/qt-5/qt.html#CheckState-enum
+            name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable) # https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
+        else: # take Shmoo from attributes
+            if attributes['Shmoo']:
+                if Min <= Default <= Max and Min != -np.Inf and Max != np.Inf:
+                    name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
+                    name_item.setData(QtCore.Qt.Checked, QtCore.Qt.CheckStateRole) 
+                else:
+                    name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+                    name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole) 
+            else:
+                if Min <= Default <= Max and Min != -np.Inf and Max != np.Inf:
+                    name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
+                else:
+                    name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+                name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole) 
+
+    # Multiplier
+        if name == 'Temperature': # fixed regardless what the attributes say
+            multiplier_item.setData('', QtCore.Qt.DisplayRole)
+            multiplier_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            multiplier_item.setFlags(QtCore.Qt.NoItemFlags)
+        else:
+            multiplier_item.setData(str(attributes['10ᵡ']), QtCore.Qt.DisplayRole)
+            multiplier_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            multiplier_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+
+    # Unit
+        if name == 'Temperature': # fixed regardless what the attribues say
+            unit_item.setData('°C', QtCore.Qt.DisplayRole)
+            unit_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            unit_item.setFlags(QtCore.Qt.NoItemFlags)
+        else:
+            unit_item.setData(str(attributes['Unit']), QtCore.Qt.DisplayRole)
+            unit_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            unit_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
     
     def setInputpParameters(self, definition):
-        pass
+        for name in definition:
+            attributes = definition[name]
+            self.setInputParameter(name, attributes)
     
     def getInputParameter(self, row):
-        attributes = {'shmoo' : None, 'Min' : None, 'Default' : None, 'Max' : None, '10ᵡ' : None, 'Unit' : None}
+        attributes = {'shmoo' : None, 'Min' : None, 'Default' : None, 'Max' : None, '10ᵡ' : None, 'Unit' : None, 'fmt' : None}
 
         name_item = self.inputParameterModel.item(row, 0)
         name = name_item.data(QtCore.Qt.DisplayRole)
@@ -704,6 +836,10 @@ class TestWizard(QtWidgets.QDialog):
         Unit = unit_item.data(QtCore.Qt.DisplayRole)
         attributes['Unit'] = Unit
                 
+        fmt_item = self.inputParameterModel.item(row, 6)
+        Fmt = fmt_item.data(QtCore.Qt.DisplayRole)
+        attributes['fmt'] = Fmt
+        
         return name, attributes
     
     def getInputParameters(self):
@@ -948,6 +1084,19 @@ def new_test_dialog(project_info):
     newTestWizard = TestWizard(project_info)
     newTestWizard.exec_()
     del(newTestWizard)
+
+
+def edit_test_dialog(project_info): #TODO: add the data still
+    editTestWizard = TestWizard(project_info)
+    editTestWizard.exec_()
+    del(editTestWizard)
+
+def new_standard_test_dialog(project_info): #TODO: move the standard test wizard here too !!!
+    pass
+
+def edit_standard_test_dialog(project_info): #TODO: does this make sense ?!?
+    pass
+
 
 if __name__ == '__main__':
     import sys, qdarkstyle

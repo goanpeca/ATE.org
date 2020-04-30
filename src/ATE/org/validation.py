@@ -19,8 +19,11 @@ valid_project_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_positive_integer_regex = r"^[+]?\d*"
 valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
-valid_float_regex = "[+-]?(∞|Inf|[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
 
+valid_float_regex = "[+-]?(∞|np.inf|np.Inf|[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
+valid_min_float_regex = "(-∞|-np.inf|-np.Inf|[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
+valid_default_float_regex = "[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?"
+valid_max_float_regex = "(+∞|+np.inf|+np.Inf|[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
 
 def is_Spyder_project(project_directory):
     '''
@@ -31,8 +34,7 @@ def is_Spyder_project(project_directory):
         return True
     else:
         return False
-
-
+    
 def is_ATE_project(project_directory):
     '''
     this method will return true if the project under 'project_directory' is
@@ -41,12 +43,11 @@ def is_ATE_project(project_directory):
     '''
     if not is_Spyder_project(project_directory):
         return False
-
+    
     if os.path.exists(os.path.join(project_directory, '.spyproject', 'ATE.config')):
         return True
     else:
         return False
-
 
 def is_valid_python_class_name(name):
     '''
@@ -57,7 +58,6 @@ def is_valid_python_class_name(name):
         return True
     else:
         return False
-
 
 def is_valid_die_name(name):
     '''
@@ -71,7 +71,6 @@ def is_valid_die_name(name):
     else:
         return False
 
-
 def is_valid_product_name(name):
     '''
     Check if the supplied name is a valid name for a 'product'
@@ -84,7 +83,6 @@ def is_valid_product_name(name):
     else:
         return False
 
-
 def is_valid_maskset_name(name):
     '''
     Check if the supplied name is a valid name for a 'maskset'
@@ -94,7 +92,6 @@ def is_valid_maskset_name(name):
         return True
     else:
         return False
-
 
 def is_valid_device_name(name):
     '''
@@ -106,7 +103,6 @@ def is_valid_device_name(name):
     else:
         return False
 
-
 def is_valid_package_name(name):
     '''
     Check if the supplied name is a valid name for a 'package'
@@ -116,7 +112,6 @@ def is_valid_package_name(name):
         return True
     else:
         return False
-
 
 def is_valid_test_name(name):
     '''
@@ -134,7 +129,6 @@ def is_valid_test_name(name):
     else:
         return False
 
-
 def is_valid_project_name(name):
     '''
     Check if the supplied name is a valid name for a 'project'
@@ -147,7 +141,6 @@ def is_valid_project_name(name):
     else:
         return False
 
-
 def is_valid_pcb_name(name):
     pattern = re.compile(valid_pcb_name_regex)
     if pattern.match(name):
@@ -155,8 +148,7 @@ def is_valid_pcb_name(name):
     else:
         return False
 
-
-def has_single_site_loadboard_value(project_path, hardware_version):
+def has_single_site_loadboard(project_path, hardware_version):
     from ATE.org.listings import dict_pcbs_for_hardware_setup
     from ATE.org.listings import list_hardware_setups
 
@@ -166,7 +158,6 @@ def has_single_site_loadboard_value(project_path, hardware_version):
             if pcbs['SingeSiteLoadboard'] != "":
                 return True
     return False
-
 
 def has_probe_card(project_path, hardware_version):
     from ATE.org.listings import dict_pcbs_for_hardware_setup
@@ -179,10 +170,8 @@ def has_probe_card(project_path, hardware_version):
                 return True
     return False
 
-
 def has_single_site_DIB(project_path, hardware_version):
     pass
-
 
 if __name__ == '__main__':
     from SpyderMockUp.SpyderMockUp import workspace
