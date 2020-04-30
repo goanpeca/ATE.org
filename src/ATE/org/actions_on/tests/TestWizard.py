@@ -8,6 +8,8 @@ import os
 import re
 import copy
 
+import numpy as np
+
 from ATE.org.validation import (is_valid_test_name, is_valid_python_class_name, 
                                 valid_float_regex, valid_test_parameter_name_regex, 
                                 valid_test_name_regex)
@@ -200,7 +202,8 @@ class TestWizard(QtWidgets.QDialog):
         self.verify()
         self.show()
 
-        self.tableAdjust(self.inputParameterView)
+        self.inputParameterSelectionChanged()
+        self.inputParameterItemChanged()
 
     def resizeEvent(self, event):
         QtWidgets.QWidget.resizeEvent(self, event)
@@ -374,9 +377,6 @@ class TestWizard(QtWidgets.QDialog):
         based on the column where we activated the context menu on, and 
         dispatch to the appropriate context menu.
         '''
-        
-        
-        
         index = self.inputParameterView.indexAt(point)
         objectName = index.model().objectName()
         if objectName == 'inputParameters':
@@ -438,87 +438,89 @@ class TestWizard(QtWidgets.QDialog):
                 menu = self.unitContextMenu(unitSetter)
                 menu.exec_(QtGui.QCursor.pos())
                 
-    def inputParameterItemChanged(self, item=None):
+    def inputParameterItemChanged(self, item):
         '''
         if one of the cells in self.inputParameterModel is changed, this 
-        routine is called.
-        https://doc.qt.io/qt-5/qstandarditemmodel.html#itemChanged
-        Note : if item == None, then we call manually
+        routine is called, and it could be cause to re-size the table columns,
+        and it could be cause to make a checkbox change.
         '''
-        self.inputParameterModel.blockSignals(True)
-        if item==None:
-            index = self.inputParameterModel.index(0, 0) # Temperature 😉
-        else:
-            index = self.inputParameterModel.indexFromItem(item)
-        rows = self.inputParameterModel.rowCount()
-        print('inputParameterItemChanged rowCount = ', rows)
-        if rows == 1:
-            self.inputParameterMoveUp.setDisabled(True)
-            self.inputParameterMoveDown.setDisabled(True)
-            self.inputParameterDelete.setDisabled(True)
-        elif rows == 2:
-            self.inputParameterMoveUp.setDisabled(True)
-            self.inputParameterMoveDown.setDisabled(True)
-            self.inputParameterDelete.setEnabled(True)
-        else:
-            self.inputParameterMoveUp.setEnabled(True)
-            self.inputParameterMoveDown.setEnabled(True)
-            self.inputParameterDelete.setEnabled(True)
-
-        # selected_items = len(self.inputParameterTable.selectedItems())
-        # if selected_items == 0:
-        #     self.inputParameterUnselect.setDisabled(True)
-        # else:
-        #     self.inputParameterUnselect.setEnabled(True)
+        name_item = self.inputParameterModel.item(item.row(), 0)
+        min_item = self.inputParameterModel.item(item.row(), 1)
+        default_item = self.inputParameterModel.item(item.row(), 2)
+        max_item = self.inputParameterModel.item(item.row(), 3)
         
-        # item = self.inputParameterTable.item(row, col)
+        print(f'type(max_item) = {type(max_item)}')
         
+        
+        Min = min_item.data(QtCore.Qt.DisplayRole)
+        if Min == '-∞': 
+            Min = -np.Inf
+        else:
+            Min = float(Min)
+        Default = default_item.data(QtCore.Qt.DisplayRole)
+        if Default == '-∞':
+            Default = -np.Inf
+        elif Default == '+∞':
+            Default = np.Inf
+        else:
+            Default = float(Default)
+        Max = max_item.data(QtCore.Qt.DisplayRole)
+        if Max in ['∞', '+∞']:
+            Max = np.Inf
+        else:
+            Max = float(Max)
 
-
-        #TODO: validation on cells
-
+        if Min <= Default <= Max and Min!=-np.Inf and Max!=np.Inf:
+            name_item.setFlags(QtCore.Qt.ItemIsSelectable | 
+                               QtCore.Qt.ItemIsEditable | 
+                               QtCore.Qt.ItemIsEnabled |
+                               QtCore.Qt.ItemIsUserCheckable)
+        else:
+            name_item.setFlags(QtCore.Qt.ItemIsSelectable | 
+                               QtCore.Qt.ItemIsEditable | 
+                               QtCore.Qt.ItemIsEnabled)
+            
+            
+            
         self.tableAdjust(self.inputParameterView)
-        self.inputParameterModel.blockSignals(False) 
+       
+    def inputParameterSelectionChanged(self):
+        '''
+        this should set the buttons
+        '''
+        selectedIndexes = self.inputParameterView.selectedIndexes()
+        max_rows = self.inputParameterModel.rowCount()
+        selected_rows = []
+        for index in selectedIndexes:
+            selected_rows.append(index.row())
+        number_of_selected_rows = len(selected_rows)
 
-    def inputParameterSelectionChanged(self, selected, deselected):
-        print(f'inputParameterSelectionChanged.selected.indexes() = {selected.indexes()}')
-        
-
-
-
-        # #https://doc.qt.io/qt-5/qabstractitemview.html#selectionChanged
-        # max_rows = self.inputParameterModel.rowCount()
-        # selected_rows = []
-        # for index in selected.indexes():
-        #     selected_rows.append(copy.copy(index.row()))
-
-        # number_of_selected_rows = len(selected_rows)
-
-        # print(f"max_rows = {max_rows}")
-        # print(f"selected_rows = {selected_rows}")
-        # print(f"number_of_selected_rows = {number_of_selected_rows}")
-
-        # if number_of_selected_rows == 1:
-        #     selected_row = selected_rows[0]
-        #     if selected_row == 0:
-        #         self.inputParameterMoveUp.setDisabled(True)
-        #         self.inputParameterMoveDown.setDisabled(True)
-        #         self.inputParameterDelete.setDisabled(True)
-        #     else:
-        #         self.inputParameterDelete.setEnabled(True)
-        #         if selected_row > 1:
-        #             self.inputParameterMoveUp.setEnabled(True)
-        #         else:
-        #             self.inputParameterMoveUp.setDisabled(True)
-        #         if selected_row < max_rows:
-        #             self.inputParameterMoveDown.setEnabled(True)
-        #         else:
-        #             self.inputParameterMoveDown.setDisabled(True)
-        # else:
-        #     print('more than 2 rows selected')
-        #     self.inputParameterMoveUp.setDisabled(True)
-        #     self.inputParameterMoveDown.setDisabled(True)
-        #     self.inputParameterDelete.setDisabled(True)
+        if number_of_selected_rows == 0:
+            self.inputParameterUnselect.setEnabled(False)
+            self.inputParameterMoveUp.setEnabled(False)
+            self.inputParameterDelete.setEnabled(False)
+            self.inputParameterMoveDown.setEnabled(False)
+        else:
+            self.inputParameterUnselect.setEnabled(True)
+            if number_of_selected_rows == 1:
+                self.inputParameterDelete.setEnabled(True)
+                selected_row = selected_rows[0]
+                if selected_row == 0:
+                    self.inputParameterMoveUp.setEnabled(False)
+                    self.inputParameterMoveDown.setEnabled(False)            
+                else:
+                    if selected_row > 1: # can move up
+                        self.inputParameterMoveUp.setEnabled(True)
+                    else:
+                        self.inputParameterMoveUp.setEnabled(False)
+                    if selected_row < max_rows:
+                        self.inputParameterMoveDown.setEnabled(True)
+                    else:
+                        self.inputParameterMoveDown.setEnabled(False)
+            else:
+                self.inputParameterMoveUp.setEnabled(False)
+                self.inputParameterDelete.setEnabled(False)
+                self.inputParameterMoveDown.setEnabled(False)
 
     def setInputParameterType(self, Type):
         selection = self.inputParameterView.selectedIndexes()
@@ -548,44 +550,37 @@ class TestWizard(QtWidgets.QDialog):
     #     print("self.setParameterBinary")
 
     def setInputParameterValue(self, value):
-        selection = self.inputParameterView.selectedIndexes()
+        '''
+        we arrive here after selecting one or more items, and evoking the 
+        context menu for Value.
+        This will evoke inputParameterItemchanged (which resizes the columms)
+        At the end we clear the selection which evokes inputParameterSelectionChanged
+        (which sets the buttons correctly)
+        '''
+        index_selection = self.inputParameterView.selectedIndexes()
         
-        for index in selection:
+        for index in index_selection:
             if value == '+∞': # only the max column can have +∞
                 if index.row() != 0: # not for 'Temperature'
                     if index.column() == 3: # max column
-                        self.inputParameterModel.itemFromIndex(index).setData('+∞', QtCore.Qt.DisplayRole)
-                        name_item = self.inputParameterModel.item(index.row(), 0)
-                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
-                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                QtCore.Qt.ItemIsEditable | 
-                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
+                        max_item = self.inputParameterModel.itemFromIndex(index)
+                        max_item.setData(value, QtCore.Qt.DisplayRole)
             elif value == '-∞': # only the min column can have -∞
                 if index.row() != 0: # not for 'Temperature'
                     if index.column() == 1: # min column
-                        self.inputParameterModel.itemFromIndex(index).setData('-∞', QtCore.Qt.DisplayRole)
-                        name_item = self.inputParameterModel.item(index.row(), 0)
-                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
-                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                QtCore.Qt.ItemIsEditable | 
-                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
-            elif value == '0': # for name, min, default, max, multiplier AND unit
-                if index.row() != 0: # not for 'Temperature'
-                    self.inputParameterModel.itemFromIndex(index).setData('', QtCore.Qt.DisplayRole)
-                    name_item = self.inputParameterModel.item(index.row(), 0)
-                    name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
-                    name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                            QtCore.Qt.ItemIsEditable | 
-                                                            QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
-            else: # for min, default, max
-                if index.row() != 0: # not for 'Temperature'
-                    if index.column in [1, 2, 3]: # for min, default and max columns
-                        self.inputParameterModel.itemFromIndex(index).setData(value, QtCore.Qt.DisplayRole)
-                        name_item = self.inputParameterModel.item(index.row(), 0)
-                        name_item.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
-                        name_item.itemFromIndex(index).setFlags(QtCore.Qt.ItemIsSelectable | 
-                                                                QtCore.Qt.ItemIsEditable | 
-                                                                QtCore.Qt.ItemIsEnabled) # no QtCore.Qt.ItemIsUserCheckable
+                        min_item = self.inputParameterModel.itemFromIndex(index)
+                        min_item.setData(value, QtCore.Qt.DisplayRole)
+            elif value == '': # for name, min, default, max, multiplier AND unit
+                if index.column() != 0: # not for 'Temperature'
+                    item = self.inputParameterModel.itemFromIndex(index)
+                    item.setData(value, QtCore.Qt.DisplayRole)
+            elif value == '0': # for min, default, max
+                if index.column() != 0: # not for 'Temperature'
+                    item = self.inputParameterModel.itemFromIndex(index)
+                    item.setData(value, QtCore.Qt.DisplayRole)
+            else:
+                raise Exception("shouldn't be able to reach this point")
+        self.inputParameterView.clearSelection()
 
     def setInputParameterMultiplier(self, text, tooltip):
         selection = self.inputParameterView.selectedIndexes()
@@ -602,6 +597,122 @@ class TestWizard(QtWidgets.QDialog):
             if index.column() == 5: # units are located in column#5
                 self.inputParameterModel.setData(index, text, QtCore.Qt.DisplayRole)
                 self.inputParameterModel.setData(index, tooltip, QtCore.Qt.ToolTipRole)
+
+    input_parameters = {'T' : {'shmoo' : True,  'Min' : -40, 'Max' : 170, 'Default' : 25,  'Unit' : '°C'}, # Obligatory !
+                        'i' : {'shmoo' : False, 'Min' : 0.1, 'Max' : 2.5, 'Default' : 1.0, 'Unit' : 'mA'}}
+
+    def setInputParameter(self, name, attributes, row=None):
+        if row == None: # append
+            name_item = QtGui.QStandardItem()
+            self.inputParameterModel.appendRow(name_item)
+        else:
+            if row > self.inputParameterModel.rowCount():
+                raise Exception(f"row({row}) > rowCount({self.inputParameterModel.rowCount()})")
+            name_item = self.inputParameterModel.item(row, 0)
+
+
+
+        
+        if name == 'Temperature':
+            if row!=0:
+                raise Exception("'Temperature' **MUST** be in row 0 !")
+            pass
+        else:
+    
+            name_index = self.inputParameterModel.indexFromItem(name_item)
+            self.inputParameterModel.setData(name_index, f'new_parameter{new_parameter_index}', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(name_index, 'Real', QtCore.Qt.ToolTipRole)
+            self.inputParameterModel.setData(name_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.setData(name_index, QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole) 
+            self.inputParameterModel.itemFromIndex(name_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                        QtCore.Qt.ItemIsEditable | 
+                                                                        QtCore.Qt.ItemIsEnabled)
+
+            min_index = self.inputParameterModel.index(name_index.row(), 1)
+            self.inputParameterModel.setData(min_index, '-∞', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(min_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.itemFromIndex(min_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                       QtCore.Qt.ItemIsEditable | 
+                                                                       QtCore.Qt.ItemIsEnabled)
+
+            default_index = self.inputParameterModel.index(name_index.row(), 2)
+            self.inputParameterModel.setData(default_index, '0', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(default_index, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.itemFromIndex(default_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                           QtCore.Qt.ItemIsEditable | 
+                                                                           QtCore.Qt.ItemIsEnabled)
+            
+            max_index = self.inputParameterModel.index(name_index.row(), 3)
+            self.inputParameterModel.setData(max_index, '+∞', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(max_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.itemFromIndex(max_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                       QtCore.Qt.ItemIsEditable | 
+                                                                       QtCore.Qt.ItemIsEnabled)
+
+            multiplier_index = self.inputParameterModel.index(name_index.row(), 4)
+            self.inputParameterModel.setData(multiplier_index, '', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(multiplier_index, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.itemFromIndex(multiplier_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                              QtCore.Qt.ItemIsEditable | 
+                                                                              QtCore.Qt.ItemIsEnabled)
+
+            unit_index = self.inputParameterModel.index(name_index.row(), 5)
+            self.inputParameterModel.setData(unit_index, '?', QtCore.Qt.DisplayRole)
+            self.inputParameterModel.setData(unit_index, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            self.inputParameterModel.itemFromIndex(unit_index).setFlags(QtCore.Qt.ItemIsSelectable | 
+                                                                        QtCore.Qt.ItemIsEditable | 
+                                                                        QtCore.Qt.ItemIsEnabled)
+    
+    def setInputpParameters(self, definition):
+        pass
+    
+    def getInputParameter(self, row):
+        attributes = {'shmoo' : None, 'Min' : None, 'Default' : None, 'Max' : None, '10ᵡ' : None, 'Unit' : None}
+
+        name_item = self.inputParameterModel.item(row, 0)
+        name = name_item.data(QtCore.Qt.DisplayRole)
+
+        shmoo = name_item.data(QtCore.Qt.CheckStateRole)
+        if shmoo & QtCore.Qt.Checked:
+            attributes['shmoo'] = True
+        else:
+            attributes['shmoo'] = False
+
+        min_item = self.inputParameterModel.item(row, 1)
+        Min = min_item.data(QtCore.Qt.DisplayRole)
+        if Min == '-∞' :
+            attributes['Min'] = -np.Inf
+        else:
+            attributes['Min'] = float(Min)
+
+        default_item = self.inputParameterModel.item(row, 2)
+        Default = default_item.data(QtCore.Qt.DisplayRole)
+        attributes['Default'] = float(Default)
+
+        max_item = self.inputParameterModel.item(row, 3)
+        Max = max_item.data(QtCore.Qt.DisplayRole)
+        if Max in ['+∞', '∞']:
+            attributes['Max'] = np.Inf
+        else:
+            attributes['Max'] = float(Max)
+
+        multiplier_item = self.inputParameterModel.item(row, 4)        
+        Multiplier = multiplier_item.data(QtCore.Qt.DisplayRole)
+        attributes['10ᵡ'] = Multiplier
+        
+        unit_item = self.inputParameterModel.item(row, 5)
+        Unit = unit_item.data(QtCore.Qt.DisplayRole)
+        attributes['Unit'] = Unit
+                
+        return name, attributes
+    
+    def getInputParameters(self):
+        retval = {}
+        rows = self.inputParameterModel.rowCount()
+        for row in rows:
+            name, attributes = self.getInputParameter(row)
+            retval[name] = attributes
+        return retval
 
     def moveInputParameterUp(self):
         selection = self.inputParameterView.selectedIndexes()
