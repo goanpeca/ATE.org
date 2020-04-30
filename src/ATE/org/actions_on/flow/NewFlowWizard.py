@@ -39,7 +39,7 @@ class NewFlowWizard(QtWidgets.QDialog):
         self.Hardwaresetups.clear()
         self.Hardwaresetups.addItems(self.existing_hardwaresetups)
         self.Hardwaresetups.setCurrentIndex(index)
-        self.Hardwaresetups.currentIndexChanged.connect(self.verify)
+        self.Hardwaresetups.currentIndexChanged.connect(self._verify)
         self.Hardwaresetups.blockSignals(False)
 
     # Radio's
@@ -66,13 +66,13 @@ class NewFlowWizard(QtWidgets.QDialog):
         TestName_validator = QtGui.QRegExpValidator(rxTestName, self)
         self.TestName.setText("")
         self.TestName.setValidator(TestName_validator)
-        self.TestName.textChanged.connect(self.verify)
+        self.TestName.textChanged.connect(self._verify)
 
         self.ForHardwaresetup.blockSignals(True)
         self.ForHardwaresetup.clear()
         self.ForHardwaresetup.addItems(self.existing_hardwaresetups)
         self.ForHardwaresetup.setCurrentIndex(0) # this is the empty string !
-        self.ForHardwaresetup.currentIndexChanged.connect(self.verify)
+        self.ForHardwaresetup.currentIndexChanged.connect(self._verify)
         self.ForHardwaresetup.blockSignals(False)
 
         self.Finaltest.setChecked(True)
@@ -86,10 +86,10 @@ class NewFlowWizard(QtWidgets.QDialog):
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.OKButton.setEnabled(False)
 
-        self.verify()
+        self._verify()
         self.show()
 
-    def verify(self):
+    def _verify(self):
         self.Feedback.setText("")
         if not is_valid_test_name(self.TestName.text()):
             self.Feedback.setText("The test name can not contain the word 'TEST' in any form!")

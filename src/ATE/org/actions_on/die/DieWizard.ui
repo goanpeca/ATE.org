@@ -80,7 +80,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>80</width>
+           <width>150</width>
            <height>22</height>
           </size>
          </property>
@@ -156,7 +156,7 @@
         <widget class="QLineEdit" name="dieName">
          <property name="minimumSize">
           <size>
-           <width>160</width>
+           <width>150</width>
            <height>22</height>
           </size>
          </property>
@@ -167,6 +167,19 @@
           </size>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>
@@ -531,7 +544,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>60</width>
+           <width>150</width>
            <height>22</height>
           </size>
          </property>
@@ -638,7 +651,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>80</width>
+           <width>150</width>
            <height>22</height>
           </size>
          </property>
@@ -709,7 +722,7 @@
         <widget class="QLineEdit" name="customer">
          <property name="minimumSize">
           <size>
-           <width>160</width>
+           <width>150</width>
            <height>22</height>
           </size>
          </property>
@@ -720,6 +733,19 @@
           </size>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_8">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>

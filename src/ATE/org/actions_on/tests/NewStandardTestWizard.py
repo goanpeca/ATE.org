@@ -27,16 +27,16 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.project_info = project_info
 
     # ForHardwareSetup ComboBox
-        self.existing_hardwaresetups = self.project_info.get_hardwares()
+        self.existing_hardwaresetups = self.project_info.get_available_hardwares()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(self.existing_hardwaresetups)
         # TODO: fix this
-        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.activeHardware))
+        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.active_hardware))
         # TODO: 
         # self.ForHardwareSetup.setDisabled(fixed)
         self.ForHardwareSetup.setDisabled(False)
-        self.ForHardwareSetup.currentTextChanged.connect(self.verify)
+        self.ForHardwareSetup.currentTextChanged.connect(self._verify)
         self.ForHardwareSetup.blockSignals(False)
         
     # WithBase ComboBox
@@ -44,10 +44,10 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.WithBase.clear()
         self.WithBase.addItems(['PR', 'FT'])
         # TODO: fix this
-        self.WithBase.setCurrentIndex(self.WithBase.findText(self.project_info.activeBase))
+        self.WithBase.setCurrentIndex(self.WithBase.findText(self.project_info.active_base))
         # self.WithBase.setDisabled(fixed)
         self.WithBase.setDisabled(False)
-        self.WithBase.currentTextChanged.connect(self.verify)
+        self.WithBase.currentTextChanged.connect(self._verify)
         self.WithBase.blockSignals(False)
 
     # StandardTestName ComboBox
@@ -72,7 +72,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.StandardTestName.blockSignals(True)
         self.StandardTestName.clear()
         self.StandardTestName.setModel(self.model)
-        self.StandardTestName.currentTextChanged.connect(self.verify)            
+        self.StandardTestName.currentTextChanged.connect(self._verify)            
         self.StandardTestName.blockSignals(False)
 
     # feedback
@@ -85,11 +85,11 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.OKButton.setEnabled(False)
 
     # go
-        self.verify()
+        self._verify()
         self.show()
         
         
-    def verify(self):
+    def _verify(self):
         self.feedback.setText('')
         
         # hardware        

@@ -87,7 +87,7 @@ def dialog(parent):
 
 if __name__ == "__main__":
     pass
-    # from ATE.org.navigation import project_navigator, run_dummy_main
+    # from ATE.org.navigation import ProjectNavigation, run_dummy_main
     
-    # project_info = project_navigator(r'C:\Users\hoeren\__spyder_workspace__\BROL')
+    # project_info = ProjectNavigation(r'C:\Users\hoeren\__spyder_workspace__\BROL')
     # run_dummy_main(project_info, DieWizard)

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
-from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
 quali_flow_name = "qualification_RSH_flows"
@@ -18,7 +16,7 @@ class RSHWizard(wizardbase.wizardbase):
     def _get_wizard_parameters(self) -> list:
         return [writeoncetextparam.WriteOnceTextParam("name"),
                 optionparam.OptionParam("Type", ["Reflow", "Bodydip", "Iron Solder"])]
-    
+
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
     def _get_wizard_testprogram_slots(self) -> list:
@@ -45,13 +43,3 @@ def view_item(storage, data):
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    dialog = RSHWizard(dict(), None)
-    dialog.show()
-    sys.exit(app.exec_())

@@ -497,6 +497,9 @@
            </item>
            <item>
             <widget class="QTableWidget" name="pinsTable">
+             <attribute name="horizontalHeaderDefaultSectionSize">
+              <number>66</number>
+             </attribute>
              <column>
               <property name="text">
                <string>Name</string>

@@ -1,7 +1,10 @@
 from ATE.org.actions_on.product.NewProductWizard import new_product_dialog
+from ATE.org.actions_on.product.EditProductWizard import edit_product_dialog
+from ATE.org.actions_on.product.ViewProductWizard import display_product_settings_dialog
 
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.model.BaseItem import BaseItem
+from ATE.org.actions_on.utils.StateItem import StateItem
 
 
 class ProductItem(BaseItem):
@@ -25,24 +28,41 @@ class ProductItem(BaseItem):
         return [MenuActionTypes.Add()]
 
     def new_item(self):
-        new_product_dialog(self.project_info, self.active_hardware)
+        new_product_dialog(self.project_info)
 
 
-class ProductItemChild(BaseItem):
+class ProductItemChild(StateItem):
     def __init__(self, project_info, name, parent=None):
         super().__init__(project_info, name, parent=parent)
 
     def edit_item(self):
-        pass
+        edit_product_dialog(self.project_info, self.text())
 
     def display_item(self):
-        pass
+        display_product_settings_dialog(self.text(), self.project_info)
 
-    def delete_item(self):
-        pass
+    def is_enabled(self):
+        return self.project_info.get_product_state(self.text())
 
-    def _get_menu_items(self):
+    def _update_db_state(self, enabled):
+        self.project_info.update_product_state(self.text(), enabled)
+
+    def _are_dependencies_fulfilled(self):
+        dependency_list = {}
+        hw = self.project_info.get_product_hardware(self.text())
+        device = self.project_info.get_product_device(self.text())
+        hw_enabled = self.project_info.get_hardware_state(hw[0])
+        device_enabled = self.project_info.get_device_state(device[0])
+
+        if not hw_enabled:
+            dependency_list.update({'hardwares': hw})
+        if not device_enabled:
+            dependency_list.update({'devices': device})
+
+        return dependency_list
+
+    def _enabled_item_menu(self):
         return [MenuActionTypes.Edit(),
                 MenuActionTypes.View(),
                 None,
-                MenuActionTypes.Delete()]
+                MenuActionTypes.Obsolete()]

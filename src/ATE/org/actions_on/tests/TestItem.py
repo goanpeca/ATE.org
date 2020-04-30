@@ -1,7 +1,8 @@
 from ATE.org.actions_on.model.BaseItem import BaseItem
+from ATE.org.actions_on.utils.StateItem import StateItem
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.tests.NewStandardTestWizard import new_standard_test_dialog
-from ATE.org.actions_on.tests.TestWizard import new_test_dialog
+from ATE.org.actions_on.tests.NewTestWizard import new_test_dialog
 from ATE.org.actions_on.utils.FileSystemOperator import FileSystemOperator
 from ATE.org.actions_on.tests.TestsObserver import TestsObserver
 
@@ -16,8 +17,8 @@ class TestItem(BaseItem):
         self.file_system_operator = FileSystemOperator(path)
 
     def _append_children(self):
-        active_hardware = self.project_info.activeHardware
-        active_base = self.project_info.activeBase
+        active_hardware = self.project_info.active_hardware
+        active_base = self.project_info.active_base
         if not active_base or not active_hardware:
             return
 
@@ -25,11 +26,12 @@ class TestItem(BaseItem):
         for test_entry in test_list:
             self.add_file_item(test_entry, path)
 
-        self.observer = TestsObserver(path, self)
-        self.observer.start_observer()
+        if self.observer is None:
+            self.observer = TestsObserver(path, self)
+            self.observer.start_observer()
 
     def add_file_item(self, name, path):
-        child = TestItemChild(os.path.splitext(name)[0], path, self)
+        child = TestItemChild(os.path.splitext(name)[0], path, self, self.project_info)
         self.appendRow(child)
 
     def new_item(self):
@@ -39,18 +41,15 @@ class TestItem(BaseItem):
         pass
 
     def update(self):
-        active_hardware = self.project_info.activeHardware
-        active_base = self.project_info.activeBase
-        # TODO: remove this after update toolbar class
-        # problem here is that the toolbar does not emit the actual
-        # hardware status when the application starts
-        if not active_hardware:
-            return
+        active_hardware = self.project_info.active_hardware
+        active_base = self.project_info.active_base
 
-        if not active_base:
+        if not active_base or \
+           not active_hardware:
             self.set_children_hidden(True)
             if self.observer is not None:
                 self.observer.stop_observer()
+                self.observer = None
             return
         else:
             self.set_children_hidden(False)
@@ -79,8 +78,8 @@ class TestItem(BaseItem):
                 MenuActionTypes.Import()]
 
 
-class TestItemChild(BaseItem):
-    def __init__(self, name, path, parent, project_info=None):
+class TestItemChild(StateItem):
+    def __init__(self, name, path, parent, project_info):
         super().__init__(project_info, name, parent)
         self.path = os.path.join(path, name + '.py')
         self.file_system_operator = FileSystemOperator(self.path)
@@ -98,7 +97,26 @@ class TestItemChild(BaseItem):
         self.file_system_operator.delete_file()
         self.model().delete_file.emit(self.path)
 
-    def _get_menu_items(self):
+        # TODO: can we delete test here or just set obsolete as used in definiton section
+        self.project_info.remove_test(self.text())
+
+    def is_enabled(self):
+        return self.project_info.get_test_state(self.text())
+
+    def _update_db_state(self, enabled):
+        self.project_info.update_test_state(self.text(), enabled)
+
+    def _are_dependencies_fulfilled(self):
+        dependency_list = {}
+        hw = self.project_info.get_test_hardware(self.text())
+        hw_enabled = self.project_info.get_hardware_state(hw[0])
+
+        if not hw_enabled:
+            dependency_list.update({'hardwares': hw})
+
+        return dependency_list
+
+    def _enabled_item_menu(self):
         return [MenuActionTypes.Edit(),
                 None,
                 MenuActionTypes.Delete()]

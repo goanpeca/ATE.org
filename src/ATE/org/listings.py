@@ -4,10 +4,9 @@ Created on Nov 20, 2019
 @author: hoeren
 '''
 import os
-import sqlite3
 
-from ATE.org.Templates import project_structure
 from ATE.org.validation import is_ATE_project
+
 
 def dict_projects(workspace_path):
     '''
@@ -21,11 +20,13 @@ def dict_projects(workspace_path):
             retval[directory] = full_directory
     return retval
 
+
 def list_projects(workspace_path):
     '''
     given a workspace_path, extract a list of all projects
     '''
     return list(dict_projects(workspace_path))
+
 
 def dict_ATE_projects(workspace_path):
     '''
@@ -40,6 +41,7 @@ def dict_ATE_projects(workspace_path):
             retval[candidate] = possible_ATE_project
     return retval
 
+
 def list_ATE_projects(workspace_path):
     '''
     given a workspace_path, extract a list of all ATE projects
@@ -51,19 +53,18 @@ def list_MiniSCTs():
     retval = ["Tom's MiniSCT", "Rudie's MiniSCT", "Achim's MiniSCT", "Siegfried's MiniSCT"]
     return retval
 
+
 if __name__ == '__main__':
     homedir = os.path.expanduser("~")
-    workspace_path = os.path.join(homedir, "__spyder_workspace__")    
+    workspace_path = os.path.join(homedir, "__spyder_workspace__")
 
     pd = dict_projects(workspace_path)
     pl = list_projects(workspace_path)
     ad = dict_ATE_projects(workspace_path)
     al = list_ATE_projects(workspace_path)
-    
+
     for project in pl:
         if project in al:
             print(f"* {project} : {pd[project]}")
         else:
             print(f"  {project} : {pd[project]}")
-
-

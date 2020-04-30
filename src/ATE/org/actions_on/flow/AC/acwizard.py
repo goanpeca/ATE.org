@@ -3,8 +3,6 @@
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
 
 quali_flow_name = "qualification_AC_flow"
 quali_flow_listentry_name = "AC"
@@ -51,13 +49,3 @@ def view_item(storage, data):
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    dialog = ACWizard(dict(), None)
-    dialog.show()
-    sys.exit(app.exec_())

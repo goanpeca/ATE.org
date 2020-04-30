@@ -3,12 +3,12 @@
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 
 quali_flow_name = "qualification_DR_flows"
 quali_flow_listentry_name = "DR"
 quali_flow_tooltip = "Data Retention"
+
 
 class DRWizard(wizardbase.wizardbase):
     # This function shall return a list of parameters, that
@@ -17,7 +17,7 @@ class DRWizard(wizardbase.wizardbase):
         return [writeoncetextparam.WriteOnceTextParam("name"),
                 intparam.IntParam("Length (hours)", 0, 0, 10000),
                 intparam.IntParam("Temperature (C°)", 0, 0, 100)]
-    
+
     # This function shall return a list of testprogram slots
     # Note: We expect a list of TextBoxParams here
     def _get_wizard_testprogram_slots(self) -> list:
@@ -44,14 +44,3 @@ def view_item(storage, data):
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
-
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    dialog = DRWizard(dict(), None)
-    dialog.show()
-    sys.exit(app.exec_())

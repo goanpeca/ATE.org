@@ -4,6 +4,9 @@ from ATE.org.actions_on.maskset.ViewMasksetSettings import display_maskset_setti
 
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.model.BaseItem import BaseItem
+from ATE.org.actions_on.utils.StateItem import StateItem
+
+from PyQt5 import QtCore
 
 
 class MasksetItem(BaseItem):
@@ -30,22 +33,27 @@ class MasksetItem(BaseItem):
         return [MenuActionTypes.Add()]
 
 
-class MasksetItemChild(BaseItem):
+class MasksetItemChild(StateItem):
     def __init__(self, project_info, name, parent=None):
         super().__init__(project_info, name, parent=parent)
+        self.definition = self._get_definition()
+
+    def _get_dependant_objects(self):
+        return self.project_info.get_dependant_objects_for_maskset(self.text())
 
     def edit_item(self):
         edit_maskset_dialog(self.project_info, self.text())
 
     def display_item(self):
-        configuration = self.project_info.get_maskset_definition(self.text())
+        configuration = self._get_definition()
         display_maskset_settings_dialog(configuration, self.text())
 
-    def delete_item(self):
-        pass
+    def is_enabled(self):
+        return self.project_info.get_maskset_state(self.text())
 
-    def _get_menu_items(self):
-        return [MenuActionTypes.Edit(),
-                MenuActionTypes.View(),
-                None,
-                MenuActionTypes.Delete()]
+    def _get_definition(self):
+        return self.project_info.get_maskset_definition(self.text())
+
+    def _update_item_state(self, enabled):
+        self.project_info.update_maskset_state(self.text(), enabled)
+        return enabled

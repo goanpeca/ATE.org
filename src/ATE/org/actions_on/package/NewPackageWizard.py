@@ -10,73 +10,74 @@ import re
 import tempfile
 
 from ATE.org.validation import valid_package_name_regex
-
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+
 class NewPackageWizard(QtWidgets.QDialog):
-
-    def __init__(self, project_info):
+    def __init__(self, project_info, read_only=False):
         super(NewPackageWizard, self).__init__()
+        self.project_info = project_info
+        self.read_only = read_only
 
+        self._load_ui()
+        self._setup()
+        self._connect_event_handler()
+
+    def _load_ui(self):
         my_ui = __file__.replace('.py', '.ui')
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
+
+    def _setup(self):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.project_info = project_info
-        
-    # create a temporary directory to store the drawing(s)
+        # create a temporary directory to store the drawing(s)
         self.temp_dir = tempfile.mkdtemp()
         self.temp_drawing = None
 
-    # name        
+        # name
         rxPackageName = QtCore.QRegExp(valid_package_name_regex)
         PackageName_validator = QtGui.QRegExpValidator(rxPackageName, self)
-        self.existing_packages = self.project_info.packages_get()
+        self.existing_packages = self.project_info.get_packages()
         self.packageName.blockSignals(True)
         self.packageName.setValidator(PackageName_validator)
         self.packageName.textChanged.connect(self.validate)
         self.packageName.blockSignals(False)
 
-    # leads
-        self.leads.blockSignals(True)
+        # leads
         self.leads.setMinimum(2)
         self.leads.setMaximum(99)
         self.leads.setValue(3)
-        self.leads.blockSignals(False)
 
-    # drawing
+        # drawing
         self.drawingGroup.setVisible(False)
         self.drawingLabel.setText("N/A")
         self.findOnFilesystem.clicked.connect(self.FindOnFileSystem)
         companies = ['', 'Micronas', 'InvenSense', 'IC-Sense', '...']
         self.importFor.clear()
         self.importFor.addItems(companies)
-        self.importFor.setCurrentIndex(0) # empty string
-        self.importFor.currentTextChanged.connect(self.importForChanged)
+        self.importFor.setCurrentIndex(0)  # empty string
         self.doImport.setEnabled(False)
-        self.doImport.clicked.connect(self.doImportFor)        
-        
         self.feedback.setText("")
         self.feedback.setStyleSheet('color: orange')
 
-        self.OKButton.clicked.connect(self.OKButtonPressed)
-        self.CancelButton.clicked.connect(self.CancelButtonPressed)
         self.OKButton.setEnabled(False)
-        
+
         self.validate()
         self.show()
+
+    def _connect_event_handler(self):
+        self.OKButton.clicked.connect(self.OKButtonPressed)
+        self.CancelButton.clicked.connect(self.CancelButtonPressed)
+        self.importFor.currentTextChanged.connect(self.importForChanged)
+        self.doImport.clicked.connect(self.doImportFor)
 
     def __del__(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def FindOnFileSystem(self):
         print("Find On File System not yet implemented")
-
-        #TODO: Implement 'FindOnFileSystem'
-
+        # TODO: Implement 'FindOnFileSystem'
 
     def importForChanged(self, Company):
         if Company == '':
@@ -88,52 +89,54 @@ class NewPackageWizard(QtWidgets.QDialog):
 
     def doImportFor(self):
         '''
-        this method will find (per company) somehow the drawings for 
-        the package and save it in the self.temp_dir directory with the 
+        this method will find (per company) somehow the drawings for
+        the package and save it in the self.temp_dir directory with the
         name of the package with the .png extension.
         upon OK button, this file is copied in ~/src/drawings/packages.
         '''
         print("Import for '{self.importFor.currentText()}' not yet implemented")
-        
-        #TODO: Implement, save the file in self.temp_dir under the name of the package !!!
-        
-        self.importFor.setCurrentIndex(0) # empty
+
+        # TODO: Implement, save the file in self.temp_dir under the name of the package !!!
+        self.importFor.setCurrentIndex(0)  # empty
         self.drawingLabel.setText(f"imported for '{self.importFor.currentText()}'")
         self.doImport.setEnabled(False)
 
     def validate(self):
-        self.feedback = ''
-        
+        self.feedback.setText('')
+
         package_name = self.packageName.text()
         if package_name == "":
-            self.feedback = "Supply a name for the Package"
+            self.feedback.setText("Supply a name for the Package")
             self.drawingGroup.setVisible(False)
         else:
-            if package_name in self.existing_packages:
-                self.feedback = "Package already defined"
+            if not self.read_only and package_name in self.existing_packages:
+                self.feedback.setText("Package already defined")
             else:
                 self.drawingGroup.setVisible(True)
 
-        if self.feedback == "":
+        if self.feedback.text() == "":
             self.OKButton.setEnabled(True)
         else:
             self.OKButton.setEnabled(False)
 
-    def OKButtonPressed(self):
-        name = self.packageName.text()
-        leads = self.leads.value()
-        
-        self.project_info.package_add(name, leads)
+    def _get_current_configuration(self):
+        return {'name': self.packageName.text(),
+                'leads': self.leads.value()}
 
+    def OKButtonPressed(self):
+        configuration = self._get_current_configuration()
+        self.project_info.add_package(configuration['name'], configuration['leads'])
         self.accept()
 
     def CancelButtonPressed(self):
         self.accept()
 
+
 def new_package_dialog(project_info):
     newPackageWizard = NewPackageWizard(project_info)
     newPackageWizard.exec_()
     del(newPackageWizard)
+
 
 if __name__ == '__main__':
     import sys, qdarkstyle

@@ -50,7 +50,7 @@ class ESDWizard(wizardbase.wizardbase):
     def set_view_only(self):
         super().set_view_only()
         self.modelChooser.disable_ui_components()
-        
+
     def get_ui_file(self) -> str:
         return __file__.replace('.py', '.ui')
 

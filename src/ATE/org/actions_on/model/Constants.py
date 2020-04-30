@@ -8,6 +8,7 @@ class MenuActionTypes(Enum):
     Delete = "delete_item"
     Import = "import_item"
     Activate = "activate_item"
+    Enable = "enable_item"
     CloneTo = "clone_to_item"
     CloneFrom = "clone_from_item"
     Trace = "trace_item"
@@ -19,6 +20,7 @@ class MenuActionTypes(Enum):
     DeleteFile = "delete_item"
     ImportFile = "import_file_item"
     ImportFolder = "import_dir_item"
+    Obsolete = "disable_item"
 
     def __call__(self):
         return self.value

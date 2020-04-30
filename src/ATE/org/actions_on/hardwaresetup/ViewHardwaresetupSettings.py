@@ -1,4 +1,3 @@
-from PyQt5 import QtCore, QtWidgets, uic
 from enum import Enum
 
 import os
@@ -6,53 +5,52 @@ import re
 
 
 from ATE.org.actions_on.hardwaresetup.constants import DEFINITION
-from ATE.org.actions_on.hardwaresetup.constants import UI_FILE
+from ATE.org.actions_on.hardwaresetup.HardwareWizard import HardwareWizard
 
 
 class ErrorMessage(Enum):
     NoValidConfiguration = "no valid configuration"
     InvalidConfigurationElements = "configuration does not match the template inside constants.py"
+
     def __call__(self):
         return self.value
 
 
-class ViewHardwaresetupSettings(QtWidgets.QDialog):
-    def __init__(self, hw_configuration, hw_name):
-        self.hw_configuration = hw_configuration
-        self.hw_name = hw_name
+class ViewHardwaresetupSettings(HardwareWizard):
+    def __init__(self, hw_name, project_info):
+        super().__init__(project_info)
+        self._setup_view(hw_name)
+        self.finaltestConfiguration.setFixedSize(626, 374)
+        ViewHardwaresetupSettings._setup_dialog_fields(self, hw_name)
 
-    def __call__(self):
-        super().__init__()
-        self._load_ui()
-        self._setup(self.hw_name)
-        ViewHardwaresetupSettings._show(self, self.hw_configuration)
-
-    def _load_ui(self):
-        import os
-        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
-        uic.loadUi(my_ui, self)
-
-    def _setup(self, hw_name):
+    def _setup_view(self, hw_name):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
 
-        self.HardwareSetup.setText(hw_name)
-        self.HardwareSetup.setEnabled(False)
+        self.hardware.setText(hw_name)
+        self.hardware.setEnabled(False)
+        self.feedback.setStyleSheet('color: orange')
 
-        self.SingleSiteLoadboard.setEnabled(False)
-        self.SingleSiteDIB.setEnabled(False)
-        self.MultiSiteLoadboard.setEnabled(False)
-        self.MultiSiteDIB.setEnabled(False)
-        self.ProbeCard.setEnabled(False)
-        self.Parallelism.setEnabled(False)
+        self.singlesiteLoadboard.setEnabled(False)
+        self.singlesiteProbecard.setEnabled(False)
+        self.singlesiteDIB.setEnabled(False)
+        self.multisiteLoadboard.setDisabled(True)
+        self.multisiteDIB.setDisabled(True)
+        self.multisiteProbecard.setDisabled(True)
+        self.maxParallelism.setEnabled(False)
+        self.finaltestSites.setEnabled(False)
+        self.finaltestConfiguration.setEnabled(False)
+        self.reset_button.setEnabled(False)
+        self.type_box.setEnabled(False)
+
+        self.right_button.setEnabled(False)
+        self.left_button.setEnabled(False)
 
         self.OKButton.setEnabled(True)
         self.OKButton.clicked.connect(self.accept)
 
         self.CancelButton.setEnabled(True)
         self.CancelButton.clicked.connect(self.accept)
-        self.Feedback.setText("")
+        self.feedback.setText("")
 
     @staticmethod
     def is_valid_configuration(hw_configuration):
@@ -62,25 +60,33 @@ class ViewHardwaresetupSettings(QtWidgets.QDialog):
         return True
 
     @staticmethod
-    def _show(owner, hw_configuration):
+    def _setup_dialog_fields(dialog, hw_name):
+        hw_configuration = dialog.project_info.get_hardware_definition(hw_name)
         if not ViewHardwaresetupSettings.is_valid_configuration(hw_configuration):
-            owner.Feedback.setText(ErrorMessage.InvalidConfigurationElements())
-            owner.Feedback.setStyleSheet('color: red')
+            dialog.feedback.setText(ErrorMessage.InvalidConfigurationElements())
+            dialog.feedback.setStyleSheet('color: red')
             return
 
-        owner.Feedback.setText('')
-        owner.Feedback.setStyleSheet('')
+        dialog.feedback.setText('')
+        dialog.feedback.setStyleSheet('')
 
-        owner.SingleSiteLoadboard.setText(hw_configuration["SingleSiteLoadboard"])
-        owner.SingleSiteDIB.setText(hw_configuration["SingleSiteDIB"])
-        owner.MultiSiteLoadboard.setText(hw_configuration["MultiSiteLoadboard"])
-        owner.MultiSiteDIB.setText(hw_configuration["MultiSiteDIB"])
-        owner.ProbeCard.setText(hw_configuration["ProbeCard"])
-        owner.Parallelism.setCurrentIndex(hw_configuration['Parallelism'] - 1)
+        dialog.singlesiteLoadboard.setText(hw_configuration["SingleSiteLoadboard"])
+        dialog.singlesiteDIB.setText(hw_configuration["SingleSiteDIB"])
+        dialog.singlesiteProbecard.setText(hw_configuration["SignleSiteProbeCard"])
+        dialog.multisiteLoadboard.setText(hw_configuration["MultiSiteLoadboard"])
+        dialog.multisiteDIB.setText(hw_configuration["MultiSiteDIB"])
+        dialog.multisiteProbecard.setText(hw_configuration["MultiSiteProbeCard"])
+        dialog.maxParallelism.setCurrentIndex(hw_configuration["MaxParallelism"] - 1)
+        dialog._available_pattern = hw_configuration["Parallelism"]
+        ViewHardwaresetupSettings._update_availabe_pattern_list(dialog)
+
+    @staticmethod
+    def _update_availabe_pattern_list(dialog):
+        for k, _ in dialog._available_pattern.items():
+            dialog.finaltestAvailableConfigurations.addItem(k)
 
 
-def display_hardware_settings_dialog(hw_configuration, hw_name):
-    hardware_wizard = ViewHardwaresetupSettings(hw_configuration, hw_name)
-    hardware_wizard()
+def display_hardware_settings_dialog(hw_name, project_info):
+    hardware_wizard = ViewHardwaresetupSettings(hw_name, project_info)
     hardware_wizard.exec_()
     del(hardware_wizard)
