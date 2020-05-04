@@ -11,24 +11,46 @@ import getpass
 from ATE.utils.DT import DT
 
 
-def test_generator(project_path, name, hardware, base, definition, Type='custom'):
+def generator(project_path, definition):
     '''
     This function will generate the actual python test based on the supplied info.
         - project_path : the absolute path to the project root
-        - name : the test name
-        - hardware : the hardware that the test is based on
-        - Type : the type of test ('standard' or 'custom')
-        - base : the base of the test ('FT' or 'PR')
         - definition : a dictionary as follows
-                {'doc_string' : [], #list of lines
-                 'input_parameters' : {},
-                 'output_parameters' : {}}
+                {'name' : str, # holding the test name
+                 'type' : str, # holding the strin 'custom' or 'standard'
+                 'hardware' : str, 
+                 'base' : str,
+                 'docstring' : [], # list of lines
+                 'input_parameters' : {
+                     'name' : {'Shmoo' : bool,
+                               'Min' : float,
+                               'Default' : float,
+                               'Max' : float,
+                               '10ᵡ' : str,
+                               'Unit' : str,
+                               'fmt' : str}, 
+                     ...},
+                 'output_parameters' : {
+                     'name' : {'LSL': float,
+                               'LTL': float,
+                               'Nom': float,
+                               'UTL': float,
+                               'USL': float,
+                               '10ᵡ': str,
+                               'Unit': str,
+                               'fmt': str},
+                     ...},
+                 'dependencies' : {'Name' : bool, # only one bool enabled, this indicates what test (name) is **IMMEDIATELY** before the current test, all others are somewhere before.
+                                   ...}
+                 }
+
     This function will return the RELATIVE path to the generated file upon 
     success, and '' upon fail
 
     If the target file already exists, then an Exception is raised, as this
     should not be possible!
     '''
+    print(definition)
     now = DT()
     user = getpass.getuser()
     domain = str(os.environ.get('USERDNSDOMAIN')) #TODO: maybe move this to 'company specific stuff' later on ?
@@ -37,11 +59,16 @@ def test_generator(project_path, name, hardware, base, definition, Type='custom'
     else:
         user_email = f"{user}@{domain}".lower()
 
-    rel_path_to_file = os.path.join('src', 'tests', hardware, base, f"{name}.py")
+    rel_path_to_file = os.path.join('src', definition['hardware'], definition['base'], f"{definition['name']}.py")
     abs_path_to_file = os.path.join(project_path, rel_path_to_file)
+    abs_dir = os.path.dirname(abs_path_to_file)
+
+    if not os.path.exists(abs_dir):
+        os.makedirs(abs_dir)
     
     if os.path.exists(abs_path_to_file):
         raise Exception("asked to generate a test that already exists ! should not be possible")
+        #TODO: no, this should be possible, there is a need for an 'over-write' ... that keeps the original source code !!!!!
 
     with open(abs_path_to_file, 'w') as tf:
         # reference : https://stackoverflow.com/questions/41914739/how-do-i-activate-a-conda-env-in-a-subshell
@@ -50,25 +77,33 @@ def test_generator(project_path, name, hardware, base, definition, Type='custom'
         tf.write("'''\n")
         tf.write(f"Created on {now}\n")
         tf.write(f"By @author: {user} ({user_email})\n")
-        tf.write(f"\thardware = '{hardware}'\n")
-        tf.write(f"\tBase = '{base}'\n")
-        tf.write(f"\tType = '{Type}'\n")
         tf.write("'''\n\n")
         
-        tf.write("import SCT\n")
-        tf.write("from ATE.org.abc import testABC\n\n")
-    
-        tf.write(f"class {name}(testABC):\n")        
-        if 'doc_string' in definition:
+        tf.write("from ATE.org.abc import testABC\n")
+        tf.write("import ..common\n\n")
+    # class definition
+        tf.write(f"class {definition['name']}(testABC):\n")        
+    # docstring
+        if 'docstring' in definition:
             tf.write("\t'''\n")
-            for line in definition['doc_string']:
-                tf.write("\t{line}\n")
+            for line in definition['docstring']:
+                tf.write(f"\t{line}\n")
             tf.write("\t'''\n")
-        tf.write("\tpass\n") # temporary
-    
+        tf.write("\n")
+    # class variables
+        tf.write(f"\thardware = '{definition['hardware']}'\n")
+        tf.write(f"\tbase = '{definition['base']}'\n")
+        tf.write(f"\tType = '{definition['type']}'\n\n")
+        tippprint(tf, definition['input_parameters'])
+        toppprint(tf, definition['output_parameters'])
+    # do-function
+        tf.write(f"\tdef do(ip, op):\n")
+        tf.write(f"\t\tpass\n\n")
+    # main         
         tf.write("if __name__ == '__main__':\n")
-        tf.write("\tpass")
-    
+        tf.write("\tfrom ATE.org import TestRunner\n")
+        tf.write("\ttestRunner = TestRunner(__file__)\n")
+
     return rel_path_to_file
 
 
@@ -80,7 +115,15 @@ def tippprint(fd, ip):
     and the input parameters (dictionary). 
     The function will print the dictionary nicely aligned to the file descriptor.
     '''
-    pass
+    
+    fd.write("\tinput_parameters = {\n")
+    for name in ip:
+        name_def = "{'a' : True, b : np.inf}"
+        
+        
+        fd.write(f"\t\t{name} = {name_def}\n")
+        
+    fd.write("\n")
 
 def toppprint(fd, op):
     '''
@@ -88,12 +131,8 @@ def toppprint(fd, op):
     
     same as tippprint but for output parameters to a test file.
     '''
-    pass
+    fd.write("\toutput_parameters = {\n")
+    for name in op:
+        fd.write(f"\t\t{name} = ''\n")
+    fd.write("\n")
 
-def tdpprint(fd, data):
-    '''
-    Test Data Pretty PRINT
-    
-    similar as in tipprint, but for the referenced data.
-    '''
-    pass

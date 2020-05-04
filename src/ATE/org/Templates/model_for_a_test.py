@@ -33,16 +33,5 @@ class %TSTCLASS%(testABC):
         return self.do(ip, op, gp, dm)
 
 if __name__ == '__main__':
-    from ATE.org.Sequencers import development_sequencer
-    from ATE.Data.Loggers import Console
-
-    sequencer = development_sequencer(__file__)
-    sequencer.register_logger(Console)
-    sequencer.register_test(%TSTCLASS%)
-
-    #sequencer.print_run_modes()
-    sequencer.run(10)
-    #sequencer.run("Time")
-    #sequencer.run("Corners")
-    #sequencer.run("Shmoo")
-    #sequencer.run("Audit")
+    from ATE.org import TestRunner
+    testRunner = TestRunner(__file__)

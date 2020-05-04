@@ -31,7 +31,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
 import qtawesome as qta
 
-minimal_description_length = 80 
+from ATE.org.coding.test_generator import generator
+
+minimal_docstring_length = 80 
 
 class Delegator(QtWidgets.QStyledItemDelegate):
 
@@ -43,6 +45,21 @@ class Delegator(QtWidgets.QStyledItemDelegate):
         line_edit = QtWidgets.QLineEdit(parent)
         line_edit.setValidator(self.validator)
         return line_edit
+
+class NameDelegator(Delegator):
+    
+    def __init__(self, regex, existing_names, parent=None):
+        self.super().__init__(regex, parent)
+        self.existing_names = existing_names
+        self.commitData.commitData.connect(self.validate_name)
+        
+    def validate_name(self, editor):
+        if editor.text() in self.existing_names:
+            pass
+        
+#TODO: the Name delegator must check if the name of the parameter is already in use !!!!!
+        
+    
 
 class TestWizard(QtWidgets.QDialog):
 
@@ -212,7 +229,7 @@ class TestWizard(QtWidgets.QDialog):
         self.outputParameterDelete.setToolTip('Delete selected parameter')
         self.outputParameterDelete.clicked.connect(self.deleteOutputParameter)
 
-        outputParameterHeaderLabels = ['Name', 'LSL', 'LTL', 'Nom', 'UTL', 'USL', '10ᵡ', 'Unit', 'fmt']
+        outputParameterHeaderLabels = ['Name', 'LSL', '(LTL)', 'Nom', '(UTL)', 'USL', '10ᵡ', 'Unit', 'fmt']
         self.outputParameterModel = QtGui.QStandardItemModel()
         self.outputParameterModel.setObjectName('outputParameters')
         self.outputParameterModel.setHorizontalHeaderLabels(outputParameterHeaderLabels)
@@ -270,6 +287,9 @@ class TestWizard(QtWidgets.QDialog):
         self.tableAdjust(self.outputParameterView)
         
     def tableAdjust(self, TableView):
+        '''
+        this is adjusting the 'TableView' column widths for perfect representation.
+        '''
         TableView.resizeColumnsToContents()
         autoVisibleWidth = 0
         for column in range(TableView.model().columnCount()):
@@ -280,26 +300,26 @@ class TestWizard(QtWidgets.QDialog):
         nameWidth = availableWidth - vHeaderWidth - autoVisibleWidth - 6 # no clue where this '6' comes from, but it works
         TableView.setColumnWidth(0, nameWidth)
     
-    def unitContextMenu(self, setter):
+    def unitContextMenu(self, unitSetter):
         menu = QtWidgets.QMenu(self)
         # unitContextMenu
         #    reference to SI : https://en.wikipedia.org/wiki/International_System_of_Units
         #    reference to unicode : https://en.wikipedia.org/wiki/List_of_Unicode_characters
         base_units = [
             ('s (time - second)', 
-             lambda: setter('s','time - second')),
+             lambda: unitSetter('s','time - second')),
             ('m (length - meter)', 
-             lambda: setter('m', 'length - meter')),
+             lambda: unitSetter('m', 'length - meter')),
             ('kg (mass - kilogram)', 
-             lambda: setter('kg', 'mass - kilogram')),
+             lambda: unitSetter('kg', 'mass - kilogram')),
             ('A (electric current - ampères)', 
-             lambda: setter('A', 'electric current - ampères')),
+             lambda: unitSetter('A', 'electric current - ampères')),
             ('K (temperature - Kelvin)', 
-             lambda: setter('K', 'temperature - Kelvin')),
+             lambda: unitSetter('K', 'temperature - Kelvin')),
             ('mol (amount of substance - mole)', 
-             lambda: setter('mol', 'amount of substance - mole')),
+             lambda: unitSetter('mol', 'amount of substance - mole')),
             ('cd (luminous intensity - candela)', 
-             lambda: setter('cd', 'luminous intensity - candela'))]
+             lambda: unitSetter('cd', 'luminous intensity - candela'))]
         for unit in base_units:
             item = menu.addAction(unit[0])
             item.triggered.connect(unit[1])
@@ -307,47 +327,47 @@ class TestWizard(QtWidgets.QDialog):
 
         derived_units = [
             ('rad (plane angle - radian = m/m)', 
-             lambda: self.setInputParameterUnit('rad', 'plane angle - radian = m/m')),
+             lambda: unitSetter('rad', 'plane angle - radian = m/m')),
             ('sr (solid angle - steradian = m²/m²)', 
-             lambda: self.setInputParameterUnit('sr', 'solid angle - steradian = m²/m²')),
+             lambda: unitSetter('sr', 'solid angle - steradian = m²/m²')),
             ('Hz (frequency - hertz = s⁻¹)', 
-             lambda: self.setInputParameterUnit('Hz', 'frequency - hertz = s⁻¹')),
+             lambda: unitSetter('Hz', 'frequency - hertz = s⁻¹')),
             ('N (force, weight - newton = kg⋅m⋅s⁻²)', 
-             lambda: self.setInputParameterUnit('N', 'force, weight - newton = kg⋅m⋅s⁻²')),
+             lambda: unitSetter('N', 'force, weight - newton = kg⋅m⋅s⁻²')),
             ('Pa ( pressure, stress - pascal = kg⋅m⁻¹⋅s⁻²)', 
-             lambda: self.setInputParameterUnit('Pa', 'pressure, stress - pascal = kg⋅m⁻¹⋅s⁻²')),
+             lambda: unitSetter('Pa', 'pressure, stress - pascal = kg⋅m⁻¹⋅s⁻²')),
             ('J (energy, work, heat - joule = kg⋅m²⋅s⁻² = N⋅m = Pa⋅m³)', 
-             lambda: self.setInputParameterUnit('J', 'energy, work, heat - joule = kg⋅m²⋅s⁻² = N⋅m = Pa⋅m³')),
+             lambda: unitSetter('J', 'energy, work, heat - joule = kg⋅m²⋅s⁻² = N⋅m = Pa⋅m³')),
             ('W (power, radiant flux - watt = kg⋅m²⋅s⁻³ = J/s)', 
-             lambda: self.setInputParameterUnit('W', 'power, radiant flux - watt = kg⋅m²⋅s⁻³ = J/s')),
+             lambda: unitSetter('W', 'power, radiant flux - watt = kg⋅m²⋅s⁻³ = J/s')),
             ('C (electric charge - coulomb = s⋅A)', 
-             lambda: self.setInputParameterUnit('C', 'electric charge - coulomb = s⋅A')),
+             lambda: unitSetter('C', 'electric charge - coulomb = s⋅A')),
             ('V (electric potential, emf - volt = kg⋅m²⋅s⁻³⋅A⁻¹ = W/A = J/C)', 
-             lambda: self.setInputParameterUnit('V', 'electric potential, emf - volt = kg⋅m²⋅s⁻³⋅A⁻¹ = W/A = J/C')),
+             lambda: unitSetter('V', 'electric potential, emf - volt = kg⋅m²⋅s⁻³⋅A⁻¹ = W/A = J/C')),
             ('F (electric capacitance - farad = kg⁻¹⋅m⁻²⋅s⁴⋅A² = C/V)', 
-             lambda: self.setInputParameterUnit('F', 'electric capacitance - farad = kg⁻¹⋅m⁻²⋅s⁴⋅A² = C/V')),
+             lambda: unitSetter('F', 'electric capacitance - farad = kg⁻¹⋅m⁻²⋅s⁴⋅A² = C/V')),
             ('Ω (electric resistance, impedance, reactance - ohm = kg⋅m²⋅s⁻³⋅A⁻² = V/A)', 
-             lambda: self.setInputParameterUnit('Ω', 'electric resistance, impedance, reactance - ohm = kg⋅m²⋅s⁻³⋅A⁻² = V/A')),
+             lambda: unitSetter('Ω', 'electric resistance, impedance, reactance - ohm = kg⋅m²⋅s⁻³⋅A⁻² = V/A')),
             ('S (electric conductance - siemens = kg⁻¹⋅m⁻²⋅s³⋅A² = Ω⁻¹)', 
-             lambda: self.setInputParameterUnit('S', 'electric conductance - siemens = kg⁻¹⋅m⁻²⋅s³⋅A² = Ω⁻¹')),
+             lambda: unitSetter('S', 'electric conductance - siemens = kg⁻¹⋅m⁻²⋅s³⋅A² = Ω⁻¹')),
             ('Wb (magnetic flux - weber = kg⋅m²⋅s⁻²⋅A⁻¹ = V⋅s)', 
-             lambda: self.setInputParameterUnit('Wb', 'magnetic flux - weber = kg⋅m²⋅s⁻²⋅A⁻¹ = V⋅s')),
+             lambda: unitSetter('Wb', 'magnetic flux - weber = kg⋅m²⋅s⁻²⋅A⁻¹ = V⋅s')),
             ('T (magnetic flux density - tesla = kg⋅s⁻²⋅A⁻¹ = Wb/m²)', 
-             lambda: self.setInputParameterUnit('T', 'magnetic flux density - tesla = kg⋅s⁻²⋅A⁻¹ = Wb/m²')),
+             lambda: unitSetter('T', 'magnetic flux density - tesla = kg⋅s⁻²⋅A⁻¹ = Wb/m²')),
             ('H (electric inductance - henry = kg⋅m²⋅s⁻²⋅A⁻² = Wb/A)', 
-             lambda: self.setInputParameterUnit('H', 'electric inductance - henry = kg⋅m²⋅s⁻²⋅A⁻² = Wb/A')),
+             lambda: unitSetter('H', 'electric inductance - henry = kg⋅m²⋅s⁻²⋅A⁻² = Wb/A')),
             ('lm (luminous flux - lumen = cd⋅sr)', 
-             lambda: self.setInputParameterUnit('lm', 'luminous flux - lumen = cd⋅sr')),
+             lambda: unitSetter('lm', 'luminous flux - lumen = cd⋅sr')),
             ('lx (illuminance - lux = m⁻²⋅cd = lm/m²)', 
-             lambda: self.setInputParameterUnit('lx', 'illuminance - lux = m⁻²⋅cd = lm/m²')),
+             lambda: unitSetter('lx', 'illuminance - lux = m⁻²⋅cd = lm/m²')),
             ('Bq (radioactivity - Becquerel = s⁻¹)', 
-             lambda: self.setInputParameterUnit('Bq', 'radioactivity - Becquerel = s⁻¹')),
+             lambda: unitSetter('Bq', 'radioactivity - Becquerel = s⁻¹')),
             ('Gy (absorbed dose - gray = m²⋅s⁻² = J/kg)', 
-             lambda: self.setInputParameterUnit('Gy', 'absorbed dose - gray = m²⋅s⁻² = J/kg')),
+             lambda: unitSetter('Gy', 'absorbed dose - gray = m²⋅s⁻² = J/kg')),
             ('Sv (equivalent dose - sievert = m²⋅s⁻² = J/kg)', 
-             lambda: self.setInputParameterUnit('Sv', 'equivalent dose - sievert = m²⋅s⁻² = J/kg')),
+             lambda: unitSetter('Sv', 'equivalent dose - sievert = m²⋅s⁻² = J/kg')),
             ('kat (catalytic activity - katal = mol⋅s⁻¹)', 
-             lambda: self.setInputParameterUnit('kat', 'catalytic activity - katal = mol⋅s⁻¹'))]
+             lambda: unitSetter('kat', 'catalytic activity - katal = mol⋅s⁻¹'))]
         for unit in derived_units:
             item = menu.addAction(unit[0])
             item.triggered.connect(unit[1])
@@ -355,11 +375,11 @@ class TestWizard(QtWidgets.QDialog):
 
         alternative_units = [
             ('°C (temperature - degree Celcius = K - 273.15)',
-             lambda: self.setInputParameterUnit('°C', 'temperature - degree Celcius = K - 273.15')),
+             lambda: unitSetter('°C', 'temperature - degree Celcius = K - 273.15')),
             ('Gs (magnetic flux density - gauss = 10⁻⁴ Tesla)',
-             lambda: self.setInputParameterUnit('Gs', 'magnetic flux density - gauss = 10⁻⁴ Tesla')),
+             lambda: unitSetter('Gs', 'magnetic flux density - gauss = 10⁻⁴ Tesla')),
             ('˽ (no dimension / unit)',
-             lambda: self.setInputParameterUnit('', 'no dimension / unit'))]
+             lambda: unitSetter('', 'no dimension / unit'))]
         for unit in alternative_units:
             item = menu.addAction(unit[0])
             item.triggered.connect(unit[1])
@@ -464,10 +484,10 @@ class TestWizard(QtWidgets.QDialog):
             if index.row() != 0: # not for temperature
                 menu = QtWidgets.QMenu(self)
                 special_values = [
-                    ('+∞', lambda: valueSetter('+∞')),
-                    ('0', lambda: valueSetter('0')), 
-                    ('<clear>', lambda: valueSetter('')),
-                    ('-∞', lambda: valueSetter('-∞'))]
+                    ('+∞', lambda: valueSetter(np.inf)),
+                    ('0', lambda: valueSetter(0.0)), 
+                    ('<clear>', lambda: valueSetter(np.nan)),
+                    ('-∞', lambda: valueSetter(-np.inf))]
                 for special_value in special_values:
                     item = menu.addAction(special_value[0])
                     item.triggered.connect(special_value[1])
@@ -561,37 +581,36 @@ class TestWizard(QtWidgets.QDialog):
 
     def setInputParameterValue(self, value):
         '''
-        we arrive here after selecting one or more items, and evoking the 
-        context menu for Value.
-        This will evoke inputParameterItemchanged (which resizes the columms)
-        At the end we clear the selection which evokes inputParameterSelectionChanged
-        (which sets the buttons correctly)
+        value is **ALWAYS** a float (might be inf & nan)
         '''
         index_selection = self.inputParameterView.selectedIndexes()
-        
+
+        if not isinstance(value, float):
+            raise Exception("Woops, a float is mandatory !!!")
+
         for index in index_selection:
-            if value == '+∞': # only the max column can have +∞
-                if index.row() != 0: # not for 'Temperature'
-                    if index.column() == 3: # max column
-                        max_item = self.inputParameterModel.itemFromIndex(index)
-                        max_item.setData(value, QtCore.Qt.DisplayRole)
-            elif value == '-∞': # only the min column can have -∞
-                if index.row() != 0: # not for 'Temperature'
-                    if index.column() == 1: # min column
-                        min_item = self.inputParameterModel.itemFromIndex(index)
-                        min_item.setData(value, QtCore.Qt.DisplayRole)
-            elif value == '': # for multiplier and unit
-                if index.row() != 0: # not for 'Temperature'
-                    if index.column() in [4, 5]:
-                        item = self.inputParameterModel.itemFromIndex(index)
-                        item.setData(value, QtCore.Qt.DisplayRole)
-            elif value == '0': # for min, default, max
-                if index.row() != 0: # not for 'Temperature'
-                    if index.column() in [1, 2, 3]:
-                        item = self.inputParameterModel.itemFromIndex(index)
-                        item.setData(value, QtCore.Qt.DisplayRole)
-            else:
-                raise Exception("shouldn't be able to reach this point")
+            item = self.inputParameterModel.itemFromIndex(index)
+            fmt_item = self.inputParameterModel.item(index.row(), 6)
+            Fmt = fmt_item.data(QtCore.Qt.DisplayRole)
+            if np.isinf(value):
+                if np.isposinf(value): # only for column 3 (Max)
+                    if index.column() == 3:
+                        item.setData('+∞', QtCore.Qt.DisplayRole)
+                else: # np.isneginf(value) # only for colums 1 (Min)
+                    if index.column() == 1:
+                        item.setData('-∞', QtCore.Qt.DisplayRole)
+            elif np.isnan(value): # forget about it! translate
+                if index.column() == 1: # Min --> -np.inf
+                    item.setData('-∞', QtCore.Qt.DisplayRole)
+                elif index.column() == 2: # Default --> 0.0
+                    item.setData(f"{0.0:{Fmt}}", QtCore.Qt.DisplayRole)
+                    pass
+                elif index.column() == 3: # Max --> np.inf
+                    item.setData('-∞', QtCore.Qt.DisplayRole)
+            else: # for columns 1, 2 and 3
+                if index.column() in [1, 2, 3]:
+                    item.setData(f"{value:{Fmt}}", QtCore.Qt.DisplayRole)
+
         self.inputParameterView.clearSelection()
 
     def setInputParameterMultiplier(self, text, tooltip):
@@ -976,10 +995,10 @@ class TestWizard(QtWidgets.QDialog):
         elif index.column() >= 1 and index.column() <= 5: # LSL, (LTL), Nom, (UTL), USL
             menu = QtWidgets.QMenu(self)
             special_values = [
-                ('+∞', lambda: valueSetter('+∞')),
-                ('0', lambda: valueSetter('0')), 
-                ('<clear>', lambda: valueSetter('')),
-                ('-∞', lambda: valueSetter('-∞'))]
+                ('+∞', lambda: valueSetter(np.inf)),
+                ('0', lambda: valueSetter(0.0)), 
+                ('<clear>', lambda: valueSetter(np.nan)),
+                ('-∞', lambda: valueSetter(-np.inf))]
             for special_value in special_values:
                 item = menu.addAction(special_value[0])
                 item.triggered.connect(special_value[1])
@@ -1026,7 +1045,7 @@ class TestWizard(QtWidgets.QDialog):
         elif numberOfSelectedRows == 1:
             selectedRow = list(selectedRows)[0]
             self.outputParameterUnselect.setEnabled(True)
-            if selectedRow > 1:
+            if selectedRow > 0:
                 self.outputParameterMoveUp.setEnabled(True)
             else:
                 self.outputParameterMoveUp.setEnabled(False)
@@ -1045,13 +1064,38 @@ class TestWizard(QtWidgets.QDialog):
         index_selection = self.outputParameterView.selectedIndexes()
         
         for index in index_selection:
-            if index.column() == 8:
+            if index.column() == 0 or index.column() == 8:
                 fmt_item = self.outputParameterModel.item(index.row(), 8)
                 fmt_item.setData(Format, QtCore.Qt.DisplayRole)
         self.outputParameterView.clearSelection()
     
-    def setOutputParameterValue(self, Value):
-        pass
+    def setOutputParameterValue(self, value):
+        '''
+        value is **ALWAYS** a float (might be +/-np.inf or np.nan)
+        '''
+        index_selection = self.outputParameterView.selectedIndexes()
+        
+        if not isinstance(value, float):
+            raise Exception("Woops, a float is mandatory !!!")
+        
+        for index in index_selection:
+            item = self.outputParameterModel.itemFromIndex(index)
+            if np.isinf(value):
+                if np.isposinf(value): # only for columns 1 & 2
+                    if index.column() in [1, 2]:
+                        item.setData('+∞', QtCore.Qt.DisplayRole)
+                else: # np.isneginf(value) # only for columsn 4 & 5
+                    if index.column() in [4, 5]:
+                        item.setData('-∞', QtCore.Qt.DisplayRole)
+            elif np.isnan(value): # only for columns 2 & 4
+                if index.column() in [2, 4]:
+                    item.setData('', QtCore.Qt.DisplayRole)
+            else: # for columns 1, 2, 3, 4 and 5
+                if index.column() in [1, 2, 3, 4, 5]:
+                    fmt_item = self.outputParameterModel.item(index.row(), 8)
+                    Fmt = fmt_item.data(QtCore.Qt.DisplayRole)
+                    item.setData(f"{value:{Fmt}}", QtCore.Qt.DisplayRole)
+        self.outputParameterView.clearSelection()
     
     def setOutputParameterMultiplier(self, text, tooltip):
         selection = self.outputParameterView.selectedIndexes()
@@ -1066,6 +1110,7 @@ class TestWizard(QtWidgets.QDialog):
         selection = self.outputParameterView.selectedIndexes()
         
         for index in selection:
+            print(f"({index.row()}, {index.column()}) --> {index.column()==7}")
             if index.column() == 7: # units are located in column#7 for output parameters
                 self.outputParameterModel.setData(index, text, QtCore.Qt.DisplayRole)
                 self.outputParameterModel.setData(index, tooltip, QtCore.Qt.ToolTipRole)
@@ -1089,7 +1134,6 @@ class TestWizard(QtWidgets.QDialog):
             https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
             https://doc.qt.io/qt-5/qstandarditem.html
         '''
-        print(f"setOutputParameter {name} = {attributes}")
         rowCount = self.outputParameterModel.rowCount()
 
         if row == None: # append
@@ -1122,136 +1166,127 @@ class TestWizard(QtWidgets.QDialog):
         fmt_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # LSL
-        if isinstance(attributes['LSL'], type(None)):
+        if isinstance(attributes['LSL'], type(None)): # None on LSL doesn't exist --> = -Inf
             LSL_ = -np.inf
             LSL = '-∞'
         elif isinstance(attributes['LSL'], (float, int)):
             if abs(attributes['LSL']) == np.inf:
                 LSL_ = -np.inf
                 LSL = '-∞'
-            elif attributes['LSL'] == float('nan'):
-                LSL_ = -np.inf
+            elif np.isnan(attributes['LSL']): # NaN on LSL doesn't exist --> = -Inf
+                LSL_ = np.inf
                 LSL = '-∞'
             else:
                 LSL_ = float(attributes['LSL'])
                 LSL = f"{LSL_:{Fmt}}"
         else:
-            raise Exception("type(attribute['LSL']) = {type(attribute['LSL'])}, which is not (str, float or int) ... WTF?!?")
+            raise Exception(f"type(attributes['LSL']) = {type(attributes['LSL'])}, which is not (NoneType, float or int) ... WTF?!?")
         LSL_item.setData(LSL, QtCore.Qt.DisplayRole)
         LSL_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
         LSL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # LTL
-        print(f"{attributes['LTL']} == {float('nan')} --> {attributes['LTL'] == float('nan')}")
-        if isinstance(attributes['LTL'], type(None)):
-            LTL_ = float('nan')
+        if isinstance(attributes['LTL'], str):
+            if attributes['LTL'] == '' or 'NAN' in attributes['LTL'].upper():
+                LTL_ = np.nan
+                LTL = ''
+            elif '∞' in attributes['LTL']:
+                LTL_ = -np.inf
+                LTL = '-∞'
+            else:
+                LTL_ = float(attributes['LTL'])
+                LTL = f"{LTL_:{Fmt}}"
+        elif isinstance(attributes['LTL'], type(None)): # None on LTL = NaN
+            LTL_ = np.nan
             LTL = ''
         elif isinstance(attributes['LTL'], (float, int)):
             if abs(attributes['LTL']) == np.inf:
                 LTL_ = -np.inf
                 LTL = '-∞'
-            elif attributes['LTL'] == float('nan'):
-                LTL_ = float('nan')
+            elif np.isnan(attributes['LTL']):
+                LTL_ = np.nan
                 LTL = ''
             else:
                 LTL_ = float(attributes['LTL'])
                 LTL = f"{LTL_:{Fmt}}"
         else:
-            raise Exception("type(attribute['LTL']) = {type(attribute['LTL'])}, which is not (None, float or int) ... WTF?!?")
+            raise Exception(f"type(attributes['LTL']) = {type(attributes['LTL'])}, which is not (str, NoneType, float or int) ... WTF?!?")
         LTL_item.setData(LTL, QtCore.Qt.DisplayRole)
         LTL_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
         LTL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # USL
-        if isinstance(attributes['USL'], type(None)):
+        if isinstance(attributes['USL'], type(None)): # None on USL doesn't exist --> = +Inf
             USL_ = np.inf
             USL = '+∞'
         elif isinstance(attributes['USL'], (float, int)):
             if abs(attributes['USL']) == np.inf:
                 USL_ = np.inf
                 USL = '+∞'
-            elif attributes['USL'] == float('nan'):
+            elif np.isnan(attributes['USL']): # NaN on USL doesn't extist --> = +Inf
                 USL_ = np.inf
                 USL = '+∞'
             else:
                 USL_ = float(attributes['USL'])
                 USL = f"{USL_:{Fmt}}"
         else:
-            raise Exception("type(attribute['USL']) = {type(attribute['USL'])}, which is not (str, float or int) ... WTF?!?")
+            raise Exception(f"type(attributes['USL']) = {type(attributes['USL'])}, which is not (NoneType, float or int) ... WTF?!?")
         USL_item.setData(USL, QtCore.Qt.DisplayRole)
         USL_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
         USL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # UTL
-        if isinstance(attributes['UTL'], type(None)):
-            UTL_ = float('nan')
+        if isinstance(attributes['UTL'], str):
+            if attributes['UTL'] == '' or 'NAN' in attributes['UTL'].upper():
+                UTL_ = np.nan
+                UTL = ''
+            elif '∞' in attributes['UTL']:
+                UTL_ = -np.inf
+                UTL = '+∞'
+            else:
+                UTL_ = float(attributes['LTL'])
+                UTL = f"{UTL_:{Fmt}}"
+        elif isinstance(attributes['UTL'], type(None)): # None on UTL = Nan
+            UTL_ = np.nan
             UTL = ''
         elif isinstance(attributes['UTL'], (float, int)):
-            if abs(attributes['UTL']) == np.inf:
-                UTL_ = float('nan')
-                UTL = ''
-            elif attributes['UTL'] == float('nan'):
-                UTL_ = float('nan')
+            if abs(attributes['UTL']) == np.inf: 
+                UTL_ = np.inf
+                UTL = '+∞'
+            elif np.isnan(attributes['UTL']):
+                UTL_ = np.nan
                 UTL = ''
             else:
                 UTL_ = float(attributes['UTL'])
                 UTL = f"{UTL_:{Fmt}}"
         else:
-            raise Exception("type(attribute['UTL']) = {type(attribute['UTL'])}, which is not (None, float or int) ... WTF?!?")
+            raise Exception(f"type(attributes['UTL']) = {type(attributes['UTL'])}, which is not (str, NoneType, float or int) ... WTF?!?")
         UTL_item.setData(UTL, QtCore.Qt.DisplayRole)
         UTL_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
         UTL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Nom
-        if isinstance(attributes['Nom'], type(None)):
+        if isinstance(attributes['Nom'], type(None)): # Nome on Nom = 0.0
             Nom_ = 0.0
         elif isinstance(attributes['Nom'], (float, int)):
             Nom_ = float(attributes['Nom'])
+            if LSL_ == -np.inf and USL_ == np.inf:
+                if Nom_ == -np.inf or Nom_ == np.inf or np.isnan(Nom_): 
+                    Nom_ = 0.0
+                if Nom_ > UTL_: Nom_ = UTL_
+                if Nom_ < LTL_: Nom_ = LTL_
+            elif LSL_ == -np.inf:
+                if Nom_ > USL_: Nom_ = USL_
+            elif USL_ == np.inf:
+                if Nom_ < LSL_: Nom_ = LSL_
+            else:
+                if Nom_ > USL_: Nom_ = USL_
+                if Nom_ > UTL_: Nom_ = UTL_
+                if Nom_ < LSL_: Nom_ = LSL_
+                if Nom_ < LTL_: Nom_ = LTL_
         else:
             raise Exception(f"type(attribute['Nom']) = {type(attributes['Nom'])}, which is not (float or int) ... WTF?!?")
         # complience to SL
-        if LSL_ == -np.inf and USL_ == np.inf:
-            if Nom_ == -np.inf or Nom_ == np.inf or Nom_ == float('nan'): Nom_ = 0.0
-            if LTL_ == -np.inf and UTL_ == np.inf:
-                pass
-            elif LTL_ == -np.inf and UTL_ == float('nan'):
-                pass
-            elif LTL_ == -np.inf and UTL_ != float('nan') and UTL != np.inf:
-                pass
-            elif LTL_ == float('nan') and UTL_ == np.inf:
-                pass
-            elif LTL_ == float('nan') and UTL_ == float('nan'):
-                pass
-            elif LTL_ == float('nan') and (UTL_ != float('nan') and UTL_ != np.inf):
-                pass
-            elif (LTL_ != -np.inf and LTL_ != float('nan')) and UTL_ == np.inf:
-                pass
-            elif (LTL_ != -np.inf and LTL_ != float('nan')) and UTL_ == float('nan'):
-                pass
-            else:
-                if Nom_ > UTL_: Nom_ = UTL_
-                if Nom_ < LTL_: Nom_ = LTL_
-        elif LSL_ == -np.inf:
-            if Nom_ > USL_: Nom_ = USL_
-            if LTL_ == -np.inf:
-                pass
-            elif LTL_ == float('nan'):
-                pass
-            else:
-                pass
-        elif USL_ == np.inf:
-            if Nom_ < LSL_: Nom_ = LSL_
-            if UTL_ == -np.inf:
-                pass
-            elif UTL_ == float('nan'):
-                pass
-            else:
-                if Nom_ < LTL_: Nom_ = LTL_
-        else:
-            if Nom_ > USL_: Nom_ = USL_
-            if Nom_ > UTL_: Nom_ = UTL_
-            if Nom_ < LSL_: Nom_ = LSL_
-            if Nom_ < LTL_: Nom_ = LTL_
         Nom = f"{Nom_:{Fmt}}"
         Nom_item.setData(Nom, QtCore.Qt.DisplayRole)
         Nom_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
@@ -1280,32 +1315,64 @@ class TestWizard(QtWidgets.QDialog):
             self.setOutputParameter(name, attributes)
 
     def getOutputParameter(self, row):
+        '''
+        the result is always a float (might be np.inf or np.nan) for LSL, LTL, Nom, UTL and USL (rest is string)
+        the source is in the model, and always a string.
+        '''
         attributes = attributes = {'LSL' : None, 'LTL' : None, 'Nom' : None, 'UTL' : None, 'USL' : None, '10ᵡ' : '', 'Unit' : '', 'fmt' : ''}
 
         name_item = self.outputParameterModel.item(row, 0)
         name = name_item.data(QtCore.Qt.DisplayRole)
-
+    
+    # LSL
         LSL_item = self.outputParameterModel.item(row, 1)
-        attributes['LSL'] = LSL_item.data(QtCore.Qt.DisplayRole)
+        LSL = LSL_item.data(QtCore.Qt.DisplayRole)
+        if '∞' in LSL:
+            attributes['LSL'] = -np.inf
+        else:
+            attributes['LSL'] = float(LSL)
 
+    # LTL
         LTL_item = self.outputParameterModel.item(row, 2)
-        attributes['LTL'] = float(LTL_item.data(QtCore.Qt.DisplayRole))
+        LTL = LTL_item.data(QtCore.Qt.DisplayRole)
+        if '∞' in LTL:
+            attributes['LTL'] = -np.inf
+        elif LTL == '':
+            attributes['LTL'] = np.nan
+        else:
+            attributes['LTL'] = float(LTL)
 
+    # Nom
         Nom_item = self.outputParameterModel.item(row, 3)
         attributes['Nom'] = float(Nom_item.data(QtCore.Qt.DisplayRole))
 
+    # UTL
         UTL_item = self.outputParameterModel.item(row, 4)
-        attributes['UTL'] = float(UTL_item.data(QtCore.Qt.DisplayRole))
+        UTL = UTL_item.data(QtCore.Qt.DisplayRole)
+        if '∞' in UTL:
+            attributes['UTL'] = +np.inf
+        elif UTL == '':
+            attributes['UTL'] = np.nan
+        else:
+            attributes['UTL'] = float(UTL)
 
+    # USL
         USL_item = self.outputParameterModel.item(row, 5)
-        attributes['USL'] = float(USL_item.data(QtCore.Qt.DisplayRole))
+        USL = USL_item.data(QtCore.Qt.DisplayRole)
+        if '∞' in USL:
+            attributes['USL'] = np.inf
+        else:
+            attributes['USL'] = float(USL)
 
+    # multiplier
         multiplier_item = self.outputParameterModel.item(row, 6)
         attributes['10ᵡ'] = multiplier_item.data(QtCore.Qt.DisplayRole)
 
+    # unit
         unit_item = self.outputParameterModel.item(row, 7)
         attributes['Unit'] = unit_item.data(QtCore.Qt.DisplayRole)
 
+    # format
         fmt_item = self.outputParameterModel.item(row, 8)               
         attributes['fmt'] = fmt_item.data(QtCore.Qt.DisplayRole)
                 
@@ -1315,7 +1382,7 @@ class TestWizard(QtWidgets.QDialog):
         retval = {}
         rows = self.outputParameterModel.rowCount()
         for row in range(rows):
-            name, attributes = self.getoutputParameter(row)
+            name, attributes = self.getOutputParameter(row)
             retval[name] = attributes
         return retval
     
@@ -1351,9 +1418,12 @@ class TestWizard(QtWidgets.QDialog):
         else:
             new_parameter_index = max(existing_parameter_indexes)+1            
         name = f'new_parameter{new_parameter_index}'
-        attributes = {'LSL' :  -np.inf, 'LTL' : '', 'Nom' : 3.14, 'UTL' : '', 'USL' : np.inf, '10ᵡ' : '', 'Unit' : '?', 'fmt' : '.3f'}        
+        attributes = {'LSL' :  -np.inf, 'LTL' : np.nan, 'Nom' : 0.0, 'UTL' : np.nan, 'USL' : np.inf, '10ᵡ' : '', 'Unit' : '?', 'fmt' : '.3f'}        
         self.setOutputParameter(name, attributes)
-    
+        if new_row == 0: # switch tabs back and fore to get the 'table adjust' bug out of the way
+            self.testTabs.setCurrentWidget(self.inputParametersTab)
+            self.testTabs.setCurrentWidget(self.outputParametersTab)
+
     def unselectOutputParameter(self):
         self.outputParameterView.clearSelection()
     
@@ -1398,7 +1468,7 @@ class TestWizard(QtWidgets.QDialog):
         return self.description.toPlainText().split('\n')
     
     def descriptionLength(self):
-        retval = ''.join(self.getDescription(), '\n').replace(' ', '').replace('\n', '').replace('\t', '')
+        retval = ''.join(self.getDescription()).replace(' ', '').replace('\t', '')
         return len(retval)
 
     def verify(self):
@@ -1416,39 +1486,27 @@ class TestWizard(QtWidgets.QDialog):
         if self.Feedback.text() == "":
             if self.TestName.text() == '':
                 self.Feedback.setText("Supply a name for the test")
-                
-        # 4. Check if the test name is a valid python class name (covered by LineEdit, but it doesn't hurt)
-        if self.Feedback.text() == "":
-            if not is_valid_python_class_name(self.TestName.text()):
-                fb = f"The test name '{self.TestName.text()}' is not a valid python class name. "
-                fb += "(It doesn't comply to RegEx '{valid_python_class_name_regex}'"
-                self.Feedback.setText(fb)
-            
-        # 5. Check if the test name holds an underscore (useless, as covered by the LineEdit, but it doesn't hurt)
-        if self.Feedback.text() == "":
-            if '_' in self.TestName.text():
-                fb = f"The usage of underscore(s) is disallowed!"
-                self.Feedback.setText(fb)
-                
-        # 6. Check if the test name holds the word 'Test' in any form
+                            
+       # 6. Check if the test name holds the word 'Test' in any form
         if self.Feedback.text() == "":
             if not is_valid_test_name(self.TestName.text()):
                 fb = "The test name can not contain the word 'TEST' in any form!"
                 self.Feedback.setText(fb)
-        
+        #TODO: Enable again
         # 7. Check if the test name already exists
-        if self.Feedback.text() == "":
-            existing_tests = self.project_info.get_tests_from_files(
-                self.ForHardwareSetup.currentText(),
-                self.WithBase.currentText())
-            if self.TestName.text() in existing_tests:
-                self.Feedback.setText("Test already exists!")
+        # if self.Feedback.text() == "":
+        #     existing_tests = self.project_info.get_tests_from_files(
+        #         self.ForHardwareSetup.currentText(),
+        #         self.WithBase.currentText())
+        #     if self.TestName.text() in existing_tests:
+        #         self.Feedback.setText("Test already exists!")
 
         # 8. see if we have at least XX characters in the description.
-        if self.Feedback.text() == "":
-            self.description_length = len(self.description.toPlainText().replace(' ','').replace('\n', '').replace('\t', ''))
-            if self.description_length < minimal_description_length:
-                self.Feedback.setText(f"Describe the test in at least {minimal_description_length} characters (spaces don't count, you have {self.description_length} characters)")
+        # if self.Feedback.text() == "":
+        #     docstring_length = self.descriptionLength()
+        #     print(docstring_length)
+        #     if docstring_length < minimal_docstring_length:
+        #         self.Feedback.setText(f"Describe the test in at least {minimal_docstring_length} characters (spaces don't count, you have {docstring_length} characters)")
         
         # 9. Check the input parameters
         if self.Feedback.text() == "":
@@ -1465,16 +1523,19 @@ class TestWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(False)
 
     def CancelButtonPressed(self):
+        self.definition = {}
         self.reject()
 
     def OKButtonPressed(self):
-        name = self.TestName.text()
-        hardware = self.ForHardwareSetup.currentText()
-        base = self.WithBase.currentText()
-        test_data = {'input_parameters' : {},
-                     'output_parameters' : {}}
-        test_type = "custom"
-
+        self.definition = {}
+        self.definition['name'] = self.TestName.text()
+        self.definition['type'] = "custom"
+        self.definition['hardware'] = self.ForHardwareSetup.currentText()
+        self.definition['base'] = self.WithBase.currentText()
+        self.definition['docstring'] = self.description.toPlainText().split('\n')
+        self.definition['input_parameters'] = self.getInputParameters()
+        self.definition['output_parameters'] = self.getOutputParameters()
+        self.definition['dependencies'] = {} # TODO: implement
         # self.project_info.add_test(name, hardware, base, test_type, test_data)        
         self.accept()
 
@@ -1599,16 +1660,9 @@ class NewStandardTestWizard(QtWidgets.QDialog):
 def new_test_dialog(project_info):
     newTestWizard = TestWizard(project_info)
     if newTestWizard.exec_(): # OK button pressed, thus exited with accept() and **NOT** with reject()
-        test_name = newTestWizard.TestName.text()
-        hardware = newTestWizard.ForHardwareSetup.currentText()
-        base = newTestWizard.WithBase.currentText()
-        input_parameters = newTestWizard.get<s()
-        output_parameters = newTestWizard.getOutputParameters()
-        doc_string =  newTestWizard.getDescription()
-        dependencies = newTestWizard.getDependencies()
-        
-    
-    
+        definition = newTestWizard.definition
+        retval = generator(project_info.project_directory, definition)
+        print(retval)
     del(newTestWizard)
 
 
