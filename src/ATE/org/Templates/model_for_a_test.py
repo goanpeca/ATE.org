@@ -6,7 +6,7 @@ Created on %DT%
 @author: %USER%
 '''
 
-from ATE.org.Testing import testABC
+from ATE.org.abc import testABC
 
 #from common import *
 
@@ -17,11 +17,6 @@ class %TSTCLASS%(testABC):
     Description:
         This test ...
     '''
-    run_time = 13.56327 #ms (automatically set)
-
-    start_state = 'UNDETERMINED'
-    end_state = 'CONTACT_TEST'
-
     input_parameters = {'T' : {'Min' : -40, 'Max' : 170, 'Default' : 25,  'Unit' : '°C'}, # Obligatory !
                         'i' : {'Min' : 0.1, 'Max' : 2.5, 'Default' : 1.0, 'Unit' : 'mA'}}
 

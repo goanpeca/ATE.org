@@ -90,7 +90,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         self.microphone_available=False
         
         # initialize the countdown
-        self.countdown = ScreenCastCountDown(self)
+        self.countdown = ScreenCastCountDown(self.parent())
 
         # set the fps
         self.fps = 14
@@ -155,12 +155,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
                 self.resize()
         grabRegion = self.getGrabRegion()
 
-        self.countdown(grabRegion)
-
-
-
-
-
+        self.countdown.do()
     
     def stop_recording(self):
         '''
@@ -358,35 +353,46 @@ class ScreenCastCountDown(QtWidgets.QSplashScreen):
     '''
     hint:
     '''
+    action = QtCore.pyqtSignal(int) # emitted when contdown is finished
     
     def __init__(self, parent): 
-        if not isinstance(parent, ScreenCastToolButton):
-            raise Exception("parent must by of type 'ScreenCastToolButton'")
+        if not isinstance(parent, QtWidgets.QMainWindow):
+            raise Exception(f"parent must by of type 'PyQt5.QtWidgets.QMainWindow', not {type(parent)}")
+        super().__init__(parent)
+        
         movie_name = os.path.join(os.path.dirname(__file__), 'countdown.gif')
         self.movie = QtGui.QMovie(movie_name)
-        self.movie.jumpToFrame(0)
+        self.movie.jumpToFrame(1)
         pixmap = QtGui.QPixmap(self.movie.frameRect().size())
-        super(ScreenCastCountDown, self).__init__(pixmap)
-        self.setParent(parent)
-        self.movie.jumpToFrame(0)
+        self.setPixmap(pixmap)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | 
                             QtCore.Qt.FramelessWindowHint)
-        self.setEnabled(False)
+        self.setEnabled(True)
         self.movie.frameChanged.connect(self.repaint)
+        self.movie.finished.connect(self.hideEvent)
     
-    def __call__(self, globalGrabRegion):
+    def do(self):
         '''
         this is the entry point to do the countdown.
         '''
-        printQ('do countdown', globalGrabRegion)
-        # x = grabRegion.x() + int(grabRegion.width()/2) + self.sizeHint().width()
-        # y = grabRegion.y() + int(grabRegion.height()/2) + self.sizeHint().height()
+        grabRegion = self.parent().frameGeometry()
         
-        #TODO: how to move the 
+        printQ('do countdown', grabRegion)
+ 
+        print(f"movie has {self.movie.frameCount()} frames")   
+ 
+        movie = self.sizeHint()
+        printQ('movie', movie)
         
+        # x = grabRegion.x() + int(grabRegion.width()/2) - int(self.sizeHint().width()/2)
+        # y = grabRegion.y() + int(grabRegion.height()/2) - int(self.sizeHint().height()/2)
         
+        # print(f"x={x}, y={y}")
+        self.move(0,0)
+        printQ('pos', self.pos())
         
-    
+        self.show()
+        
     def showEvent(self, event):
         self.movie.start()
         super(ScreenCastCountDown, self).showEvent(event)
@@ -394,6 +400,7 @@ class ScreenCastCountDown(QtWidgets.QSplashScreen):
     def hideEvent(self, event):
         self.movie.stop()
         super(ScreenCastCountDown, self).hideEvent(event)
+        self.action.emit(10000) # how to determine the number ?!?
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)

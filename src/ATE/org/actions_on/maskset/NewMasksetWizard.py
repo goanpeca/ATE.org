@@ -33,7 +33,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self._connect_event_handler()
 
     def _load_ui(self):
-        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\\{UI_FILE}"
+        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)),UI_FILE)
         uic.loadUi(my_ui, self)
 
     def _setup(self):

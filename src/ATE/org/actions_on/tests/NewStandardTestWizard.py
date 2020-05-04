@@ -115,7 +115,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
 
 
     def CancelButtonPressed(self):
-        self.accept()
+        self.reject()
 
     def OKButtonPressed(self):
         name = self.StandardTestName.currentText()
@@ -132,7 +132,8 @@ class NewStandardTestWizard(QtWidgets.QDialog):
 
 def new_standard_test_dialog(project_info):
     newStandardTestWizard = NewStandardTestWizard(project_info)
-    newStandardTestWizard.exec_()
+    if newStandardTestWizard.exec_():
+        pass
     del(newStandardTestWizard)
 
 if __name__ == '__main__':

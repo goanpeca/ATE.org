@@ -14,6 +14,8 @@ import os
 import re
 import sys
 
+import numpy as np
+
 from PyQt5 import QtCore, QtWidgets, uic
 
 import qdarkstyle

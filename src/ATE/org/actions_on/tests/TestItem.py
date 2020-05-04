@@ -2,7 +2,7 @@ from ATE.org.actions_on.model.BaseItem import BaseItem
 from ATE.org.actions_on.utils.StateItem import StateItem
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.tests.NewStandardTestWizard import new_standard_test_dialog
-from ATE.org.actions_on.tests.NewTestWizard import new_test_dialog
+from ATE.org.actions_on.tests.TestWizard import new_test_dialog
 from ATE.org.actions_on.utils.FileSystemOperator import FileSystemOperator
 from ATE.org.actions_on.tests.TestsObserver import TestsObserver
 

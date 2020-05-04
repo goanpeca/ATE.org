@@ -530,7 +530,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="testProgramTab">
         <attribute name="title">
@@ -2188,134 +2188,117 @@
         </attribute>
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="0" column="0">
-          <layout class="QHBoxLayout" name="binningLayout">
+          <widget class="QTreeWidget" name="treeWidget">
+           <column>
+            <property name="text">
+             <string>Test</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Bin/Grade</string>
+            </property>
+           </column>
            <item>
-            <widget class="QTreeWidget" name="treeWidget">
-             <column>
-              <property name="text">
-               <string>Test</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Bin/Grade</string>
-              </property>
-             </column>
-             <item>
-              <property name="text">
-               <string>Contact</string>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-              <item>
-               <property name="text">
-                <string>resistance</string>
-               </property>
-               <property name="text">
-                <string>Contact Fail</string>
-               </property>
-              </item>
-             </item>
-             <item>
-              <property name="text">
-               <string>IDD</string>
-              </property>
-              <item>
-               <property name="text">
-                <string>New Subitem</string>
-               </property>
-               <property name="text">
-                <string>Digital Fail</string>
-               </property>
-              </item>
-             </item>
-             <item>
-              <property name="text">
-               <string>...</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Sensitive</string>
-              </property>
-              <item>
-               <property name="text">
-                <string>SomeParameter</string>
-               </property>
-               <property name="text">
-                <string>Digital Fail</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>SomeOtherParameter</string>
-               </property>
-               <property name="text">
-                <string>Some Fail Category</string>
-               </property>
-              </item>
-             </item>
-             <item>
-              <property name="text">
-               <string>...</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>VerySensitive</string>
-              </property>
-              <item>
-               <property name="text">
-                <string>SomeParameter</string>
-               </property>
-               <property name="text">
-                <string>Some Other Fail Category</string>
-               </property>
-              </item>
-             </item>
-             <item>
-              <property name="text">
-               <string>...</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Calibrate</string>
-              </property>
-              <item>
-               <property name="text">
-                <string>SomeParameter</string>
-               </property>
-               <property name="text">
-                <string>TargetNameForGradeB</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>SomeOtherParameter</string>
-               </property>
-               <property name="text">
-                <string>TargetNameForGradeC</string>
-               </property>
-              </item>
-             </item>
-            </widget>
+            <property name="text">
+             <string>Contact</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <item>
+             <property name="text">
+              <string>resistance</string>
+             </property>
+             <property name="text">
+              <string>Contact Fail</string>
+             </property>
+            </item>
            </item>
            <item>
-            <spacer name="horizontalSpacer_8">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+            <property name="text">
+             <string>IDD</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>New Subitem</string>
              </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
+             <property name="text">
+              <string>Digital Fail</string>
              </property>
-            </spacer>
+            </item>
            </item>
-          </layout>
+           <item>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Sensitive</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>SomeParameter</string>
+             </property>
+             <property name="text">
+              <string>Digital Fail</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SomeOtherParameter</string>
+             </property>
+             <property name="text">
+              <string>Some Fail Category</string>
+             </property>
+            </item>
+           </item>
+           <item>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>VerySensitive</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>SomeParameter</string>
+             </property>
+             <property name="text">
+              <string>Some Other Fail Category</string>
+             </property>
+            </item>
+           </item>
+           <item>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Calibrate</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>SomeParameter</string>
+             </property>
+             <property name="text">
+              <string>TargetNameForGradeB</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SomeOtherParameter</string>
+             </property>
+             <property name="text">
+              <string>TargetNameForGradeC</string>
+             </property>
+            </item>
+           </item>
+          </widget>
          </item>
         </layout>
        </widget>

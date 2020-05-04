@@ -6,28 +6,22 @@ Created on 24 Oct 2016
 
 '''
 
-#TODO: change the capitalization of this file for consistency with the rest of the source tree
-#TODO: change the name so that this is no longer recognized as a unit-test ... (ABC.py ?!?)
-
-import copy
-import imp
-import inspect
+import inspect, imp
 import logging
-import os
+import os, sys, re
+import copy
 import random
-import re
+import hashlib
+import abc.ABC
 
 Pass = 1
 Fail = 0
 Undetermined = -1
 Unknown = -1
 
-
-#TODO: import ABC ... make it a real Abstract Base Class !
-
-class testABC(object):
+class testABC(abc.ABC):
     '''
-    This class is the prototype class for all tests.
+    This is the Abstract Base Class for all ATE.org tests.
     '''
     start_state = None
     end_state = None
@@ -39,11 +33,6 @@ class testABC(object):
     test_dependencies = []
     tester = None
     ran_before = False
-    is_self_reentrant = False
-    is_post_reentrant = False
-    is_pre_reentrant = False
-    is_reentrant = 0
-    is_stand_alone_capable = True
 
     def __init__(self):
         self.name = str(self.__class__).split('main__.')[1].split("'")[0]
@@ -67,42 +56,20 @@ class testABC(object):
         self._extract_tester()
         self.sanity_check()
 
-    def __call__(self, start_state, end_state, input_parameters, output_parameters, extra_output_parameters, data_manager):
+    def __call__(self, input_parameters, output_parameters, extra_output_parameters, data_manager):
         '''
         This method is how the test will be called from a higher level
         '''
-        self.setup(start_state)
-        retval = self.do(input_parameters, output_parameters, extra_output_parameters, data_manager)
-        #TODO: implement functional test (based on the return value of do not being None
-        self.teardown(end_state)
+        # retval = self.do(input_parameters, output_parameters, extra_output_parameters, data_manager)
+
 
     def __del__(self):
         pass
 
-    def _extract_patterns(self):
-        '''
-        This method will extract the patterns it finds in the test class methods 'pre_do', 'do' and 'post_do' as well as in all *functions* in the definitions module and adds them to self.patterns
-        format : {'pattern_file' : [(start_label, end_label), ...]}
-        '''
-        patterns = {} # {'pattern_name' : ['label1', 'label2', ...]}
-        #TODO: Implement pattern extraction from setup
-        #TODO: Implement pattern extraction from do
-        #TODO: Implement pattern extraction from teardown
-        #TODO: Implement pattern extraction from functions in module definitions (definitions.py in the tests directory)
-        self.patterns += patterns
-        self.patterns = sorted(set(self.patterns)) # no duplications, sorted alphabetically
 
-    def _extract_tester_states(self):
-        '''
-        This method will extract the used tester-states it finds in the test class methods 'setup', 'do' and 'teardown' as well as all *functions* in the definitions module and adds them to self.tester_states
-        '''
-        tester_states = []
-        #TODO: Implement tester-state extraction from setup
-        #TODO: Implement tester-state extraction from do
-        #TODO: Implement tester-state extraction from teardown
-        #TODO: Implement tester-state extraction from functions in module definitions (definitions.py in the tests directory)
-        self.tester_states += tester_states
-        self.tester_states = sorted(set(self.tester_states)) # no duplications, sorted alphabetically
+    @abc.abstractmethod
+    def do(self, ip, op, ep, dm):
+        pass
 
     def _extract_test_dependencies(self):
         '''
@@ -285,363 +252,129 @@ class testABC(object):
                     setup_states.append(code_line)
         self.end_state = (self.end_state, setup_states)
 
-    def _my_targets(self):
+
+# ---    
+            
+    def _get_method_info(self, method_object):
         '''
-        this method will return a dictionary with as key XXX where XXX comes
-        from all the do_XXX methods, and as value a 2 element tuple as follows
-        (`boolian`, `hash`)
-            - `boolean` indicates if the target uses the default (iow if returns self.do()) = True or a custom implementation  = False
-            - `hash` the hash of the code (after .strip())
-        Note:
-            Also the default do() function must have an entry in the dictionary, however there is no 'XXX' there, the XXX=DEFAULT (with capitals)
+        this method returns a tuple (source_file, source_lines, line_number, doc_string) of obj.
+        obj **must** be a method object!
         '''
-        retval = {}
-        return retval
-        
-    def sanity_check(self):
-        if not self.ran_before:
-            # sanity check on the (test) class name and module
-            if self.name != self.file_name.split('.py')[0]:
-                msg = "The class '%s' doesn't live in a module with the name '%s.py', instead the module name is '%s', please correct this." % (self.name, self.name, self.file_name)
-                logging.critical(msg)
-                raise Exception()
+        if not inspect.ismethod(method_object):
+            raise Exception("What is going on ?!? 'obj' should be a menthod !!!")
+        source_file = inspect.getfile(method_object)
+        source_lines, line_number = inspect.getsourcelines(method_object)
+        doc_string = inspect.getdoc(method_object)
+        return(source_file, source_lines, line_number, doc_string)
 
-
-            # sanity check on pre_do for the state names
-
-            # sanity check on the post_do for the state names
-
-            # sanity check on the start_state
-#             try:
-#                 self.start_state
-#             except NameError: # was not defined
-#                 self.start_state = 'pre_%s' % self.name
-#                 msg = "test '%s' did not define a start_state, it was added as '%s'" % (self.name, self.start_state)
-#                 logging.warn(msg)
-#             else: # was defined
-#                 if type(self.start_state) == tuple:
-#                     if len(self.start_state)!=2:
-#                         msg = "The start_state for test '%s' is to be a 2-element tuple, not a %d element tuple" % (self.name, len(self.start_state))
-#                         logging.critical(msg)
-#                         raise Exception(msg)
-#                 else:
-#                     msg = "The start_state for test '%s' is to be a tuple not '%s'" % (self.name, type(self.start_state))
-#                     logging.critical(msg)
-#                     raise Exception(msg)
-#             # sanity check on the end_state
-#             try:
-#                 self.end_state
-#             except NameError: # was not defined
-#                 self.end_state = self.name
-#                 msg = "test '%s' did not define an end_state, it was added as '%s'" % (self.name, self.end_state)
-#                 logging.warn(msg)
-#             else: # was defined
-#                 if type(self.end_state) == tuple:
-#                     if len(self.end_state)!=2:
-#                         msg = "The end_state for test '%s' is to be a 2-element tuple, not a %d element tuple" % (self.name, len(self.end_state))
-#                         logging.critical(msg)
-#                         raise Exception(msg)
-#                 else:
-#                     msg = "The end_state for test '%s' is to be a tuple, not a '%s'" % (self.name, type(self.end_state))
-#                     logging.critical(msg)
-#                     raise Exception(msg)
-            # sanity check on the input_parameters format  : {'parmeter' : {'Min' : 1.4, 'Max' : 12, 'Default' : 5, 'Unit' : 'V'}}
-            try:
-                self.input_parameters
-            except NameError: # was not defined
-                self.input_parameters = {}
-                msg = "input_parameters was not defined, added as '{}'" % self.start_state
-                logging.warn(msg)
-            else: # was defined
-                if type(self.input_parameters) == dict:
-                    for input_parameter in self.input_parameters:
-                        if type(input_parameter)!=str:
-                            msg = "input_parameters contains the key '%s' that is not a string!" % input_parameter
-                            logging.critical(msg)
-                            raise Exception(msg)
-                        if type(self.input_parameters[input_parameter]) != dict:
-                            msg = "input_parameters contains the key '%s' that doesn't point to a dictionary " % (input_parameter, self.input_parameters[input_parameter])
-                            logging.critical(msg)
-                            raise Exception(msg)
+    def _calculate_hash(self, source_lines, doc_string):
+        '''
+        this method calculates tha hash of the source_lines (excluding the
+        doc_string and any commented out lines).
+        '''
+        def cleanup(source_lines, doc_string, block_size):
+            '''
+            this method removes the doc_string and any comments from source_lines
+            and returns the concateneted ASCII version of the source_lines in a
+            list of block_size chunks.
+            '''
+            pure_ascii_code = b''
+            my_doc_string = ''
+            in_doc_string = False
+            for index in range(1, len(source_lines)):
+                line = source_lines[index].lstrip()
+                if in_doc_string:
+                    if line.rstrip().endswith("'''") or line.rstrip().endswith('"""'):
+                        in_doc_string = False
+                        if line.rstrip()[:-3] != '':
+                            my_doc_string += line.rstrip()[:-3]
                         else:
-                            if 'Min' not in self.input_parameters[input_parameter]:
-                                msg = "No minimum defined for input_parameter '%s' (Key is to be 'Min')" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif type(self.input_parameters[input_parameter]['Min']) not in [int, float]:
-                                msg = "The minimum defined for input_parameter '%s' is not of type int or float" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if 'Max' not in self.input_parameters[input_parameter]:
-                                msg = "No maximum defined for input_parameter '%s' (Key is to be 'Max')" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif type(self.input_parameters[input_parameter]['Max']) not in [int, float]:
-                                msg = "The maximum defined for input_parameter '%s' is not of type int or float" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if self.input_parameters[input_parameter]['Min'] > self.input_parameters[input_parameter]['Max']:
-                                msg = "The minimum defined for input_parameter '%s' is bigger than the defined maximum" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if self.input_parameters[input_parameter]['Min'] == self.input_parameters[input_parameter]['Max']:
-                                msg = "The defined minimum and maximum for input_parameter '%s' are equal." % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if 'Default' not in self.input_parameters[input_parameter]:
-                                msg = "No default defined for input_parameter '%s' (Key is to be 'Default')" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif type(self.input_parameters[input_parameter]['Default'])!=int and type(self.input_parameters[input_parameter]['Default'])!=float:
-                                msg = "The default defined for test '%s' input_parameter '%s' is not of type int or float" % (self.name, input_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if self.input_parameters[input_parameter]['Default'] > self.input_parameters[input_parameter]['Max'] or self.input_parameters[input_parameter]['Default'] < self.input_parameters[input_parameter]['Min']:
-                                msg = "The default defined for input_parameter '%s' is not in the domain [Min .. Max]" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if self.input_parameters[input_parameter]['Default'] == self.input_parameters[input_parameter]['Max']:
-                                logging.warn("The default defined for input_parameter '%s' is equal to the maximum" % input_parameter)
-                            if self.input_parameters[input_parameter]['Default'] == self.input_parameters[input_parameter]['Min']:
-                                logging.warn("The default defined for input_parameter '%s' is equal to the minimum" % input_parameter)
-                            if 'Unit' not in self.input_parameters[input_parameter]:
-                                msg = "No unit defined for input_parameter '%s' (Key is to be 'Unit')" % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif type(self.input_parameters[input_parameter]['Unit'])!=str:
-                                msg = "The unit defined for input_parameter '%s' should be of type str." % input_parameter
-                                logging.critical(msg)
-                                raise Exception(msg)
-                else:
-                    msg = "input_parameters should be a dictionary !"
-                    logging.critical(msg)
-                    raise Exception(msg)
-            # sanity check on the output_parameters format : {'parameter' : {'LSL' : None, 'USL' : 200, 'Nom' : 100, 'Unit' : 'mA'}}
-            try:
-                self.output_parameters
-            except NameError: # was not defined
-                self.output_parameters = {}
-                msg = "test '%s' output_parameters was not defined, added as '{}'" % self.name
-                logging.warn(msg)
-            else: # was defined
-                if type(self.output_parameters) == dict:
-                    for output_parameter in self.output_parameters:
-                        if type(output_parameter)!=str:
-                            msg = "output_parameters contains the key '%s' that is not a string!" % output_parameter
-                            logging.critical(msg)
-                            raise Exception(msg)
-                        if type(self.output_parameters[output_parameter]) != dict:
-                            msg = "output_parameters contains the key '%s' that doesn't point to a dictionary " % (output_parameter, self.output_parameters[output_parameter])
-                            logging.critical(msg)
-                            raise Exception(msg)
+                            my_doc_string = my_doc_string.rstrip()
+                        continue
+                    else:
+                        if line == '':
+                            my_doc_string += '\n'
                         else:
-                            if 'LSL' not in self.output_parameters[output_parameter] and 'USL' not in self.output_parameters[output_parameter]:
-                                msg = "The test '%s' output_parameter '%s' does not define either spec limits (LSL/USL) at least one is needed" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if 'LSL' not in self.output_parameters[output_parameter]:
-                                self.output_parameters[output_parameter]['LSL'] = None
-                                msg = "No lower spec limit (LSL) defined for test '%s' output_parameter '%s' it is added as a 'None'" % (self.name, output_parameter)
-                                logging.info(msg)
-                            elif type(self.output_parameters[output_parameter]['LSL']) not in [int, float, type(None)]:
-                                msg = "The defined lower spec limit (LSL) for test '%s' output_parameter '%s' is not of type int, float or None" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if 'USL' not in self.output_parameters[output_parameter]:
-                                self.output_parameters[output_parameter]['USL'] = None
-                                msg = "No upper spec limit (USL) defined for test '%s' output_parameter '%s' it is added as a 'None'" % (self.name, output_parameter)
-                                logging.info(msg)
-                            elif type(self.output_parameters[output_parameter]['USL']) not in [int, float, None]:
-                                msg = "The defined upper spec limit (USL) for test '%s' output_parameter '%s' is not of type int, float or None" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if 'Nom' not in self.output_parameters[output_parameter]:
-                                self.output_parameters[output_parameter]['Nom'] = None
-                                msg = "No nominal defined for test '%s' output_parameter '%s', it is added as 'None'" % (self.name, output_parameter)
-                                logging.info(msg)
-                            elif type(self.output_parameters[output_parameter]['Nom']) not in [int, float, None]:
-                                msg = "The nominal defined for test '%s' output_parameter '%s' is not of type int, float or None" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            if type(self.output_parameters[output_parameter]['LSL'])!=None and type(self.output_parameters[output_parameter]['USL'])!=None:
-                                if self.output_parameters[output_parameter]['LSL'] > self.output_parameters[output_parameter]['USL']:
-                                    msg = "The defined lower spec limit (LSL) defined for test '%s' output_parameter '%s' is bigger than the defined upper spec limit (USL)" % (self.name, output_parameter)
-                                    logging.critical(msg)
-                                    raise Exception(msg)
-                                if self.output_parameters[output_parameter]['LSL'] == self.output_parameters[output_parameter]['USL']:
-                                    msg = "The defined lower spec limit (LSL) and upper spec limit (USL) for test '%s' output_parameter '%s' are equal.If a functional test (aka go-no-go-test) is intended, use the return statement" % (self.name, output_parameter)
-                                    logging.critical(msg)
-                                    raise Exception(msg)
-                                if self.output_parameters[output_parameter]['Nom'] > self.output_parameters[output_parameter]['USL'] or self.output_parameters[output_parameter]['Nom'] < self.output_parameters[output_parameter]['LSL']:
-                                    print self.output_parameters[output_parameter]['Nom']
-                                    print self.output_parameters[output_parameter]['USL']
-                                    print self.output_parameters[output_parameter]['LSL']
-                                    msg = "The defined nominal for test '%s' output_parameter '%s' is not in the domain [LSL .. USL]" % (self.name, output_parameter)
-                                    logging.critical(msg)
-                                    raise Exception(msg)
-                                if self.output_parameters[output_parameter]['Nom'] == self.output_parameters[output_parameter]['USL']:
-                                    logging.warn("The defined nominal for test '%s' output_parameter '%s' is equal to the USL !!!" % (self.name, output_parameter))
-                                if self.output_parameters[output_parameter]['Nom'] == self.output_parameters[output_parameter]['LSL']:
-                                    logging.warn("The defined nominal for test '%s' output_parameter '%s' is equal to the LSL !!!" % (self.name, output_parameter))
-                            if 'Unit' not in self.output_parameters[output_parameter]:
-                                msg = "No unit defined for test '%s' output_parameter '%s' (Key is to be 'Unit')" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif type(self.output_parameters[output_parameter]['Unit']) != str:
-                                msg = "The unit defined for test '%s' output_parameter '%s' should be of type str" % (self.name, output_parameter)
-                                logging.critical(msg)
-                                raise Exception(msg)
+                            my_doc_string += line
                 else:
-                    msg = "output_parameters should be a dictionary !"
-                    logging.critical(msg)
-                    raise Exception(msg)
-            # sanity check on the extra_output_parameters
-            try:
-                self.extra_output_parameters
-            except NameError: # was not defined
-                self.extra_output_parameters = {}
-                msg = "extra_output_parameters was not defined, added as '{}'" % self.start_state
-                logging.warn(msg)
-            else: # was defined
-                pass
-            # sanity check on the patterns
-            for pattern in self.patterns:
-                pattern_file = pattern + '.tp'
-                pattern_path = os.path.join(self.project_path, 'patterns')
-                pattern_path_to_file = os.path.join(pattern_path, pattern_file)
-                if not os.path.isfile(pattern_path_to_file):
-                    msg = "pattern file '%s' does not exist in location '%s'" % (pattern_file, pattern_path)
-                    logging.critical(msg)
-                    raise Exception(msg)
+                    if line.startswith("'''") or line.startswith('"""'):
+                        if line.rstrip().endswith("'''") or line.rstrip().endswith('"""'):
+                            pass
+                        else:
+                            in_doc_string = True
+                            if line[3:].strip() != '':
+                                my_doc_string += line[3:]
+                            continue
+                    else:
+                        pure_ascii_code += source_lines[index].encode('ascii', 'ignore')
+            if my_doc_string == '':
+                my_doc_string = None
+                
+                
+                
+            print(source_lines[0].strip())
+            print('-'*len(source_lines[0].strip()))
+            print(my_doc_string)
+            print('='*100)
+            print(doc_string)
+            print('-'*99, '>', my_doc_string == doc_string)
+                
+
+
+
+
+
+
+            if len(pure_ascii_code)>block_size:
+                pure_ascii_code_chunks = [pure_ascii_code[i*block_size:(i+1)*block_size] for i in range(int(len(pure_ascii_code)/block_size))]
+                if len(pure_ascii_code)%block_size!=0:
+                    pure_ascii_code_chunks+=[pure_ascii_code[int(len(pure_ascii_code)/block_size):]]    
+            else:
+                pure_ascii_code_chunks = [pure_ascii_code]
+            return pure_ascii_code_chunks
+
+        method_hash = hashlib.sha512()
+        pure_ascii_code_chunks = cleanup(source_lines, doc_string, method_hash.block_size)
+        for pure_ascii_code_chunk in pure_ascii_code_chunks:
+            method_hash.update(pure_ascii_code_chunk)
+        return method_hash.hexdigest()
+
+    def _get_targets(self):
+        '''
+        this method returns a dictionary with as key the 'do' and 'do_' methods defined,
+        and as value a tuple (method_code_hash, default, source_file_name, line_number) 
+        where default indicates if the 'do' function is called (directly) or not.
+        line_number is the line number on which the method is defined.
+        Notes
+            - Of course the 'do' method itself is always 'default' 🙂
+        TODO:
+            - exclude the docstring from the code prior to hashing
+            - get how 'do' is called, and use that for all members (instead of static compare)
+        '''
+        retval ={}
+        all_members = inspect.getmembers(self)
+        members_of_interest = {}
+        for member in all_members:
+            if member[0]=='do' or member[0].startswith('do_'):
+                if inspect.ismethod(member[1]):
+                    members_of_interest[member[0]] = member[1]
+        if not 'do' in members_of_interest:
+            raise Exception("What the fuck!, where is the default 'do' implementation ?!?")
+
+        for member in members_of_interest:
+            source_file, source_lines, line_number, doc_string = self._get_method_info(members_of_interest[member])
+            method_code_hash = self._calculate_hash(source_lines, doc_string)
+            if member == 'do':
+                members_of_interest[member] = (method_code_hash, True, source_file, line_number)
+            else:
+                if source_lines[-1].strip() == 'return self.do()':
+                    members_of_interest[member] = (method_code_hash, True, source_file, line_number)
                 else:
-                    found_labels = get_labels_from_pattern(pattern_path_to_file)
-                    for start_label, stop_label in self.patterns[pattern]:
-                        # check if labels are present in the file
-                        if start_label not in found_labels or stop_label not in found_labels:
-                            if start_label not in found_labels and stop_label not in found_labels:
-                                msg = "start label '%s' and stop label '%s' not found in '%s'" % (start_label, stop_label, pattern_file)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            elif start_label not in found_labels:
-                                msg = "start label '%s' not found in '%s'" (start_label, pattern_file)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                            else:
-                                msg = "stop label '%s' not found in '%s'" (stop_label, pattern_file)
-                                logging.critical(msg)
-                                raise Exception(msg)
-                        # check if start label comes before stop label in the pattern file
-                        if found_labels[start_label] > found_labels[stop_label]:
-                            msg = "start label '%s' comes after stop label '%s' in pattern file" % (start_label, stop_label, pattern_file)
-                            logging.critical(msg)
-                            raise Exception(msg)
+                    members_of_interest[member] = (method_code_hash, False, source_file, line_number)
 
-            # sanity check on the tester_states (reentrant / stand_alone_capable)
-            if self.start_state[0] == self.end_state[0]:
-                self.is_self_reentrant = True
-            if self.start_state[0] in self.end_state[1]:
-                self.is_post_reentrant = True
-            if self.end_state[0] in self.start_state[0]:
-                self.is_pre_reentrant = True
-            if self.start_state[0] in self.start_state[1]:
-                msg = "the do method of test '%s' starts with the '%s' state, yet '%s' is also defined in pre_do method ... please remove it from the pre_do method" % (self.name, self.start_state[0], self.start_state[0])
-                logging.critical(msg)
-                raise Exception(msg)
-            if self.end_state[0] in self.end_state[1]:
-                msg = "the do method of test '%s' ends with the '%s' state, yet '%s' is also defined in the post_do method ... please remove it from the post_do method" % (self.name, self.end_state[0], self.end_state[0])
-                logging.critical(msg)
-                raise Exception(msg)
-            self.is_reentrant = len(set(self.start_state[1])&set(self.end_state[1]))+int(self.is_pre_reentrant)+int(self.is_post_reentrant)+int(self.is_self_reentrant)
-            if self.is_reentrant == 0:
-                msg = "the test '%s' is not reentrant" % self.name
-                logging.critical(msg)
-                raise Exception(msg)
-            else:
-                msg = "the test '%s' is %d times reentrant" % (self.name, self.is_reentrant)
-                logging.info(msg)
-            if not self.is_stand_alone_capable:
-                msg = "test '%s' is not stand alone capable, add a the 'off' state switch to the pre_do routine or make the test run from 'off' state" % self.name
-                logging.critical(msg)
-                raise Exception(msg)
-            else:
-                msg = "test '%s' is stand alone capable" % self.name
-                logging.info(msg)
-
-            # sanity check on the test_dependency
-            #TODO: implement the test_dependency
-
-            # sanity check on the tester
-            if self.tester is None:
-                msg = "Test '%s' does not seem to be written for a tester ..." % self.name
-                logging.critical(msg)
-                raise Exception(msg)
-            if type(self.tester)==tuple:
-                if len(self.tester)==2:
-                    msg = "Test '%s' uses tester '%s' referenced as '%s'" % (self.name, self.tester[0], self.tester[1])
-                    logging.debug(msg)
-                else:
-                    msg = "I don't understand what tester test '%s' is written for" % self.name
-                    logging.critical(msg)
-                    raise Exception(msg)
-            else:
-                msg = "I don't understand what tester test '%s' is written for" % self.name
-                logging.critical(msg)
-                raise Exception(msg)
-
-            # check if the test's doc string is implemented
-            if self.__doc__ == '':
-                msg = "Please implement a good doc string for test '%s'" % self.name
-                logging.warn(msg)
-
-    def switch_extraction(self, method):
-        print type(method)
-        exit()
-        if type(method) == str:
-            if method.upper() == 'PRE':
+        return members_of_interest    
 
 
-                pass
-            elif method.upper() == 'POST':
-                pass
-            else:
-                msg = "method should be 'pre' for pre-do or 'post' for post-do, not '%s'" % method
-                logging.critical(msg)
-                raise Exception(msg)
-        else:
-            msg = "method should be the string 'pre' or 'post'"
-            logging.critical(msg)
-            raise Exception(msg)
-
-
-
-    def can_refactor(self):
-        '''
-        This method will return True/False depending if a refactoring can be made from the pre_do/post_do definitions (regardless if it will lead to conflicts at refactoring time)
-        '''
-        pass
-
-    def has_refactor_conflict(self):
-        '''
-        This method will return True/False depending if a re-factoring already has an entry in definitions.py
-        '''
-        pass
-
-    def refactor(self):
-        '''
-        This method will take the code-blocks in the if-elif-else block of pre_do and post_do, and re-factor them as functions in definitions.py for the benefit of other tests.
-        If a state-change already exists (self.has_refactro_conflict() will return True) the code block will be appended as comment to the previously defined code-block.
-        Each re-factored code block has a comment stating from what test(and place) if was re-factored.
-        '''
-        pass
-
-    def pre_do(self, from_state):
-        pass
-
-    def do(self, ip, op, ep, dm):
-        pass
-
-    def post_do(self, to_state):
-        pass
 
     def run(self, from_state, to_state, ip, op, eop=None, dm=None):
         logging.debug("Running test '%s' from start_state '%s' to end_state '%s' with parameters '%s'" % (self.name, from_state, to_state, ip))
@@ -686,39 +419,6 @@ def isEmptyFunction(func):
         pass
 
     return func.__code__.co_code == empty_func.__code__.co_code or func.__code__.co_code == empty_func_with_doc.__code__.co_code
-
-
-def project_state_changes():
-    '''
-    This method will return a list of form [(start_state, end_state), ...] from the definition functions in 'definitions.py'
-    '''
-    pass
-
-def new_ate_project(ProjectName, Workspace):
-    '''
-    This function will create 'ProjectName' in directory 'Workspace' and populate it with the necessary files.
-    '''
-    # doc dir
-    # patterns dir
-    # programs dir
-    # tests dir
-    # programs/Configurations.py file
-    # programs/specs.xlsx file
-    # tests/POR.py file
-    # tests/IDD.py file
-    # tests/ctest.py file
-    # tests/definitions.py file (empty)
-    pass
-
-
-def get_labels_from_pattern(pattern_path_to_file):
-    '''
-    This function will return a dictionary of labels pointing to the line number in the pattern file
-    something like {'label1' : 15, 'label2' : 1034}
-    '''
-    retval = {}
-    #TODO: Implement 'get_labels_from_pattern'
-    return retval
 
 if __name__ == '__main__':
     pass

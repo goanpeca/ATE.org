@@ -20,10 +20,11 @@ valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_positive_integer_regex = r"^[+]?\d*"
 valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
 
-valid_float_regex = "[+-]?(∞|np.inf|np.Inf|[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
-valid_min_float_regex = "(-∞|-np.inf|-np.Inf|[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
-valid_default_float_regex = "[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?"
-valid_max_float_regex = "(+∞|+np.inf|+np.Inf|[+-]?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?)"
+valid_float_regex = "[+-]?(∞|[0-9]+(\\.[0-9]+)?)"
+valid_min_float_regex = "[+-]?(∞|[0-9]+(\\.[0-9]+)?)"
+valid_default_float_regex = "[+-]?([0-9]+(\\.[0-9]+)?)"
+valid_max_float_regex = "[+-]?(∞|[0-9]+(\\.[0-9]+)?)"
+valid_fmt_regex = "([0-9]*\\.[0-9]+)?f"
 
 def is_Spyder_project(project_directory):
     '''
