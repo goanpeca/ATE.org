@@ -31,7 +31,7 @@ class testABC(abc.ABC):
     tester = None
     ran_before = False
 
-    def __init__(self):
+    def __init__(self, call_values=None, limits=None, SBINs=None):
         self.name = self.__class__.__name__
         tmp = str(inspect.getmodule(self)).split("from '")[1].replace("'", '').replace('>', '').split('/')
         self.test_dir = os.sep.join(tmp[0:-1])
@@ -76,7 +76,7 @@ class testABC(abc.ABC):
         retval['name'] = '.'.join(os.path.split(os.path.basename(__file__), '.')[:-1]) # file name without the last extension
         if retval['name'] != self.name:
             raise Exception(f"the file name and the test-class name don't match ('{retval['name']}' vs '{self.name}'")
-        retval['type'] = self.Type 
+        retval['type'] = self.Type
         retval['hardware'] = self.hardware
         retval['base'] = self.base
         retval['docstring'] = inspect.getdoc(self)
@@ -166,8 +166,8 @@ class testABC(abc.ABC):
                     ofd.write("\t\treturn self.do(ip, op)\n\n")
                 line = ifd.readline()
                 line_nr+=1
-                ofd.write(f"{line}\n")            
-            
+                ofd.write(f"{line}\n")
+
     def _get_method_info(self, method_object):
         '''
         this method returns a tuple (source_file, source_lines, line_number, doc_string) of obj.
@@ -183,7 +183,7 @@ class testABC(abc.ABC):
     def _get_targets(self):
         '''
         this method returns a dictionary with as key the 'do' and 'do_' methods defined,
-        and as value a tuple (method_code_hash, default, source_file_name, line_number) 
+        and as value a tuple (method_code_hash, default, source_file_name, line_number)
         where default indicates if the 'do' function is called (directly) or not.
         line_number is the line number on which the method is defined.
         Notes
@@ -213,7 +213,7 @@ class testABC(abc.ABC):
                 else:
                     members_of_interest[member] = (method_code_hash, False, source_file, line_number)
 
-        return members_of_interest    
+        return members_of_interest
 
     def _calculate_hash(self, source_lines, doc_string):
         '''
@@ -257,16 +257,16 @@ class testABC(abc.ABC):
                         pure_ascii_code += source_lines[index].encode('ascii', 'ignore')
             if my_doc_string == '':
                 my_doc_string = None
-                
-                
-                
+
+
+
             print(source_lines[0].strip())
             print('-'*len(source_lines[0].strip()))
             print(my_doc_string)
             print('='*100)
             print(doc_string)
             print('-'*99, '>', my_doc_string == doc_string)
-                
+
 
 
 
@@ -276,7 +276,7 @@ class testABC(abc.ABC):
             if len(pure_ascii_code)>block_size:
                 pure_ascii_code_chunks = [pure_ascii_code[i*block_size:(i+1)*block_size] for i in range(int(len(pure_ascii_code)/block_size))]
                 if len(pure_ascii_code)%block_size!=0:
-                    pure_ascii_code_chunks+=[pure_ascii_code[int(len(pure_ascii_code)/block_size):]]    
+                    pure_ascii_code_chunks+=[pure_ascii_code[int(len(pure_ascii_code)/block_size):]]
             else:
                 pure_ascii_code_chunks = [pure_ascii_code]
             return pure_ascii_code_chunks

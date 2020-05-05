@@ -5,15 +5,15 @@ Created on Mon Nov 25 18:13:27 2019
 @author: hoeren
 
 hints:
-    
+
     Window Geometry:
         https://doc.qt.io/qt-5/application-windows.html#window-geometry
 
-    Splash:    
+    Splash:
         QMovie *movie = new QMovie(":/images/other/images/16x16/loading.gif");
         QLabel *processLabel = new QLabel(this);
         processLabel->setMovie(movie);
-        movie->start();    
+        movie->start();
 
 """
 import os, sys, platform
@@ -37,11 +37,11 @@ def printQ(message, QObj):
         print(f'QPoint {message} : ({QObj.x()}, {QObj.y()})')
     else:
         print('not supported')
-        
+
 class ScreenCastToolButton(QtWidgets.QToolButton):
-    
+
     rightClicked = QtCore.pyqtSignal()
-    
+
     video_sizes = {240 : ((462, 240), ''),
                    360 : ((640, 360), ''),
                    480 : ((854, 480), ''),
@@ -51,28 +51,28 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
                    2160 : ((3840, 2160), 'aka 4K')}
 
     video_file = 'SSC#.mp4'
-    
+
     icon_size = 16
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         # safety check
         for video_size in self.video_sizes:
             if video_size != self.video_sizes[video_size][0][1]:
                 raise Exception("problem with declared video sizes")
-        
+
         # check OS
         self.os = platform.system()
         if self.os == 'Windows':
-            self.desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
+            self.desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
         elif self.os == 'Linux':
-            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
+            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         elif self.os == 'Darwin': #TODO: check on mac if this works
-            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
+            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         else:
             raise Exception("unrecognized operating system")
-        
+
         # check dependencies
         self.dependenciesMet = True
         cv2_spec = importlib.util.find_spec('cv2')
@@ -83,18 +83,21 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         self.numpy_is_available = numpy_spec is not None
         if not self.numpy_is_available:
             self.dependenciesMet = False
+
+        # for test purposes:
+        self.dependenciesMet = True
         #TODO: check if I have all dependencies
 
         # find a microphone
         #TODO: implement the microphone-find-thingy
         self.microphone_available=False
-        
+
         # initialize the countdown
-        self.countdown = ScreenCastCountDown(self.parent())
+        # self.countdown = ScreenCastCountDown(self.parent())
 
         # set the fps
         self.fps = 14
-        
+
         # initialize the tool button itself.
         self.setIcon(qta.icon('mdi.video', color='orange'))
         self.setIconSize(QtCore.QSize(self.icon_size, self.icon_size))
@@ -106,7 +109,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         self.nextScreencastFile = self.getNextScreencastFile()
 
         self.show()
-        
+
     def getNextScreencastFile(self):
         '''
         this method will look on the desktop for existing screencast files,
@@ -132,21 +135,21 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
             self.rightClicked.emit()
         else:
             self.clicked.emit()
-        
+
     def toggle_recording(self):
         if self.state == 'idle':
             self.start_recording()
         else:
             self.stop_recording()
-        
+
     def start_recording(self):
         '''
-        this method will spawn a process (besided spyder) that will do 
+        this method will spawn a process (besided spyder) that will do
         the actual recording stuff.
         '''
         self.state = 'recording'
         self.setIcon(qta.icon('mdi.stop', color='red'))
-        
+
         grabRegion = self.getGrabRegion()
         if grabRegion.height() not in self.video_sizes:
             self.resize()
@@ -155,11 +158,11 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
                 self.resize()
         grabRegion = self.getGrabRegion()
 
-        self.countdown.do()
-    
+        #self.countdown.do()
+
     def stop_recording(self):
         '''
-        this method will communicate with the spawend recording process to 
+        this method will communicate with the spawend recording process to
         tell it to stop recording and save the recording.
         '''
         self.state = 'idle'
@@ -170,7 +173,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         print(f"creating {screencast_file} ... ", end='')
         touching(screencast_file).touch()
         print("Done.")
-        
+
         self.nextScreencastFile = self.getNextScreencastFile()
 
     def settings(self):
@@ -181,14 +184,14 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
             if psize <= screenAG.height(): #TODO: maybe screenG instead ?
                 return True
             return False
-        
+
         mainWindow = self.parent().parent()
         screenAG = QtWidgets.QDesktopWidget().availableGeometry(mainWindow)
         screenG = QtWidgets.QDesktopWidget().screenGeometry(mainWindow)
 
         menu = QtWidgets.QMenu(self)
-        
-        action = menu.addAction(f'&& {self.fps} Frames per second')  
+
+        action = menu.addAction(f'&& {self.fps} Frames per second')
         if self.microphone_available:
             action.setIcon(qta.icon('mdi.microphone', color='orange'))
         else:
@@ -200,7 +203,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         mws = self.getGrabRegion()
         bmws = self.calculateGrabRegion()
         itemset = sorted(set(list(self.video_sizes) + [mws.height()]))
-        for item in itemset:        
+        for item in itemset:
             if item in self.video_sizes:
                 text = f"{item}p ({self.video_sizes[item][0][0]}x{self.video_sizes[item][0][1]}) {self.video_sizes[item][1]}"
                 icon = None
@@ -229,7 +232,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
             elif item == 2160 or ((item==mws.height()) and bmws.height()==2160):
                 action.triggered.connect(self.resize_to_2160p)
             action.setEnabled(enabled)
-            
+
         menu.addSeparator()
 
         action = menu.addAction(qta.icon('mdi.monitor', color='orange'),
@@ -238,7 +241,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         action = menu.addAction(qta.icon('mdi.monitor-screenshot', color='orange'),
                                 f"{screenAG.width()}x{screenAG.height()}")
         action.setEnabled(True)
-        
+
         cursorPoint = QtGui.QCursor.pos()
         menuSize = menu.sizeHint()
         menuPoint = QtCore.QPoint(cursorPoint.x()-menuSize.width(),
@@ -257,25 +260,25 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
             self.fps = 25
         else:
             self.fps = fps
-        
+
     def resize_to_240p(self):
         self.resize(240)
-        
+
     def resize_to_360p(self):
         self.resize(360)
-        
+
     def resize_to_480p(self):
         self.resize(480)
-        
+
     def resize_to_720p(self):
         self.resize(720)
-        
+
     def resize_to_1080p(self):
         self.resize(1080)
-        
+
     def resize_to_1440p(self):
         self.resize(1440)
-        
+
     def resize_to_2160p(self):
         self.resize(2160)
 
@@ -296,16 +299,16 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
 
     def getGrabRegion(self):
         '''
-        this method will get the 'GrabRegion' of the main window, and 
+        this method will get the 'GrabRegion' of the main window, and
         return it as a QRect.
         '''
         mainWindow = self.parent().parent()
-        retval = QtCore.QRect(mainWindow.x(), 
-                              mainWindow.y(), 
-                              mainWindow.frameGeometry().width(), 
+        retval = QtCore.QRect(mainWindow.x(),
+                              mainWindow.y(),
+                              mainWindow.frameGeometry().width(),
                               mainWindow.frameGeometry().height())
-        return retval        
-        
+        return retval
+
     def calculateGrabRegion(self, psize=-1):
         '''
         this method will determine the ideal 'GrabRegion' on the screen
@@ -313,6 +316,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         If psize=-1, the biggest possible psize given the screen is used.
         return value is a QRect.
         '''
+
         screenRect = QtWidgets.QDesktopWidget().availableGeometry(self)
 
         if psize == -1:
@@ -321,30 +325,30 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
                 if video_size <= screenRect.height():
                     width = self.video_sizes[video_size][0][0]
                     height = self.video_sizes[video_size][0][1]
-                
+
             if width > screenRect.width(): # width takes precedence (rare but possible)
                 width = height = 0
                 for video_size in self.video_sizes:
                     if self.video_sizes[video_size][0][0] <= self.activeScreenGeometry.width():
                         width = self.video_sizes[video_size][0][0]
                         height = self.video_sizes[video_size][0][1]
-                       
-            x = int(((screenRect.width()-width)/2)+screenRect.x()) 
+
+            x = int(((screenRect.width()-width)/2)+screenRect.x())
             y = int(((screenRect.height()-height)/2)+screenRect.y())
-            
+
         elif psize in self.video_sizes:
             width = self.video_sizes[psize][0][0]
             height = self.video_sizes[psize][0][1]
             if width <= screenRect.width() and height <= screenRect.height():
-                x = int(((screenRect.width()-width)/2)+screenRect.x()) 
+                x = int(((screenRect.width()-width)/2)+screenRect.x())
                 y = int(((screenRect.height()-height)/2)+screenRect.y())
             else:
                 width = height = 0
-                x = int(((screenRect.width()-width)/2)+screenRect.x()) 
+                x = int(((screenRect.width()-width)/2)+screenRect.x())
                 y = int(((screenRect.height()-height)/2)+screenRect.y())
         else:
             width = height = 0
-            x = int(((screenRect.width()-width)/2)+screenRect.x()) 
+            x = int(((screenRect.width()-width)/2)+screenRect.x())
             y = int(((screenRect.height()-height)/2)+screenRect.y())
         retval = QtCore.QRect(x, y, width, height)
         return retval
@@ -354,45 +358,45 @@ class ScreenCastCountDown(QtWidgets.QSplashScreen):
     hint:
     '''
     action = QtCore.pyqtSignal(int) # emitted when contdown is finished
-    
-    def __init__(self, parent): 
+
+    def __init__(self, parent):
         if not isinstance(parent, QtWidgets.QMainWindow):
             raise Exception(f"parent must by of type 'PyQt5.QtWidgets.QMainWindow', not {type(parent)}")
         super().__init__(parent)
-        
+
         movie_name = os.path.join(os.path.dirname(__file__), 'countdown.gif')
         self.movie = QtGui.QMovie(movie_name)
         self.movie.jumpToFrame(1)
         pixmap = QtGui.QPixmap(self.movie.frameRect().size())
         self.setPixmap(pixmap)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | 
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint |
                             QtCore.Qt.FramelessWindowHint)
         self.setEnabled(True)
         self.movie.frameChanged.connect(self.repaint)
         self.movie.finished.connect(self.hideEvent)
-    
+
     def do(self):
         '''
         this is the entry point to do the countdown.
         '''
         grabRegion = self.parent().frameGeometry()
-        
+
         printQ('do countdown', grabRegion)
- 
-        print(f"movie has {self.movie.frameCount()} frames")   
- 
+
+        print(f"movie has {self.movie.frameCount()} frames")
+
         movie = self.sizeHint()
         printQ('movie', movie)
-        
+
         # x = grabRegion.x() + int(grabRegion.width()/2) - int(self.sizeHint().width()/2)
         # y = grabRegion.y() + int(grabRegion.height()/2) - int(self.sizeHint().height()/2)
-        
+
         # print(f"x={x}, y={y}")
         self.move(0,0)
         printQ('pos', self.pos())
-        
+
         self.show()
-        
+
     def showEvent(self, event):
         self.movie.start()
         super(ScreenCastCountDown, self).showEvent(event)
@@ -417,25 +421,25 @@ class ScreenCastRecorder(object):
 
 
 if __name__ == '__main__':
-    
+
     class MainWindow(QtWidgets.QMainWindow):
-    
+
         def __init__(self, app):
             super().__init__()
-    
+
             self.app = app # work-around for the 'spydercustomize.SpyderQApplication' stuff ... not sure what is going on there ...
-    
+
             self.setWindowTitle('Dummy Main Window')
             self.setGeometry(100, 100, 1280, 720)
-            self.statusbar = QtWidgets.QStatusBar(self)        
-    
+            self.statusbar = QtWidgets.QStatusBar(self)
+
             self.screenCastToolButton = ScreenCastToolButton(self)
             self.statusbar.addPermanentWidget(self.screenCastToolButton)
-    
+
             self.setStatusBar(self.statusbar)
             self.show()
-            
-    
+
+
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     mainWindow = MainWindow(app)
