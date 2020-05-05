@@ -48,6 +48,14 @@ class ToolBar(QtWidgets.QToolBar):
         self.tester_combo.setCurrentText('')
         self.addWidget(self.tester_combo)
 
+        self.tester_mode_combo = QtWidgets.QComboBox()
+        tester_modes = ['Direct Mode', 'Iteractive Mode']
+        self.tester_mode_combo.addItems(tester_modes)
+        self.tester_mode_combo.setCurrentText('Direct Mode')
+        width = self.tester_mode_combo.minimumSizeHint().width()
+        self.tester_mode_combo.setMinimumWidth(width)
+        self.addWidget(self.tester_mode_combo)
+
         self.refresh_testers = QtWidgets.QAction(qta.icon('mdi.refresh', color='orange'), "Refresh Testers", self)
         self.refresh_testers.setStatusTip("Refresh the tester list")
         self.refresh_testers.setCheckable(False)

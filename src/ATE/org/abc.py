@@ -23,11 +23,8 @@ class testABC(abc.ABC):
     '''
     This is the Abstract Base Class for all ATE.org tests.
     '''
-    start_state = None
-    end_state = None
     input_parameters = {}
     output_parameters = {}
-    extra_output_parameters = {}
     patterns = []
     tester_states = []
     test_dependencies = []
@@ -35,7 +32,7 @@ class testABC(abc.ABC):
     ran_before = False
 
     def __init__(self):
-        self.name = str(self.__class__).split('main__.')[1].split("'")[0]
+        self.name = self.__class__.__name__
         tmp = str(inspect.getmodule(self)).split("from '")[1].replace("'", '').replace('>', '').split('/')
         self.test_dir = os.sep.join(tmp[0:-1])
         self.file_name = tmp[-1]
@@ -71,24 +68,31 @@ class testABC(abc.ABC):
     def do(self, ip, op, ep, dm):
         pass
 
-    def _extract_test_dependencies(self):
+    def _extract_definition(self):
         '''
-        This method will analyze the do method, and extract all the test dependencies (by looking what is accessed in the DataManager (dm) and add them to self.test_dependencies
+        this method will create the defintion dictionary from the overloaded class.
         '''
-        test_dependencies = []
-        #TODO: Implement test dependency extraction from do
-        self.test_dependencies += test_dependencies
-        self.test_dependencies = sorted(set(self.test_dependencies)) # no duplications, sorted alphabetically
+        retval = {}
+        retval['name'] = '.'.join(os.path.split(os.path.basename(__file__), '.')[:-1]) # file name without the last extension
+        if retval['name'] != self.name:
+            raise Exception(f"the file name and the test-class name don't match ('{retval['name']}' vs '{self.name}'")
+        retval['type'] = self.Type 
+        retval['hardware'] = self.hardware
+        retval['base'] = self.base
+        retval['docstring'] = inspect.getdoc(self)
+        retval['input_parameters'] = self.input_parameters
+        retval['output_parameters'] = self.output_parameters
+        retval['dependencies'] = {} #TODO: add the dependencies when available
+
+        return retval
 
     def _extract_tester(self):
         '''
-        This method will extract the used tester (firmware) self.tester accordingly.
+        This method will extract the used tester from the loaded objects.
         '''
-        fp, pathname, description = imp.find_module(self.name, [self.test_dir])
-        module = imp.load_module(self.name, fp, pathname, description)
-        for member in inspect.getmembers(module, inspect.isclass):
-            if 'ATE.Tester.' in str(member[1]):
-                self.tester = (str(member[1]).split('<class')[1].strip().replace('>', '').replace("'", ''), member[0])
+        retval = 'SCT'
+        #TODO: need to see how pluggy 'identifies' testers.
+        return 'SCT'
 
     def _get_imports(self):
         '''
@@ -97,11 +101,13 @@ class testABC(abc.ABC):
             'from bla.bla.bla import foo as bar" --> ('bla.bla.bla', 'foo', 'bar')
             'import os' --> ('', os, '')
         '''
+        retval = []
         fp, pathname, description = imp.find_module(self.name, [self.test_dir])
         module = imp.load_module(self.name, fp, pathname, description)
         for member in inspect.getmembers(module):
             print(member)
 
+        return retval
 
     def _get_method_source(self, method):
         '''
@@ -126,134 +132,41 @@ class testABC(abc.ABC):
             retval = inspect.getsource(method_of_interest)
         return retval
 
-    def _get_if_elif_structure(self, method):
-        '''
-        This method will return the if/elif structure from the named method in the form of a dictionary.
-        It will choke on a else statement!
-        '''
-        if method == 'pre_do' or method == 'post_do':
-            code_lines = self._get_method_source(method).split('\n')
-            def_regex = "\s*(?:def)\s+(?P<function_name>\w+)\s*\(\s*self\s*,\s*(?P<switch>\w+)\):"
-            def_pattern = re.compile(def_regex)
-            if_regex = '''\s*if\s+(?P<switch>[^ =]+)\s*==\s*(?P<quoting>['"])(?P<state>\w+)(?P=quoting):'''
-            if_pattern = re.compile(if_regex)
-            elif_regex = '''\s*elif\s+(?P<switch>[^ =]+)\s*==\s*(?P<quoting>['"])(?P<state>\w+)(?P=quoting)\s*:'''
-            elif_pattern = re.compile(if_regex)
-            go_from_regex = "\s*go_from_(?P<from_state>\w+)_to_(?P<to_state>\w+)_state()"
-            go_from_pattern = re.compile(go_from_regex)
-            split_pattern = "\s*(?:el)+?if\s+(?P<switch>%s.upper())\s+(?:==)"
-            base_indent = len(code_lines[0]) - len(code_lines[0].lstrip())
-            retval = {0:None}
-            chunk = 0
-            for code_line in code_lines:
-                if code_line.strip() == '': continue
-                indent = (len(code_line) - len(code_line.lstrip()) - base_indent)/base_indent
-                if chunk == 0: # in function definition or pre-switch config
-                    if indent == 0: # in function definition
-                        def_match = def_pattern.match(code_line)
-                        if not def_match:
-                            raise Exception("Couldn't match '%s'" % code_line)
-                        else:
-                            switch = def_match.group('switch')
-                            if method != def_match.group('function_name'):
-                                raise Exception("Unexpected method naming ('%s'<->'%s')" % (method, def_match.group('function_name')))
-                            retval[0] = (method, switch) # is always chunk 0 !
-                    elif indent == 1:
-                        if code_line.stip().startswith('if'):
-                            pass
-                        else:
-                            pass
-                    else:
-                        pass
-                else: # in switch definition
-                    if indent == 0: # can only be comment !!!
-                        pass
-                    elif indent == 1: # can only be if/elif statement
-                        if code_line.strip().startswith('else'):
-                            raise Exception("'%s' can not contain a general else statement !" % method)
-                        if code_line.strip().startswith('if') or code_line.strip().startswith('elif'):
-                            chunk += 1
-                            retval[chunk]=[]
-                            if_match = if_pattern.match(code_line)
-                            if not if_match:
-                                raise Exception("Couldn't match '%s'" % code_line)
-                            else:
-
-                                pass
-                        else:
-                            retval[chunk].append(code_line)
-
-                    elif indent == 2: # switch block code
-                        pass
-                    else: # switch block code
-                        pass
-
-
-        else:
-            raise Exception("'_get_if_elif_structure' only applies to 'pre_do' and 'post_do'")
-
-
-
-
     def _set_method_source(self, method, source):
         '''
 
         '''
         pass
 
-
-    def _add_pre_do_states_to_start_state(self):
+    def _add_target(self, target_name):
         '''
-        self.start_state is a string prior to class instantization.
-        The __init__ method will call this function to transform the start state in a 2 element tuple,
-        the first element being the start state of the do function (=initial assignment to start_state)
-        and the second element is a list of all the from_states defined in setup.
+        this method adds a new do_target to the source.
+        (alphabetically inserted)
         '''
-        if type(self.start_state) == tuple:
-            self.start_state = self.start_state[0]
-        setup_states = []
-        code_lines = self._get_method_source('setup').split('\n')
-        switch = code_lines[0].strip().split(',')[1].strip().replace(',', ')').split(')')[0].strip()
-        for code_line in code_lines:
-            if 'if' in code_line:
-                code_line = code_line.split('if')[1]
-                if switch in code_line:
-                    code_line = code_line.split(switch)[1].replace(' ','').replace('==', '').replace(':', '')
-                    if code_line.startswith("'"):
-                        code_line = code_line.replace("'", '')
-                    if code_line.startswith('"'):
-                        code_line = code_line.replace('"', '')
-                    setup_states.append(code_line)
-        self.start_state = (self.start_state, setup_states)
-
-    def _add_post_do_states_to_end_state(self):
-        '''
-        self.end_state is a string prior to class instantization.
-        The __init__ method will call this function to transform the start state in a 2 element tuple,
-        the first element being the end state of the do function (=initial assignment to end_state)
-        and the second element is a list of all the to_states defined in teardown.
-        '''
-        if type(self.end_state) == tuple:
-            self.end_state = self.end_state[0]
-        setup_states = []
-        print
-
-        code_lines = self._get_method_source('teardown').split('\n')
-        switch = code_lines[0].strip().split(',')[1].strip().replace(',', ')').split(')')[0].strip()
-        for code_line in code_lines:
-            if 'if' in code_line:
-                code_line = code_line.split('if')[1]
-                if switch in code_line:
-                    code_line = code_line.split(switch)[1].replace(' ','').replace('==', '').replace(':', '')
-                    if code_line.startswith("'"):
-                        code_line = code_line.replace("'", '')
-                    if code_line.startswith('"'):
-                        code_line = code_line.replace('"', '')
-                    setup_states.append(code_line)
-        self.end_state = (self.end_state, setup_states)
-
-
-# ---    
+        temp_file = os.path.join(__file__, '.tmp')
+        existing_targets = self._get_targets()
+        new_target = f"do_{target_name}"
+        if new_target not in existing_targets:
+            target_lines = {key:existing_targets[key][1] for key in existing_targets}
+            target_lines[new_target] = -1
+            last_target_line = 0
+            break_on_next = False
+            for target in sorted(target_lines):
+                if target == new_target:
+                    break_on_next = True
+                else:
+                    last_target_line = target_lines[target]
+                    if break_on_next:
+                        break
+            insertion_line = last_target_line
+            line_nr = 0
+            with open(__file__, 'r') as ifd, open(temp_file, 'w') as ofd:
+                if line_nr == insertion_line:
+                    ofd.write(f"\tdef {new_target}(ip, op):\n")
+                    ofd.write("\t\treturn self.do(ip, op)\n\n")
+                line = ifd.readline()
+                line_nr+=1
+                ofd.write(f"{line}\n")            
             
     def _get_method_info(self, method_object):
         '''
@@ -266,6 +179,41 @@ class testABC(abc.ABC):
         source_lines, line_number = inspect.getsourcelines(method_object)
         doc_string = inspect.getdoc(method_object)
         return(source_file, source_lines, line_number, doc_string)
+
+    def _get_targets(self):
+        '''
+        this method returns a dictionary with as key the 'do' and 'do_' methods defined,
+        and as value a tuple (method_code_hash, default, source_file_name, line_number) 
+        where default indicates if the 'do' function is called (directly) or not.
+        line_number is the line number on which the method is defined.
+        Notes
+            - Of course the 'do' method itself is always 'default' 🙂
+        TODO:
+            - exclude the docstring from the code prior to hashing
+            - get how 'do' is called, and use that for all members (instead of static compare)
+        '''
+        retval ={}
+        all_members = inspect.getmembers(self)
+        members_of_interest = {}
+        for member in all_members:
+            if member[0]=='do' or member[0].startswith('do_'):
+                if inspect.ismethod(member[1]):
+                    members_of_interest[member[0]] = member[1]
+        if not 'do' in members_of_interest:
+            raise Exception("What the fuck!, where is the default 'do' implementation ?!?")
+
+        for member in members_of_interest:
+            source_file, source_lines, line_number, doc_string = self._get_method_info(members_of_interest[member])
+            method_code_hash = self._calculate_hash(source_lines, doc_string)
+            if member == 'do':
+                members_of_interest[member] = (method_code_hash, True, source_file, line_number)
+            else:
+                if source_lines[-1].strip() == 'return self.do()':
+                    members_of_interest[member] = (method_code_hash, True, source_file, line_number)
+                else:
+                    members_of_interest[member] = (method_code_hash, False, source_file, line_number)
+
+        return members_of_interest    
 
     def _calculate_hash(self, source_lines, doc_string):
         '''
@@ -339,40 +287,6 @@ class testABC(abc.ABC):
             method_hash.update(pure_ascii_code_chunk)
         return method_hash.hexdigest()
 
-    def _get_targets(self):
-        '''
-        this method returns a dictionary with as key the 'do' and 'do_' methods defined,
-        and as value a tuple (method_code_hash, default, source_file_name, line_number) 
-        where default indicates if the 'do' function is called (directly) or not.
-        line_number is the line number on which the method is defined.
-        Notes
-            - Of course the 'do' method itself is always 'default' 🙂
-        TODO:
-            - exclude the docstring from the code prior to hashing
-            - get how 'do' is called, and use that for all members (instead of static compare)
-        '''
-        retval ={}
-        all_members = inspect.getmembers(self)
-        members_of_interest = {}
-        for member in all_members:
-            if member[0]=='do' or member[0].startswith('do_'):
-                if inspect.ismethod(member[1]):
-                    members_of_interest[member[0]] = member[1]
-        if not 'do' in members_of_interest:
-            raise Exception("What the fuck!, where is the default 'do' implementation ?!?")
-
-        for member in members_of_interest:
-            source_file, source_lines, line_number, doc_string = self._get_method_info(members_of_interest[member])
-            method_code_hash = self._calculate_hash(source_lines, doc_string)
-            if member == 'do':
-                members_of_interest[member] = (method_code_hash, True, source_file, line_number)
-            else:
-                if source_lines[-1].strip() == 'return self.do()':
-                    members_of_interest[member] = (method_code_hash, True, source_file, line_number)
-                else:
-                    members_of_interest[member] = (method_code_hash, False, source_file, line_number)
-
-        return members_of_interest    
 
 
 

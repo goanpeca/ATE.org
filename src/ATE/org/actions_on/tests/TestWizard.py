@@ -63,9 +63,8 @@ class NameDelegator(Delegator):
 
 class TestWizard(QtWidgets.QDialog):
 
-    def __init__(self, project_info, fixedHardware=None, fixedBase=None, 
-                 testName=None, docString=None, inputParameters=None, 
-                 outputParameters=None):
+    def __init__(self, project_info, definition=None):
+        
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
@@ -1656,6 +1655,27 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.project_info.standard_test_add(name, hardware, base)
         self.accept()
 
+def make_blank_definition(project_info):
+    '''
+    this function creates a blank definition dictionary with 'hardware', 'base' and Type
+    '''
+    retval = {}
+    retval['name'] = ''
+    retval['type'] = ''
+    retval['hardware'] = project_info.active_hardware
+    retval['base'] = project_info.active_base
+    retval['docstring'] = []
+    retval['input_parameters'] = {'Temperature' : {'Shmoo' : True, 'Min' : -40, 'Default' : 25, 'Max' : 170, '10ᵡ' : '', 'Unit' : '°C', 'fmt' : '.0f'}}
+    retval['output_parameters'] = {'new_parameter1' : {'LSL' :  -np.inf, 'LTL' : np.nan, 'Nom' : 0.0, 'UTL' : np.nan, 'USL' : np.inf, '10ᵡ' : '', 'Unit' : '?', 'fmt' : '.3f'}}
+    retval['dependencies'] = {} 
+    return retval
+
+def load_definition_from_file(File):
+    '''
+    this function will load the defintion from an existing (test) file.
+    '''
+    pass
+
 
 def new_test_dialog(project_info):
     newTestWizard = TestWizard(project_info)
@@ -1679,12 +1699,15 @@ def edit_standard_test_dialog(project_info): #TODO: does this make sense ?!? -->
 
 
 if __name__ == '__main__':
-    import sys, qdarkstyle
-    from ATE.org.actions.dummy_main import DummyMainWindow
+    print(make_blank_definition())
+    
+    
+    # import sys, qdarkstyle
+    # from ATE.org.actions.dummy_main import DummyMainWindow
 
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    dummyMainWindow = DummyMainWindow()
-    dialog = TestWizard(dummyMainWindow)
-    dummyMainWindow.register_dialog(dialog)
-    sys.exit(app.exec_())
+    # app = QtWidgets.QApplication(sys.argv)
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    # dummyMainWindow = DummyMainWindow()
+    # dialog = TestWizard(dummyMainWindow)
+    # dummyMainWindow.register_dialog(dialog)
+    # sys.exit(app.exec_())
