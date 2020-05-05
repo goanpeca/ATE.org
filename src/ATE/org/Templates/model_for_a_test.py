@@ -1,37 +1,45 @@
-#!/usr/bin/env python
+#!/usr/bin/env conda run -n ATE python
 # -*- coding: utf-8 -*-
-'''
-Created on %DT%
-
-@author: %USER%
-'''
-
 from ATE.org.abc import testABC
+import .common
 
-#from common import *
+class fubar(testABC):
+	'''
+	Created on Tuesday, May 5 2020 @ 12:02:50 (Q2 20192)
+	By @author: hoeren (hoeren@micronas.com)
 
-#from definitions.protocols.bi_phase import my_bi_phase
+	'''
 
-class %TSTCLASS%(testABC):
-    '''
-    Description:
-        This test ...
-    '''
-    input_parameters = {'T' : {'Min' : -40, 'Max' : 170, 'Default' : 25,  'Unit' : '°C'}, # Obligatory !
+	hardware = 'HW0'
+	base = 'FT'
+	Type = 'custom'
+
+    input_parameters = {'T' : {'Min' : -40, 'Max' : 170, 'Default' : 25,  'Unit' : '°C'},
                         'i' : {'Min' : 0.1, 'Max' : 2.5, 'Default' : 1.0, 'Unit' : 'mA'}}
 
-    output_parameters = {'parameter1_name' : {'LSL' : None, 'USL' : 5,    'Nom' : 2.5, 'Unit' : 'Ω'}, # maybe add SBIN group ? - NO, auto assign testnumbers
+    output_parameters = {'parameter1_name' : {'LSL' : None, 'USL' : 5,    'Nom' : 2.5, 'Unit' : 'Ω'},
                          'parameter2_name' : {'LSL' : 0,    'USL' : None, 'Nom' : 2.5, 'Unit' : 'mV'},
                          'R_vdd_contact'   : {'LSL' : None, 'USL' : 5,    'Nom' : 2,   'Unit' : 'Ω'}}
 
-    def do(self, ip, op, gp, dm):
-        print("Doing %s test ..." % self.__class__.__name__.split("_")[0])
-        #the_value = SCT.protocol.my_bi_phase.read('adc')
-        #SCT.protocol.my_bi_phase.write('dac', 0xAA)
+	def do(ip, op):
+		SCT.measure(ch5)
+        K2000.measure()
 
-    def target(self, ip, op, gp, dm):
-        return self.do(ip, op, gp, dm)
+
+
+
+    def do_TARGET(ip, op):
+		SCT.measure(ch5)
+        K2000.measure(5)
+
+
 
 if __name__ == '__main__':
-    from ATE.org import TestRunner
-    testRunner = TestRunner(__file__)
+	import os
+	tester = os.environ.get('TESTER')
+	tester_mode = os.environ.get('TESTERMODE')
+	if tester_mode == 'DIRECT':
+		pass #TODO: implement
+	else: # 'INTERACTIVE'
+		from ATE.org import TestRunner
+		testRunner = TestRunner(__file__)

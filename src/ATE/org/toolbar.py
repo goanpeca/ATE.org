@@ -46,6 +46,8 @@ class ToolBar(QtWidgets.QToolBar):
         self.testers = SCT_testers()
         self.tester_combo.addItems([''] + self.testers.report())
         self.tester_combo.setCurrentText('')
+        width = self.tester_combo.minimumSizeHint().width()
+        self.tester_combo.setMinimumWidth(width)
         self.addWidget(self.tester_combo)
 
         self.tester_mode_combo = QtWidgets.QComboBox()

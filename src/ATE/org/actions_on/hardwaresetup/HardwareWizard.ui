@@ -751,7 +751,7 @@
                     </size>
                    </property>
                    <property name="text">
-                    <string> </string>
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -1010,9 +1010,9 @@
         <attribute name="title">
          <string>Instruments</string>
         </attribute>
-        <layout class="QGridLayout" name="gridLayout_3">
+        <layout class="QGridLayout" name="gridLayout">
          <item row="0" column="0">
-          <layout class="QVBoxLayout" name="verticalLayout_8">
+          <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
             <layout class="QHBoxLayout" name="testerLayout">
              <item>
@@ -1096,7 +1096,7 @@
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="instrumentsLayout">
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
               <layout class="QVBoxLayout" name="availableInstrumentsLayout">
                <item>
@@ -1190,6 +1190,21 @@
                    <property name="text">
                     <string>K2000</string>
                    </property>
+                   <item>
+                    <property name="text">
+                     <string>Micronas</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>InvenSense</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>IC-Sense</string>
+                    </property>
+                   </item>
                   </item>
                  </item>
                  <item>
@@ -1423,7 +1438,7 @@
               </layout>
              </item>
              <item>
-              <layout class="QVBoxLayout" name="usedInstrumentsLayout">
+              <layout class="QVBoxLayout" name="verticalLayout_8">
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <item>
@@ -1461,7 +1476,7 @@
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>0</width>
+                     <width>13</width>
                      <height>22</height>
                     </size>
                    </property>
@@ -1470,33 +1485,60 @@
                 </layout>
                </item>
                <item>
-                <widget class="QListWidget" name="usedInstruments">
-                 <property name="minimumSize">
-                  <size>
-                   <width>141</width>
-                   <height>141</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>261</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="editTriggers">
-                  <set>QAbstractItemView::SelectedClicked</set>
-                 </property>
-                 <property name="selectionMode">
-                  <enum>QAbstractItemView::ExtendedSelection</enum>
-                 </property>
-                 <item>
+                <widget class="QTableWidget" name="tableWidget">
+                 <row>
                   <property name="text">
-                   <string>K2000 (Keithley)</string>
+                   <string>1</string>
+                  </property>
+                 </row>
+                 <row>
+                  <property name="text">
+                   <string>2</string>
+                  </property>
+                 </row>
+                 <column>
+                  <property name="text">
+                   <string>Instrument</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Manufacturer</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Implementation</string>
+                  </property>
+                 </column>
+                 <item row="0" column="0">
+                  <property name="text">
+                   <string>K2000</string>
                   </property>
                  </item>
-                 <item>
+                 <item row="0" column="1">
                   <property name="text">
-                   <string>abc (TTi)</string>
+                   <string>Keithley</string>
+                  </property>
+                 </item>
+                 <item row="0" column="2">
+                  <property name="text">
+                   <string>Micronas</string>
+                  </property>
+                 </item>
+                 <item row="1" column="0">
+                  <property name="text">
+                   <string>abc</string>
+                  </property>
+                 </item>
+                 <item row="1" column="1">
+                  <property name="text">
+                   <string>TTi</string>
+                  </property>
+                 </item>
+                 <item row="1" column="2">
+                  <property name="text">
+                   <string>Micronas</string>
                   </property>
                  </item>
                 </widget>
@@ -2369,19 +2411,19 @@
            <attribute name="horizontalHeaderCascadingSectionResizes">
             <bool>true</bool>
            </attribute>
-           <attribute name="horizontalHeaderMinimumSectionSize">
+           <attribute name="horizontalHeaderDefaultSectionSize">
             <number>39</number>
            </attribute>
-           <attribute name="horizontalHeaderDefaultSectionSize">
+           <attribute name="horizontalHeaderMinimumSectionSize">
             <number>39</number>
            </attribute>
            <attribute name="verticalHeaderVisible">
             <bool>false</bool>
            </attribute>
-           <attribute name="verticalHeaderMinimumSectionSize">
+           <attribute name="verticalHeaderDefaultSectionSize">
             <number>23</number>
            </attribute>
-           <attribute name="verticalHeaderDefaultSectionSize">
+           <attribute name="verticalHeaderMinimumSectionSize">
             <number>23</number>
            </attribute>
            <row>
