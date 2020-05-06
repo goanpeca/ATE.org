@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>289</width>
-    <height>122</height>
+    <width>259</width>
+    <height>124</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,6 +20,24 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QLabel" name="NewProjectLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>81</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>81</width>
+           <height>22</height>
+          </size>
+         </property>
          <property name="text">
           <string>Project Name:</string>
          </property>
@@ -30,6 +48,18 @@
        </item>
        <item>
         <widget class="QLineEdit" name="ProjectName">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>22</height>
+          </size>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -38,24 +68,24 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="qualityLayout">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QLabel" name="label_4">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>65</width>
+           <width>81</width>
            <height>22</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>65</width>
+           <width>81</width>
            <height>22</height>
           </size>
          </property>
@@ -68,9 +98,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="productQuality">
+        <widget class="QComboBox" name="projectQuality">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -83,7 +113,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>150</width>
+           <width>16777215</width>
            <height>22</height>
           </size>
          </property>
@@ -118,19 +148,6 @@
           </property>
          </item>
         </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </item>

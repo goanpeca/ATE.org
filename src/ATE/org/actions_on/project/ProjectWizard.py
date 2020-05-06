@@ -13,27 +13,24 @@ from ATE.org.listings import list_ATE_projects
 
 class ProjectWizard(QtWidgets.QDialog):
 
-    def __init__(self, parent):
-        self.parent = parent
-        super().__init__()
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+    def __init__(self, parent, navigator, title):
+        super().__init__(parent)
+        self.setParent(parent)
 
         my_ui = __file__.replace('.py', '.ui')
         if not os.path.exists(my_ui):
             raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-
+        self.setWindowTitle(title)
 
         rxProjectName = QtCore.QRegExp(valid_project_name_regex)
         ProjectName_validator = QtGui.QRegExpValidator(rxProjectName, self)
         self.ProjectName.setValidator(ProjectName_validator)
         self.ProjectName.setText("")
         self.ProjectName.textChanged.connect(self.verify)
-        # self.ProjectName.returnPressed.connect(self.PressedEnter)
 
-        self.existing_projects = list_ATE_projects(self.parent.workspace_path)
+        self.existing_projects = navigator.list_ATE_projects(self.parent().workspace_path)
 
         self.Feedback.setStyleSheet('color: orange')
 
@@ -63,29 +60,23 @@ class ProjectWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(False)
 
     def OKButtonPressed(self):
-        project_name = self.ProjectName.text()
-        #switch the parent to this new project
-        self.parent.active_project = project_name
-        self.parent.active_project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
-
-        # from ATE.org.navigation import project_navigator
-        # self.parent.project_info = project_navigator(self.parent.active_project_path)
-
-
-
-
-
+        self.project_name = self.ProjectName.text()
+        self.project_quality = self.projectQuality.currentText()
         self.accept()
 
     def CancelButtonPressed(self):
         self.reject()
 
-
-def new_project_dialog(parent):
-    projectWizard = ProjectWizard(parent)
-    projectWizard.exec_()
-    del(projectWizard)
-
+def NewProjectDialog(parent, navigator):
+    newProjectWizard = ProjectWizard(parent, navigator, 'New Project Wizard')
+    if newProjectWizard.exec_(): # OK button pressed
+        project_name = newProjectWizard.project_name
+        project_quality = newProjectWizard.project_quality
+    else:
+        project_name = ''
+        project_quality = ''
+    del(newProjectWizard)
+    return project_name, project_quality
 
 if __name__ == '__main__':
     import sys, qdarkstyle

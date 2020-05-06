@@ -15,7 +15,7 @@ from pathlib import Path as create_file
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from ATE.org.constants import TableIds as TableId
-
+from ATE.org.validation import is_ATE_project
 
 class ProjectNavigation(QObject):
     '''
@@ -30,28 +30,55 @@ class ProjectNavigation(QObject):
     hardware_removed = pyqtSignal(str)
     update_target = pyqtSignal()
 
-    def __init__(self, project_directory, parent=None):
+    def __init__(self, project_directory, parent, project_quality=''):
         super().__init__(parent)
+        self.__call__(project_directory, project_quality)
+
+    def __call__(self, project_directory, project_quality=''):
         print(f"project_directory = {project_directory}")
-        self.template_directory = os.path.join(os.path.dirname(__file__), 'Templates')
-        self.project_directory = project_directory
-
-        self.db_file = os.path.join(project_directory,
-                                    os.path.split(project_directory)[-1] + '.sqlite3')
-
-        if not os.path.exists(self.project_directory):  # brand new project, initialize it.
-            self.create_project_structure()
-            self.con = sqlite3.connect(self.db_file)
-            self.cur = self.con.cursor()
-            self.create_project_database()
+        self.template_directory = os.path.join(os.path.dirname(__file__), 'templates')
+        if project_directory == '' or isinstance(project_directory, type(None)) or project_directory == self.parent().workspace_path:
+            self.project_directory = ''
+            self.workspace = ''
+            self.active_target = ''
+            self.active_hardware = ''
+            self.active_base = ''
+            self.project_name = ''
+            self.project_quality = ''
+            self.db_file = ''
         else:
-            self.con = sqlite3.connect(self.db_file)
-            self.cur = self.con.cursor()
+            self.project_directory = project_directory
+            print(f"- {project_directory}")
+            split_list = os.path.split(project_directory)
+            print(f"-- {split_list}")
+            joined_list = os.path.join(split_list[:-1])
+            print(f"--- {joined_list}")
+            self.workspace = joined_list
+            self.active_target = ''
+            self.active_hardware = ''
+            self.active_base = ''
+            self.project_name = os.path.split(self.project_directory)[-1]
 
-        self.active_target = ''
-        self.active_hardware = ''
-        self.active_base = ''
-        self.project_name = os.path.split(self.project_directory)[-1]
+            self.db_file = os.path.join(project_directory, f"{self.project_name}.sqlite3")
+
+            project_quality_file = os.path.join(self.project_directory, 'project_quality.pickle')
+            if not os.path.exists(self.project_directory):  # brand new project, initialize it.
+                self.create_project_structure()
+                self.project_quality = project_quality
+                if project_quality != '':
+                    with open(project_quality_file, 'wb') as writer:
+                        pickle.dump(project_quality, writer, 4)
+                self.con = sqlite3.connect(self.db_file)
+                self.cur = self.con.cursor()
+                self.create_project_database()
+            else:
+                if os.path.exists(project_quality_file):
+                    with open(project_quality_file, 'rb') as reader:
+                        self.project_quality = pickle.load(reader)
+                else:
+                    self.project_quality = ''
+                self.con = sqlite3.connect(self.db_file)
+                self.cur = self.con.cursor()
 
     def update_toolbar_elements(self, active_hardware, active_base, active_target):
         self.active_hardware = active_hardware
@@ -108,14 +135,26 @@ class ProjectNavigation(QObject):
 
         # documentation
         os.makedirs(os.path.join(self.project_directory, 'doc'))
-        os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
-        os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
-        os.makedirs(os.path.join(self.project_directory, 'doc', 'export'))
+        standards_destination_dir = os.path.join(self.project_directory, 'doc', 'standards')
+        os.makedirs(standards_destination_dir)
+        standards_source_dir = os.path.join(self.template_directory, 'doc', 'standards')
+        for root, dirs, files in os.walk(standards_source_dir):
+            rel_path = root.replace(standards_source_dir+os.sep, '')
+            for File in files:
+                if File.upper() != '__INIT__.PY':
+                    shutil.copyfile(os.path.join(root, File),
+                                    os.path.join(standards_destination_dir, rel_path, File))
+            for Dir in dirs:
+                os.makedirs(os.path.join(standards_destination_dir, rel_path), exist_ok=True)
+
+
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'), exist_ok=True)
+        os.makedirs(os.path.join(self.project_directory, 'doc', 'export'), exist_ok=True)
 
         # sources
-        psrcd = os.path.join(self.project_directory, 'src')
-        os.makedirs(psrcd)
-        create_file(os.path.join(psrcd, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src'))
+        create_file(os.path.join(self.project_directory, 'src', '__init__.py')).touch()
+        # the rest of the 'src' tree is added by add_hardware!
 
     def create_project_database(self):
         '''
@@ -264,6 +303,76 @@ class ProjectNavigation(QObject):
 	                           PRIMARY KEY("name")
                             );''')
         self.con.commit()
+
+    def add_project(self, project_name, project_quality=''):
+        project_directory = os.path.join(self.workspace, project_name)
+        self.__call__(project_directory, project_quality)
+
+    def open_project(self):
+        pass
+
+    def dict_projects(self, workspace_path=''):
+        '''
+        given a workspace_path, create a list with projects as key, and their
+        (absolute) project_path as value.
+        if workspace_path is empty, the parent's "workspace_path" is used.
+        '''
+        retval = {}
+        if workspace_path == '':
+            workspace_path = self.parent().workspace_path
+        for directory in os.listdir(workspace_path):
+            full_directory = os.path.join(workspace_path, directory)
+            if os.path.isdir(full_directory):
+                retval[directory] = full_directory
+        print('...', workspace_path, retval)
+        return retval
+
+    def list_projects(self, workspace_path=''):
+        '''
+        given a workspace_path, extract a list of all projects
+        '''
+        if workspace_path == '':
+            workspace_path = self.parent().workspace_path
+        return list(self.dict_projects(workspace_path))
+
+    def list_ATE_projects(self, workspace_path=''):
+        '''
+        given a workspace_path, extract a list of all ATE projects
+        if workspace_path is empty, the parent's "workspace_path" will be used.
+        '''
+        if workspace_path == '':
+            workspace_path = self.parent().workspace_path
+        print('>>>', workspace_path)
+        return list(self.dict_ATE_projects(workspace_path))
+
+    def dict_ATE_projects(self, workspace_path=''):
+        '''
+        given a workspace_path, create a dictionary with all ATE projects as key,
+        and the (absolute) project_path as value.
+        if workspace_path is empty, the parent's "workspace_path" is used.
+        '''
+        retval = {}
+        if workspace_path == '':
+            workspace_path = self.parent().workspace_path
+        print('-->', workspace_path)
+        all_projects = self.dict_projects(workspace_path)
+        for candidate in all_projects:
+            possible_ATE_project = all_projects[candidate]
+            if is_ATE_project(possible_ATE_project):
+                retval[candidate] = possible_ATE_project
+        return retval
+
+    def get_ATE_projects(self, root_directory=''):
+        '''
+        this method returns a list of all ATE projects present in the supplied 'root_directory'.
+        If the supplied 'root_directory' is empty, the parent's ''workspace_path' is used.
+        '''
+        retval = []
+        if root_directory == '':
+            pass
+        else:
+            pass
+        return retval
 
     def add_hardware(self, definition, is_enabled=True):
         '''

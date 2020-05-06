@@ -26,7 +26,7 @@ class NewProjectWizard(QtWidgets.QDialog):
 
     def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
 
         rxProjectName = QtCore.QRegExp(valid_project_name_regex)
         ProjectName_validator = QtGui.QRegExpValidator(rxProjectName, self)

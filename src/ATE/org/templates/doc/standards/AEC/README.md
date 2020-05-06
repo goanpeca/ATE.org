@@ -1,6 +1,6 @@
 # AEC = Automotive Electronics Council
 
-This is a council that formulates guidelines for [different aspects](http://www.aecouncil.com/AECDocuments.html) but mainly Qualification of Automotive Electronic Devices.
+This is a council that formulates guidelines for [different aspects]( http://www.aecouncil.com/AECDocuments.html ) but mainly Qualification of Automotive Electronic Devices.
 
 #### AEC-Q001: Guidelines for Part Average Testing (**PAT**)
 - [AEC-Q001-Rev-D](AEC-Q001-Rev-D.pdf)
@@ -54,7 +54,7 @@ This is a council that formulates guidelines for [different aspects](http://www.
 #### AEC-Q104: Failure Mechanism Based Stress Test Qualification for **Multichip Modules (MCM)** In Automotive Applications
 - [AEC-Q104-Rev-](AEC-Q104-Rev-.pdf) : Failure Mechanism Based Stress Test Qualification For Multichip Modules (MCM) In Automotive Applications
 
-#### AEC-Q200: Stress Test Qualification for **Passive Components** 
+#### AEC-Q200: Stress Test Qualification for **Passive Components**
 - [AEC-Q200-Rev-D](AEC-Q200-Rev-D.pdf) : Base Document
 - [AEC-Q200-001-Rev-B](AEC-Q200-001-Rev-B.pdf) : Flame Retardance Test
 - [AEC-Q200-002-Rev-B](AEC-Q200-002-Rev-B.pdf) : Human Body Model (HBM) Electrostatic Discharge Test

@@ -26,14 +26,6 @@ from ATE.org.validation import is_ATE_project
 
 show_workspace = False
 
-
-homedir = os.path.expanduser("~")
-workspace_path = os.path.join(homedir, "__spyder_workspace__")
-
-if not os.path.exists(workspace_path):
-    os.mkdir(workspace_path)
-
-
 class screenCast(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
     rightClicked = QtCore.pyqtSignal()
@@ -72,9 +64,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.open_cv_available = spec is not None
 
     # setup initial paths
-        self.workspace_path = workspace_path
+        self.homedir = os.path.expanduser("~")
+        self.workspace_path = os.path.join(self.homedir, "__spyder_workspace__")
         if not os.path.exists(self.workspace_path):
             os.makedirs(self.workspace_path)
+        self.project_info = ProjectNavigation(self.workspace_path, self)
 
     # connect the File/New/Project menu
         self.action_quit.triggered.connect(self.quit_event)
@@ -149,15 +143,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tree.doubleClicked.connect(self.item_double_clicked)
 
     def new_project(self):
-        from ATE.org.actions_on.project.NewProjectWizard import new_project_dialog
-        new_project_dialog(self)
-        self.project_info = ProjectNavigation(self.active_project_path, self)
+        from ATE.org.actions_on.project.ProjectWizard import NewProjectDialog
+
+        new_project_name, new_project_quality = NewProjectDialog(self, self.project_info)
+        self.project_info.add_project(new_project_name, new_project_quality)
         self.toolbar(self.project_info)
         self.set_tree()
 
     def open_project(self):
-        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", workspace_path,
-                                                              QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self,
+                                                              "Select Directory",
+                                                              self.workspace_path,
+                                                              QtWidgets.QFileDialog.ShowDirsOnly |
+                                                              QtWidgets.QFileDialog.DontResolveSymlinks)
         selected_directory = os.path.normpath(dir_name)
         self.open_project_impl(selected_directory)
 

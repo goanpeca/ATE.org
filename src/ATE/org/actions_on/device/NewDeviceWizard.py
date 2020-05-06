@@ -10,8 +10,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import qtawesome as qta
 import os
 import re
-import pickle
-
 
 class NewDeviceWizard(QtWidgets.QDialog):
     def __init__(self, project_info, read_only=False):
