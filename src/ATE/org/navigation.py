@@ -52,7 +52,7 @@ class ProjectNavigation(QObject):
         self.active_hardware = ''
         self.active_base = ''
         self.project_name = os.path.split(self.project_directory)[-1]
- 
+
     def update_toolbar_elements(self, active_hardware, active_base, active_target):
         self.active_hardware = active_hardware
         self.active_base = active_base
@@ -77,7 +77,7 @@ class ProjectNavigation(QObject):
                         os.path.join(self.project_directory, '.gitignore'))
         # setup.py ???
         # .pre-commit-config.yaml ???
-    
+
         # spyder
         #TODO: once we are integrated in Spyder, we need to get the following
         #      stuff from Spyder, and no longer from the template directroy.
@@ -105,32 +105,17 @@ class ProjectNavigation(QObject):
                         os.path.join(pspydefd, 'defaults-vcs-0.2.0.ini'))
         shutil.copyfile(os.path.join(self.template_directory, 'defaults-workspace-0.2.0.ini'),
                         os.path.join(pspydefd, 'defaults-workspace-0.2.0.ini'))
-                    
-        # documentation 
+
+        # documentation
         os.makedirs(os.path.join(self.project_directory, 'doc'))
         os.makedirs(os.path.join(self.project_directory, 'doc', 'standards'))
         os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'))
         os.makedirs(os.path.join(self.project_directory, 'doc', 'export'))
-        
+
         # sources
         psrcd = os.path.join(self.project_directory, 'src')
         os.makedirs(psrcd)
         create_file(os.path.join(psrcd, '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'patterns'))
-        create_file(os.path.join(psrcd, 'patterns', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'protocols'))
-        create_file(os.path.join(psrcd, 'protocols', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'states'))
-        create_file(os.path.join(psrcd, 'states', '__init__.py')).touch()
-        shutil.copyfile(os.path.join(self.template_directory, 'init_hardware.py'),
-                        os.path.join(psrcd, 'states', 'init_hardware.py'))
-        os.makedirs(os.path.join(psrcd, 'tests'))
-        create_file(os.path.join(psrcd, 'tests', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'programs'))
-        create_file(os.path.join(psrcd, 'programs', '__init__.py')).touch()
-        os.makedirs(os.path.join(psrcd, 'drawings'))
-        os.makedirs(os.path.join(psrcd, 'drawings', 'packages'))
-        os.makedirs(os.path.join(psrcd, 'drawings', 'dies'))
 
     def create_project_database(self):
         '''
@@ -170,16 +155,16 @@ class ProjectNavigation(QObject):
                                "is_enabled" BOOL,
 
 	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("hardware") 
+	                           FOREIGN KEY("hardware")
                                    REFERENCES "hardware"("name"),
-	                           FOREIGN KEY("maskset") 
+	                           FOREIGN KEY("maskset")
                                    REFERENCES "masksets"("name")
                             );''')
         self.con.commit()
         # flows
         self.cur.execute('''CREATE TABLE "flows" (
 	                           "name"	TEXT NOT NULL,
-	                           "base"	TEXT NOT NULL 
+	                           "base"	TEXT NOT NULL
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "target"	TEXT NOT NULL,
 	                           "type"	TEXT NOT NULL,
@@ -223,7 +208,7 @@ class ProjectNavigation(QObject):
         # packages
         self.cur.execute('''CREATE TABLE "packages" (
 	                          "name"	TEXT NOT NULL UNIQUE,
-	                          "leads"	INTEGER NOT NULL 
+	                          "leads"	INTEGER NOT NULL
                                  CHECK(leads>=2 AND leads<=99),
                               "is_enabled" BOOL,
 
@@ -242,11 +227,11 @@ class ProjectNavigation(QObject):
 	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name")
                             );''')
         self.con.commit()
-        # programs  
+        # programs
         self.cur.execute('''CREATE TABLE "programs" (
 	                           "name"	TEXT NOT NULL,
 	                           "hardware"	TEXT NOT NULL,
-	                           "base"	TEXT NOT NULL 
+	                           "base"	TEXT NOT NULL
                                    CHECK(base=='PR' OR base=='FT'),
 	                           "definition"	BLOB NOT NULL,
 	                           "relative_path"	TEXT NOT NULL,
@@ -264,13 +249,13 @@ class ProjectNavigation(QObject):
                         );''')
         self.con.commit()
 
-        # tests  
+        # tests
         self.cur.execute('''CREATE TABLE "tests" (
 	                           "name"	TEXT NOT NULL,
 	                           "hardware"	TEXT NOT NULL,
-	                           "type"	TEXT NOT NULL 
+	                           "type"	TEXT NOT NULL
                                   CHECK(type=='standard' OR type=='custom'),
-	                           "base"	TEXT NOT NULL 
+	                           "base"	TEXT NOT NULL
                                   CHECK(base=='PR' OR base=='FT'),
 	                           "definition"	BLOB NOT NULL,
 	                           "relative_path"	TEXT NOT NULL,
@@ -294,28 +279,30 @@ class ProjectNavigation(QObject):
         # -> we might have to do this after the whole create file stuff.
         self.database_changed.emit(TableId.Hardware())
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'patterns', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'patterns', new_hardware, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware))
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'programs', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'programs', new_hardware, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware), exist_ok=True)
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, '__init__.py')).touch()
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'protocols', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'protocols', new_hardware, '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'patterns'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'patterns', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'protocols'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'protocols', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'states'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'states', '__init__.py')).touch()
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', 'states', new_hardware, 'PR', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'patterns'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'patterns', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'protocols'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'protocols', '__init__.py')).touch()
+        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states'))
+        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states', '__init__.py')).touch()
 
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', 'tests', new_hardware, 'PR', '__init__.py')).touch()
+        #TODO: and the common.py in .../src/HWx/common.py --> comes from the wizard!!!
 
         self.hardware_added.emit(new_hardware)
         return new_hardware
@@ -335,7 +322,7 @@ class ProjectNavigation(QObject):
 
     def get_hardwares_info(self):
         '''
-        This method will return a DICTIONARY with as key all hardware names, 
+        This method will return a DICTIONARY with as key all hardware names,
         and as key the definition.
         '''
         query = '''SELECT name, definition, is_enabled FROM hardwares'''
@@ -551,12 +538,12 @@ class ProjectNavigation(QObject):
         existing_hardware = self.get_hardwares()
         if hardware not in existing_hardware:
             raise KeyError(f"hardware '{hardware}' doesn't exist")
-    
+
         update_query = '''UPDATE dies SET hardware = ? WHERE name = ?'''
         self.cur.execute(update_query, (hardware, name))
-        self.con.commit()        
+        self.con.commit()
 
-    
+
     def update_die_maskset(self, name, maskset):
         '''
         this method will update die 'name' with 'maskset'.
@@ -1048,13 +1035,13 @@ class ProjectNavigation(QObject):
         create the test (.py) file at the right place (=test_file_path), it
         will add the test to the database, and return the relative path to
         test_file_path.
-        
-        If a failure of some kind arrises an exception is raised 
+
+        If a failure of some kind arrises an exception is raised
         '''
         from ATE.org.coding import test_generator
 
         try:
-            rel_path = test_generator(self.project_directory, name, hardware, Type, base, definition) 
+            rel_path = test_generator(self.project_directory, name, hardware, Type, base, definition)
             query = '''INSERT INTO tests(name, hardware, type, base, definition, relative_path) VALUES (?, ?, ?, ?, ?, ?)'''
             blob = pickle.dumps(definition, 4)
             self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
@@ -1064,11 +1051,11 @@ class ProjectNavigation(QObject):
             raise
         else:
             return rel_path
-    
+
     def standard_test_add(self, name, hardware, base):
         import runpy
         from ATE.org.coding.standard_tests import names as standard_test_names
-        
+
         if name in standard_test_names:
             temp = runpy.run_path(standard_test_names[name])
             # TODO: fix this
@@ -1076,26 +1063,26 @@ class ProjectNavigation(QObject):
                 print(f"... no joy creating standard test '{name}'")
         else:
             raise Exception(f"{name} not a standard test ... WTF!")
-    
-    
+
+
     def add_test(self, name, hardware, base, test_type, definition, is_enabled=True):
         '''
-        given the name, hardware, base and test_numbers for a test, 
-        create the test based on the supplied info and add the info to 
+        given the name, hardware, base and test_numbers for a test,
+        create the test based on the supplied info and add the info to
         the database.
         '''
         from ATE.org.coding import test_generator
-        
+
         relative_path = test_generator(self.project_directory, name, hardware, base, definition)
         query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path, is_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
         self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path, is_enabled))
         self.con.commit()
-        self.database_changed.emit(TableId.Test()) 
+        self.database_changed.emit(TableId.Test())
 
     def update_test(self, name):
         pass
-    
+
     def get_tests_from_files(self, hardware, base, test_type='all'):
         '''
         given hardware , base and type this method will return a dictionary
@@ -1110,7 +1097,7 @@ class ProjectNavigation(QObject):
         tests_directory = os.path.join(self.project_directory, 'src', 'tests', hardware, base)
         potential_tests = os.listdir(tests_directory)
         from ATE.org.actions_on.tests import standard_test_names
-        
+
         for potential_test in potential_tests:
             if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY
                 if not '_' in potential_test.upper().replace('.PY', ''): # name doesn't contain an underscore

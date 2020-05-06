@@ -67,9 +67,13 @@ class ProjectWizard(QtWidgets.QDialog):
         #switch the parent to this new project
         self.parent.active_project = project_name
         self.parent.active_project_path = os.path.join(self.parent.workspace_path, self.parent.active_project)
-        
+
         # from ATE.org.navigation import project_navigator
         # self.parent.project_info = project_navigator(self.parent.active_project_path)
+
+
+
+
 
         self.accept()
 
