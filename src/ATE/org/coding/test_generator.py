@@ -8,7 +8,7 @@ Created on Mon Apr  6 11:37:12 2020
 import os
 import getpass
 
-from ATE.utils.DT import DT
+from ATE.utils import DT
 
 
 def generator(project_path, definition):
@@ -58,13 +58,13 @@ def generator(project_path, definition):
     if not os.path.exists(abs_dir):
         os.makedirs(abs_dir)
 
-    if os.path.exists(abs_path_to_file): # overwrite
-        print("asked to generate a test that already exists ... hence 'overwrite'!") #TODO: implement
-    else: # create new
+    if os.path.exists(abs_path_to_file):  # overwrite
+        print("asked to generate a test that already exists ... hence 'overwrite'!")  # TODO: implement
+    else:  # create new
         with open(abs_path_to_file, 'w') as tf:
             # reference : https://stackoverflow.com/questions/41914739/how-do-i-activate-a-conda-env-in-a-subshell
             tf.write("#!/usr/bin/env conda run -n ATE python\n")
-            tf.write("# -*- coding: utf-8 -*-\n") # not sure if in python 3 this is still necessary, but just in case
+            tf.write("# -*- coding: utf-8 -*-\n")  # not sure if in python 3 this is still necessary, but just in case
             tf.write("from ATE.org.abc import testABC\n")
             tf.write("import .common\n\n")
         # class definition
@@ -112,10 +112,10 @@ def tippprint(fd, ip):
     for name in ip:
         name_def = "{'a' : True, b : np.inf}"
 
-
         fd.write(f"\t\t{name} = {name_def}\n")
 
     fd.write("\n")
+
 
 def toppprint(fd, op):
     '''
@@ -127,4 +127,3 @@ def toppprint(fd, op):
     for name in op:
         fd.write(f"\t\t{name} = ''\n")
     fd.write("\n")
-

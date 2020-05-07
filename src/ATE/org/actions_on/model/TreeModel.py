@@ -32,7 +32,7 @@ class TreeModel(QtGui.QStandardItemModel):
         self.target = ''
         import os
         self.doc_path = os.path.join(self.project_info.project_directory, "doc")
-        self.tests_path = os.path.join(self.project_info.project_directory, "src", "tests")
+        self.tests_path = os.path.join(self.project_info.project_directory, "src")
         self._setup()
         self._connect_action_handler()
         self.update(self.hardware, self.base, self.target)

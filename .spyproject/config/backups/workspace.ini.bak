@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['src\\SpyderMockUp\\SpyderMockUp.py', 'src\\ATE\\org\\navigation.py', 'src\\ATE\\org\\actions_on\\project\\ProjectWizard.py', 'src\\SpyderMockUp\\ScreenCasting\\QtScreenCast.py']
+recent_files = ['src\\SpyderMockUp\\SpyderMockUp.py', 'src\\ATE\\org\\actions_on\\tests\\TestWizard.py', 'src\\ATE\\org\\actions_on\\tests\\TestsObserver.py', 'src\\ATE\\org\\actions_on\\tests\\TestItem.py', 'src\\ATE\\org\\actions_on\\model\\TreeModel.py', 'src\\ATE\\org\\actions_on\\utils\\ObserverBase.py']
 

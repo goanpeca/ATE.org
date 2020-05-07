@@ -27,6 +27,7 @@ class TestItem(BaseItem):
             self.add_file_item(test_entry, path)
 
         if self.observer is None:
+            print(f"TestItem.path = '{path}'")
             self.observer = TestsObserver(path, self)
             self.observer.start_observer()
 
@@ -60,7 +61,7 @@ class TestItem(BaseItem):
         from os import walk, path
 
         test_directory = path.join(self.project_info.project_directory, 'src',
-                                   'tests', active_hardware, active_base)
+                                   active_hardware, active_base)
 
         files = []
         for _, _, filenames in walk(test_directory):
@@ -108,13 +109,16 @@ class TestItemChild(StateItem):
 
     def _are_dependencies_fulfilled(self):
         dependency_list = {}
-        hw = self.project_info.get_test_hardware(self.text())
-        hw_enabled = self.project_info.get_hardware_state(hw[0])
-
-        if not hw_enabled:
-            dependency_list.update({'hardwares': hw})
-
         return dependency_list
+
+        # FIXME
+        # hw = self.project_info.get_test_hardware(self.text())
+        # hw_enabled = self.project_info.get_hardware_state(hw[0])
+
+        # if not hw_enabled:
+        #     dependency_list.update({'hardwares': hw})
+
+        # return dependency_list
 
     def _enabled_item_menu(self):
         return [MenuActionTypes.Edit(),

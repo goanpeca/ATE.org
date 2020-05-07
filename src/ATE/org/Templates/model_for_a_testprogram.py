@@ -24,6 +24,29 @@ fts.registerTest(fu, {CallValues}, {Limits}, {SBINs})
 # ...
 
 
+{SBINs} = {
+    'Contact_resistance' : (0, 'Contact Fail'),
+    'IDD_NewSubItem' : (16, 'Digital Fail'),
+    ...
+    'Sensitive_SomeParameter' : (72, 'Digital Fail')}
+
+
+SBIN
+0 - Contact fail
+1 - Good A grade
+2 - Good B
+3
+4
+5
+6
+7
+8
+9 - Good I grade
+10 - 1st fail bin
+11 - ...
+
+
+
 if __name__ == '__main__':
 	fts.run()
     fts.registerTCC(...)
