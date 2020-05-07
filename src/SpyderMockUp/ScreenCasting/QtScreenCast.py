@@ -9,11 +9,20 @@ hints:
     Window Geometry:
         https://doc.qt.io/qt-5/application-windows.html#window-geometry
 
+    recording:
+        https://www.youtube.com/watch?v=KTlgVCrO7IQ
+        https://www.youtube.com/watch?v=GWdrL8dt1xQ
+        https://www.youtube.com/watch?v=1eHQIu4r0Bc / https://www.codingforentrepreneurs.com/blog/how-to-record-video-in-opencv-python/
+        https://docs.opencv.org/2.4/index.html
+        
     Splash:
         QMovie *movie = new QMovie(":/images/other/images/16x16/loading.gif");
         QLabel *processLabel = new QLabel(this);
         processLabel->setMovie(movie);
         movie->start();
+
+
+    
 
 """
 import os, sys, platform
@@ -85,7 +94,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
             self.dependenciesMet = False
 
         # for test purposes:
-        self.dependenciesMet = True
+        # self.dependenciesMet = True
         #TODO: check if I have all dependencies
 
         # find a microphone
@@ -93,7 +102,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
         self.microphone_available=False
 
         # initialize the countdown
-        # self.countdown = ScreenCastCountDown(self.parent())
+        self.countdown = ScreenCastCountDown(self.parent())
 
         # set the fps
         self.fps = 14
@@ -158,7 +167,7 @@ class ScreenCastToolButton(QtWidgets.QToolButton):
                 self.resize()
         grabRegion = self.getGrabRegion()
 
-        #self.countdown.do()
+        self.countdown.do()
 
     def stop_recording(self):
         '''
@@ -372,6 +381,7 @@ class ScreenCastCountDown(QtWidgets.QSplashScreen):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint |
                             QtCore.Qt.FramelessWindowHint)
         self.setEnabled(True)
+        self.show()
         self.movie.frameChanged.connect(self.repaint)
         self.movie.finished.connect(self.hideEvent)
 
