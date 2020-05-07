@@ -1,14 +1,16 @@
 # ATE.org
 
-Add a short description here!
+ATE.org is a python package that itself is a plugin for the [Spyder](https://github.com/spyder-ide/spyder) IDE (starting from V5).
+
+It adds the **ATE** project type to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured way. `ATE.org` is 
 
 
-## Description
+# Description
 
 A longer description of your project goes here...
 
 
-## Note
+# Note
 
 This project has been set up using PyScaffold 3.2.2. For details and usage
 information on PyScaffold see https://pyscaffold.org/.
