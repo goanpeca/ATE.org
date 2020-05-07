@@ -146,7 +146,11 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.actions_on.project.ProjectWizard import NewProjectDialog
 
         new_project_name, new_project_quality = NewProjectDialog(self, self.project_info)
-        self.project_info.add_project(new_project_name, new_project_quality)
+        print(f"SpyderMockUp.new_project : new_project_name = '{new_project_name}' & new_project_quality = '{new_project_quality}'")
+        self.project_info.add_project(
+
+
+new_project_name, new_project_quality)
         self.toolbar(self.project_info)
         self.set_tree()
 

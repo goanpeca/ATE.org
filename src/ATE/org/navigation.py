@@ -35,11 +35,12 @@ class ProjectNavigation(QObject):
         self.__call__(project_directory, project_quality)
 
     def __call__(self, project_directory, project_quality=''):
-        print(f"project_directory = {project_directory}")
         self.template_directory = os.path.join(os.path.dirname(__file__), 'templates')
-        if project_directory == '' or isinstance(project_directory, type(None)) or project_directory == self.parent().workspace_path:
+        print(f"navigation.template_directory = '{self.template_directory}'")
+        self.workspace_path = self.parent().workspace_path
+        print(f"navigation.workspace_path = '{self.workspace_path}'")
+        if project_directory == '' or isinstance(project_directory, type(None)) or project_directory == self.workspace_path:
             self.project_directory = ''
-            self.workspace = ''
             self.active_target = ''
             self.active_hardware = ''
             self.active_base = ''
@@ -48,12 +49,6 @@ class ProjectNavigation(QObject):
             self.db_file = ''
         else:
             self.project_directory = project_directory
-            print(f"- {project_directory}")
-            split_list = os.path.split(project_directory)
-            print(f"-- {split_list}")
-            joined_list = os.path.join(split_list[:-1])
-            print(f"--- {joined_list}")
-            self.workspace = joined_list
             self.active_target = ''
             self.active_hardware = ''
             self.active_base = ''
@@ -138,14 +133,28 @@ class ProjectNavigation(QObject):
         standards_destination_dir = os.path.join(self.project_directory, 'doc', 'standards')
         os.makedirs(standards_destination_dir)
         standards_source_dir = os.path.join(self.template_directory, 'doc', 'standards')
+        print(f"standards_source_dir = '{standards_source_dir}'")
+        print(f"standards_destination_dir = '{standards_destination_dir}'")
+
         for root, dirs, files in os.walk(standards_source_dir):
-            rel_path = root.replace(standards_source_dir+os.sep, '')
+            print(f"root = '{root}'")
+            rel_path = root.replace(standards_source_dir, '')
+            if rel_path.startswith(os.path.sep):
+                rel_path = rel_path[1:]
+            print(f"rel_path = '{rel_path}'")
+
+            for Dir in dirs:
+                dir_to_create = os.path.join(standards_destination_dir, Dir)
+                print(f"dir_to_create = '{dir_to_create}'")
+                os.makedirs(dir_to_create, exist_ok=True)
+
             for File in files:
                 if File.upper() != '__INIT__.PY':
-                    shutil.copyfile(os.path.join(root, File),
-                                    os.path.join(standards_destination_dir, rel_path, File))
-            for Dir in dirs:
-                os.makedirs(os.path.join(standards_destination_dir, rel_path), exist_ok=True)
+                    from_path = os.path.join(root, File)
+                    print(f"from_path = '{from_path}'")
+                    to_path = os.path.join(standards_destination_dir, rel_path, File)
+                    print(f"to_path = '{to_path}'")
+                    shutil.copy(from_path, to_path)
 
 
         os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'), exist_ok=True)
@@ -305,7 +314,8 @@ class ProjectNavigation(QObject):
         self.con.commit()
 
     def add_project(self, project_name, project_quality=''):
-        project_directory = os.path.join(self.workspace, project_name)
+        project_directory = os.path.join(self.workspace_path, project_name)
+        print(f"add_project({project_name}, {project_quality}) --> {project_directory}")
         self.__call__(project_directory, project_quality)
 
     def open_project(self):
@@ -342,7 +352,6 @@ class ProjectNavigation(QObject):
         '''
         if workspace_path == '':
             workspace_path = self.parent().workspace_path
-        print('>>>', workspace_path)
         return list(self.dict_ATE_projects(workspace_path))
 
     def dict_ATE_projects(self, workspace_path=''):
@@ -354,24 +363,11 @@ class ProjectNavigation(QObject):
         retval = {}
         if workspace_path == '':
             workspace_path = self.parent().workspace_path
-        print('-->', workspace_path)
         all_projects = self.dict_projects(workspace_path)
         for candidate in all_projects:
             possible_ATE_project = all_projects[candidate]
             if is_ATE_project(possible_ATE_project):
                 retval[candidate] = possible_ATE_project
-        return retval
-
-    def get_ATE_projects(self, root_directory=''):
-        '''
-        this method returns a list of all ATE projects present in the supplied 'root_directory'.
-        If the supplied 'root_directory' is empty, the parent's ''workspace_path' is used.
-        '''
-        retval = []
-        if root_directory == '':
-            pass
-        else:
-            pass
         return retval
 
     def add_hardware(self, definition, is_enabled=True):
