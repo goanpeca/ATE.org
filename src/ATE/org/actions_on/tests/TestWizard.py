@@ -28,22 +28,20 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import qtawesome as qta
 
 from ATE.org.coding.test_generator import generator
-from ATE.utils.DT import DT
 
-import getpass
 
 minimal_docstring_length = 80
 
 
 class Delegator(QtWidgets.QStyledItemDelegate):
-    """General Custom Delegator Class that works with regex"""
+    """General Custom Delegator Class that works with regex."""
 
     def __init__(self, regex, parent=None):
         QtWidgets.QStyledItemDelegate.__init__(self, parent)
         self.validator = QtGui.QRegExpValidator(QtCore.QRegExp(regex))
 
     def createEditor(self, parent, option, index):
-        """Overloading to customize"""
+        """Overloading to customize."""
         line_edit = QtWidgets.QLineEdit(parent)
         line_edit.setValidator(self.validator)
         return line_edit
@@ -61,14 +59,14 @@ class NameDelegator(Delegator):
         self.commitData.commitData.connect(self.validate_name)
 
     def validate_name(self, editor):
-        """Make sure the entered name does not exist already"""
+        """Make sure the entered name does not exist already."""
         # TODO: implement
         if editor.text() in self.existing_names:
             pass
 
 
 class TestWizard(QtWidgets.QDialog):
-    """Wizard to work with 'Test' definitions"""
+    """Wizard to work with 'Test' definitions."""
 
     def __init__(self, project_info, definition=None):
 
@@ -126,21 +124,8 @@ class TestWizard(QtWidgets.QDialog):
         self.description.blockSignals(True)
         self.description.clear()
         self.description.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)  # https://doc.qt.io/qt-5/qtextedit.html#LineWrapMode-enum
-        # TODO: add a line at 80 characters (https://stackoverflow.com/questions/30371613/draw-vertical-lines-on-qtextedit-in-pyqt)
-        if definition['docstring'] != []:
-            self.description.setPlainText('\n'.join(definition['docstring']))
-        else:
-            now = DT()
-            user = getpass.getuser()
-            domain = str(os.environ.get('USERDNSDOMAIN'))  # TODO: maybe move this to 'company specific stuff' later on ?
-            if domain == 'None':
-                user_email = ''
-            else:
-                user_email = f"{user}@{domain}".lower()
-            default_docstring = f"Created on {now}\nBy @author: {user} ({user_email})\n"
-            self.description.setPlainText(default_docstring)
-        self.description_length = self.descriptionLength()
-        self.description.textChanged.connect(self.descriptionLength)
+        # TODO: add a line at 80 characters (PEP8/E501) (https://stackoverflow.com/questions/30371613/draw-vertical-lines-on-qtextedit-in-pyqt)
+        self.description.setPlainText('\n'.join(definition['docstring']))
         self.description.blockSignals(False)
 
     # Delegators
@@ -279,7 +264,7 @@ class TestWizard(QtWidgets.QDialog):
         self.verify()
 
     def testTabChanged(self, activatedTabIndex):
-        """Slot for when the Tab is changed"""
+        """Slot for when the Tab is changed."""
         if activatedTabIndex == self.testTabs.indexOf(self.inputParametersTab):
             self.tableAdjust(self.inputParameterView)
         elif activatedTabIndex == self.testTabs.indexOf(self.outputParametersTab):
@@ -288,13 +273,14 @@ class TestWizard(QtWidgets.QDialog):
             pass
 
     def resizeEvent(self, event):
-        """Overload of Slot for when the Wizard is resized"""
+        """Overload of Slot for when the Wizard is resized."""
+
         QtWidgets.QWidget.resizeEvent(self, event)
         self.tableAdjust(self.inputParameterView)
         self.tableAdjust(self.outputParameterView)
 
     def tableAdjust(self, TableView):
-        """Call that adjust the table columns in 'TableView' to the available space"""
+        """Call that adjust the table columns in 'TableView' to the available space."""
         TableView.resizeColumnsToContents()
         autoVisibleWidth = 0
         for column in range(TableView.model().columnCount()):

@@ -36,9 +36,7 @@ class ProjectNavigation(QObject):
 
     def __call__(self, project_directory, project_quality=''):
         self.template_directory = os.path.join(os.path.dirname(__file__), 'templates')
-        print(f"navigation.template_directory = '{self.template_directory}'")
         self.workspace_path = self.parent().workspace_path
-        print(f"navigation.workspace_path = '{self.workspace_path}'")
         if project_directory == '' or isinstance(project_directory, type(None)) or project_directory == self.workspace_path:
             self.project_directory = ''
             self.active_target = ''
@@ -94,14 +92,14 @@ class ProjectNavigation(QObject):
         os.makedirs(self.project_directory)
         shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
                         os.path.join(self.project_directory, '__main__.py'))
-        create_file(os.path.join(self.project_directory, '__init__.py')).touch() # not sure if this one is needed ...
+        create_file(os.path.join(self.project_directory, '__init__.py')).touch()  # not sure if this one is needed ...
         shutil.copyfile(os.path.join(self.template_directory, 'dot_gitignore'),
                         os.path.join(self.project_directory, '.gitignore'))
         # setup.py ???
         # .pre-commit-config.yaml ???
 
         # spyder
-        #TODO: once we are integrated in Spyder, we need to get the following
+        # TODO: once we are integrated in Spyder, we need to get the following
         #      stuff from Spyder, and no longer from the template directroy.
         pspyd = os.path.join(self.project_directory, '.spyproject')
         os.makedirs(pspyd)
@@ -133,29 +131,21 @@ class ProjectNavigation(QObject):
         standards_destination_dir = os.path.join(self.project_directory, 'doc', 'standards')
         os.makedirs(standards_destination_dir)
         standards_source_dir = os.path.join(self.template_directory, 'doc', 'standards')
-        print(f"standards_source_dir = '{standards_source_dir}'")
-        print(f"standards_destination_dir = '{standards_destination_dir}'")
 
         for root, dirs, files in os.walk(standards_source_dir):
-            print(f"root = '{root}'")
             rel_path = root.replace(standards_source_dir, '')
             if rel_path.startswith(os.path.sep):
                 rel_path = rel_path[1:]
-            print(f"rel_path = '{rel_path}'")
 
             for Dir in dirs:
                 dir_to_create = os.path.join(standards_destination_dir, Dir)
-                print(f"dir_to_create = '{dir_to_create}'")
                 os.makedirs(dir_to_create, exist_ok=True)
 
             for File in files:
                 if File.upper() != '__INIT__.PY':
                     from_path = os.path.join(root, File)
-                    print(f"from_path = '{from_path}'")
                     to_path = os.path.join(standards_destination_dir, rel_path, File)
-                    print(f"to_path = '{to_path}'")
                     shutil.copy(from_path, to_path)
-
 
         os.makedirs(os.path.join(self.project_directory, 'doc', 'audit'), exist_ok=True)
         os.makedirs(os.path.join(self.project_directory, 'doc', 'export'), exist_ok=True)
@@ -165,29 +155,30 @@ class ProjectNavigation(QObject):
         create_file(os.path.join(self.project_directory, 'src', '__init__.py')).touch()
         # the rest of the 'src' tree is added by add_hardware!
 
+
     def create_project_database(self):
         '''
         this method will create a new (and empty) database file.
         '''
         # devices
         self.cur.execute('''CREATE TABLE "devices" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "hardware"	TEXT NOT NULL,
-	                           "package"	TEXT NOT NULL,
-	                           "definition"	BLOB NOT NULL,
+                               "name"	TEXT NOT NULL UNIQUE,
+                               "hardware"	TEXT NOT NULL,
+                               "package"	TEXT NOT NULL,
+                               "definition"	BLOB NOT NULL,
                                "is_enabled" BOOL,
 
                                PRIMARY KEY("name"),
-	                           FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
-	                           FOREIGN KEY("package") REFERENCES "packages"("name")
+                               FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
+                               FOREIGN KEY("package") REFERENCES "packages"("name")
                             );''')
         self.con.commit()
         # dies
         self.cur.execute('''CREATE TABLE "dies" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "hardware"	TEXT NOT NULL,
-	                           "maskset"	TEXT NOT NULL,
-	                           "grade"	TEXT NOT NULL
+                               "name"	TEXT NOT NULL UNIQUE,
+                               "hardware"	TEXT NOT NULL,
+                               "maskset"	TEXT NOT NULL,
+                               "grade"	TEXT NOT NULL
                                    CHECK (grade=='A' OR
                                           grade=='B' OR
                                           grade=='C' OR
@@ -197,95 +188,95 @@ class ProjectNavigation(QObject):
                                           grade=='G' OR
                                           grade=='H' OR
                                           grade=='I'),
-	                           "grade_reference"	TEXT NOT NULL,
+                               "grade_reference"	TEXT NOT NULL,
                                "quality"	TEXT NOT NULL,
-	                           "customer"	TEXT NOT NULL,
+                               "customer"	TEXT NOT NULL,
                                "is_enabled" BOOL,
 
-	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("hardware")
+                               PRIMARY KEY("name"),
+                               FOREIGN KEY("hardware")
                                    REFERENCES "hardware"("name"),
-	                           FOREIGN KEY("maskset")
+                               FOREIGN KEY("maskset")
                                    REFERENCES "masksets"("name")
                             );''')
         self.con.commit()
         # flows
         self.cur.execute('''CREATE TABLE "flows" (
-	                           "name"	TEXT NOT NULL,
-	                           "base"	TEXT NOT NULL
-                                  CHECK(base=='PR' OR base=='FT'),
-	                           "target"	TEXT NOT NULL,
-	                           "type"	TEXT NOT NULL,
+                               "name"	TEXT NOT NULL,
+                               "base"	TEXT NOT NULL
+                                   CHECK(base=='PR' OR base=='FT'),
+                               "target"	TEXT NOT NULL,
+                               "type"	TEXT NOT NULL,
                                "is_enabled" BOOL,
 
- 	                           PRIMARY KEY("name")
+                               PRIMARY KEY("name")
                             );''')
         self.con.commit()
 
         # qualification flow data:
         self.cur.execute('''CREATE TABLE "qualification_flow_data" (
-	                           "name"	    TEXT NOT NULL,
+                               "name"	    TEXT NOT NULL,
                                "type"       TEXT NOT NULL,
                                "product"    TEXT NOT NULL,
                                "data"	    BLOB NOT NULL,
 
- 	                           PRIMARY KEY("name"),
+                               PRIMARY KEY("name"),
                                FOREIGN KEY("product") REFERENCES "products"("name")
                             );''')
         self.con.commit()
 
         # hardwares
         self.cur.execute('''CREATE TABLE "hardwares" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "definition"	BLOB NOT NULL,
+                               "name"	TEXT NOT NULL UNIQUE,
+                               "definition"	BLOB NOT NULL,
                                "is_enabled" BOOL,
 
-	                           PRIMARY KEY("name")
+                               PRIMARY KEY("name")
                             );''')
         self.con.commit()
         # masksets
         self.cur.execute('''CREATE TABLE "masksets" (
-	                          "name"	TEXT NOT NULL UNIQUE,
-	                          "customer"	TEXT NOT NULL,
-	                          "definition"	BLOB NOT NULL,
+                              "name"	TEXT NOT NULL UNIQUE,
+                              "customer"	TEXT NOT NULL,
+                              "definition"	BLOB NOT NULL,
                               "is_enabled" BOOL,
 
-	                          PRIMARY KEY("name")
+                              PRIMARY KEY("name")
                            );''')
         self.con.commit()
         # packages
         self.cur.execute('''CREATE TABLE "packages" (
-	                          "name"	TEXT NOT NULL UNIQUE,
-	                          "leads"	INTEGER NOT NULL
+                              "name"	TEXT NOT NULL UNIQUE,
+                              "leads"	INTEGER NOT NULL
                                  CHECK(leads>=2 AND leads<=99),
                               "is_enabled" BOOL,
 
-	                          PRIMARY KEY("name")
+                              PRIMARY KEY("name")
                            );''')
         self.con.commit()
         # products
         self.cur.execute('''CREATE TABLE "products" (
-	                           "name"	TEXT NOT NULL UNIQUE,
-	                           "device"	TEXT NOT NULL,
-	                           "hardware"	TEXT NOT NULL,
+                               "name"	TEXT NOT NULL UNIQUE,
+                               "device"	TEXT NOT NULL,
+                               "hardware"	TEXT NOT NULL,
                                "is_enabled" BOOL,
 
-	                           PRIMARY KEY("name"),
-	                           FOREIGN KEY("device") REFERENCES "devices"("name"),
-	                           FOREIGN KEY("hardware") REFERENCES "hardware"("name")
+                               PRIMARY KEY("name"),
+                               FOREIGN KEY("device") REFERENCES "devices"("name"),
+                               FOREIGN KEY("hardware") REFERENCES "hardware"("name")
                             );''')
         self.con.commit()
         # programs
         self.cur.execute('''CREATE TABLE "programs" (
-	                           "name"	TEXT NOT NULL,
-	                           "hardware"	TEXT NOT NULL,
-	                           "base"	TEXT NOT NULL
+                               "name"	TEXT NOT NULL,
+                               "hardware"	TEXT NOT NULL,
+                               "base"	TEXT NOT NULL
                                    CHECK(base=='PR' OR base=='FT'),
-	                           "definition"	BLOB NOT NULL,
-	                           "relative_path"	TEXT NOT NULL,
+                               "definition"	BLOB NOT NULL,
+                               "relative_path"	TEXT NOT NULL,
                                "is_enabled" BOOL,
 
- 	                           PRIMARY KEY("name")
+                               PRIMARY KEY("name")
                             );''')
         self.con.commit()
 
@@ -299,17 +290,17 @@ class ProjectNavigation(QObject):
 
         # tests
         self.cur.execute('''CREATE TABLE "tests" (
-	                           "name"	TEXT NOT NULL,
-	                           "hardware"	TEXT NOT NULL,
-	                           "type"	TEXT NOT NULL
-                                  CHECK(type=='standard' OR type=='custom'),
-	                           "base"	TEXT NOT NULL
-                                  CHECK(base=='PR' OR base=='FT'),
-	                           "definition"	BLOB NOT NULL,
-	                           "relative_path"	TEXT NOT NULL,
+                               "name"	TEXT NOT NULL,
+                               "hardware"	TEXT NOT NULL,
+                               "type"	TEXT NOT NULL
+                                   CHECK(type=='standard' OR type=='custom'),
+                               "base"	TEXT NOT NULL
+                                   CHECK(base=='PR' OR base=='FT'),
+                               "definition"	BLOB NOT NULL,
+                               "relative_path"	TEXT NOT NULL,
                                "is_enabled" BOOL,
 
-	                           PRIMARY KEY("name")
+                               PRIMARY KEY("name")
                             );''')
         self.con.commit()
 

@@ -1,14 +1,13 @@
-'''
+"""
 Created on Nov 18, 2019
 
 @author: hoeren (horen.tom@micronas.com)
 
+References:
+    - file://./documentation/STDF_V4.pdf
 
-https://www.google.com
+"""
 
-file://./documentation/STDF_V4.pdf
-
-'''
 import importlib
 import os
 import re

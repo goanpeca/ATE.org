@@ -27,7 +27,6 @@ class TestItem(BaseItem):
             self.add_file_item(test_entry, path)
 
         if self.observer is None:
-            print(f"TestItem.path = '{path}'")
             self.observer = TestsObserver(path, self)
             self.observer.start_observer()
 
