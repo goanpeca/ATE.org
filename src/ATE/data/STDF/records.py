@@ -20,6 +20,12 @@ Disclaimer:
     It has not been used with STDF V4 extensions (lack of sample files) or STDF V3 (lack of sample files and specification)
 
 License : GPL
+
+References:
+    -
+
+PEP8 and ignore E501, E241, E221, E203, E202, E201
+
 '''
 
 import bz2
@@ -43,79 +49,81 @@ __author__ = '$Author: tho $'
 __latest_STDF_version__ = 'V4'
 
 FileNameDefinitions = {
-    'V3' : r'[a-zA-Z][a-zA-Z0-9_\$]{0,38}.[sS][tT][dD][a-zA-Z0-9_\.\$]{0,36}', # ?!?
+    'V3' : r'[a-zA-Z][a-zA-Z0-9_\$]{0,38}.[sS][tT][dD][a-zA-Z0-9_\.\$]{0,36}',  # ?!?
     'V4' : r'[a-zA-Z][a-zA-Z0-9_]{0,38}\.[sS][tT][dD][a-zA-Z0-9_\.]{0,36}'
 }
 
 RecordDefinitions = {
     # Information about the STDF file
-    (0,10)   : {'V3' : ['FAR', 'File Attributes Record', [('', False)]],                        'V4' : ['FAR', 'File Attributes Record', [('', True)]]                               },
-    (0,20)   : {                                                                                'V4' : ['ATR', 'Audit Trail Record', [('', False)]]                                  },
-    (0,30)   : {                                                                                'V4' : ['VUR', 'Version Update Record', [('V4-2007', True), ('Memory:2010.1', True)]]},
+    (0, 10)   : {'V3' : ['FAR', 'File Attributes Record', [('', False)]],                        'V4' : ['FAR', 'File Attributes Record', [('', True)]]                               },
+    (0, 20)   : {                                                                                'V4' : ['ATR', 'Audit Trail Record', [('', False)]]                                  },
+    (0, 30)   : {                                                                                'V4' : ['VUR', 'Version Update Record', [('V4-2007', True), ('Memory:2010.1', True)]]},
     # Data collected on a per lot basis
-    (1,10)   : {'V3' : ['MIR', 'Master Information Record', [('', True)]],                      'V4' : ['MIR', 'Master Information Record', [('', True)]]                            },
-    (1,20)   : {'V3' : ['MRR', 'Master Results Record', [('', True)]],                          'V4' : ['MRR', 'Master Results Record', [('', True)]]                                },
-    (1,30)   : {                                                                                'V4' : ['PCR', 'Part Count Record', [('', True)]]                                    },
-    (1,40)   : {'V3' : ['HBR', 'Hardware Bin Record', [('', False)]],                           'V4' : ['HBR', 'Hardware Bin Record', [('', False)]]                                 },
-    (1,50)   : {'V3' : ['SBR', 'Software Bin Record', [('', False)]],                           'V4' : ['SBR', 'Software Bin Record', [('', False)]]                                 },
-    (1,60)   : {'V3' : ['PMR', 'Pin Map Record', [('', False)]],                                'V4' : ['PMR', 'Pin Map Record', [('', False)]]                                      },
-    (1,62)   : {                                                                                'V4' : ['PGR', 'Pin Group Record', [('', False)]]                                    },
-    (1,63)   : {                                                                                'V4' : ['PLR', 'Pin List Record', [('', False)]]                                     },
-    (1,70)   : {                                                                                'V4' : ['RDR', 'Re-test Data Record', [('', False)]]                                 },
-    (1,80)   : {                                                                                'V4' : ['SDR', 'Site Description Record', [('', False)]]                             },
-    (1,90)   : {                                                                                'V4' : ['PSR', 'Pattern Sequence Record', [('V4-2007', False)]]                      },
-    (1,91)   : {                                                                                'V4' : ['NMR', 'Name Map Record', [('V4-2007', False)]]                              },
-    (1,92)   : {                                                                                'V4' : ['CNR', 'Cell Name Record', [('V4-2007', False)]]                             },
-    (1,93)   : {                                                                                'V4' : ['SSR', 'Scan Structure Record', [('V4-2007', False)]]                        },
-    (1,94)   : {                                                                                'V4' : ['CDR', 'Chain Description Record', [('V4-2007', False)]]                     },
-    (1,95)   : {                                                                                'V4' : ['ASR', 'Algorithm Specification Record', [('Memory:2010.1', False)]]         },
-    (1,96)   : {                                                                                'V4' : ['FSR', 'Frame Specification Record', [('Memory:2010.1', False)]]             },
-    (1,97)   : {                                                                                'V4' : ['BSR', 'Bit stream Specification Record', [('Memory:2010.1', False)]]        },
-    (1,99)   : {                                                                                'V4' : ['MSR', 'Memory Structure Record', [('Memory:2010.1', False)]]                },
-    (1,100)  : {                                                                                'V4' : ['MCR', 'Memory Controller Record', [('Memory:2010.1', False)]]               },
-    (1,101)  : {                                                                                'V4' : ['IDR', 'Instance Description Record', [('Memory:2010.1', False)]]            },
-    (1,102)  : {                                                                                'V4' : ['MMR', 'Memory Model Record', [('Memory:2010.1', False)]]                    },
+    (1, 10)   : {'V3' : ['MIR', 'Master Information Record', [('', True)]],                      'V4' : ['MIR', 'Master Information Record', [('', True)]]                            },
+    (1, 20)   : {'V3' : ['MRR', 'Master Results Record', [('', True)]],                          'V4' : ['MRR', 'Master Results Record', [('', True)]]                                },
+    (1, 30)   : {                                                                                'V4' : ['PCR', 'Part Count Record', [('', True)]]                                    },
+    (1, 40)   : {'V3' : ['HBR', 'Hardware Bin Record', [('', False)]],                           'V4' : ['HBR', 'Hardware Bin Record', [('', False)]]                                 },
+    (1, 50)   : {'V3' : ['SBR', 'Software Bin Record', [('', False)]],                           'V4' : ['SBR', 'Software Bin Record', [('', False)]]                                 },
+    (1, 60)   : {'V3' : ['PMR', 'Pin Map Record', [('', False)]],                                'V4' : ['PMR', 'Pin Map Record', [('', False)]]                                      },
+    (1, 62)   : {                                                                                'V4' : ['PGR', 'Pin Group Record', [('', False)]]                                    },
+    (1, 63)   : {                                                                                'V4' : ['PLR', 'Pin List Record', [('', False)]]                                     },
+    (1, 70)   : {                                                                                'V4' : ['RDR', 'Re-test Data Record', [('', False)]]                                 },
+    (1, 80)   : {                                                                                'V4' : ['SDR', 'Site Description Record', [('', False)]]                             },
+    (1, 90)   : {                                                                                'V4' : ['PSR', 'Pattern Sequence Record', [('V4-2007', False)]]                      },
+    (1, 91)   : {                                                                                'V4' : ['NMR', 'Name Map Record', [('V4-2007', False)]]                              },
+    (1, 92)   : {                                                                                'V4' : ['CNR', 'Cell Name Record', [('V4-2007', False)]]                             },
+    (1, 93)   : {                                                                                'V4' : ['SSR', 'Scan Structure Record', [('V4-2007', False)]]                        },
+    (1, 94)   : {                                                                                'V4' : ['CDR', 'Chain Description Record', [('V4-2007', False)]]                     },
+    (1, 95)   : {                                                                                'V4' : ['ASR', 'Algorithm Specification Record', [('Memory:2010.1', False)]]         },
+    (1, 96)   : {                                                                                'V4' : ['FSR', 'Frame Specification Record', [('Memory:2010.1', False)]]             },
+    (1, 97)   : {                                                                                'V4' : ['BSR', 'Bit stream Specification Record', [('Memory:2010.1', False)]]        },
+    (1, 99)   : {                                                                                'V4' : ['MSR', 'Memory Structure Record', [('Memory:2010.1', False)]]                },
+    (1, 100)  : {                                                                                'V4' : ['MCR', 'Memory Controller Record', [('Memory:2010.1', False)]]               },
+    (1, 101)  : {                                                                                'V4' : ['IDR', 'Instance Description Record', [('Memory:2010.1', False)]]            },
+    (1, 102)  : {                                                                                'V4' : ['MMR', 'Memory Model Record', [('Memory:2010.1', False)]]                    },
     # Data collected per wafer
-    (2,10)   : {'V3' : ['WIR', 'Wafer Information Record', [('', False)]],                      'V4' : ['WIR', 'Wafer Information Record', [('', False)]]                            },
-    (2,20)   : {'V3' : ['WRR', 'Wafer Results Record', [('', False)]],                          'V4' : ['WRR', 'Wafer Results Record', [('', False)]]                                },
-    (2,30)   : {'V3' : ['WCR', 'Wafer Configuration Record', [('', False)]],                    'V4' : ['WCR', 'Wafer Configuration Record', [('', False)]]                          },
+    (2, 10)   : {'V3' : ['WIR', 'Wafer Information Record', [('', False)]],                      'V4' : ['WIR', 'Wafer Information Record', [('', False)]]                            },
+    (2, 20)   : {'V3' : ['WRR', 'Wafer Results Record', [('', False)]],                          'V4' : ['WRR', 'Wafer Results Record', [('', False)]]                                },
+    (2, 30)   : {'V3' : ['WCR', 'Wafer Configuration Record', [('', False)]],                    'V4' : ['WCR', 'Wafer Configuration Record', [('', False)]]                          },
     # Data collected on a per part basis
-    (5,10)   : {'V3' : ['PIR', 'Part Information Record', [('', False)]],                       'V4' : ['PIR', 'Part Information Record', [('', False)]]                             },
-    (5,20)   : {'V3' : ['PRR', 'Part Results Record', [('', False)]],                           'V4' : ['PRR', 'Part Results Record', [('', False)]]                                 },
+    (5, 10)   : {'V3' : ['PIR', 'Part Information Record', [('', False)]],                       'V4' : ['PIR', 'Part Information Record', [('', False)]]                             },
+    (5, 20)   : {'V3' : ['PRR', 'Part Results Record', [('', False)]],                           'V4' : ['PRR', 'Part Results Record', [('', False)]]                                 },
     # Data collected per test in the test program
-    (10,10)  : {'V3' : ['PDR', 'Parametric Test Description Record', [('', False)]]                                                                                                  },
-    (10,20)  : {'V3' : ['FDR', 'Functional Test Description Record', [('', False)]]                                                                                                  },
-    (10,30)  : {'V3' : ['TSR', 'Test Synopsis Record', [('', False)]],                          'V4' : ['TSR', 'Test Synopsis Record', [('', False)]]                                },
+    (10, 10)  : {'V3' : ['PDR', 'Parametric Test Description Record', [('', False)]]                                                                                                  },
+    (10, 20)  : {'V3' : ['FDR', 'Functional Test Description Record', [('', False)]]                                                                                                  },
+    (10, 30)  : {'V3' : ['TSR', 'Test Synopsis Record', [('', False)]],                          'V4' : ['TSR', 'Test Synopsis Record', [('', False)]]                                },
     # Data collected per test execution
-    (15,10)  : {'V3' : ['PTR', 'Parametric Test Record', [('', False)]],                        'V4' : ['PTR', 'Parametric Test Record', [('', False)]]                              },
-    (15,15)  : {                                                                                'V4' : ['MPR', 'Multiple-Result Parametric Record', [('', False)]]                   },
-    (15,20)  : {'V3' : ['FTR', 'Functional Test Record', [('', False)]],                        'V4' : ['FTR', 'Functional Test Record', [('', False)]]                              },
-    (15,30)  : {                                                                                'V4' : ['STR', 'Scan Test Record', [('V4-2007', False)]]                             },
-    (15,40)  : {                                                                                'V4' : ['MTR', 'Memory Test Record', [('Memory:2010.1', False)]]                     },
+    (15, 10)  : {'V3' : ['PTR', 'Parametric Test Record', [('', False)]],                        'V4' : ['PTR', 'Parametric Test Record', [('', False)]]                              },
+    (15, 15)  : {                                                                                'V4' : ['MPR', 'Multiple-Result Parametric Record', [('', False)]]                   },
+    (15, 20)  : {'V3' : ['FTR', 'Functional Test Record', [('', False)]],                        'V4' : ['FTR', 'Functional Test Record', [('', False)]]                              },
+    (15, 30)  : {                                                                                'V4' : ['STR', 'Scan Test Record', [('V4-2007', False)]]                             },
+    (15, 40)  : {                                                                                'V4' : ['MTR', 'Memory Test Record', [('Memory:2010.1', False)]]                     },
     # Data collected per program segment
-    (20,10)  : {'V3' : ['BPS', 'Begin Program Section Record', [('', False)]],                  'V4' : ['BPS', 'Begin Program Section Record', [('', False)]]                        },
-    (20,20)  : {'V3' : ['EPS', 'End Program Section Record', [('', False)]],                    'V4' : ['EPS', 'End Program Section Record', [('', False)]]                          },
+    (20, 10)  : {'V3' : ['BPS', 'Begin Program Section Record', [('', False)]],                  'V4' : ['BPS', 'Begin Program Section Record', [('', False)]]                        },
+    (20, 20)  : {'V3' : ['EPS', 'End Program Section Record', [('', False)]],                    'V4' : ['EPS', 'End Program Section Record', [('', False)]]                          },
     # Data collected per test site
-    (25,10)  : {'V3' : ['SHB', 'Site specific Hardware Bin record', [('+', False)]]                                                                                                  },
-    (25,20)  : {'V3' : ['SSB', 'Site specific Software Bin record', [('+', False)]]                                                                                                  },
-    (25,30)  : {'V3' : ['STS', 'Site specific Test Synopsis record', [('+', False)]]                                                                                                 },
-    (25,40)  : {'V3' : ['SCR', 'Site specific part Count Record', [('+', False)]]                                                                                                    },
+    (25, 10)  : {'V3' : ['SHB', 'Site specific Hardware Bin record', [('+', False)]]                                                                                                  },
+    (25, 20)  : {'V3' : ['SSB', 'Site specific Software Bin record', [('+', False)]]                                                                                                  },
+    (25, 30)  : {'V3' : ['STS', 'Site specific Test Synopsis record', [('+', False)]]                                                                                                 },
+    (25, 40)  : {'V3' : ['SCR', 'Site specific part Count Record', [('+', False)]]                                                                                                    },
     # Generic Data
-    (50,10)  : {'V3' : ['GDR', 'Generic Data Record', [('', False)]],                           'V4' : ['GDR', 'Generic Data Record', [('', False)]]                                 },
-    (50,30)  : {'V3' : ['DTR', 'Datalog Text Record', [('', False)]],                           'V4' : ['DTR', 'Datalog Text Record', [('', False)]]                                 },
+    (50, 10)  : {'V3' : ['GDR', 'Generic Data Record', [('', False)]],                           'V4' : ['GDR', 'Generic Data Record', [('', False)]]                                 },
+    (50, 30)  : {'V3' : ['DTR', 'Datalog Text Record', [('', False)]],                           'V4' : ['DTR', 'Datalog Text Record', [('', False)]]                                 },
     # Teradyne extensions
-    (180,-1) : {                                                                                'V4' : ['RR1', 'Records Reserved for use by Image software', [('', False)]]          },
-    (181,-1) : {                                                                                'V4' : ['RR2', 'Records Reserved for use by IG900 software', [('', False)]]          },
-    (220,201): {'V3' : ['BRR', '?!?', [('+', False)]]                                                                                                                                },
-    (220,202): {'V3' : ['WTR', '?!?', [('+', False)]]                                                                                                                                },
-    (220,203): {'V3' : ['ETSR', 'Extended Test Synopsis Record', [('+', False)]],                                                                                                    },
-    (220,204): {'V3' : ['GTR', '?!?', [('+', False)]]                                                                                                                                },
-    (220,205): {'V3' : ['ADR', '?!?', [('+', False)]]                                                                                                                                },
-    (220,206): {'V3' : ['EPDR', 'Extended Parametric Test Description Record', [('+', False)]]                                                                                       }
+    (180, -1) : {                                                                                'V4' : ['RR1', 'Records Reserved for use by Image software', [('', False)]]          },
+    (181, -1) : {                                                                                'V4' : ['RR2', 'Records Reserved for use by IG900 software', [('', False)]]          },
+    (220, 201): {'V3' : ['BRR', '?!?', [('+', False)]]                                                                                                                                },
+    (220, 202): {'V3' : ['WTR', '?!?', [('+', False)]]                                                                                                                                },
+    (220, 203): {'V3' : ['ETSR', 'Extended Test Synopsis Record', [('+', False)]],                                                                                                    },
+    (220, 204): {'V3' : ['GTR', '?!?', [('+', False)]]                                                                                                                                },
+    (220, 205): {'V3' : ['ADR', '?!?', [('+', False)]]                                                                                                                                },
+    (220, 206): {'V3' : ['EPDR', 'Extended Parametric Test Description Record', [('+', False)]]                                                                                       }
 }
+
 
 class STDFError(Exception):
     pass
+
 
 # Removal of dependency on ATE.utils.macignumber:
 # The original implementation in ATE.utils.magicnumber.extension_from_magic_number_in_file(filename)
@@ -132,13 +140,16 @@ def is_file_with_stdf_magicnumber(filename):
         # if it cannot be read it's not an stdf file
         return False
 
+
 # Removal of dependency on ATE.utils.DT: DT().epoch and DT.__repr__
 def _missing_stdf_time_field_value() -> int:
-    return int(time.time()) # used to be DT().epoch, which returned time.time(). note that we need an 32bit unsigned integer to allow de-/serialization without data loss
+    return int(time.time())  # used to be DT().epoch, which returned time.time(). note that we need an 32bit unsigned integer to allow de-/serialization without data loss
 
 # date and time format according to the STDF spec V4:
 # number of seconds since midnight on January 1st, 1970, in the local time zone (32bit unsigned int)
 # Note that DT() has a more detailed format but that is not relevant for now (e.g. we dont need Quarter)
+
+
 def _stdf_time_field_value_to_string(seconds_since_1970_in_local_time: int):
     return datetime.datetime.fromtimestamp(seconds_since_1970_in_local_time).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -150,7 +161,7 @@ def ts_to_id(Version=__latest_STDF_version__, Extensions=None):
     '''
     retval = {}
     if Version in supported().versions():
-        if Extensions==None:
+        if Extensions is None:
             Extensions = supported().extensions_for_version(Version) + ['']
         else:
             exts = ['']
@@ -166,6 +177,7 @@ def ts_to_id(Version=__latest_STDF_version__, Extensions=None):
                         retval[(REC_TYP, REC_SUB)] = RecordDefinitions[(REC_TYP, REC_SUB)][Version][0]
     return retval
 
+
 def id_to_ts(Version=__latest_STDF_version__, Extensions=None):
     '''
     This function returns a dictionary ID -> TS for the given STDF version and Extension(s)
@@ -174,8 +186,9 @@ def id_to_ts(Version=__latest_STDF_version__, Extensions=None):
     retval = {}
     temp = ts_to_id(Version, Extensions)
     for item in temp:
-        retval[temp[item]]= item
+        retval[temp[item]] = item
     return retval
+
 
 class supported(object):
 
@@ -203,7 +216,7 @@ class supported(object):
                 if Version in RecordDefinitions[(Type, Sub)]:
                     exts = RecordDefinitions[(Type, Sub)][Version][2]
                     for ext in exts:
-                        if ext[0]!='' and ext[0] not in retval:
+                        if ext[0] != '' and ext[0] not in retval:
                             retval.append(ext[0])
         return retval
 
@@ -214,6 +227,7 @@ class supported(object):
         retval = {}
         for version in self.supported_versions():
             retval[version] = self.extensions_for_version(version)
+
 
 class STDR(ABC):
     '''
@@ -254,17 +268,15 @@ class STDR(ABC):
             'R*9'      : {'#' : 19, 'Type' :  'R*8', 'Ref' : None, 'Value' :   None, 'Text' : 'Nine byte fixed length string         ', 'Missing' : '123456789'},
             'C*10'     : {'#' : 20, 'Type' :  'R*8', 'Ref' : None, 'Value' :   None, 'Text' : 'Ten byte (2-digit) fixed length string', 'Missing' : '1234567890'}
 
-# C*12 Fixed length character string:
-# C*n Variable length character string
-# C*f Variable length character string
-
-# B*6 Fixed length bit-encoded data
-# V*n Variable data type field:
-# B*n Variable length bit-encoded field.
-# D*n Variable length bit-encoded field.
-# N*1 Unsigned integer data stored in a nibble.
-# kxTYPE Array of data of the type specified.
-
+            # C*12 Fixed length character string:
+            # C*n Variable length character string
+            # C*f Variable length character string
+            # B*6 Fixed length bit-encoded data
+            # V*n Variable data type field:
+            # B*n Variable length bit-encoded field.
+            # D*n Variable length bit-encoded field.
+            # N*1 Unsigned integer data stored in a nibble.
+            # kxTYPE Array of data of the type specified.
         }
         self._default_init(endian, record)
 
@@ -274,36 +286,37 @@ class STDR(ABC):
         # Buffer
         self.buffer = ''
         # Endian
-        if endian == None:
+        if endian is None:
             self.endian = sys_endian()
         elif ((endian == '<') or (endian == '>')):
             self.endian = endian
         else:
             raise STDFError("%s object creation error : unsupported endian '%s'" % (self.id, endian))
         # Record
-        if record != None:
-            if self.local_debug: print("len(%s) = %s" % (self.id, len(record)))
+        if record is not None:
+            if self.local_debug:
+                print("len(%s) = %s" % (self.id, len(record)))
             self._unpack(record)
 
-    def __call__(self, endian = None, record = None):
+    def __call__(self, endian=None, record=None):
         '''
         Method to change contents of an already created object. (eg : Change endian)
         '''
-        if endian != None:
+        if endian is not None:
             if ((endian == '<') or (endian == '>')):
                 self.endian = endian
             else:
                 raise STDFError("%s object creation error : unsupported endian '%s'" % (self.id, endian))
-        if record != None:
+        if record is not None:
             self._unpack(record)
 
-    def get_fields(self, FieldID = None):
+    def get_fields(self, FieldID=None):
         '''
         Getter, returns a 7 element tuple (#, Type, Ref, Value, Text, Missing, Note)
         if FieldID is provided either in a string or numerical way.
         If it is not provided, it returns a (IN ORDER) list of (string) keys.
         '''
-        if FieldID == None:
+        if FieldID is None:
             retval = [None] * len(self.fields)
             for field in self.fields:
                 retval[self.fields[field]['#']] = field
@@ -338,7 +351,7 @@ class STDR(ABC):
         _, _, Ref, Value, _, Missing = self.get_fields(FieldID)
         # TODO: ref value handling is missing here: for arrays (kxTYPE etc.) this returns the size of the array instead of its value for now
         if Ref is not None:
-            return self.get_value(ref)
+            return self.get_value(Ref)
         return Missing if Value is None else Value
 
     def set_value(self, FieldID, Value):
@@ -373,93 +386,113 @@ class STDR(ABC):
             length_type = self.fields[Ref]['Type']
             if not length_type.startswith('U*'):
                 raise STDFError("%s.set_value(%s, %s) Error : '%s' references a non unsigned integer." % (self.id, FieldKey, Value, "*".join((str(K), Type, Bytes))))
-            if not length_type in ['U*1', 'U*2', 'U*4', 'U*8']:
+            if length_type not in ['U*1', 'U*2', 'U*4', 'U*8']:
                 raise STDFError("%s.set_value(%s, %s) Error : '%s' references an unsupported unsigned integer." % (self.id, FieldKey, Value, "*".join((str(K), Type, Bytes))))
 
-            if Type == 'xU': # list of unsigned integers
+            if Type == 'xU':  # list of unsigned integers
                 temp = [0] * len(Value)
                 if Bytes == '1':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=0) and (Value[index]<=255)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*1." % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= 0) and (Value[index] <= 255)):
+                                temp[index] = Value[index]
+                            else:
+                                # raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*1." % (self.id, FieldKey, Value, index, Value[index]))
+                                raise STDFError(f"{self.id}.set_value({FieldKey}, {Value}) Error : 'index[{index}]={Value[index]}' can not be casted into U*1.")
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '2':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=0) and (Value[index]<=65535)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*2" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= 0) and (Value[index] <= 65535)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*2" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '4':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=0) and (Value[index]<=4294967295)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*4" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= 0) and (Value[index] <= 4294967295)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*4" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '8':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=0) and (Value[index]<=18446744073709551615)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*8" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= 0) and (Value[index] <= 18446744073709551615)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into U*8" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 else:
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xI': # list of signed integers
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xI --> list of signed integers
+            elif Type == 'xI':
                 temp = [0] * len(Value)
                 if Bytes == '1':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=-128) and (Value[index]<=128)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*1" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= -128) and (Value[index] <= 128)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*1" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '2':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=-32768) and (Value[index]<=32767)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*2" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= -32768) and (Value[index] <= 32767)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*2" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '4':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=-2147483648) and (Value[index]<=2147483647)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*4" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= -2147483648) and (Value[index] <= 2147483647)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*4" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 elif Bytes == '8':
                     for index in range(len(Value)):
                         if isinstance(Value[index], int):
-                            if ((Value[index]>=-36028797018963968) and (Value[index]<=36028797018963967)): temp[index]=Value[index]
-                            else: raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*8" % (self.id, FieldKey, Value, index, Value[index]))
+                            if ((Value[index] >= -36028797018963968) and (Value[index] <= 36028797018963967)):
+                                temp[index] = Value[index]
+                            else:
+                                raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]=%s' can not be casted into I*8" % (self.id, FieldKey, Value, index, Value[index]))
                         else:
                             raise STDFError("%s.set_value(%s, %s) Error : 'index[%s]' is not an integer." % (self.id, FieldKey, Value, index))
                 else:
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
 
-            elif Type == 'xR': # list of floats
+            elif Type == 'xR':  # list of floats
                 temp = [0.0] * len(Value)
                 if ((Bytes == '4') or (Bytes == '8')):
                     for index in len(Value):
-                        temp[index] = float(Value[index]) # no checking for float & double, pack will cast with appropriate precision, cast integers.
+                        temp[index] = float(Value[index])  # no checking for float & double, pack will cast with appropriate precision, cast integers.
                 else:
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xC': # list of strings
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xC --> list of strings
+            elif Type == 'xC':
                 temp = [''] * len(Value)
                 if Bytes.isdigit():
                     raise STDFError("%s.set_value(%s, %s) : Unimplemented type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
@@ -471,25 +504,27 @@ class STDR(ABC):
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xB': # list of list of single character strings being '0' or '1' (max length = 255*8 = 2040 bits)
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xB --> list of list of single character strings being '0' or '1' (max length = 255*8 = 2040 bits)
+            elif Type == 'xB':
                 if Bytes.isdigit():
                     temp = [['0'] * (int(Bytes) * 8)] * len(Value)
                     raise STDFError("%s.set_value(%s, %s) : Unimplemented type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 elif Bytes == 'n':
-                    temp = [['0'] * (int() * 8)] * len(Value) #TODO: Fill in the int() statement
+                    temp = [['0'] * (int() * 8)] * len(Value)  # TODO: Fill in the int() statement
                     raise STDFError("%s.set_value(%s, %s) : Unimplemented type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 elif Bytes == 'f':
-                    temp = [['0'] * (int() * 8)] * len(Value) #TODO: Fill in the int() statement
+                    temp = [['0'] * (int() * 8)] * len(Value)  # TODO: Fill in the int() statement
                     raise STDFError("%s.set_value(%s, %s) : Unimplemented type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xD': # list of list of single character strings being '0' and '1'(max length = 65535 bits)
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xD --> list of list of single character strings being '0' or '1' (max length = 65535 bits)
+            elif Type == 'xD':
                 if Bytes.isdigit():
                     raise STDFError("%s.set_value(%s, %s) : Unimplemented type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 elif Bytes == 'n':
@@ -499,9 +534,10 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 # assign from temp to field
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xN': # list of list of nibble integers
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xN --> list of lists of nibble integers
+            elif Type == 'xN':
                 if not isinstance(Value, list):
                     raise STDFError("%s.set_value(%s, %s) : %s should be a list" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 for nibble_list in Value:
@@ -520,9 +556,10 @@ class STDR(ABC):
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
                 self.fields[Ref]['Value'] = len(temp)
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
-
-            elif Type == 'xV': # list of tuple (type, value) where type is defined in spec page 62tuples
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+        # xV --> list of tuple (type, value) where type is defined in spec page 62tuples
+            elif Type == 'xV':
                 '''
                  0 = B*0 Special pad field
                  1 = U*1 One byte unsigned integer
@@ -547,66 +584,89 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, str(K) + '*'.join((Type, Bytes))))
                 # assign from temp to field
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s, Reference '%s' = %s" % (self.id, FieldKey, Value, temp, Ref, len(temp)))
 
             else:
                 raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
         else:
             temp = ''
-            if Type == 'U': # unsigned integer
+        # U --> unsigned integer
+            if Type == 'U':
                 if type(Value) not in [int, int]:
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is not a an integer" % (self.id, FieldKey, Value, Value))
                 if Bytes == '1':
-                    if ((Value>=0) and (Value<=255)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*1" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= 0) and (Value <= 255)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*1" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '2':
-                    if ((Value>=0) and (Value<=65535)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*2" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= 0) and (Value <= 65535)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*2" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '4':
-                    if ((Value>=0) and (Value<=4294967295)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*4" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= 0) and (Value <= 4294967295)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*4" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '8':
-                    if ((Value>=0) and (Value<=18446744073709551615)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*8" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= 0) and (Value <= 18446744073709551615)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) Error : '%s' can not be casted into U*8" % (self.id, FieldKey, Value, Value))
                 else:
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'I': # signed integer
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # I --> signed integer
+            elif Type == 'I':
                 if type(Value) not in [int, int]:
                     raise STDFError("%s.set_value(%s, %s) : '%s' is not an integer" % (self.id, FieldKey, Value, Value))
                 if Bytes == '1':
-                    if ((Value>=-128) and (Value<=127)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*1" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= -128) and (Value <= 127)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*1" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '2':
-                    if ((Value>=-32768) and (Value<=32767)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*2" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= -32768) and (Value <= 32767)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*2" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '4':
-                    if ((Value>=-2147483648) and (Value<=2147483647)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*4" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= -2147483648) and (Value <= 2147483647)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*4" % (self.id, FieldKey, Value, Value))
                 elif Bytes == '8':
-                    if ((Value>=-36028797018963968) and (Value<=36028797018963967)): temp = Value
-                    else: raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*8" % (self.id, FieldKey, Value, Value))
+                    if ((Value >= -36028797018963968) and (Value <= 36028797018963967)):
+                        temp = Value
+                    else:
+                        raise STDFError("%s.set_value(%s, %s) : '%s' can not be casted into I*8" % (self.id, FieldKey, Value, Value))
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'R': # float
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # R --> float
+            elif Type == 'R':
                 if type(Value) not in [float, int, int]:
                     raise STDFError("%s.set_value(%s, %s) : '%s' is not a float" % (self.id, FieldKey, Value, Value))
-                if ((Bytes == '4') or (Bytes == '8')): temp = float(Value) # no checking for float & double, pack will cast with appropriate precision
-                else: raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
+                if ((Bytes == '4') or (Bytes == '8')):
+                    temp = float(Value)
+                else:
+                    raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'C': # string
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # C --> string
+            elif Type == 'C':
                 if not isinstance(Value, str):
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is not a python-string" % (self.id, FieldKey, Value, Value))
                 if Bytes.isdigit():
                     temp = Value.strip()[:int(Bytes)]
-                    #TODO: pad with spaces if the length doesn't match !!!
+                    # TODO: pad with spaces if the length doesn't match !!!
                     # TODO: OK, but why strip first, just to pad again? common value for "C*1" is a single space ' ', but "C*n" is usually not filled with spaces, is it?
                     temp = temp.ljust(int(Bytes), ' ')
                 elif Bytes == 'n':
@@ -616,17 +676,18 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'B': # list of single character strings being '0' or '1' (max length = 255*8 = 2040 bits)
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # B --> list of single character strings being '0' or '1' (max length = 255*8 = 2040 bits)
+            elif Type == 'B':
                 if Bytes.isdigit():
-                    if Bytes == '1': # can be a list of '1' and '0' or can be an unsigned 1 character byte
+                    if Bytes == '1':  # can be a list of '1' and '0' or can be an unsigned 1 character byte
                         temp = ['0'] * 8
                         if isinstance(Value, int):
                             if (Value < 0) or (Value > 255):
                                 raise STDFError("%s.set_value(%s, %s) : '%s' does contain an non-8-bit integer." % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                             for Bit in range(8):
-                                mask = pow(2, 7-Bit)
+                                mask = pow(2, 7 - Bit)
                                 if (Value & mask) == mask:
                                     temp[Bit] = '1'
                         elif isinstance(Value, list):
@@ -670,7 +731,7 @@ class STDR(ABC):
                             temp_index += 1
                         elif isinstance(Value[value_index], int):
                             for Bit in range(8):
-                                mask = pow(2, 7-Bit)
+                                mask = pow(2, 7 - Bit)
                                 if (Value[value_index] & mask) == mask:
                                     temp[temp_index] = '1'
                                 temp_index += 1
@@ -681,15 +742,16 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'D': # list of single character strings being '0' and '1'(max length = 65535 bits)
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # D --> list of single character strings being '0' and '1'(max length = 65535 bits)
+            elif Type == 'D':
                 if not isinstance(Value, list):
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is not a list" % (self.id, FieldKey, Value, Value))
                 if Bytes.isdigit():
                     if int(Bytes) > 65535:
                         raise STDFError("%s.set_value(%s, %s) Error : type '%s' can't be bigger than 65535 bits" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
-                    temp = ['0'] * int(Bytes) # set all bits to '0'
+                    temp = ['0'] * int(Bytes)  # set all bits to '0'
                     if len(Value) > len(temp):
                         raise STDFError("%s.set_value(%s, %s) Error : too many elements in Value" % (self.id, FieldKey, Value))
                     for i in range(len(Value)):
@@ -701,13 +763,14 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'N': # list of integers
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # N --> list of integers
+            elif Type == 'N':
                 if not isinstance(Value, list):
                     raise STDFError("%s.set_value(%s, %s) Error : '%s' is not a list" % (self.id, FieldKey, Value, Value))
                 for nibble in Value:
-                    if ((nibble<0) or (nibble>15)):
+                    if ((nibble < 0) or (nibble > 15)):
                         raise STDFError("%s.set_value(%s, %s) Error : a non-nibble value is present in the list." % (self.id, FieldKey, Value))
                 if Bytes.isdigit():
                     if int(Bytes) > 510:
@@ -724,9 +787,10 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
-            elif Type == 'V': # tuple (type, value) where type is defined in spec page 62
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
+        # V --> tuple (type, value) where type is defined in spec page 62
+            elif Type == 'V':
                 '''
                  0 = B*0 Special pad field
                  1 = U*1 One byte unsigned integer
@@ -757,8 +821,8 @@ class STDR(ABC):
                 else:
                     raise STDFError("%s.set_value(%s, %s) : Unsupported type '%s'" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
                 self.fields[FieldKey]['Value'] = temp
-                if self.local_debug: print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
-
+                if self.local_debug:
+                    print("%s._set_value(%s, %s) -> Value = %s" % (self.id, FieldKey, Value, temp))
             else:
                 raise STDFError("%s.set_value(%s, %s) Error : '%s' is an unsupported Type" % (self.id, FieldKey, Value, '*'.join((Type, Bytes))))
 
@@ -779,10 +843,11 @@ class STDR(ABC):
             else:
                 FieldKey = FieldID
         else:
-            raise STDFError("%s._type_size(%s) : '%s' is not a string or integer." % (self.id, FieldID,FieldID))
+            raise STDFError("%s._type_size(%s) : '%s' is not a string or integer." % (self.id, FieldID, FieldID))
 
         Type, Ref, Value = self.get_fields(FieldKey)[1:4]
-        if Value==None: Value=self.get_fields(FieldKey)[5] # get the 'missing' default
+        if Value is None:
+            Value = self.get_fields(FieldKey)[5]  # get the 'missing' default
         # TODO: the reference handling and/or array ("kxTYPE") handling here is most probably
         # broken and need to be tested: (e.g. Ref !='' seems wrong, missing/default value of
         # referenced field should be used, None check before use of K below etc.)
@@ -795,21 +860,24 @@ class STDR(ABC):
             if ((Type == 'xU') or (Type == 'xI')):
                 if Bytes in ['1', '2', '4', '8']:
                     retval = int(Bytes) * K
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
                     return retval
                 else:
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, str(K) + '*'.join((Type, Bytes))))
             elif Type == 'xR':
                 if Bytes in ['4', '8']:
                     retval = int(Bytes) * K
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
                     return retval
                 else:
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, str(K) + '*'.join((Type, Bytes))))
             elif Type == 'xC':
                 if Bytes.isdigit():
                     retval = int(Bytes) * K
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     raise STDFError("%s._type_size(%s) : Unimplemented type '%s'" % (self.id, FieldKey, str(K) + '*'.join((Type, Bytes))))
@@ -841,7 +909,8 @@ class STDR(ABC):
                     if (int(Bytes) % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack * K
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, str(K) + '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     raise STDFError("%s._type_size(%s) : Unimplemented type '%s'" % (self.id, FieldKey, str(K) + '*'.join((Type, Bytes))))
@@ -864,36 +933,42 @@ class STDR(ABC):
             if ((Type == 'U') or (Type == 'I')):
                 if Bytes in ['1', '2', '4', '8']:
                     retval = int(Bytes)
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 else:
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
             elif Type == 'R':
                 if Bytes in ['4', '8']:
                     retval = int(Bytes)
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 else:
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
             elif Type == 'C':
                 if Bytes.isdigit():
                     retval = int(Bytes)
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     retval = len(Value) + 1
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'f':
                     retval = len(Value)
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 else:
                     raise STDFError("%s_type_size(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
             elif Type == 'B':
                 if Bytes.isdigit():
                     retval = int(Bytes)
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     bits_to_pack = len(Value)
@@ -902,7 +977,8 @@ class STDR(ABC):
                         bytes_to_pack += 1
                     if bytes_to_pack <= 255:
                         retval = bytes_to_pack + 1
-                        if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                        if self.local_debug:
+                            print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                         return retval
                     else:
                         raise STDFError("%s._type_size(%s) : '%s' can not hold more than 255 bytes" % (self.id, FieldKey, '*'.join((Type, Bytes))))
@@ -916,7 +992,8 @@ class STDR(ABC):
                     if (int(Bytes) % 8) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     bits_to_pack = len(Value)
@@ -925,7 +1002,8 @@ class STDR(ABC):
                         bytes_to_pack += 1
                     if bytes_to_pack <= 8192:
                         retval = bytes_to_pack + 2
-                        if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                        if self.local_debug:
+                            print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                         return retval
                     else:
                         raise STDFError("%s._type_size(%s) : '%s' can not hold more than 8192 bytes (=65535 bits)" % (self.id, FieldKey, '*'.join((Type, Bytes))))
@@ -939,7 +1017,8 @@ class STDR(ABC):
                     if (int(Bytes) % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'n':
                     nibbles_to_pack = len(Value)
@@ -947,7 +1026,8 @@ class STDR(ABC):
                     if (nibbles_to_pack % 2) != 0:
                         bytes_to_pack += 1
                     retval = bytes_to_pack + 1
-                    if self.local_debug: print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
+                    if self.local_debug:
+                        print("%s._type_size(%s) = %s [%s]" % (self.id, FieldKey, retval, '*'.join((Type, Bytes))))
                     return retval
                 elif Bytes == 'f':
                     raise STDFError("%s._type_size(%s) : Unimplemented type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
@@ -971,11 +1051,15 @@ class STDR(ABC):
         '''
         reclen = 0
         for field in self.fields:
-            if field == 'REC_LEN' : continue
-            if field == 'REC_TYP' : continue
-            if field == 'REC_SUB' : continue
+            if field == 'REC_LEN' :
+                continue
+            if field == 'REC_TYP' :
+                continue
+            if field == 'REC_SUB' :
+                continue
             reclen += self._type_size(field)
-        if self.local_debug: print("%s._update_rec_len() = %s" % (self.id, reclen))
+        if self.local_debug:
+            print(f"{self.id}._update_rec_len() = {reclen}")
         self.fields['REC_LEN']['Value'] = reclen
 
     def _pack_item(self, FieldID):
@@ -1549,7 +1633,7 @@ class STDR(ABC):
                     if self.local_debug: print("%s._unpack_item(%s)\n   '%s' [%s] -> %s" % (self.id, FieldKey, hexify(pkg), '*'.join((Type, Bytes)), result))
                     self.set_value(FieldID, result)
 
-                elif Type == 'V': # tuple (type, value) where type is defined in spec page 62
+                elif Type == 'V':  # tuple (type, value) where type is defined in spec page 62
                     '''
                      0 = B*0 Special pad field
                      1 = U*1 One byte unsigned integer
@@ -1573,7 +1657,8 @@ class STDR(ABC):
                         raise STDFError("%s._pack_item(%s) : Unimplemented type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
                     else:
                         raise STDFError("%s._pack_item(%s) : Unsupported type '%s'" % (self.id, FieldKey, '*'.join((Type, Bytes))))
-                    if self.local_debug: print("%s._unpack_item(%s)\n   '%s' [%s] -> %s" % (self.id, FieldKey, hexify(pkg), '*'.join((Type, Bytes)), result))
+                    if self.local_debug:
+                        print("%s._unpack_item(%s)\n   '%s' [%s] -> %s" % (self.id, FieldKey, hexify(pkg), '*'.join((Type, Bytes)), result))
                     self.set_value(FieldID, result)
 
                 else:
@@ -1585,7 +1670,8 @@ class STDR(ABC):
         '''
         self.buffer = record
 
-        if self.local_debug: print("%s._unpack(%s) with buffer length = %s" % (self.id, hexify(record), len(record)))
+        if self.local_debug:
+            print("%s._unpack(%s) with buffer length = %s" % (self.id, hexify(record), len(record)))
 
         if record[2] != self.fields['REC_TYP']['Value']:
             raise STDFError("%s_unpack(%s) : REC_TYP doesn't match record" % hexify(record))
@@ -1595,7 +1681,7 @@ class STDR(ABC):
 
         items = {}
         for index in self.fields:
-            items[self.fields[index]['#']]=index
+            items[self.fields[index]['#']] = index
         for index in range(len(items)):
             self._unpack_item(items[index])
 
@@ -1611,63 +1697,63 @@ class STDR(ABC):
         if buffer_endian not in ['<', '>']:
             raise STDFError("Vn_decode() : unsupported endian '%s'" % buffer_endian)
 
-        return buffer_remainer #TODO: implement the tests for decoding of the V*n type and remove this bypass return statement
+        return buffer_remainer  # TODO: implement the tests for decoding of the V*n type and remove this bypass return statement
 
         while len(buffer_remainer) != 0:
             working_buffer = buffer_remainer[0:1]
             buffer_remainer = buffer_remainer[1:]
-            local_type, = struct.unpack('b', working_buffer) # type identifier
-            if local_type == 0: # B*0 Special pad field, of length 0
+            local_type, = struct.unpack('b', working_buffer)  # type identifier
+            if local_type == 0:  # B*0 Special pad field, of length 0
                 pass
-            elif local_type == 1: # U*1 One byte unsigned integer
+            elif local_type == 1:  # U*1 One byte unsigned integer
                 working_buffer = buffer_remainer[0:1]
                 buffer_remainer = buffer_remainer[1:]
                 retval[index]['Type'] = 'U*1'
                 retval[index]['Value'], = struct.unpack("%sB" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 2: # U*2 Two byte unsigned integer
+            elif local_type == 2:  # U*2 Two byte unsigned integer
                 working_buffer = buffer_remainer[0:2]
                 buffer_remainer = buffer_remainer[2:]
                 retval[index]['Type'] = 'U*2'
                 retval[index]['Value'], = struct.unpack("%sH" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 3: # U*4 Four byte unsigned integer
+            elif local_type == 3:  # U*4 Four byte unsigned integer
                 working_buffer = buffer_remainer[0:4]
                 buffer_remainer = buffer_remainer[4:]
                 retval[index]['Type'] = 'U*4'
                 retval[index]['Value'], = struct.unpack("%sI" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 4: # I*1 One byte signed integer
+            elif local_type == 4:  # I*1 One byte signed integer
                 working_buffer = buffer_remainer[0:1]
                 buffer_remainer = buffer_remainer[1:]
                 retval[index]['Type'] = 'I*1'
                 retval[index]['Value'], = struct.unpack("%sb" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 5: # I*2 Two byte signed integer
+            elif local_type == 5:  # I*2 Two byte signed integer
                 working_buffer = buffer_remainer[0:2]
                 buffer_remainer = buffer_remainer[2:]
                 retval[index]['Type'] = 'I*2'
                 retval[index]['Value'], = struct.unpack("%sh" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 6: # I*4 Four byte signed integer
+            elif local_type == 6:  # I*4 Four byte signed integer
                 working_buffer = buffer_remainer[0:4]
                 buffer_remainer = buffer_remainer[4:]
                 retval[index]['Type'] = 'I*4'
                 retval[index]['Value'], = struct.unpack("%si" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 7: # R*4 Four byte floating point number
+            elif local_type == 7:  # R*4 Four byte floating point number
                 working_buffer = buffer_remainer[0:4]
                 buffer_remainer = buffer_remainer[4:]
                 retval[index]['Type'] = 'R*4'
                 retval[index]['Value'], = struct.unpack("%sf" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 8: # R*8 Eight byte floating point number
+            elif local_type == 8:  # R*8 Eight byte floating point number
                 working_buffer = buffer_remainer[0:8]
                 buffer_remainer = buffer_remainer[8:]
                 retval[index]['Type'] = 'R*8'
                 retval[index]['Value'], = struct.unpack("%sd" % buffer_endian, working_buffer)
                 index += 1
-            elif local_type == 10: # C*n Variable length ASCII character string (first byte is string length in bytes)
+            elif local_type == 10:  # C*n Variable length ASCII character string (first byte is string length in bytes)
                 working_buffer = buffer_remainer[0:1]
                 buffer_remainer = buffer_remainer[1:]
                 Cn_length, = struct.unpack("%sB" % buffer_endian, working_buffer)
@@ -1676,7 +1762,7 @@ class STDR(ABC):
                 retval[index]['Type'] = 'C*n'
                 retval[index]['Value'] = working_buffer
                 index += 1
-            elif local_type == 11: # B*n Variable length binary data string (first byte is string length in bytes)
+            elif local_type == 11:  # B*n Variable length binary data string (first byte is string length in bytes)
                 working_buffer = buffer_remainer[0:1]
                 buffer_remainer = buffer_remainer[1:]
                 Bn_length, = struct.unpack("%sB" % buffer_endian, working_buffer)
@@ -1685,7 +1771,7 @@ class STDR(ABC):
                 retval[index]['Type'] = 'B*n'
                 retval[index]['Value'] = working_buffer
                 index += 1
-            elif local_type == 12: # D*n Bit encoded data (first two bytes of string are length in bits)
+            elif local_type == 12:  # D*n Bit encoded data (first two bytes of string are length in bits)
                 working_buffer = buffer_remainer[0:2]
                 buffer_remainer = buffer_remainer[2:]
                 Dn_length = struct.unpack("%sH" % buffer_endian, working_buffer)
@@ -1694,7 +1780,7 @@ class STDR(ABC):
                 retval[index]['Type'] = 'D*n'
                 retval[index]['Value'] = working_buffer
                 index += 1
-            elif local_type == 13: # N*1 Unsigned nibble
+            elif local_type == 13:  # N*1 Unsigned nibble
                 working_buffer = buffer_remainer[0:1]
                 buffer_remainer = buffer_remainer[1:]
                 retval[index]['Type'] = 'N*1'
@@ -1710,11 +1796,12 @@ class STDR(ABC):
             retval += self._type_size(field)
         return retval
 
-
     def __repr__(self):
         '''
         Method that packs the whole record and returns the packed version.
         '''
+        # TODO : move this one to __bytes__ (Python 3 !)
+        # TODO : __repr__ should return a statement that re-creates the object, probably something like obj = REC(...., X) where X is the __bytes__ result
         sequence = {}
         header = b''
         body = b''
@@ -1771,7 +1858,7 @@ class STDR(ABC):
         sequence = {}
         for field in self.fields:
             sequence[self.fields[field]['#']] = field
-        return {sequence[field]: self.fields[sequence[field]]['Value'] 
+        return {sequence[field]: self.fields[sequence[field]]['Value']
                 for field in sequence
                 if include_missing_values or self.fields[sequence[field]]['Value'] != self.fields[sequence[field]]['Missing']}
 
@@ -3635,15 +3722,18 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class RR1(STDR):
     def __init__(self, version=None, endian=None, record=None):
         self.id = 'RR1'
         raise STDFError("%s object creation error : reserved object", self.id)
 
+
 class RR2(STDR):
     def __init__(self, version=None, endian=None, record=None):
         self.id = 'RR2'
         raise STDFError("%s object creation error : reserved object", self.id)
+
 
 class SBR(STDR):
     def __init__(self, version=None, endian=None, record=None):
@@ -3757,6 +3847,7 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class SDR(STDR):
     def __init__(self, version=None, endian=None, record = None):
         self.id = 'SDR'
@@ -3807,11 +3898,12 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class SHB(STDR):
-    def __init__(self, version=None, endian=None, record = None):
+    def __init__(self, version=None, endian=None, record=None):
         self.id = 'SHB'
         self.local_debug = False
-        if version==None or version == 'V3':
+        if version is None or version == 'V3':
             self.version = 'V3'
             self.info = '''
 Site specific Hardware bin Record (V3+)
@@ -3844,11 +3936,12 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class SSB(STDR):
-    def __init__(self, version=None, endian=None, record = None):
+    def __init__(self, version=None, endian=None, record=None):
         self.id = 'SSB'
         self.local_debug = False
-        if version==None or version == 'V3':
+        if version is None or version == 'V3':
             self.version = 'V3'
             self.info = '''
 Site specific Software Bin record (V3+)
@@ -3881,13 +3974,14 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class SSR(STDR):
-    def __init__(self, version=None, endian=None, record = None):
+    def __init__(self, version=None, endian=None, record=None):
         self.id = 'SSR'
         self.local_debug = False
-        if version==None or version == 'V4':
+        if version is None or version == 'V4':
             self.version = 'V4'
-            self.info=    '''
+            self.info = '''
 Scan Structure Record
 ---------------------
 
@@ -3914,13 +4008,14 @@ Location:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
         self._default_init(endian, record)
 
+
 class STR(STDR):
-    def __init__(self, version=None, endian=None, record = None):
+    def __init__(self, version=None, endian=None, record=None):
         self.id = 'STR'
         self.local_debug = False
-        if version==None or version=='V4':
+        if version is None or version=='V4':
             self.version = 'V4'
-            self.info=    '''
+            self.info = '''
 Record
 ------------------
 
@@ -3936,68 +4031,68 @@ Location:
     ?!?
 '''
             self.fields = {
-                'REC_LEN'  : {'#' :  0, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Bytes of data following header        ', 'Missing' : None   },
-                'REC_TYP'  : {'#' :  1, 'Type' : 'U*1',  'Ref' : None,                     'Value' :   15, 'Text' : 'Record type                           ', 'Missing' : None   },
-                'REC_SUB'  : {'#' :  2, 'Type' : 'U*1',  'Ref' : None,                     'Value' :   30, 'Text' : 'Record sub-type                       ', 'Missing' : None   },
-                'CONT_FLG' : {'#' :  3, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Continuation STRs follow (if not 0)   ', 'Missing' : 0      },
-                'TEST_NUM' : {'#' :  4, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Test number                           ', 'Missing' : None   },
-                'HEAD_NUM' : {'#' :  5, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test head number                      ', 'Missing' : 1      },
-                'SITE_NUM' : {'#' :  6, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test site number                      ', 'Missing' : 1      },
-                'PSR_REF'  : {'#' :  7, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'PSR Index (Pattern Sequence Record)   ', 'Missing' : 0      },
-                'TEST_FLG' : {'#' :  8, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test flags (fail, alarm, etc.)        ', 'Missing' : ['0']*8},
-                'LOG_TYP'  : {'#' :  9, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'User defined description of datalog   ', 'Missing' : ''     },
-                'TEST_TXT' : {'#' : 10, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Descriptive text or label             ', 'Missing' : ''     },
-                'ALARM_ID' : {'#' : 11, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Name of alarm                         ', 'Missing' : ''     },
-                'PROG_TXT' : {'#' : 12, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Additional Programmed information     ', 'Missing' : ''     },
-                'RSLT_TXT' : {'#' : 13, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Additional result information         ', 'Missing' : ''     },
-                'Z_VAL'    : {'#' : 14, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Z Handling Flag                       ', 'Missing' : 0      },
-                'FMU_FLG'  : {'#' : 15, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'MASK_MAP & FAL_MAP field status       ', 'Missing' : ['0']*8},
-                'MASK_MAP' : {'#' : 16, 'Type' : 'D*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Bit map of Globally Masked Pins       ', 'Missing' : []     },
-                'FAL_MAP'  : {'#' : 17, 'Type' : 'D*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Bit map of failures after buffer full ', 'Missing' : []     },
-                'CYC_CNT'  : {'#' : 18, 'Type' : 'U*8',  'Ref' : None,                     'Value' : None, 'Text' : 'Total cycles executed in test         ', 'Missing' : 0      },
-                'TOTF_CNT' : {'#' : 19, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Total failures (pin x cycle) detected ', 'Missing' : 0      },
-                'TOTL_CNT' : {'#' : 20, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : "Total fails logged across all STR's   ", 'Missing' : 0      },
-                'CYC_BASE' : {'#' : 21, 'Type' : 'U*8',  'Ref' : None,                     'Value' : None, 'Text' : 'Cycle offset to apply to CYCL_NUM arr ', 'Missing' : 0      },
-                'BIT_BASE' : {'#' : 22, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Offset to apply to BIT_POS array      ', 'Missing' : 0      },
-                'COND_CNT' : {'#' : 23, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (g) of Test Conditions+opt spec ', 'Missing' : 0      },
-                'LIM_CNT'  : {'#' : 24, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (j) of LIM Arrays in cur. rec.  ', 'Missing' : 0      }, # 1 = global
-                'CYC_SIZE' : {'#' : 25, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of  CYC_OFST    ', 'Missing' : 1      },
-                'PMR_SIZE' : {'#' : 26, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1 or 2] of PMR_INDX         ', 'Missing' : 1      },
-                'CHN_SIZE' : {'#' : 27, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1, 2 or 4] of CHN_NUM       ', 'Missing' : 1      },
-                'PAT_SIZE' : {'#' : 28, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2, or 4] of PAT_NUM       ', 'Missing' : 1      },
-                'BIT_SIZE' : {'#' : 29, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2, or 4] of BIT_POS       ', 'Missing' : 1      },
-                'U1_SIZE'  : {'#' : 30, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR1         ', 'Missing' : 1      },
-                'U2_SIZE'  : {'#' : 31, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR2         ', 'Missing' : 1      },
-                'U3_SIZE'  : {'#' : 32, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR3         ', 'Missing' : 1      },
-                'UTX_SIZE' : {'#' : 33, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) of each string in USER_TXT   ', 'Missing' : 0      },
-                'CAP_BGN'  : {'#' : 34, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Offset to BIT_POS to get capture cycls', 'Missing' : 0      },
-                'LIM_INDX' : {'#' : 35, 'Type' : 'xU*2', 'Ref' : 'LIM_CNT',                'Value' : None, 'Text' : 'Array of PMR unique limit specs       ', 'Missing' : []     },
-                'LIM_SPEC' : {'#' : 36, 'Type' : 'xU*4', 'Ref' : 'LIM_CNT',                'Value' : None, 'Text' : "Array of fail datalog limits for PMR's", 'Missing' : []     },
-                'COND_LST' : {'#' : 37, 'Type' : 'xC*n', 'Ref' : 'COND_CNT',               'Value' : None, 'Text' : 'Array of test condition (Name=value)  ', 'Missing' : []     },
-                'CYC_CNT'  : {'#' : 38, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in CYC_OFST array', 'Missing' : 0      },
-                'CYC_OFST' : {'#' : 39, 'Type' : 'xU*f', 'Ref' : ('CYC_CNT', 'CYC_SIZE'),  'Value' : None, 'Text' : 'Array of cycle nrs relat to CYC_BASE  ', 'Missing' : []     },
-                'PMR_CNT'  : {'#' : 40, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in the PMR_INDX  ', 'Missing' : 0      },
-                'PMR_INDX' : {'#' : 41, 'Type' : 'xU*f', 'Ref' : ('PMR_CNT', 'PMR_SIZE'),  'Value' : None, 'Text' : 'Array of PMR Indexes (All Formats)    ', 'Missing' : []     },
-                'CHN_CNT'  : {'#' : 42, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in the CHN_NUM   ', 'Missing' : 0      },
-                'CHN_NUM'  : {'#' : 43, 'Type' : 'xU*f', 'Ref' : ('CHN_CNT', 'CHN_SIZE'),  'Value' : None, 'Text' : 'Array of Chain No for FF Name Mapping ', 'Missing' : []     },
-                'EXP_CNT'  : {'#' : 44, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of EXP_DATA array entries   ', 'Missing' : 0      },
-                'EXP_DATA' : {'#' : 45, 'Type' : 'xU*1', 'Ref' : 'EXP_CNT',                'Value' : None, 'Text' : 'Array of expected vector data         ', 'Missing' : []     },
-                'CAP_CNT'  : {'#' : 46, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of CAP_DATA array entries   ', 'Missing' : 0      },
-                'CAP_DATA' : {'#' : 47, 'Type' : 'xU*1', 'Ref' : 'CAP_CNT',                'Value' : None, 'Text' : 'Array of captured data                ', 'Missing' : []     },
-                'NEW_CNT'  : {'#' : 48, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of NEW_DATA array entries   ', 'Missing' : 0      },
-                'NEW_DATA' : {'#' : 49, 'Type' : 'xU*1', 'Ref' : 'NEW_CNT',                'Value' : None, 'Text' : 'Array of new vector data              ', 'Missing' : []     },
-                'PAT_CNT'  : {'#' : 50, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of PAT_NUM array entries    ', 'Missing' : 0      },
-                'PAT_NUM'  : {'#' : 51, 'Type' : 'xU*f', 'Ref' : ('PAT_CNT', 'PAT_SIZE'),  'Value' : None, 'Text' : 'Array of pattern # (Ptn/Chn/Bit fmt)  ', 'Missing' : []     },
-                'BPOS_CNT' : {'#' : 52, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of BIT_POS array entries    ', 'Missing' : 0      },
-                'BIT_POS'  : {'#' : 53, 'Type' : 'xU*f', 'Ref' : ('BPOS_CNT', 'BIT_SIZE'), 'Value' : None, 'Text' : 'Array of chain bit (Ptn/Chn/Bit fmt)  ', 'Missing' : []     },
-                'USR1_CNT' : {'#' : 54, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR1 array entries       ', 'Missing' : 0      },
-                'USR1'     : {'#' : 55, 'Type' : 'xU*f', 'Ref' : ('USR1_CNT', 'U1_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []     },
-                'USR2_CNT' : {'#' : 56, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR2 array entries       ', 'Missing' : 0      },
-                'USR2'     : {'#' : 57, 'Type' : 'xU*f', 'Ref' : ('USR2_CNT', 'U2_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []     },
-                'USR3_CNT' : {'#' : 58, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR3 array entries       ', 'Missing' : 0      },
-                'USR3'     : {'#' : 59, 'Type' : 'xU*f', 'Ref' : ('USR3_CNT', 'U3_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []     },
-                'TXT_CNT'  : {'#' : 60, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USER_TXT array entries   ', 'Missing' : 0      },
-                'USER_TXT' : {'#' : 61, 'Type' : 'xC*f', 'Ref' : ('TXT_CNT', 'UTX_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []     }
+                'REC_LEN'  : {'#' :  0, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Bytes of data following header        ', 'Missing' : None     },
+                'REC_TYP'  : {'#' :  1, 'Type' : 'U*1',  'Ref' : None,                     'Value' :   15, 'Text' : 'Record type                           ', 'Missing' : None     },
+                'REC_SUB'  : {'#' :  2, 'Type' : 'U*1',  'Ref' : None,                     'Value' :   30, 'Text' : 'Record sub-type                       ', 'Missing' : None     },
+                'CONT_FLG' : {'#' :  3, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Continuation STRs follow (if not 0)   ', 'Missing' : 0        },
+                'TEST_NUM' : {'#' :  4, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Test number                           ', 'Missing' : None     },
+                'HEAD_NUM' : {'#' :  5, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test head number                      ', 'Missing' : 1        },
+                'SITE_NUM' : {'#' :  6, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test site number                      ', 'Missing' : 1        },
+                'PSR_REF'  : {'#' :  7, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'PSR Index (Pattern Sequence Record)   ', 'Missing' : 0        },
+                'TEST_FLG' : {'#' :  8, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Test flags (fail, alarm, etc.)        ', 'Missing' : ['0'] * 8},
+                'LOG_TYP'  : {'#' :  9, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'User defined description of datalog   ', 'Missing' : ''       },
+                'TEST_TXT' : {'#' : 10, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Descriptive text or label             ', 'Missing' : ''       },
+                'ALARM_ID' : {'#' : 11, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Name of alarm                         ', 'Missing' : ''       },
+                'PROG_TXT' : {'#' : 12, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Additional Programmed information     ', 'Missing' : ''       },
+                'RSLT_TXT' : {'#' : 13, 'Type' : 'C*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Additional result information         ', 'Missing' : ''       },
+                'Z_VAL'    : {'#' : 14, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Z Handling Flag                       ', 'Missing' : 0        },
+                'FMU_FLG'  : {'#' : 15, 'Type' : 'B*1',  'Ref' : None,                     'Value' : None, 'Text' : 'MASK_MAP & FAL_MAP field status       ', 'Missing' : ['0'] * 8},
+                'MASK_MAP' : {'#' : 16, 'Type' : 'D*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Bit map of Globally Masked Pins       ', 'Missing' : []       },
+                'FAL_MAP'  : {'#' : 17, 'Type' : 'D*n',  'Ref' : None,                     'Value' : None, 'Text' : 'Bit map of failures after buffer full ', 'Missing' : []       },
+                'CYC_CNT'  : {'#' : 18, 'Type' : 'U*8',  'Ref' : None,                     'Value' : None, 'Text' : 'Total cycles executed in test         ', 'Missing' : 0        },
+                'TOTF_CNT' : {'#' : 19, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Total failures (pin x cycle) detected ', 'Missing' : 0        },
+                'TOTL_CNT' : {'#' : 20, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : "Total fails logged across all STR's   ", 'Missing' : 0        },
+                'CYC_BASE' : {'#' : 21, 'Type' : 'U*8',  'Ref' : None,                     'Value' : None, 'Text' : 'Cycle offset to apply to CYCL_NUM arr ', 'Missing' : 0        },
+                'BIT_BASE' : {'#' : 22, 'Type' : 'U*4',  'Ref' : None,                     'Value' : None, 'Text' : 'Offset to apply to BIT_POS array      ', 'Missing' : 0        },
+                'COND_CNT' : {'#' : 23, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (g) of Test Conditions+opt spec ', 'Missing' : 0        },
+                'LIM_CNT'  : {'#' : 24, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (j) of LIM Arrays in cur. rec.  ', 'Missing' : 0        },  # 1 = global
+                'CYC_SIZE' : {'#' : 25, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of  CYC_OFST    ', 'Missing' : 1        },
+                'PMR_SIZE' : {'#' : 26, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1 or 2] of PMR_INDX         ', 'Missing' : 1        },
+                'CHN_SIZE' : {'#' : 27, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1, 2 or 4] of CHN_NUM       ', 'Missing' : 1        },
+                'PAT_SIZE' : {'#' : 28, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2, or 4] of PAT_NUM       ', 'Missing' : 1        },
+                'BIT_SIZE' : {'#' : 29, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2, or 4] of BIT_POS       ', 'Missing' : 1        },
+                'U1_SIZE'  : {'#' : 30, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR1         ', 'Missing' : 1        },
+                'U2_SIZE'  : {'#' : 31, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR2         ', 'Missing' : 1        },
+                'U3_SIZE'  : {'#' : 32, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) [1,2,4 or 8] of USR3         ', 'Missing' : 1        },
+                'UTX_SIZE' : {'#' : 33, 'Type' : 'U*1',  'Ref' : None,                     'Value' : None, 'Text' : 'Size (f) of each string in USER_TXT   ', 'Missing' : 0        },
+                'CAP_BGN'  : {'#' : 34, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Offset to BIT_POS to get capture cycls', 'Missing' : 0        },
+                'LIM_INDX' : {'#' : 35, 'Type' : 'xU*2', 'Ref' : 'LIM_CNT',                'Value' : None, 'Text' : 'Array of PMR unique limit specs       ', 'Missing' : []       },
+                'LIM_SPEC' : {'#' : 36, 'Type' : 'xU*4', 'Ref' : 'LIM_CNT',                'Value' : None, 'Text' : "Array of fail datalog limits for PMR's", 'Missing' : []       },
+                'COND_LST' : {'#' : 37, 'Type' : 'xC*n', 'Ref' : 'COND_CNT',               'Value' : None, 'Text' : 'Array of test condition (Name=value)  ', 'Missing' : []       },
+                'CYC_CNT'  : {'#' : 38, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in CYC_OFST array', 'Missing' : 0        },
+                'CYC_OFST' : {'#' : 39, 'Type' : 'xU*f', 'Ref' : ('CYC_CNT', 'CYC_SIZE'),  'Value' : None, 'Text' : 'Array of cycle nrs relat to CYC_BASE  ', 'Missing' : []       },
+                'PMR_CNT'  : {'#' : 40, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in the PMR_INDX  ', 'Missing' : 0        },
+                'PMR_INDX' : {'#' : 41, 'Type' : 'xU*f', 'Ref' : ('PMR_CNT', 'PMR_SIZE'),  'Value' : None, 'Text' : 'Array of PMR Indexes (All Formats)    ', 'Missing' : []       },
+                'CHN_CNT'  : {'#' : 42, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of entries in the CHN_NUM   ', 'Missing' : 0        },
+                'CHN_NUM'  : {'#' : 43, 'Type' : 'xU*f', 'Ref' : ('CHN_CNT', 'CHN_SIZE'),  'Value' : None, 'Text' : 'Array of Chain No for FF Name Mapping ', 'Missing' : []       },
+                'EXP_CNT'  : {'#' : 44, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of EXP_DATA array entries   ', 'Missing' : 0        },
+                'EXP_DATA' : {'#' : 45, 'Type' : 'xU*1', 'Ref' : 'EXP_CNT',                'Value' : None, 'Text' : 'Array of expected vector data         ', 'Missing' : []       },
+                'CAP_CNT'  : {'#' : 46, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of CAP_DATA array entries   ', 'Missing' : 0        },
+                'CAP_DATA' : {'#' : 47, 'Type' : 'xU*1', 'Ref' : 'CAP_CNT',                'Value' : None, 'Text' : 'Array of captured data                ', 'Missing' : []       },
+                'NEW_CNT'  : {'#' : 48, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of NEW_DATA array entries   ', 'Missing' : 0        },
+                'NEW_DATA' : {'#' : 49, 'Type' : 'xU*1', 'Ref' : 'NEW_CNT',                'Value' : None, 'Text' : 'Array of new vector data              ', 'Missing' : []       },
+                'PAT_CNT'  : {'#' : 50, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of PAT_NUM array entries    ', 'Missing' : 0        },
+                'PAT_NUM'  : {'#' : 51, 'Type' : 'xU*f', 'Ref' : ('PAT_CNT', 'PAT_SIZE'),  'Value' : None, 'Text' : 'Array of pattern # (Ptn/Chn/Bit fmt)  ', 'Missing' : []       },
+                'BPOS_CNT' : {'#' : 52, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of BIT_POS array entries    ', 'Missing' : 0        },
+                'BIT_POS'  : {'#' : 53, 'Type' : 'xU*f', 'Ref' : ('BPOS_CNT', 'BIT_SIZE'), 'Value' : None, 'Text' : 'Array of chain bit (Ptn/Chn/Bit fmt)  ', 'Missing' : []       },
+                'USR1_CNT' : {'#' : 54, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR1 array entries       ', 'Missing' : 0        },
+                'USR1'     : {'#' : 55, 'Type' : 'xU*f', 'Ref' : ('USR1_CNT', 'U1_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []       },
+                'USR2_CNT' : {'#' : 56, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR2 array entries       ', 'Missing' : 0        },
+                'USR2'     : {'#' : 57, 'Type' : 'xU*f', 'Ref' : ('USR2_CNT', 'U2_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []       },
+                'USR3_CNT' : {'#' : 58, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USR3 array entries       ', 'Missing' : 0        },
+                'USR3'     : {'#' : 59, 'Type' : 'xU*f', 'Ref' : ('USR3_CNT', 'U3_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []       },
+                'TXT_CNT'  : {'#' : 60, 'Type' : 'U*2',  'Ref' : None,                     'Value' : None, 'Text' : 'Count (k) of USER_TXT array entries   ', 'Missing' : 0        },
+                'USER_TXT' : {'#' : 61, 'Type' : 'xC*f', 'Ref' : ('TXT_CNT', 'UTX_SIZE'),  'Value' : None, 'Text' : 'Array of logged fail                  ', 'Missing' : []       }
             }
         else:
             raise STDFError("%s object creation error: unsupported version '%s'" % (self.id, version))
