@@ -297,21 +297,30 @@ def toppprint(fd, op):
         if len(f"{op[param]['fmt']}") > fmt_:
             fmt_ = len(f"{op[param]['fmt']}")
 
-    name_ += 2
+    # name_ += 2
+    if name_ < 9:
+        name_ = 9  # for the header
     mul_ += 2
     unit_ += 2
     fmt_ += 2
 
-    cw(fd, f"{indent}output_parameters = {{")
+    th = f"{indent}{indent}{'Parameter':{name_}} | LSL"
+    cw(fd, th)
+
+    bh = f"{indent}{indent}"
+    b_parameter = '-' * (name_ + 1)
+    b_parameter += '+'
+    cw(fd, bh)
+
     for index, param in enumerate(op):
         ind = f"{indent}{indent}"
 
-        name = f"'{param}':"
-        Name = f"{name:{name_}}{{"
+        name = f"{param}"
+        Name = f"{name:{name_}} | "
 
-        LSL = f"'LSL': {op[param]['LSL']:{LSL_}{op[param]['fmt']}}, "
+        LSL = f"{LSL_:{op[param]['fmt']}} | "
 
-        LTL = f"'LTL': {op[param]['LTL']:{LTL_}{op[param]['fmt']}}, "
+        LTL = f"'{op[param]['LTL']:{LTL_}{op[param]['fmt']}}, "
 
         Nom = f"'Nom': {op[param]['Nom']:{Nom_}{op[param]['fmt']}}, "
 
@@ -349,4 +358,4 @@ if __name__ == '__main__':
         'new_parameter4': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.3f'}}
 
     # tippprint(None, input_parameters)
-    # toppprint(None, output_parameters)
+    toppprint(None, output_parameters)
