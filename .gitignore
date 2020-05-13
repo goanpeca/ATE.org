@@ -15,7 +15,7 @@ __pycache__/*
 .DS_Store
 
 # test artifacts
-src/ATE/org/coding/src/
+src/ATE/org/coding/TRIAL/
 
 # Project files
 .spyproject/*

@@ -906,7 +906,7 @@ class FT_common_generator:
         template = env.get_template(template_name)
 
         hardware = HWdefinition['hardware']
-        file_name = '__init__.py'
+        file_name = 'common.py'
         rel_path_to_dir = os.path.join('src', hardware, 'FT')
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)

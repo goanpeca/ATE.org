@@ -1,9 +1,0 @@
-# -*- coding: utf-8 -*-
-"""
-This is the 'common.py' file for ''/'FT'
-"""
-
-from . import __init__  # Do **NOT** touch !
-from .. import common  # Do **NOT** toych !
-
-# Add your stuff after this line.
