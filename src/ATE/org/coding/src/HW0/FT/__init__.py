@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Do **NOT** change anything in this module, as it is automatically generated thus your changes **WILL** be lost in time!
+
+If you have the need to add things, add it to 'common.py' (which is including this file).
+
+BTW : YOU SHOULD **NOT** EVEN BE READING THIS !!!
+"""
+from .. import __init__
+from trial_BC import trial_BC
+
+base = 'FT'

@@ -31,7 +31,7 @@ class testABC(abc.ABC):
     tester = None
     ran_before = False
 
-    def __init__(self, call_values=None, limits=None, SBINs=None):
+    def __init__(self, call_values=None, limits=None, SBINs=None, TEST_NUMS=None):
         self.name = self.__class__.__name__
         tmp = str(inspect.getmodule(self)).split("from '")[1].replace("'", '').replace('>', '').split('/')
         self.test_dir = os.sep.join(tmp[0:-1])

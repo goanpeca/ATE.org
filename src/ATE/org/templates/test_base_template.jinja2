@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+"""
+{% for line in module_doc_string %}
+{{ line }}
+{% endfor %}
+
+Do **NOT** change anything in this module, as it is automatically generated thus your changes **WILL** be lost in time!
+
+If you have the need to add things, add it to '{{ definition['name'] }}.py' or 'common.py'
+
+BTW : YOU SHOULD **NOT** BE READING THIS !!!
+"""
+
+import numpy as np
+from ATE.org.coding.abc import testABC, ipBC, opBC
+from ATE.data.descriptors import IPDescriptor, OPDescriptor
+
+
+class {{ definition['name'] }}_OP(opBC):
+    """Class definition for the output parameters of {{ definition['name'] }}."""
+
+    {% for output_parameter in definition['output_parameters'] %}
+    {{ output_parameter }} = OPDescriptor('{{ output_parameter }}')
+    {% endfor %}
+
+    def __init__(self):
+        super().__init__()
+        self._output_parameters = {
+            {% for line in opppd %}
+            {{ line }}
+            {% endfor %}
+        self.__call__()
+
+
+class {{ definition['name']}}_IP(ipBC):
+    """Class definition for the input parameters of {{ definition['name'] }}."""
+
+    {% for input_parameter in definition['input_parameters'] %}
+    {{ input_parameter }} = IPDescriptor('{{ input_parameter }}')
+    {% endfor %}
+
+    def __init__(self):
+        super().__init__()
+        self._input_parameters = {
+            {% for line in ipppd %}
+            {{ line }}
+            {% endfor %}
+        self.__call__()
+
+
+class {{ definition['name'] }}_BC(testABC):
+    '''Base class definition for {{ definition['name'] }}'''
+
+    hardware = '{{ definition['hardware'] }}'
+    base = '{{ definition['base'] }}'
+    Type = '{{ definition['type'] }}'
+
+    def __init__(self):
+        super().__init__()
+        self.ip = {{ definition['name']}}_IP()
+        self.op = {{ definition['name'] }}_OP()
+
