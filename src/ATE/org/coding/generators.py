@@ -372,6 +372,7 @@ def generate_output_parameters_ppd(op):
 def test_generator(project_path, definition):
     test_base_generator(project_path, definition)
     test_proper_generator(project_path, definition)
+    test__init__generator(project_path, definition)
 
 
 class test_proper_generator:
@@ -388,10 +389,14 @@ class test_proper_generator:
         template_name = template_name.replace('generator', 'template') + '.jinja2'
         template = env.get_template(template_name)
 
-        name = definition['name']
         hardware = definition['hardware']
         base = definition['base']
+        name = definition['name']
         file_name = f"{name}.py"
+
+        rel_path_to_dir = os.path.join('src', hardware, base, name)
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
         msg = template.render(
             module_doc_string=generate_module_docstring(),
@@ -399,10 +404,8 @@ class test_proper_generator:
             output_parameter_table=generate_output_parameters_table(definition['output_parameters']),
             definition=definition)
 
-        rel_path_to_file = os.path.join('src', hardware, base, file_name)
-        abs_path_to_file = os.path.join(project_path, rel_path_to_file)
-        if not os.path.exists(os.path.dirname(abs_path_to_file)):
-            os.makedirs(os.path.dirname(abs_path_to_file))
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
         f = open(abs_path_to_file, 'w', encoding='utf-8')
         f.write(msg)
 
@@ -421,10 +424,14 @@ class test_base_generator:
         template_name = template_name.replace('generator', 'template') + '.jinja2'
         template = env.get_template(template_name)
 
-        name = definition['name']
         hardware = definition['hardware']
         base = definition['base']
+        name = definition['name']
         file_name = f"{name}_BC.py"
+
+        rel_path_to_dir = os.path.join('src', hardware, base, name)
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
         msg = template.render(
             module_doc_string=generate_module_docstring(),
@@ -432,12 +439,55 @@ class test_base_generator:
             opppd=generate_output_parameters_ppd(definition['output_parameters']),
             definition=definition)
 
-        rel_path_to_file = os.path.join('src', hardware, base, file_name)
-        abs_path_to_file = os.path.join(project_path, rel_path_to_file)
-        if not os.path.exists(os.path.dirname(abs_path_to_file)):
-            os.makedirs(os.path.dirname(abs_path_to_file))
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
         f = open(abs_path_to_file, 'w', encoding='utf-8')
         f.write(msg)
+
+
+class test__init__generator:
+    """Generator for the __init__.py file of a given test."""
+
+    def __init__(self, project_path, definition):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        template = env.get_template(template_name)
+
+        hardware = definition['hardware']
+        base = definition['base']
+        name = definition['name']
+        file_name = '__init__.py'
+
+        rel_path_to_dir = os.path.join('src', hardware, base, name)
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        imports = []
+        for item in os.listdir(abs_path_to_dir):
+            if item.upper().endswith('_BC.PY'):
+                what = '.'.join(item.split('.')[:-1])
+                imports.append(f"from {what} import {what}")
+
+        msg = template.render(
+            hardware=hardware,
+            base=base,
+            name=name,
+            imports=imports)
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+        f = open(abs_path_to_file, 'w', encoding='utf-8')
+        f.write(msg)
+
+
+def test_program_generator(project_path, definition):
+    pass
 
 
 class HW_common_generator:
@@ -455,6 +505,7 @@ class PR_common_generatror:
 class src__init__generator:
     """Generator for the __init__.py file of the src (root)"""
     pass
+
 
 class HW__init__generator:
     pass
@@ -530,6 +581,10 @@ class PR__init__generator:
         f.write(msg)
 
 
+
+
+
+
 if __name__ == '__main__':
     definition = {
         'name' : 'trial',
@@ -557,6 +612,8 @@ if __name__ == '__main__':
         print(line)
     print()
 
+    test_generator(project_path, definition)
+    definition['base'] = 'PR'
     test_generator(project_path, definition)
 
     for line in generate_input_parameters_table(definition['input_parameters']):

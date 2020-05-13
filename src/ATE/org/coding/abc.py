@@ -96,11 +96,11 @@ class testABC(abc.ABC):
                 else:
                     UTL = self._input_parameters[parameter]['UTL']
 
-                if self._input_parameters[parameter]['Nom'] < LTL:
-                    raise Exception(f"Nom < LTL for {parameter}")
+                if μ < LTL:
+                    raise Exception(f"μ ({μ}) < LTL ({LTL}) for {parameter}")
 
-                if self._input_parameters[parameter]['Nom'] > UTL:
-                    raise Exception(f"Nom > UTL for {parameter}")
+                if μ > UTL:
+                    raise Exception(f"μ ({μ}) > UTL ({UTL}) for {parameter}")
 
                 σ = abs(μ - LTL)
                 if σ < abs(UTL - μ):
