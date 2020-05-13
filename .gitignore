@@ -14,6 +14,9 @@ __pycache__/*
 */.ipynb_checkpoints/*
 .DS_Store
 
+# test artifacts
+src/ATE/org/coding/src/
+
 # Project files
 .spyproject/*
 .ropeproject
