@@ -146,10 +146,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         new_project_name, new_project_quality = NewProjectDialog(self, self.project_info)
         print(f"SpyderMockUp.new_project : new_project_name = '{new_project_name}' & new_project_quality = '{new_project_quality}'")
-        self.project_info.add_project(
+        self.project_info.add_project(new_project_name, new_project_quality)
 
-
-new_project_name, new_project_quality)
         self.toolbar(self.project_info)
         self.set_tree()
 

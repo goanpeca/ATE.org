@@ -10,7 +10,7 @@ References:
     numpy doc style : https://numpydoc.readthedocs.io/en/latest/format.html
 
 """
-import os
+import os, shutil
 import numpy as np
 from ATE.utils.DT import DT
 import getpass
@@ -369,6 +369,19 @@ def prepare_output_parameters_ppd(op):
     return retval
 
 
+def HW_generator(project_path, hardware):
+    """Generator for a new hardware structure."""
+
+    HW__init__generator(project_path, hardware)
+    HW_common_generator(project_path, hardware)
+
+    PR__init__generator(project_path, hardware)
+    PR_common_generator(project_path, hardware)
+
+    FT__init__generator(project_path, hardware)
+    FT_common_generator(project_path, hardware)
+
+
 def test_generator(project_path, definition):
     test_base_generator(project_path, definition)
     test_proper_generator(project_path, definition)
@@ -490,24 +503,180 @@ def test_program_generator(project_path, definition):
     pass
 
 
-class HW_common_generator:
+def project_generator(project_path):
+    """This function generates the
+
+    This generator should be called upon the creation of a new project.
+    It will subsequently call the following generators:
+        - spyder_generator
+        - doc_generator
+        - src__init__generator
+    """
+    project_root_generator(project_path)
+    src__init__generator(project_path)
+    project_doc_generator(project_path)
+    project_spyder_generator(project_path)
+
+
+def project_root_generator(project_path):
+    """This function will create the base project structure.
+
+    Here we put all the **FILES** that live in ther project root.
+    """
+
+    os.makedirs(project_path)
+    project__main__generator(project_path)
+    project__init__generator(project_path)
+    project_gitignore_generator(project_path)
+
+
+def project_doc_generator(project_path):
+    """This function will create and populate the 'doc' directory under the project root.
+
+    This generator should be called **ONCE** upon the creation of a new project.
+    """
     pass
 
 
-class FT_common_generator:
+def project_spyder_generator(project_path):
+    """This function will create and populate the project with spyder config files.
+
+    This generator should be called **ONCE** upon the creation of a new project.
+    """
     pass
 
 
-class PR_common_generatror:
-    pass
+class project__main__generator:
+    """Generator for the project's __main__.py file."""
+
+    def __init__(self, project_path):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+
+        file_name = '__main__.py'
+
+        abs_path_to_dir = project_path
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        msg = template.render()
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+        f = open(abs_path_to_file, 'w', encoding='utf-8')
+        f.write(msg)
+
+
+class project__init__generator:
+    """Generator for the project's __init__.py file."""
+
+    def __init__(self, project_path):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+
+        file_name = '__init__.py'
+
+        abs_path_to_dir = project_path
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        msg = template.render()
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+        f = open(abs_path_to_file, 'w', encoding='utf-8')
+        f.write(msg)
+
+
+class project_gitignore_generator:
+    """Generator for the project's .gitignore file."""
+
+    def __init__(self, project_path):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+
+        file_name = '.gitignore'
+
+        abs_path_to_dir = project_path
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        msg = template.render()
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+        f = open(abs_path_to_file, 'w', encoding='utf-8')
+        f.write(msg)
 
 
 class src__init__generator:
-    """Generator for the __init__.py file of the src (root)"""
+    """Generator for the __init__.py file of the src (root)
+
+    This file contains nothing more than "system wide" 'constants'
+
+    This generator should be called upon the creation of a new project.
+    """
+
+    def __init__(self, project_path):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+
+        file_name = '__init__.py'
+
+        rel_path_to_dir = 'src'
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        msg = template.render()
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+        f = open(abs_path_to_file, 'w', encoding='utf-8')
+        f.write(msg)
+
+
+class src_common_generator:
     pass
 
 
 class HW__init__generator:
+    pass
+
+
+class HW_common_generator:
     pass
 
 
@@ -546,6 +715,10 @@ class FT__init__generator:
         f.write(msg)
 
 
+class FT_common_generator:
+    pass
+
+
 class PR__init__generator:
     """Generator for the __init__.py file of 'PR' for the given hardware."""
 
@@ -581,19 +754,19 @@ class PR__init__generator:
         f.write(msg)
 
 
-
-
+class PR_common_generatror:
+    pass
 
 
 if __name__ == '__main__':
     definition = {
-        'name' : 'trial',
-        'type' : 'custom',
-        'hardware' : 'HW0',
-        'base' : 'FT',
-        'doc_string' : ['line1', 'line2'],
-        'input_parameters' : {
-            'Temperature' : {'Shmoo': True, 'Min': -40.0, 'Default': 25.0, 'Max': 170.0, '10ᵡ': '', 'Unit': '°C', 'fmt': '.0f'},
+        'name': 'trial',
+        'type': 'custom',
+        'hardware': 'HW0',
+        'base': 'FT',
+        'doc_string': ['line1', 'line2'],
+        'input_parameters': {
+            'Temperature':    {'Shmoo': True, 'Min': -40.0, 'Default': 25.0, 'Max': 170.0, '10ᵡ': '', 'Unit': '°C', 'fmt': '.0f'},
             'new_parameter1': {'Shmoo': False, 'Min': -np.inf, 'Default': 0.0, 'Max': np.inf, '10ᵡ': 'μ', 'Unit':  'V', 'fmt': '.3f'},
             'new_parameter2': {'Shmoo': False, 'Min': -np.inf, 'Default':  0.123456789, 'Max': np.inf, '10ᵡ':  '', 'Unit':  'dB', 'fmt': '.6f'}},
         'output_parameters' : {
@@ -603,33 +776,15 @@ if __name__ == '__main__':
             'new_parameter4': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.3f'}},
         'dependencies' : {}}
 
-    project_path = os.path.dirname(__file__)
-    dump_dir = os.path.join(project_path, 'src', definition['hardware'], definition['base'])
-    if not os.path.exists(dump_dir):
-        os.makedirs(dump_dir)
+    project_path = os.path.join(os.path.dirname(__file__), 'TRIAL')
+    if os.path.exists(project_path):
+        shutil.rmtree(project_path)
 
-    for line in prepare_module_docstring():
-        print(line)
-    print()
+    project_generator(project_path)
 
-    test_generator(project_path, definition)
-    definition['base'] = 'PR'
-    test_generator(project_path, definition)
+    # HW_generator(project_path, definition['hardware'])
 
-    for line in prepare_input_parameters_table(definition['input_parameters']):
-        print(line)
-    print()
+    # test_generator(project_path, definition)
+    # definition['base'] = 'PR'
+    # test_generator(project_path, definition)
 
-    for line in prepare_input_parameters_ppd(definition['input_parameters']):
-        print(line)
-    print()
-
-    for line in prepare_output_parameters_table(definition['output_parameters']):
-        print(line)
-    print()
-
-    for line in prepare_output_parameters_ppd(definition['output_parameters']):
-        print(line)
-
-    PR__init__generator(project_path, 'HW0')
-    FT__init__generator(project_path, 'HW0')

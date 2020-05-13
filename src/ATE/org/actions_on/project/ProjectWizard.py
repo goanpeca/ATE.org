@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from ATE.org.validation import is_valid_project_name, valid_project_name_regex
 from ATE.org.listings import list_ATE_projects
 
+
 class ProjectWizard(QtWidgets.QDialog):
 
     def __init__(self, parent, navigator, title):
@@ -66,9 +67,10 @@ class ProjectWizard(QtWidgets.QDialog):
     def CancelButtonPressed(self):
         self.reject()
 
+
 def NewProjectDialog(parent, navigator):
     newProjectWizard = ProjectWizard(parent, navigator, 'New Project Wizard')
-    if newProjectWizard.exec_(): # OK button pressed
+    if newProjectWizard.exec_():  # OK button pressed
         project_name = newProjectWizard.project_name
         project_quality = newProjectWizard.project_quality
     else:
@@ -77,8 +79,10 @@ def NewProjectDialog(parent, navigator):
     del(newProjectWizard)
     return project_name, project_quality
 
+
 if __name__ == '__main__':
-    import sys, qdarkstyle
+    import sys
+    import qdarkstyle
     from ATE.org.actions.dummy_main import DummyMainWindow
 
     app = QtWidgets.QApplication(sys.argv)
