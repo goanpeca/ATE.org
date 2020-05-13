@@ -17,7 +17,7 @@ import getpass
 from jinja2 import FileSystemLoader, Environment
 
 
-def generate_module_docstring():
+def prepare_module_docstring():
     retval = []
 
     line = f"Created on {str(DT())}"
@@ -33,7 +33,7 @@ def generate_module_docstring():
     return retval
 
 
-def generate_input_parameters_table(ip):
+def prepare_input_parameters_table(ip):
     """Generates a list of strings, holding a talble (with header) of the input parameters"""
 
     retval = []
@@ -164,7 +164,7 @@ def generate_input_parameters_table(ip):
     return retval
 
 
-def generate_input_parameters_ppd(ip):
+def prepare_input_parameters_ppd(ip):
     '''Test Input Parameters Pretty Print Dict.
 
     This function creates a list of strings that 'pretty print' the dictionary.
@@ -182,7 +182,7 @@ def generate_input_parameters_ppd(ip):
     return retval
 
 
-def generate_output_parameters_table(op):
+def prepare_output_parameters_table(op):
     """Generates a list of strings, holding a talble (with header) of the output parameters"""
 
     retval = []
@@ -351,7 +351,7 @@ def generate_output_parameters_table(op):
     return retval
 
 
-def generate_output_parameters_ppd(op):
+def prepare_output_parameters_ppd(op):
     """Test Output Parameters Pretty Print Dict.
 
     This function creates a list of strings that 'pretty print' the dictionary.
@@ -399,9 +399,9 @@ class test_proper_generator:
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
         msg = template.render(
-            module_doc_string=generate_module_docstring(),
-            input_parameter_table=generate_input_parameters_table(definition['input_parameters']),
-            output_parameter_table=generate_output_parameters_table(definition['output_parameters']),
+            module_doc_string=prepare_module_docstring(),
+            input_parameter_table=prepare_input_parameters_table(definition['input_parameters']),
+            output_parameter_table=prepare_output_parameters_table(definition['output_parameters']),
             definition=definition)
 
         if not os.path.exists(abs_path_to_dir):
@@ -434,9 +434,9 @@ class test_base_generator:
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
         msg = template.render(
-            module_doc_string=generate_module_docstring(),
-            ipppd=generate_input_parameters_ppd(definition['input_parameters']),
-            opppd=generate_output_parameters_ppd(definition['output_parameters']),
+            module_doc_string=prepare_module_docstring(),
+            ipppd=prepare_input_parameters_ppd(definition['input_parameters']),
+            opppd=prepare_output_parameters_ppd(definition['output_parameters']),
             definition=definition)
 
         if not os.path.exists(abs_path_to_dir):
@@ -608,7 +608,7 @@ if __name__ == '__main__':
     if not os.path.exists(dump_dir):
         os.makedirs(dump_dir)
 
-    for line in generate_module_docstring():
+    for line in prepare_module_docstring():
         print(line)
     print()
 
@@ -616,19 +616,19 @@ if __name__ == '__main__':
     definition['base'] = 'PR'
     test_generator(project_path, definition)
 
-    for line in generate_input_parameters_table(definition['input_parameters']):
+    for line in prepare_input_parameters_table(definition['input_parameters']):
         print(line)
     print()
 
-    for line in generate_input_parameters_ppd(definition['input_parameters']):
+    for line in prepare_input_parameters_ppd(definition['input_parameters']):
         print(line)
     print()
 
-    for line in generate_output_parameters_table(definition['output_parameters']):
+    for line in prepare_output_parameters_table(definition['output_parameters']):
         print(line)
     print()
 
-    for line in generate_output_parameters_ppd(definition['output_parameters']):
+    for line in prepare_output_parameters_ppd(definition['output_parameters']):
         print(line)
 
     PR__init__generator(project_path, 'HW0')
