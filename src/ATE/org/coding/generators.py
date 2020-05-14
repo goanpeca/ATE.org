@@ -17,7 +17,6 @@ There are four (4) entries to the generators from outside:
     4. program_generator
 
 all other generators are called by these 4 'top level' generators.
-
 """
 
 import os
