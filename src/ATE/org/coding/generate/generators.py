@@ -9,8 +9,18 @@ References:
     PEP8 : https://www.python.org/dev/peps/pep-0008/
     numpy doc style : https://numpydoc.readthedocs.io/en/latest/format.html
 
+
+There are four (4) entries to the generators from outside:
+    1. project_generator
+    2. HW_generator --> renamed in the package to hardware_generator (more consistent nameing from outside)
+    3. test_generator
+    4. program_generator
+
+all other generators are called by these 4 'top level' generators.
 """
-import os, shutil
+
+import os
+import shutil
 import numpy as np
 from ATE.utils.DT import DT
 import getpass
@@ -48,6 +58,7 @@ def copydir(source, destination, ignore_dunder=True):
             if not os.path.exists(destination_directory):
                 os.makedirs(destination_directory, exist_ok=True)
             shutil.copy(from_path, to_path)
+
 
 def prepare_module_docstring():
     retval = []
@@ -593,12 +604,13 @@ class project__main__generator:
             raise Exception(f"couldn't find the template : {template_name}")
         template = env.get_template(template_name)
 
-        file_name = '__main__.py'
+        project_name = os.path.basename(project_path)
 
+        file_name = '__main__.py'
         abs_path_to_dir = project_path
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render()
+        msg = template.render(project_name=project_name)
 
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
@@ -622,12 +634,13 @@ class project__init__generator:
             raise Exception(f"couldn't find the template : {template_name}")
         template = env.get_template(template_name)
 
-        file_name = '__init__.py'
+        project_name = os.path.basename(project_path)
 
+        file_name = '__init__.py'
         abs_path_to_dir = project_path
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render()
+        msg = template.render(project_name=project_name)
 
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
@@ -795,7 +808,7 @@ class HW_common_generator:
 
         file_name = 'common.py'
 
-        rel_path_to_dir = 'src'
+        rel_path_to_dir = os.path.join('src', definition['hardware'])
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
@@ -919,7 +932,18 @@ class FT_common_generator:
         f.write(msg)
 
 
+def program_generator(definition):
+    pass
+
+
 if __name__ == '__main__':
+    hardware_definition = {
+        'hardware': 'HW0',
+        'PCB': {},
+        'tester': ('SCT', 'import stuff'),
+        'instruments': {},
+        'actuators': {}}
+
     test_definition = {
         'name': 'trial',
         'type': 'custom',
@@ -937,14 +961,66 @@ if __name__ == '__main__':
             'new_parameter4': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.3f'}},
         'dependencies' : {}}
 
-    hardware_definition = {
+    program_definition = {
         'hardware': 'HW0',
-        'PCB': {},
-        'tester': ('SCT', 'import stuff'),
-        'instruments': {},
-        'actuators': {}}
+        'base': 'FT',
+        'target': 'target',
+        'USER_TXT': 'H2LHH',
+        'MOD_COD': 'P',  # see STDF V4 definition page 19 --> needs further elaboration on the codes ! P = Production
+        'FLOW_ID': '1',  # see STDF V4 definition page 19 --> needs further elaboration
+        'sequencer': ('Fixed Temperature', -40.0, 1),
+        'sequence': {
+            'test1': {
+                'call values': {
+                    'ipname1': 123.456,
+                    'ipname2': 789.012
+                },
+                'limits': {  # (LTL, UTL)
+                    'opname1': (1.1, 2.2),
+                    'opname2': (3.3, 4.4)
+                }
+            },
+            'test2': {
+                'call values': {
+                    'ipname1': 1.234,
+                    'ipname2': 5.678
+                },
+                'limits': {
+                    'opname1': (5.5, 6.6),
+                    'opname2': (7.7, 8.8)
+                }
+            }
+        },
+        'binning': {  # TODO: needs some more thinking !!!
+            'test1': {   # (TSTNUM, SBIN, SBIN_GROUP)
+                'opname1': (10, 10, 'test1/opname1 fail'),
+                'opname2': (11, 11, 'test1/opname2 fail')
+            },
+            'test2': {
+                'opname1': (12, 12, 'test2/opname1 fail'),
+                'opname2': (13, 13, 'test2/opname2 fail')
+            }
+        },
+        'pingpong': {
+            'PR1.1': ((1,),),
+            'PR15.1': ((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),),
+            'PR15.3': ((1, 2, 3, 4, 5), (6, 7, 8, 9, 10), (11, 12, 13, 14, 15)),
+            'PR15.15': ((1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,), (9,), (10,), (11,), (12,), (13,), (14,), (15,))
+        },
+        'execution': {
+            'PR1': {
+                'test1': 'PR1.1',
+                'test2': 'PR1.1'
+            },
+            'PR15': {
+                'test1': 'PR15.1',
+                'test2': 'PR15.3'
+            }
+        }
+    }
 
-    project_path = os.path.join(os.path.dirname(__file__), 'TRIAL')
+    project_name = 'TRIAL'
+    project_path = os.path.join(os.path.dirname(__file__), project_name)
     if os.path.exists(project_path):
         shutil.rmtree(project_path)
 
@@ -952,7 +1028,6 @@ if __name__ == '__main__':
 
     HW_generator(project_path, hardware_definition)
 
-    # test_generator(project_path, test_definition)
-    # test_definition['base'] = 'PR'
-    # test_generator(project_path, test_definition)
-
+    test_generator(project_path, test_definition)
+    test_definition['base'] = 'PR'
+    test_generator(project_path, test_definition)
