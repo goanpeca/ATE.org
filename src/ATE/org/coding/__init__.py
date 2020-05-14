@@ -1,1 +1,0 @@
-from ATE.org.coding.test_generator import generator

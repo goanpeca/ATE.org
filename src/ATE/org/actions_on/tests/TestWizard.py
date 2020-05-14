@@ -27,8 +27,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import qtawesome as qta
 
-from ATE.org.coding.test_generator import generator
-
 
 minimal_docstring_length = 80
 

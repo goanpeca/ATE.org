@@ -6,20 +6,18 @@ Created on 24 Oct 2016
 
 '''
 
-import inspect, imp
+import inspect
+import imp
 import logging
-import os, sys, re
+import os
+import sys
+import re
 import copy
 import random
 import hashlib
 import abc.ABC
-
 import numpy as np
 
-Pass = 1
-Fail = 0
-Undetermined = -1
-Unknown = -1
 
 class testABC(abc.ABC):
     '''
@@ -206,7 +204,7 @@ class testABC(abc.ABC):
             with open(__file__, 'r') as ifd, open(temp_file, 'w') as ofd:
                 if line_nr == insertion_line:
                     ofd.write(f"\tdef {new_target}(ip, op):\n")
-                    ofd.write("\t\treturn self.do(ip, op)\n\n")
+                    ofd.write("\t\treturn self.do(ip, op)\n\n\n")
                 line = ifd.readline()
                 line_nr += 1
                 ofd.write(f"{line}\n")
@@ -353,6 +351,29 @@ class testABC(abc.ABC):
             self.ran_fefore = True
 
 
+# TODO: lost ipBC and opBC implementations somewhere ... need re-implementing
+class ipBC:
+    """Input Parameters Base Class.
+
+    This class presumes that the child class declares IPDescriptor classes as
+    class variables for each of the input_parameters ADN that an object varialbe
+    is defined in it's __init__ method with the name self._input_parameters.
+    The _input_parameters is a dictionary with as key the IPDescriptor names!
+    """
+    pass
+
+
+class opBC:
+    """Output Parameters Base Class.
+
+    This class presumes that the child class declares OPDescriptor classes as
+    class variables for each of the output_parameters AND that an object variable
+    is defined in it's __init__ method with the name self._output_parameters.
+    The _output_parameters is a dictionary with as key the OPDescriptor names!
+    """
+    pass
+
+
 def isEmptyFunction(func):
     '''
     This function will determine if the passed func (or method) is empty or not.
@@ -366,8 +387,3 @@ def isEmptyFunction(func):
         pass
 
     return func.__code__.co_code == empty_func.__code__.co_code or func.__code__.co_code == empty_func_with_doc.__code__.co_code
-
-
-if __name__ == '__main__':
-    pass
-    # TODO: Implement the unit tests here ...

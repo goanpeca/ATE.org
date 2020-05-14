@@ -12,7 +12,7 @@ References:
 
 There are four (4) entries to the generators from outside:
     1. project_generator
-    2. HW_generator --> renamed in the package to hardware_generator (more consistent nameing from outside)
+    2. hardware_generator
     3. test_generator
     4. program_generator
 
@@ -25,6 +25,50 @@ import numpy as np
 from ATE.utils.DT import DT
 import getpass
 from jinja2 import FileSystemLoader, Environment
+
+
+def project_generator(project_path):
+    """This function generates the
+
+    This generator should be called upon the creation of a new project.
+    It will subsequently call the following generators:
+        - spyder_generator
+        - doc_generator
+        - src__init__generator
+    """
+    project_root_generator(project_path)
+    src__init__generator(project_path)
+    src_common_generator(project_path)
+    project_doc_generator(project_path)
+    project_spyder_generator(project_path)
+
+
+def hardware_generator(project_path, hardware):
+    """Generator for a new hardware structure."""
+
+    HW__init__generator(project_path, hardware)
+    HW_common_generator(project_path, hardware)
+
+    PR__init__generator(project_path, hardware)
+    PR_common_generator(project_path, hardware)
+
+    FT__init__generator(project_path, hardware)
+    FT_common_generator(project_path, hardware)
+
+
+def test_generator(project_path, definition):
+    test_base_generator(project_path, definition)
+    test_proper_generator(project_path, definition)
+    test__init__generator(project_path, definition)
+
+
+def program_generator(definition):
+    pass
+
+
+##############################################################################
+# The below generators are 'private', they are used by the generators above. #
+##############################################################################
 
 
 def copydir(source, destination, ignore_dunder=True):
@@ -412,12 +456,6 @@ def prepare_output_parameters_ppd(op):
     return retval
 
 
-def test_generator(project_path, definition):
-    test_base_generator(project_path, definition)
-    test_proper_generator(project_path, definition)
-    test__init__generator(project_path, definition)
-
-
 class test_proper_generator:
     """Generator for the Test Class."""
 
@@ -527,26 +565,6 @@ class test__init__generator:
             os.makedirs(abs_path_to_dir)
         f = open(abs_path_to_file, 'w', encoding='utf-8')
         f.write(msg)
-
-
-def test_program_generator(project_path, definition):
-    pass
-
-
-def project_generator(project_path):
-    """This function generates the
-
-    This generator should be called upon the creation of a new project.
-    It will subsequently call the following generators:
-        - spyder_generator
-        - doc_generator
-        - src__init__generator
-    """
-    project_root_generator(project_path)
-    src__init__generator(project_path)
-    src_common_generator(project_path)
-    project_doc_generator(project_path)
-    project_spyder_generator(project_path)
 
 
 def project_root_generator(project_path):
@@ -747,19 +765,6 @@ class src_common_generator:
         f.write(msg)
 
 
-def HW_generator(project_path, hardware):
-    """Generator for a new hardware structure."""
-
-    HW__init__generator(project_path, hardware)
-    HW_common_generator(project_path, hardware)
-
-    PR__init__generator(project_path, hardware)
-    PR_common_generator(project_path, hardware)
-
-    FT__init__generator(project_path, hardware)
-    FT_common_generator(project_path, hardware)
-
-
 class HW__init__generator:
     """Generator for the __init__.py file of the hardware proper."""
 
@@ -932,10 +937,6 @@ class FT_common_generator:
         f.write(msg)
 
 
-def program_generator(definition):
-    pass
-
-
 if __name__ == '__main__':
     hardware_definition = {
         'hardware': 'HW0',
@@ -1026,7 +1027,7 @@ if __name__ == '__main__':
 
     project_generator(project_path)
 
-    HW_generator(project_path, hardware_definition)
+    hardware_generator(project_path, hardware_definition)
 
     test_generator(project_path, test_definition)
     test_definition['base'] = 'PR'

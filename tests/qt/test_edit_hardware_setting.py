@@ -52,7 +52,7 @@ HW_NAME = "HW1"
 def setup_method():
     def setup(test_func):
         def wrap(qtbot, mocker):
-            proj_nav = ProjectNavigation("./tests/qt/")
+            proj_nav = ProjectNavigation(None, "./tests/qt/")
             proj_nav.db_file = DB_FILE
             return test_func(proj_nav, qtbot, mocker)
         return wrap
