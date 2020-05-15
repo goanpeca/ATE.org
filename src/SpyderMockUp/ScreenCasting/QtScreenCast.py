@@ -411,7 +411,7 @@ class Combiner(Process):
 
     def run(self):
         '''
-            to produce the video with its assosiated audio, we muss calculate the frame rate new
+            to produce the video with its assosiated audio, we must calculate the frame rate new
             each time we do recording to prevent any overlapping error between audio and video.
         '''
         import wave
@@ -427,6 +427,8 @@ class Combiner(Process):
 
 class ScreenCastCountDown(QtWidgets.QSplashScreen):
     action = QtCore.pyqtSignal(int)  # emitted when contdown is finished
+    # TODO: move to process signal to signal the recording process it can start
+    #       3 seconds would give it way enough time to get the process started 🙏
 
     def __init__(self, parent):
         if not isinstance(parent, QtWidgets.QMainWindow):
@@ -456,10 +458,6 @@ class ScreenCastCountDown(QtWidgets.QSplashScreen):
         movie = self.sizeHint()
         printQ('movie', movie)
 
-        # x = grabRegion.x() + int(grabRegion.width()/2) - int(self.sizeHint().width()/2)
-        # y = grabRegion.y() + int(grabRegion.height()/2) - int(self.sizeHint().height()/2)
-
-        # print(f"x={x}, y={y}")
         self.move(0, 0)
         printQ('pos', self.pos())
 
