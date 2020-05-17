@@ -132,6 +132,7 @@ dependencies:
   - traitlets=4.3.3=py38_0
   - ujson=1.35=py38he774522_0
   - urllib3=1.25.8=py38_0
+  - vs2015_runtime=14.16.27012=h30e32a0_2
   - watchdog=0.10.2=py38_0
   - wcwidth=0.1.9=pyh9f0ad1d_0
   - webencodings=0.5.1=py38_1
