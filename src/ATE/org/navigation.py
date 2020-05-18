@@ -88,10 +88,20 @@ class ProjectNavigation(QObject):
         self.hardware_activated.emit(hardware)
 
     def create_project_structure(self):
+        '''This method creates a new project structure.
+
+        self.project_directroy must **NOT** exist yet, otherwhise an exception will be raised.
         '''
-        this method creates a new project (self.project_directroy must *not*
-        exist yet, otherwhise an exception will be raised)
-        '''
+
+        if os.path.exists(self.project_directory):
+            raise Exception(f"project directory '{self.project_directory}' already exists.")
+        else:
+            from ATE.org.coding.generators import project_generator
+            project_generator(self.project_directory)
+
+
+
+
         # # project root directory
         # os.makedirs(self.project_directory)
         # shutil.copyfile(os.path.join(self.template_directory, 'dunder_main.py'),
@@ -308,6 +318,7 @@ class ProjectNavigation(QObject):
         self.con.commit()
 
     def add_project(self, project_name, project_quality=''):
+        """ """
         project_directory = os.path.join(self.workspace_path, project_name)
         print(f"add_project({project_name}, {project_quality}) --> {project_directory}")
         self.__call__(project_directory, project_quality)
@@ -365,46 +376,38 @@ class ProjectNavigation(QObject):
         return retval
 
     def add_hardware(self, definition, is_enabled=True):
+        '''This method adds a hardware setup to the project.
+
+        The hardware is defined in the 'definition' parameter as follows:
+            hardware_definition = {
+                'hardware': 'HW0',
+                'PCB': {},
+                'tester': ('SCT', 'import stuff'),
+                'instruments': {},
+                'actuators': {}}
+
+        This method returns the name of the Hardware on success and raises an
+        exception on fail (no sense of continuing, this should work!)
         '''
-        this method adds a hardware setup (defined in 'definition') and returns
-        the name for this.
-        '''
-        new_hardware = self.get_next_hardware()
+        try:  # make the directory structure
+            from ATE.org.coding.generators import hardware_generator
+            hardware_generator(self.project_directory, definition)
+        except Exception as e:  # explode on fail
+            print(f"failed to create hardware structure for {definition['hardware']}")
+            raise e
+
+        # fill the database on success
         blob = pickle.dumps(definition, 4)
         query = '''INSERT INTO hardwares(name, definition, is_enabled) VALUES (?, ?, ?)'''
         self.cur.execute(query, (new_hardware, blob, is_enabled))
         self.con.commit()
-        # Attention, this might be dangerous in the long run
-        # -> we might have to do this after the whole create file stuff.
-        self.database_changed.emit(TableId.Hardware())
 
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware))
-
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware), exist_ok=True)
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, '__init__.py')).touch()
-
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'patterns'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'patterns', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'protocols'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'protocols', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'states'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'FT', 'states', '__init__.py')).touch()
-
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'patterns'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'patterns', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'protocols'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'protocols', '__init__.py')).touch()
-        os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states'))
-        create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states', '__init__.py')).touch()
-
-        # TODO: and the common.py in .../src/HWx/common.py --> comes from the wizard!!!
-
+        # let ATE.org know that we have new hardware
         self.hardware_added.emit(new_hardware)
-        return new_hardware
+
+        # return the new hardware name
+        return definition['hardware']
+
 
     def update_hardware(self, name, definition):
         '''
@@ -1125,30 +1128,7 @@ class ProjectNavigation(QObject):
 
         return retval
 
-    def test_add(self, name, hardware, Type, base, definition):
-        '''
-        given a name, hardware, Type, base and definition, this method will
-        create the test (.py) file at the right place (=test_file_path), it
-        will add the test to the database, and return the relative path to
-        test_file_path.
-
-        If a failure of some kind arrises an exception is raised
-        '''
-        from ATE.org.coding import test_generator
-
-        try:
-            rel_path = test_generator(self.project_directory, name, hardware, Type, base, definition)
-            query = '''INSERT INTO tests(name, hardware, type, base, definition, relative_path) VALUES (?, ?, ?, ?, ?, ?)'''
-            blob = pickle.dumps(definition, 4)
-            self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
-            self.con.commit()
-            self.database_changed.emit(TableId.Flow())
-        except:
-            raise
-        else:
-            return rel_path
-
-    def standard_test_add(self, name, hardware, base):
+    def add_standard_test(self, name, hardware, base):
         import runpy
         from ATE.org.coding.standard_tests import names as standard_test_names
 
@@ -1160,15 +1140,43 @@ class ProjectNavigation(QObject):
         else:
             raise Exception(f"{name} not a standard test ... WTF!")
 
-    def add_test(self, name, hardware, base, test_type, definition, is_enabled=True):
-        '''
-        given the name, hardware, base and test_numbers for a test,
-        create the test based on the supplied info and add the info to
-        the database.
-        '''
-        from ATE.org.coding import test_generator
+    def add_custom_test(self, definition, is_enabled=True):
+        '''This method adds a 'custom' test to the project.
 
-        relative_path = test_generator(self.project_directory, name, hardware, base, definition)
+        'definition' is a structure as follows:
+
+            test_definition = {
+                'name': 'trial',
+                'type': 'custom', <-- needs to be 'custom' otherwhise explode
+                'quality': 'automotive',
+                'hardware': 'HW0',
+                'base': 'FT',
+                'doc_string': ['line1', 'line2'],
+                'input_parameters': {
+                    'Temperature':    {'Shmoo': True, 'Min': -40.0, 'Default': 25.0, 'Max': 170.0, '10ᵡ': '', 'Unit': '°C', 'fmt': '.0f'},
+                    'new_parameter1': {'Shmoo': False, 'Min': -np.inf, 'Default': 0.0, 'Max': np.inf, '10ᵡ': 'μ', 'Unit':  'V', 'fmt': '.3f'},
+                    'new_parameter2': {'Shmoo': False, 'Min': -np.inf, 'Default':  0.123456789, 'Max': np.inf, '10ᵡ':  '', 'Unit':  'dB', 'fmt': '.6f'}},
+                'output_parameters' : {
+                    'new_parameter1': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.3f'},
+                    'new_parameter2': {'LSL': -np.inf, 'LTL': -5000.0, 'Nom': 10.0, 'UTL':   15.0, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.1f'},
+                    'new_parameter3': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.6f'},
+                    'new_parameter4': {'LSL': -np.inf, 'LTL':  np.nan, 'Nom':  0.0, 'UTL': np.nan, 'USL': np.inf, '10ᵡ': '', 'Unit': '?', 'fmt': '.3f'}},
+                'dependencies' : {}}
+        '''
+
+        if definition['type'] != 'custom':
+            raise Exception(f"not a 'custom' test!!!")
+
+        try:  # generate the test with everythin around it.
+            from ATE.org.coding.generators import test_generator
+            test_generator(self.project_directory, definition)
+        except Exception as e:  # explode on fail
+            print(f"failed to create test structure for {definition['hardware']}/{definition['base']}/{definition['name']}")
+            raise e
+
+        # add to database on pass
+        relative_path = os.path.join('src', definition['hardware'], definition['base'], definition['name'])
+        print(f"relative_path = {relative_path}")
         query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path, is_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
         self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path, is_enabled))
