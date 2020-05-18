@@ -790,12 +790,16 @@ class HW__init__generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(definition=definition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(definition=definition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 class HW_common_generator:
@@ -820,12 +824,16 @@ class HW_common_generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(definition=definition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(definition=definition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 class PR__init__generator:
@@ -848,12 +856,16 @@ class PR__init__generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(HWdefinition=HWdefinition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(HWdefinition=HWdefinition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 class PR_common_generator:
@@ -876,12 +888,16 @@ class PR_common_generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(HWdefinition=HWdefinition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(HWdefinition=HWdefinition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 class FT__init__generator:
@@ -904,12 +920,16 @@ class FT__init__generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(HWdefinition=HWdefinition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(HWdefinition=HWdefinition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 class FT_common_generator:
@@ -932,12 +952,16 @@ class FT_common_generator:
         abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
-        msg = template.render(HWdefinition=HWdefinition)
-
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(HWdefinition=HWdefinition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
 
 
 if __name__ == '__main__':

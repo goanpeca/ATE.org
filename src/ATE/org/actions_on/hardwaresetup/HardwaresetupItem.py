@@ -1,5 +1,5 @@
 from ATE.org.actions_on.hardwaresetup.HardwareWizard import new_hardwaresetup_dialog
-from ATE.org.actions_on.hardwaresetup.EditHardwaresetupWizard import edit_hardwaresetup_dialog
+from ATE.org.actions_on.hardwaresetup.HardwareWizard import edit_hardwaresetup_dialog
 from ATE.org.actions_on.hardwaresetup.ViewHardwaresetupSettings import display_hardware_settings_dialog
 
 from ATE.org.actions_on.model.Constants import MenuActionTypes

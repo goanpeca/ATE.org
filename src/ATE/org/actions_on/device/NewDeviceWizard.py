@@ -252,9 +252,6 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.check_for_dual_die()
         self._verify()
 
-    def CancelButtonPressed(self):
-        self.reject()
-
     def _get_current_configuration(self):
         dies_in_package = []
         for die in self.diesInDevice.findItems('*', QtCore.Qt.MatchWrap | QtCore.Qt.MatchWildcard):
@@ -273,6 +270,9 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.project_info.add_device(configuration['name'], configuration['hardware'],
                                      configuration['package'], configuration['definition'])
         self.accept()
+
+    def CancelButtonPressed(self):
+        self.reject()
 
 
 def new_device_dialog(project_info):

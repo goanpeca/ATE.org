@@ -57,9 +57,6 @@ class ProjectNavigation(QObject):
 
             project_quality_file = os.path.join(self.project_directory, 'project_quality.pickle')
             if not os.path.exists(self.project_directory):  # brand new project, initialize it.
-
-
-
                 self.create_project_structure()
                 self.project_quality = project_quality
                 if project_quality != '':
@@ -389,6 +386,7 @@ class ProjectNavigation(QObject):
         This method returns the name of the Hardware on success and raises an
         exception on fail (no sense of continuing, this should work!)
         '''
+        # print(definition)
         try:  # make the directory structure
             from ATE.org.coding.generators import hardware_generator
             hardware_generator(self.project_directory, definition)
@@ -397,6 +395,7 @@ class ProjectNavigation(QObject):
             raise e
 
         # fill the database on success
+        new_hardware = definition['hardware']
         blob = pickle.dumps(definition, 4)
         query = '''INSERT INTO hardwares(name, definition, is_enabled) VALUES (?, ?, ?)'''
         self.cur.execute(query, (new_hardware, blob, is_enabled))
@@ -406,20 +405,25 @@ class ProjectNavigation(QObject):
         self.hardware_added.emit(new_hardware)
 
         # return the new hardware name
-        return definition['hardware']
+        return new_hardware
 
-
-    def update_hardware(self, name, definition):
+    def update_hardware(self, definition, is_enabled=True):
         '''
         this method will update hardware 'name' with 'definition'
         if name doesn't exist, a KeyError will be thrown
         '''
-        existing_hardware = self.get_hardwares()
-        if name not in existing_hardware:
-            raise KeyError
+        try:
+            from ATE.org.coding.generators import hardware_generator
+            hardware_generator(self.project_directory, definition)
+        except Exception as e:  # explode on fail
+            print(f"failed to update hardware structure for {definition['hardware']}")
+            raise e
+
+        # update the database on success
+        name = definition['hardware']
         blob = pickle.dumps(definition, 4)
-        update_blob_query = '''UPDATE hardwares SET definition = ? WHERE name = ?'''
-        self.cur.execute(update_blob_query, (blob, name))
+        update_blob_query = '''UPDATE hardwares SET definition = ?, is_enabled = ? WHERE name = ?'''
+        self.cur.execute(update_blob_query, (blob, is_enabled, name))
         self.con.commit()
 
     def get_hardwares_info(self):

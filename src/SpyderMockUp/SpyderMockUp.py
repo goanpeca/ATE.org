@@ -25,6 +25,7 @@ from ATE.org.validation import is_ATE_project
 
 show_workspace = False
 
+
 class screenCast(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
     rightClicked = QtCore.pyqtSignal()
@@ -152,11 +153,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.set_tree()
 
     def open_project(self):
-        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                              "Select Directory",
-                                                              self.workspace_path,
-                                                              QtWidgets.QFileDialog.ShowDirsOnly |
-                                                              QtWidgets.QFileDialog.DontResolveSymlinks)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory",
+            self.workspace_path,
+            QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
         selected_directory = os.path.normpath(dir_name)
         self.open_project_impl(selected_directory)
 

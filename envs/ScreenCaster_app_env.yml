@@ -1,4 +1,4 @@
-name: __spyder__
+name: __screen_caster__
 channels:
   - conda-forge
   - defaults
@@ -35,3 +35,6 @@ dependencies:
   - spyder-kernels
   - watchdog
   - spyder =4.1.3
+  - numpy
+  - ffmpeg
+
