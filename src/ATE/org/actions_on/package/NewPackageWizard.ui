@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>244</width>
+    <width>255</width>
     <height>279</height>
    </rect>
   </property>
@@ -32,7 +32,7 @@
    <string>Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
+   <item row="1" column="0">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <layout class="QHBoxLayout" name="nameLayout">
@@ -52,9 +52,6 @@
          </property>
          <property name="text">
           <string>Package name :</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -80,6 +77,17 @@
          </property>
          <property name="text">
           <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QCheckBox" name="isNakedDie">
+         <property name="text">
+          <string>Is a &quot;Naked Die&quot;</string>
          </property>
         </widget>
        </item>

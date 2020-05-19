@@ -13,24 +13,21 @@ import { SystemStatus, SystemState } from '../system-status';
 })
 export class SystemSiteComponent implements OnInit, PipeTransform {
 
-  constructor() {
-    this.systemStatus = new SystemStatus();
-  }
+  constructor() { }
 
   @Input() msg: JSON;
   @Input() sites: string[];
-  @Input() systemStatus: SystemStatus;
+  @Input() systemStatus: SystemStatus = new SystemStatus();
   mySystemState = SystemState;
 
-  sitesControl: Site[] = [];
-  siteTest: Site[] = [];
+  sitesControl: ISite[] = [];
+  sitesTest: ISite[] = [];
 
-  _SITES = {
-    Control: this.sitesControl,
-    TestApp: this.siteTest
-  };
-
-  transform(value: JSON, args) {
+// sitesObj
+  sitesObj = { Control: this.sitesControl,
+              TestApp: this.sitesTest
+            };
+  transform(value: JSON, args?: any): any {
     return this.retrieveData(value);
   }
 
@@ -57,24 +54,24 @@ export class SystemSiteComponent implements OnInit, PipeTransform {
 
     if (topic.includes('site')) {
       const siteNum = site.replace(/^\D+/g, '');
-      const type = topicSplit[2];
+      const siteType = topicSplit[2];
       if (this.sites.find(x => x === siteNum)) {
-        let site1: Site;
-        site1 = {
-          type: topicSplit[2],
-          siteId: siteNum,
-          state: payload.state
-        };
+          let singleSite: ISite;
+          singleSite = {
+            type: topicSplit[2],
+            siteId: siteNum,
+            state: payload.state
+          };
 
-        const SITE_LIST: Site[] = this._SITES[type];
-        const num = SITE_LIST.findIndex(x => x.siteId === siteNum);
-        if (num !== -1) {
-          this._SITES[type][num] = site1;
-          return;
+          const s: ISite[] = this.sitesObj[siteType];
+          const num = s.findIndex(x => x.siteId === siteNum);
+          if (num !== -1) {
+            this.sitesObj[siteType][num] = singleSite;
+            return;
+          }
+
+          this.sitesObj[siteType].push(singleSite);
         }
-
-        this._SITES[type].push(site1);
-      }
     }
 
     return source;
@@ -87,9 +84,10 @@ export enum SourceApp {
   Master = 'master',
   Control = 'control',
   Test = 'test',
+
 }
 
-export interface Site {
+export interface ISite {
   type: string;
   siteId: string;
   state: string;

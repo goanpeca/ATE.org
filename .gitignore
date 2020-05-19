@@ -58,3 +58,6 @@ MANIFEST
 .lastproject
 .spyproject/config/backups/workspace.ini.bak
 .spyproject/config/workspace.ini
+src/ATE/apps/control_config_file.json
+src/ATE/apps/master_config_file.json
+src/ATE/apps/master_user_settings.json

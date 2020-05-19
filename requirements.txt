@@ -21,6 +21,7 @@ PyQt5==5.14.1
 qtawesome==0.7.0
 qdarkstyle==2.8
 watchdog==0.10.2
+numpy==1.18.1
 
 pytest-qt==3.3.0
 pytest==5.3.5

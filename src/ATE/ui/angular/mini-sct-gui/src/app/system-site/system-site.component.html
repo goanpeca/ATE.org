@@ -13,15 +13,15 @@
                     <th>State</th>
                 </tr>
 
-                <tr *ngFor='let site of _sites_control'>
+                <tr *ngFor='let site of sitesControl'>
                     <td> {{ site.type }} </td>
-                    <td> {{ site.site_id }} </td>
+                    <td> {{ site.siteId }} </td>
                     <td> {{ site.state }} </td>
                 </tr>
 
-                <tr *ngFor='let site of _sites_test'>
+                <tr *ngFor='let site of sitesTest'>
                     <td> {{ site.type }} </td>
-                    <td> {{ site.site_id }} </td>
+                    <td> {{ site.siteId }} </td>
                     <td> {{ site.state }} </td>
                 </tr>
             </table>

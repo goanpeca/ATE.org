@@ -17,6 +17,7 @@ class NewProductWizard(QtWidgets.QDialog):
         self.read_only = read_only
         self._load_ui()
         self._setup()
+        self._connect_event_handler()
 
     def _load_ui(self):
         my_ui = __file__.replace('.py', '.ui')
@@ -30,9 +31,6 @@ class NewProductWizard(QtWidgets.QDialog):
         if len(self.existing_hardwares) == 0:
             self.existing_hardwares = ['']
 
-        self.existing_devices = [''] + self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
-        self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
-
         from ATE.org.validation import valid_product_name_regex
         rxProductName = QtCore.QRegExp(valid_product_name_regex)
         ProductName_validator = QtGui.QRegExpValidator(rxProductName, self)
@@ -40,31 +38,33 @@ class NewProductWizard(QtWidgets.QDialog):
         self.ProductName.setValidator(ProductName_validator)
         self.ProductName.textChanged.connect(self._verify)
 
-        self.WithHardware.blockSignals(True)
         self.WithHardware.clear()
         for index, hardware in enumerate(self.existing_hardwares):
             self.WithHardware.addItem(hardware)
             if hardware == self.project_info.active_hardware:
                 self.WithHardware.setCurrentIndex(index)
 
-        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
-        self.WithHardware.blockSignals(False)
+        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
+        self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
 
-        self.FromDevice.blockSignals(True)
         self.FromDevice.clear()
         self.FromDevice.addItems(self.existing_devices)
-        self.FromDevice.setCurrentIndex(0)  # this is the empty string in the beginning of the list!
-        self.FromDevice.currentIndexChanged.connect(self._verify)
-        self.FromDevice.blockSignals(False)
+        self.FromDevice.setCurrentText('' if not len(self.existing_devices) else self.existing_devices[0])
+        # TODO: why can't we set the first available device as default ? as below
+        # self.FromDevice.setCurrentIndex(0)  # this is the empty string in the beginning of the list!
 
         self.Feedback.setText("No die name")
         self.Feedback.setStyleSheet('color: orange')
 
-        self.CancelButton.clicked.connect(self.CancelButtonPressed)
-        self.OKButton.clicked.connect(self.OKButtonPressed)
         self.OKButton.setEnabled(False)
 
         self._verify()
+
+    def _connect_event_handler(self):
+        self.FromDevice.currentIndexChanged.connect(self._verify)
+        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
+        self.CancelButton.clicked.connect(self.CancelButtonPressed)
+        self.OKButton.clicked.connect(self.OKButtonPressed)
 
     def hardware_changed(self):
         '''
@@ -72,10 +72,9 @@ class NewProductWizard(QtWidgets.QDialog):
         at the parent level is also changed and that the new device list
         (for the new hardware) is loaded.
         '''
-        # TODO: find an other way to do this
-        # self.parent.active_hardware = self.WithHardware.currentText()
+        self.project_info.hardware_activated.emit(self.WithHardware.currentText())
 
-        self.existing_devices = [''] + self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
+        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
         self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
 
     def _verify(self):
@@ -83,7 +82,7 @@ class NewProductWizard(QtWidgets.QDialog):
             self.Feedback.setText("No hardware is available")
             return
 
-        if len(self.existing_devices) == 1:
+        if len(self.existing_devices) == 0:
             self.Feedback.setText("No device is available")
             return
 
@@ -118,15 +117,3 @@ def new_product_dialog(project_info):
     newProductWizard = NewProductWizard(project_info)
     newProductWizard.exec_()
     del(newProductWizard)
-
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-    from ATE.org.actions.dummy_main import DummyMainWindow
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    dummyMainWindow = DummyMainWindow()
-    dialog = NewProductWizard(dummyMainWindow)
-    dummyMainWindow.register_dialog(dialog)
-    sys.exit(app.exec_())

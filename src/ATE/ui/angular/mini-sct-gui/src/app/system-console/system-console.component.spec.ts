@@ -1,9 +1,9 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SystemConsoleComponent, ConsoleData } from './system-console.component';
+import { SystemConsoleComponent, IConsoleData } from './system-console.component';
 
 describe('SystemConsoleComponent', () => {
-  let msg: ConsoleData;
+  let msg: IConsoleData;
   let component: SystemConsoleComponent;
   let fixture: ComponentFixture<SystemConsoleComponent>;
 

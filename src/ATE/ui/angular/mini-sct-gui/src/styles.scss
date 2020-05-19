@@ -107,7 +107,7 @@ $green: ("darkGreen": #008A65, "hellGreen": #6CFBCE, "middleGreen": #1FC198, "bt
 @mixin blueDivider {
     margin-bottom: 0;
     padding-bottom: 5px;
-    background-color: #0046AD;
+    background-color: $micronasBlue;
 }
 
 
@@ -115,8 +115,11 @@ $green: ("darkGreen": #008A65, "hellGreen": #6CFBCE, "middleGreen": #1FC198, "bt
 
 hr {
     @include solidBorder(5px, $whiteSmoke);
-    margin: 10px;
     clear: both;
+}
+
+h2 {
+    color: $micronasBlue;
 }
 
 

@@ -114,7 +114,7 @@ class HardwareWizard(QtWidgets.QDialog):
         self.expand.setIcon(qta.icon('mdi.unfold-more-horizontal', color='orange'))
         self.addInstrument.setIcon(qta.icon('mdi.arrow-right-bold', color='orange'))
         self.removeInstrument.setIcon(qta.icon('mdi.arrow-left-bold', color='orange'))
-        # self.usedInstruments.clear()
+        # self.tableWidget.clear()
         # TODO: move from list to tree for this widget!
 
     # Actuator
@@ -154,7 +154,7 @@ class HardwareWizard(QtWidgets.QDialog):
         self.removeInstrument.clicked.connect(self.removingInstrument)
         self.checkInstruments.clicked.connect(self.checkInstrumentUsage)
         self.availableInstruments.itemSelectionChanged.connect(self.availableInstrumentsSelectionChanged)
-        self.usedInstruments.itemSelectionChanged.connect(self.usedInstrumentsSelectionChanged)
+        # self.tableWidget.itemSelectionChanged.connect(self.tableWidgetSelectionChanged)
 
         # Actuator
         self.addActuator.clicked.connect(self.addingActuator)
@@ -550,7 +550,7 @@ class HardwareWizard(QtWidgets.QDialog):
     def checkInstrumentUsage(self):
         print("check Instrument Usage")
 
-    def usedInstrumentsSelectionChanged(self):
+    def tableWidgetSelectionChanged(self):
         print("used instruments selection changed")
 
 # Actuator

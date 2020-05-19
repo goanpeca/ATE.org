@@ -24,7 +24,7 @@ class MenuDialog(QtWidgets.QDialog):
         self._connect_action_handler()
 
     def show(self):
-        self.exec_()
+        return self.exec_()
 
     def _load_ui(self):
         current_dir = os.path.dirname(__file__)
@@ -32,6 +32,7 @@ class MenuDialog(QtWidgets.QDialog):
 
     def _setup(self):
         self.setWindowTitle(self.action)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
         self.setFixedSize(self.size())
         self.ok_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)

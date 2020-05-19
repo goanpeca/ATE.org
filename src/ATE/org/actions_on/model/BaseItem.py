@@ -19,7 +19,12 @@ class BaseItem(QtGui.QStandardItem):
         self.menu = QtWidgets.QMenu()
         from ATE.org.actions_on.model.Actions import ACTIONS
 
-        for action_type in self._get_menu_items():
+        menu_items = self._get_menu_items()
+
+        if len(menu_items) == 0:
+            return
+
+        for action_type in menu_items:
             if not action_type:
                 self.menu.addSeparator()
                 continue
@@ -70,7 +75,7 @@ class BaseItem(QtGui.QStandardItem):
     def add_standard_test_item(self):
         pass
 
-    def _append_children(self):
+    def add_testprogram(self):
         pass
 
     def _get_tooltip(self):
@@ -106,15 +111,11 @@ class BaseItem(QtGui.QStandardItem):
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def has_children(self):
-        # return self.rowCount() > 0
         count = 0
         for child in self._get_children_names():
             item = self.get_child(child)
             if item is None:
                 continue
-
-            # if not item.is_enabled():
-            #     continue
 
             count += 1
 
@@ -133,6 +134,8 @@ class BaseItem(QtGui.QStandardItem):
 
     def remove_child(self, name):
         child_item = self.get_child(name)
+        if child_item is None:
+            return
         self.removeRow(child_item.row())
 
     def _set_node_state(self, dependency_list, enabled):

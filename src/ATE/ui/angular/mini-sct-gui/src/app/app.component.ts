@@ -8,7 +8,7 @@ import { SystemStatus } from './system-status';
 })
 
 export class AppComponent {
-  constructor() {
+constructor() {
 
 
     const _SELF = this;
@@ -21,11 +21,11 @@ export class AppComponent {
     };
 
     this.webSocket.onerror = (e) => {
-      console.log( 'WebSocket connection caused error. type: ' + e.type );
+        console.log( 'WebSocket connection caused error. type: ' + e.type );
     };
 
     this.webSocket.onclose = (e) => {
-      console.log( 'WebSocket connection has been closed' );
+        console.log( 'WebSocket connection has been closed' );
     };
 
     this.webSocket.onmessage = (e) => {
@@ -41,11 +41,11 @@ export class AppComponent {
           _SELF.onMqttProxyMessage(jsonMessage.payload);
         }
       } else if ( e.data instanceof ArrayBuffer ) {
-        console.log( 'WebSocket connection received ArrayBuffer' );
+            console.log( 'WebSocket connection received ArrayBuffer' );
       } else if ( e.data instanceof Blob ) {
-        console.log('WebSocket connection received Blob' );
+            console.log('WebSocket connection received Blob' );
       } else {
-        console.log( 'WebSocket connection something else: ' + e.data );
+            console.log( 'WebSocket connection something else: ' + e.data );
       }
 
       console.log('Session id is: ' + _SELF.getSessionId());
@@ -59,9 +59,7 @@ export class AppComponent {
 
   sessionCache: object;
 
-
-
-  lotNumberChange(event) {
+  loadLot(event) {
     this.sendData({
       type: 'cmd',
       command: 'load',
@@ -69,14 +67,14 @@ export class AppComponent {
     });
   }
 
-  startDutTestEventChange(event) {
+  startDutTest(event) {
     this.sendData({
       type: 'cmd',
       command: 'next'
     });
   }
 
-  unLoadTestProgramEventChange(event) {
+  unloadLot(event) {
     this.sendData({
       type: 'cmd',
       command: 'unload'
@@ -85,9 +83,10 @@ export class AppComponent {
 
   systemStateEventChange(event) {
     this.systemStatus.state = event;
+    this.systemStatus = Object.assign({}, this.systemStatus);
   }
 
-  sendData(json: object) {
+  private sendData(json: object) {
     console.log('Sending json: ' + json);
     this.webSocket.send(JSON.stringify(json));
   }
@@ -95,14 +94,21 @@ export class AppComponent {
   getSessionId() {
     const result = localStorage.getItem('sctSessionId');
     if ( result === null ) {
-      localStorage.clear();
-      localStorage.setItem('sctSessionId', '0' );
+        localStorage.clear();
+        localStorage.setItem('sctSessionId', '0' );
     }
     return localStorage.getItem('sctSessionId');
   }
 
   setSystemStatus(json) {
+
     this.systemStatus.update(json);
+
+    // make a new instance of system state in order to detect changes by angular
+    let copySystemStatus = new SystemStatus();
+    this.systemStatus = Object.assign(copySystemStatus, this.systemStatus);
+    this.systemStatus = copySystemStatus;
+
     if (this.isSubscribed) { return; }
     this.initMqttProxy();
     this.isSubscribed = true;

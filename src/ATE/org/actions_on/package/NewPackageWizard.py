@@ -121,11 +121,12 @@ class NewPackageWizard(QtWidgets.QDialog):
 
     def _get_current_configuration(self):
         return {'name': self.packageName.text(),
-                'leads': self.leads.value()}
+                'leads': self.leads.value(),
+                'is_naked_die': self.isNakedDie.isChecked()}
 
     def OKButtonPressed(self):
         configuration = self._get_current_configuration()
-        self.project_info.add_package(configuration['name'], configuration['leads'])
+        self.project_info.add_package(configuration['name'], configuration['leads'], configuration["is_naked_die"])
         self.accept()
 
     def CancelButtonPressed(self):

@@ -3,6 +3,7 @@ from ATE.org.actions_on.utils.StateItem import StateItem
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.tests.NewStandardTestWizard import new_standard_test_dialog
 from ATE.org.actions_on.tests.TestWizard import new_test_dialog
+from ATE.org.actions_on.tests.TestWizard import edit_test_dialog
 from ATE.org.actions_on.utils.FileSystemOperator import FileSystemOperator
 from ATE.org.actions_on.tests.TestsObserver import TestsObserver
 
@@ -42,10 +43,10 @@ class TestItem(BaseItem):
 
     def update(self):
         active_hardware = self.project_info.active_hardware
-        active_base = self.project_info.active_base
+        active_target = self.project_info.active_target
 
-        if not active_base or \
-           not active_hardware:
+        if not active_hardware or \
+           not active_target:
             self.set_children_hidden(True)
             if self.observer is not None:
                 self.observer.stop_observer()
@@ -64,7 +65,7 @@ class TestItem(BaseItem):
 
         files = []
         for _, _, filenames in walk(test_directory):
-            files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py'])
+            files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py' and '_' not in x])
             break
 
         return files, test_directory
@@ -91,14 +92,22 @@ class TestItemChild(StateItem):
         self.file_system_operator = FileSystemOperator(self.path)
 
     def edit_item(self):
+        definition = self.project_info.get_test_definition(self.text())
+        edit_test_dialog(self.project_info, definition)
+
+    def open_file_item(self):
         self.model().edit_file.emit(self.path)
 
     def delete_item(self):
-        self.file_system_operator.delete_file()
-        self.model().delete_file.emit(self.path)
+        if not self.file_system_operator.delete_file():
+            return
 
+        self.model().delete_file.emit(self.path)
         # TODO: can we delete test here or just set obsolete as used in definiton section
         self.project_info.remove_test(self.text())
+
+    def _get_dependant_objects(self):
+        return self.project_info.get_dependant_objects_for_test(self.text())
 
     def is_enabled(self):
         return self.project_info.get_test_state(self.text())
@@ -108,18 +117,18 @@ class TestItemChild(StateItem):
 
     def _are_dependencies_fulfilled(self):
         dependency_list = {}
+
+        hw = self.project_info.get_test_hardware(self.text())
+        hw_enabled = self.project_info.get_hardware_state(hw[0])
+
+        if not hw_enabled:
+            dependency_list.update({'hardwares': hw})
+
         return dependency_list
 
-        # FIXME
-        # hw = self.project_info.get_test_hardware(self.text())
-        # hw_enabled = self.project_info.get_hardware_state(hw[0])
-
-        # if not hw_enabled:
-        #     dependency_list.update({'hardwares': hw})
-
-        # return dependency_list
-
     def _enabled_item_menu(self):
-        return [MenuActionTypes.Edit(),
+        return [MenuActionTypes.OpenFile(),
+                MenuActionTypes.Edit(),
+                MenuActionTypes.Trace(),
                 None,
                 MenuActionTypes.Delete()]

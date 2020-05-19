@@ -12,64 +12,63 @@ import {formatDate } from '@angular/common';
   pure: true
 })
 export class SystemConsoleComponent implements OnInit, PipeTransform {
-  msgs: ConsoleData[] = [];
+
+
+  constructor() {}
+
   @Input() msg: JSON;
-  // tslint:disable-next-line: no-any
-  transform(value: JSON, args?: any) {
-    this.retrieveData(value);
+  msgs: IConsoleData[] = [];
+  transform(value: JSON, args?: any): any {
+    return this.retrieveData(value);
   }
 
   retrieveData(message) {
-    // abort
     if (!message) { return; }
 
-    const JSON_MESSAGE = JSON.parse(message.payload);
+    const jsonMessage = JSON.parse(message.payload);
 
-    const STATE: string = JSON_MESSAGE.state;
-    const TOPIC: string = message.topic;
-    const TYPE: string = JSON_MESSAGE.type;
+    const _STATE: string = jsonMessage.state;
+    const _TOPIC: string = message.topic;
+    const mType: string = jsonMessage.type;
 
-    if (!STATE || !TOPIC || !TYPE) {
+    if (!_STATE || !_TOPIC || !mType) {
       return;
     }
 
-    let data: ConsoleData;
-
-    if (TYPE === MessageTypes.Status) {
-      const description: string = TYPE + ':      ' + STATE;
-      data = this.generateMessage(STATE, description, TOPIC);
-    } else if (JSON_MESSAGE.type === MessageTypes.Cmd) {
-      const description: string = TYPE + ':     ' + JSON_MESSAGE.command;
-      data = this.generateMessage(STATE, description, TOPIC);
-    } else if (JSON_MESSAGE.type === MessageTypes.Testresult) {
-      const description: string = TYPE + ':     ' + JSON_MESSAGE.testdata;
-      data = this.generateMessage(STATE, description, TOPIC);
+    let data: IConsoleData;
+    if (mType === MessageTypes.Status) {
+      const description: string = mType + ':      ' + _STATE;
+      data = this.generateMessage(_STATE, description, _TOPIC);
+    } else if (jsonMessage.type === MessageTypes.Cmd) {
+      const description: string = mType + ':     ' + jsonMessage.command;
+      data = this.generateMessage(_STATE, description, _TOPIC);
+    } else if (jsonMessage.type === MessageTypes.Testresult) {
+      const description: string = mType + ':     ' + jsonMessage.testdata;
+      data = this.generateMessage(_STATE, description, _TOPIC);
     } else { return; }
+
     this.msgs.push(data);
   }
 
-  generateMessage(state: string, description: string, topic: string): ConsoleData {
+  generateMessage(state: string, description: string, topic: string): IConsoleData {
+      const DATA: IConsoleData = {
+        date: formatDate(Date.now(), 'medium', 'en-US'),
+        topic,
+        description
+      };
 
-    const DATA: ConsoleData = {
-      date: formatDate(Date.now(), 'medium', 'en-US'),
-      topic,
-      description
-    };
-
-    return DATA;
+      return DATA;
   }
 
   clearConsole() {
     this.msgs.length = 0;
   }
 
-  constructor() {}
-
   ngOnInit() {}
 
 }
 
-export interface ConsoleData {
+export interface IConsoleData {
   date: string;
   topic: string;
   description: string;

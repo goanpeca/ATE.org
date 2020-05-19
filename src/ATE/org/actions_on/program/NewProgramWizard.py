@@ -238,7 +238,7 @@ class NewProgramWizard(QtWidgets.QDialog):
         #To Do: The Testprogram name needs to be set in order to
         # attach the program to a node. Replace this, as soon as 
         # the rest works!
-        self.result = "ProgramName"
+        self.result = "ProgramName1"
         self.accept()
 
     def _cancel(self):

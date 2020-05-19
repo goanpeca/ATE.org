@@ -13,30 +13,18 @@ import os
 import re
 import sys
 
-import numpy as np
-
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
 import qdarkstyle
 import qtawesome as qta
 
 from ATE.org.navigation import ProjectNavigation
 from ATE.org.validation import is_ATE_project
+# from ScreenCasting.ScreenCastSettings import ScreenCast
+from ScreenCasting.QtScreenCast import ScreenCastToolButton
 
 show_workspace = False
 
-class screenCast(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-    rightClicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        super().__init__(parent)
-
-    def mouse_pressed_event(self, ev):
-        if ev.button() == QtCore.Qt.RightButton:
-            self.rightClicked.emit()
-        else:
-            self.clicked.emit()
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -67,7 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.workspace_path = os.path.join(self.homedir, "__spyder_workspace__")
         if not os.path.exists(self.workspace_path):
             os.makedirs(self.workspace_path)
-        self.project_info = ProjectNavigation(self.workspace_path, self)
+        self.project_info = ProjectNavigation('', self.workspace_path, self)
 
     # connect the File/New/Project menu
         self.action_quit.triggered.connect(self.quit_event)
@@ -80,12 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tree.customContextMenuRequested.connect(self.context_menu_manager)
 
     # setup the screencaster
-        self.screencast = screenCast()
-        self.screencast.setPixmap(qta.icon('mdi.video', color='orange').pixmap(16, 16))
-        self.screencast_state = 'idle'
-        self.screencast.clicked.connect(self.screencast_start_stop)
-        self.screencast.rightClicked.connect(self.screencast_settings)
-
+        self.screencast = ScreenCastToolButton(self)
         self.statusBar().addPermanentWidget(self.screencast)
 
     # setup the toolbar
@@ -100,8 +83,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.editorTabs.tabCloseRequested.connect(self.close_tab)
 
         self.load_last_project()
-
-        # self.show()
 
     def context_menu_manager(self, point):
         # https://riverbankcomputing.com/pipermail/pyqt/2009-April/022668.html
@@ -145,20 +126,20 @@ class MainWindow(QtWidgets.QMainWindow):
         from ATE.org.actions_on.project.ProjectWizard import NewProjectDialog
 
         new_project_name, new_project_quality = NewProjectDialog(self, self.project_info)
-        print(f"SpyderMockUp.new_project : new_project_name = '{new_project_name}' & new_project_quality = '{new_project_quality}'")
-        self.project_info.add_project(
+        if not new_project_name:
+            return
 
-
-new_project_name, new_project_quality)
         self.toolbar(self.project_info)
         self.set_tree()
+
+        with open(".lastproject", "w") as f:
+            f.write(os.path.join(self.project_info.workspace_path, new_project_name))
 
     def open_project(self):
         dir_name = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                               "Select Directory",
                                                               self.workspace_path,
-                                                              QtWidgets.QFileDialog.ShowDirsOnly |
-                                                              QtWidgets.QFileDialog.DontResolveSymlinks)
+                                                              QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
         selected_directory = os.path.normpath(dir_name)
         self.open_project_impl(selected_directory)
 
@@ -169,18 +150,13 @@ new_project_name, new_project_quality)
                 f.write(projectpath)
 
             self.active_project_path = projectpath
-            self.project_info = ProjectNavigation(self.active_project_path, self)
+            self.project_info = ProjectNavigation(self.active_project_path, self.workspace_path, self)
             self.active_project = os.path.split(self.active_project_path)[-1]
             self.toolbar(self.project_info)
 
             self.set_tree()
 
     def screencast_settings(self):
-        # TODO: implementation missed
-        # from ScreenCastSettings import ScreenCastSettings
-        # screenCastSettings = ScreenCastSettings(self)
-        # screenCastSettings.exec_()
-        # del(screenCastSettings)
         pass
 
     def screencast_start_stop(self):
@@ -188,12 +164,10 @@ new_project_name, new_project_quality)
 
             print("recording stopped")
             self.screencast_state = 'idle'
-            self.screencast.setPixmap(qta.icon('mdi.video', color='orange').pixmap(16, 16))
         else:
 
             print("recording started")
             self.screencast_state = 'recording'
-            self.screencast.setPixmap(qta.icon('mdi.video', 'fa5s.ban', options=[{'color': 'orange'}, {'color': 'red'}]).pixmap(16, 16))
 
     def edit_test(self, path):
         selected_file = os.path.basename(path)
