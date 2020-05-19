@@ -1,0 +1,50 @@
+name: foxy
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - atomicwrites
+  - attrs
+  - blas
+  - ca-certificates
+  - certifi
+  - colorama
+  - entrypoints
+  - ffmpeg
+  - flake8
+  - icu
+  - intel-openmp
+  - jpeg
+  - libclang
+  - libpng
+  - mccabe
+  - mkl
+  - mkl-service
+  - mkl_fft
+  - mkl_random
+  - more-itertools
+  - numpy
+  - numpy-base
+  - openssl
+  - packaging
+  - pluggy
+  - py
+  - pip
+  - pycodestyle
+  - pyflakes
+  - pyparsing
+  - pyqt
+  - pytest
+  - pytest-qt
+  - python == 3.8.2
+  - python_abi
+  - qt == 5.12.5
+  - setuptools
+  - sqlite
+  - wcwidth
+  - wheel
+  - zlib
+  - pip:
+      - pyqt5-sip == 4.19.18
+      - pyqtchart == 5.12
+      - pyqtwebengine == 5.12.1

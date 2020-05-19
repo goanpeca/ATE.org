@@ -284,11 +284,12 @@ class AudioRecorder(QtMultimedia.QAudioRecorder):
         self._setup()
 
     def _setup(self):
-        self.audio_encoder_settings = QtMultimedia.QAudioEncoderSettings()
-        self.audio_encoder_settings.setCodec('audio/aac')
-        self.audio_encoder_settings.setQuality(QtMultimedia.QMultimedia.HighQuality)
-        self.audio_encoder_settings.setEncodingMode(QtMultimedia.QMultimedia.ConstantBitRateEncoding)
-        self.setAudioSettings(self.audio_encoder_settings)
+        # self.audio_encoder_settings = QtMultimedia.QAudioEncoderSettings()
+        # self.audio_encoder_settings.setCodec('audio/aac')
+        # self.audio_encoder_settings.setQuality(QtMultimedia.QMultimedia.HighQuality)
+        # self.audio_encoder_settings.setEncodingMode(QtMultimedia.QMultimedia.ConstantBitRateEncoding)
+        # self.setAudioSettings(self.audio_encoder_settings)
+        self.setContainerFormat("audio/x-wav")
         self.setOutputLocation(QtCore.QUrl.fromLocalFile(self.audio))
 
         # TODO: do we need to specify audio input
