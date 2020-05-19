@@ -46,8 +46,10 @@ class NewDeviceWizard(QtWidgets.QDialog):
         # packages
         self.existing_packages = self.project_info.get_available_packages()
         self.package.clear()
-        self.package.addItems([''] + self.existing_packages + ['Naked Die'])
-        self.package.setCurrentIndex(0)  # this is the empty string !
+        self.package.addItems([''] + self.existing_packages)
+        self.package.setCurrentText('' if not len(self.existing_packages) else self.existing_packages[0])
+        # TODO: should we just take the first available one, as below
+        # self.package.setCurrentIndex(0)  # this is the empty string !
 
         # Dies/Pins
         if self.hardware.currentText() == '':
@@ -118,8 +120,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         at the parent level is also changed, the dies in device list is cleared,
         and the available dies is reloaded.
         '''
-        # TODO: must be done elsewhere
-        # self.parent.active_hardware = self.hardware.currentText()
+        self.project_info.hardware_activated.emit(self.hardware.currentText())
 
         self.diesInDevice.clear()
         self.existing_dies = self.project_info.get_dies_for_hardware(self.project_info.active_hardware)

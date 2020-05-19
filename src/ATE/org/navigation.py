@@ -6,7 +6,6 @@ Created on Tue Mar  3 14:08:04 2020
 """
 
 import os
-import sys
 import sqlite3
 import pickle
 import shutil
@@ -16,6 +15,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from ATE.org.constants import TableIds as TableId
 from ATE.org.validation import is_ATE_project
+
 
 class ProjectNavigation(QObject):
     '''
@@ -30,14 +30,15 @@ class ProjectNavigation(QObject):
     hardware_removed = pyqtSignal(str)
     update_target = pyqtSignal()
 
-    def __init__(self, project_directory, parent, project_quality=''):
+    def __init__(self, project_directory, workspace_path, parent, project_quality=''):
         super().__init__(parent)
+        self.workspace_path = workspace_path
         self.__call__(project_directory, project_quality)
 
     def __call__(self, project_directory, project_quality=''):
         self.template_directory = os.path.join(os.path.dirname(__file__), 'templates')
-        self.workspace_path = self.parent().workspace_path
-        if project_directory == '' or isinstance(project_directory, type(None)) or project_directory == self.workspace_path:
+
+        if project_directory == '':
             self.project_directory = ''
             self.active_target = ''
             self.active_hardware = ''
@@ -45,6 +46,7 @@ class ProjectNavigation(QObject):
             self.project_name = ''
             self.project_quality = ''
             self.db_file = ''
+            self.con = None
         else:
             self.project_directory = project_directory
             self.active_target = ''
@@ -70,6 +72,8 @@ class ProjectNavigation(QObject):
                         self.project_quality = pickle.load(reader)
                 else:
                     self.project_quality = ''
+
+                self._set_folder_structure()
                 self.con = sqlite3.connect(self.db_file)
                 self.cur = self.con.cursor()
 
@@ -82,6 +86,13 @@ class ProjectNavigation(QObject):
     def update_active_hardware(self, hardware):
         self.active_hardware = hardware
         self.hardware_activated.emit(hardware)
+
+    def _set_folder_structure(self):
+        # make sure that the doc structure is obtained
+        doc_path = os.path.join(self.project_directory, "doc")
+        os.makedirs(os.path.join(doc_path, "audit"), exist_ok=True)
+        os.makedirs(os.path.join(doc_path, "export"), exist_ok=True)
+        os.makedirs(os.path.join(doc_path, "standards"), exist_ok=True)
 
     def create_project_structure(self):
         '''
@@ -97,7 +108,6 @@ class ProjectNavigation(QObject):
                         os.path.join(self.project_directory, '.gitignore'))
         # setup.py ???
         # .pre-commit-config.yaml ???
-
         # spyder
         # TODO: once we are integrated in Spyder, we need to get the following
         #      stuff from Spyder, and no longer from the template directroy.
@@ -162,155 +172,151 @@ class ProjectNavigation(QObject):
         '''
         # devices
         self.cur.execute('''CREATE TABLE "devices" (
-                               "name"	TEXT NOT NULL UNIQUE,
-                               "hardware"	TEXT NOT NULL,
-                               "package"	TEXT NOT NULL,
-                               "definition"	BLOB NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "hardware"	TEXT NOT NULL,
+                         "package"	TEXT NOT NULL,
+                         "definition"	BLOB NOT NULL,
+                         "is_enabled" BOOL,
 
-                               PRIMARY KEY("name"),
-                               FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
-                               FOREIGN KEY("package") REFERENCES "packages"("name")
-                            );''')
+                            PRIMARY KEY("name"),
+                         FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
+                         FOREIGN KEY("package") REFERENCES "packages"("name")
+                         );''')
         self.con.commit()
         # dies
         self.cur.execute('''CREATE TABLE "dies" (
-                               "name"	TEXT NOT NULL UNIQUE,
-                               "hardware"	TEXT NOT NULL,
-                               "maskset"	TEXT NOT NULL,
-                               "grade"	TEXT NOT NULL
-                                   CHECK (grade=='A' OR
-                                          grade=='B' OR
-                                          grade=='C' OR
-                                          grade=='D' OR
-                                          grade=='E' OR
-                                          grade=='F' OR
-                                          grade=='G' OR
-                                          grade=='H' OR
-                                          grade=='I'),
-                               "grade_reference"	TEXT NOT NULL,
-                               "quality"	TEXT NOT NULL,
-                               "customer"	TEXT NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "hardware"	TEXT NOT NULL,
+                         "maskset"	TEXT NOT NULL,
+                         "grade"	TEXT NOT NULL
+                                CHECK (grade=='A' OR
+                                       grade=='B' OR
+                                       grade=='C' OR
+                                       grade=='D' OR
+                                       grade=='E' OR
+                                       grade=='F' OR
+                                       grade=='G' OR
+                                       grade=='H' OR
+                                       grade=='I'),
+                         "grade_reference"	TEXT NOT NULL,
+                            "quality"	TEXT NOT NULL,
+                         "customer"	TEXT NOT NULL,
+                            "is_enabled" BOOL,
 
-                               PRIMARY KEY("name"),
-                               FOREIGN KEY("hardware")
-                                   REFERENCES "hardware"("name"),
-                               FOREIGN KEY("maskset")
-                                   REFERENCES "masksets"("name")
-                            );''')
+                         PRIMARY KEY("name"),
+                         FOREIGN KEY("hardware")
+                                REFERENCES "hardware"("name"),
+                         FOREIGN KEY("maskset")
+                                REFERENCES "masksets"("name")
+                         );''')
         self.con.commit()
         # flows
         self.cur.execute('''CREATE TABLE "flows" (
-                               "name"	TEXT NOT NULL,
-                               "base"	TEXT NOT NULL
-                                   CHECK(base=='PR' OR base=='FT'),
-                               "target"	TEXT NOT NULL,
-                               "type"	TEXT NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"   TEXT NOT NULL,
+                         "base"   TEXT NOT NULL
+                               CHECK(base=='PR' OR base=='FT'),
+                         "target"	TEXT NOT NULL,
+                         "type"   TEXT NOT NULL,
+                         "is_enabled" BOOL,
 
-                               PRIMARY KEY("name")
-                            );''')
+                            PRIMARY KEY("name")
+                         );''')
         self.con.commit()
 
         # qualification flow data:
         self.cur.execute('''CREATE TABLE "qualification_flow_data" (
-                               "name"	    TEXT NOT NULL,
-                               "type"       TEXT NOT NULL,
-                               "product"    TEXT NOT NULL,
-                               "data"	    BLOB NOT NULL,
+                            "name"	    TEXT NOT NULL,
+                            "type"       TEXT NOT NULL,
+                            "product"    TEXT NOT NULL,
+                            "data"	    BLOB NOT NULL,
 
-                               PRIMARY KEY("name"),
-                               FOREIGN KEY("product") REFERENCES "products"("name")
-                            );''')
+                            PRIMARY KEY("name"),
+                            FOREIGN KEY("product") REFERENCES "products"("name")
+                         );''')
         self.con.commit()
 
         # hardwares
         self.cur.execute('''CREATE TABLE "hardwares" (
-                               "name"	TEXT NOT NULL UNIQUE,
-                               "definition"	BLOB NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "definition"	BLOB NOT NULL,
+                         "is_enabled" BOOL,
 
-                               PRIMARY KEY("name")
-                            );''')
+                             PRIMARY KEY("name")
+                         );''')
         self.con.commit()
         # masksets
         self.cur.execute('''CREATE TABLE "masksets" (
-                              "name"	TEXT NOT NULL UNIQUE,
-                              "customer"	TEXT NOT NULL,
-                              "definition"	BLOB NOT NULL,
-                              "is_enabled" BOOL,
-
-                              PRIMARY KEY("name")
-                           );''')
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "customer"	TEXT NOT NULL,
+                         "definition"	BLOB NOT NULL,
+                         "is_enabled" BOOL,
+                         
+                         PRIMARY KEY("name")
+                         );''')
         self.con.commit()
         # packages
         self.cur.execute('''CREATE TABLE "packages" (
-                              "name"	TEXT NOT NULL UNIQUE,
-                              "leads"	INTEGER NOT NULL
-                                 CHECK(leads>=2 AND leads<=99),
-                              "is_enabled" BOOL,
-
-                              PRIMARY KEY("name")
-                           );''')
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "leads"	INTEGER NOT NULL
+                               CHECK(leads>=2 AND leads<=99),
+                         "is_enabled" BOOL,
+                         "is_naked_die" BOOL,
+                         PRIMARY KEY("name")
+                         );''')
         self.con.commit()
         # products
         self.cur.execute('''CREATE TABLE "products" (
-                               "name"	TEXT NOT NULL UNIQUE,
-                               "device"	TEXT NOT NULL,
-                               "hardware"	TEXT NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL UNIQUE,
+                         "device"	TEXT NOT NULL,
+                         "hardware"	TEXT NOT NULL,
+                            "is_enabled" BOOL,
 
-                               PRIMARY KEY("name"),
-                               FOREIGN KEY("device") REFERENCES "devices"("name"),
-                               FOREIGN KEY("hardware") REFERENCES "hardware"("name")
-                            );''')
+                         PRIMARY KEY("name"),
+                         FOREIGN KEY("device") REFERENCES "devices"("name"),
+                         FOREIGN KEY("hardware") REFERENCES "hardware"("name")
+                         );''')
         self.con.commit()
         # programs
         self.cur.execute('''CREATE TABLE "programs" (
-                               "name"	TEXT NOT NULL,
-                               "hardware"	TEXT NOT NULL,
-                               "base"	TEXT NOT NULL
-                                   CHECK(base=='PR' OR base=='FT'),
-                               "definition"	BLOB NOT NULL,
-                               "relative_path"	TEXT NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL,
+                         "hardware"	TEXT NOT NULL,
+                         "base"	TEXT NOT NULL
+                                CHECK(base=='PR' OR base=='FT'),
+                         "definition"	BLOB NOT NULL,
+                         "relative_path"	TEXT NOT NULL,
+                            "is_enabled" BOOL,
 
-                               PRIMARY KEY("name")
-                            );''')
+                          PRIMARY KEY("name")
+                         );''')
         self.con.commit()
 
         # program owers (i.e. the flows who got a given program assigned)
         self.cur.execute('''CREATE TABLE "program_owner" (
-                            "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
-                            "prog_name"	TEXT NOT NULL,
-                            "owner_name"	TEXT NOT NULL
-                        );''')
+                         "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+                         "prog_name"	TEXT NOT NULL,
+                         "owner_name"	TEXT NOT NULL,
+                         "prog_order" INTEGER
+                         );''')
         self.con.commit()
 
         # tests
         self.cur.execute('''CREATE TABLE "tests" (
-                               "name"	TEXT NOT NULL,
-                               "hardware"	TEXT NOT NULL,
-                               "type"	TEXT NOT NULL
-                                   CHECK(type=='standard' OR type=='custom'),
-                               "base"	TEXT NOT NULL
-                                   CHECK(base=='PR' OR base=='FT'),
-                               "definition"	BLOB NOT NULL,
-                               "relative_path"	TEXT NOT NULL,
-                               "is_enabled" BOOL,
+                         "name"	TEXT NOT NULL,
+                         "hardware"	TEXT NOT NULL,
+                         "type"	TEXT NOT NULL
+                               CHECK(type=='standard' OR type=='custom'),
+                         "base"	TEXT NOT NULL
+                               CHECK(base=='PR' OR base=='FT'),
+                         "definition"	BLOB NOT NULL,
+                         "is_enabled" BOOL,
 
-                               PRIMARY KEY("name")
-                            );''')
+                         PRIMARY KEY("name")
+                         );''')
         self.con.commit()
 
     def add_project(self, project_name, project_quality=''):
         project_directory = os.path.join(self.workspace_path, project_name)
-        print(f"add_project({project_name}, {project_quality}) --> {project_directory}")
         self.__call__(project_directory, project_quality)
-
-    def open_project(self):
-        pass
 
     def dict_projects(self, workspace_path=''):
         '''
@@ -320,12 +326,11 @@ class ProjectNavigation(QObject):
         '''
         retval = {}
         if workspace_path == '':
-            workspace_path = self.parent().workspace_path
+            workspace_path = self.workspace_path
         for directory in os.listdir(workspace_path):
             full_directory = os.path.join(workspace_path, directory)
             if os.path.isdir(full_directory):
                 retval[directory] = full_directory
-        print('...', workspace_path, retval)
         return retval
 
     def list_projects(self, workspace_path=''):
@@ -333,7 +338,7 @@ class ProjectNavigation(QObject):
         given a workspace_path, extract a list of all projects
         '''
         if workspace_path == '':
-            workspace_path = self.parent().workspace_path
+            workspace_path = self.workspace_path
         return list(self.dict_projects(workspace_path))
 
     def list_ATE_projects(self, workspace_path=''):
@@ -342,7 +347,7 @@ class ProjectNavigation(QObject):
         if workspace_path is empty, the parent's "workspace_path" will be used.
         '''
         if workspace_path == '':
-            workspace_path = self.parent().workspace_path
+            workspace_path = self.workspace_path
         return list(self.dict_ATE_projects(workspace_path))
 
     def dict_ATE_projects(self, workspace_path=''):
@@ -353,7 +358,7 @@ class ProjectNavigation(QObject):
         '''
         retval = {}
         if workspace_path == '':
-            workspace_path = self.parent().workspace_path
+            workspace_path = self.workspace_path
         all_projects = self.dict_projects(workspace_path)
         for candidate in all_projects:
             possible_ATE_project = all_projects[candidate]
@@ -398,7 +403,7 @@ class ProjectNavigation(QObject):
         os.makedirs(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states'))
         create_file(os.path.join(self.project_directory, 'src', new_hardware, 'PR', 'states', '__init__.py')).touch()
 
-        #TODO: and the common.py in .../src/HWx/common.py --> comes from the wizard!!!
+        # TODO: and the common.py in .../src/HWx/common.py --> comes from the wizard!!!
 
         self.hardware_added.emit(new_hardware)
         return new_hardware
@@ -620,7 +625,6 @@ class ProjectNavigation(QObject):
         self.cur.execute(update_query, (hardware, maskset, grade, grade_reference, quality, customer, is_enabled, name))
         self.con.commit()
 
-
     def update_die_hardware(self, name, hardware):
         '''
         this method will update die 'name' with 'hardware'.
@@ -638,7 +642,6 @@ class ProjectNavigation(QObject):
         update_query = '''UPDATE dies SET hardware = ? WHERE name = ?'''
         self.cur.execute(update_query, (hardware, name))
         self.con.commit()
-
 
     def update_die_maskset(self, name, maskset):
         '''
@@ -788,7 +791,7 @@ class ProjectNavigation(QObject):
 
 # Packages
 
-    def add_package(self, name, leads, is_enabled=True):
+    def add_package(self, name, leads, is_naked_die, is_enabled=True):
         '''
         this method will insert package 'name' and 'pleads' in the
         database, but prior it will check if 'name' already exists, if so
@@ -797,14 +800,14 @@ class ProjectNavigation(QObject):
         existing_packages = self.get_packages()
         if name in existing_packages:
             raise KeyError(f"package '{name}' already exists")
-        query = '''INSERT INTO packages(name, leads, is_enabled) VALUES (?, ?, ?)'''
-        self.cur.execute(query, (name, leads, is_enabled))
+        query = '''INSERT INTO packages(name, leads, is_enabled, is_naked_die) VALUES (?, ?, ?, ?)'''
+        self.cur.execute(query, (name, leads, is_enabled, is_naked_die))
         self.con.commit()
         self.database_changed.emit(TableId.Package())
 
-    def update_package(self, name, leads, is_enabled=True):
-        update_query = '''UPDATE packages SET leads = ?, is_enabled = ? WHERE name = ?'''
-        self.cur.execute(update_query, (leads, is_enabled, name))
+    def update_package(self, name, leads, is_naked_die, is_enabled=True):
+        update_query = '''UPDATE packages SET leads = ?, is_enabled = ?, is_naked_die=? WHERE name = ?'''
+        self.cur.execute(update_query, (leads, is_enabled, is_naked_die, name))
         self.con.commit()
 
     def get_package(self, name):
@@ -815,6 +818,16 @@ class ProjectNavigation(QObject):
                 return package
 
         return None
+
+    def is_package_a_naked_die(self, package):
+        query = f'''SELECT "is_naked_die" FROM packages where name=? LIMIT 1'''
+        self.cur.execute(query, (package,))
+        row = self.cur.fetchone()
+        # Note: If we are called with an non-existing package this is
+        # an error worthy of an exception.
+        if row is None:
+            raise KeyError
+        return row[0]
 
     def update_package_leads(self, name, leads):
         '''
@@ -878,10 +891,6 @@ class ProjectNavigation(QObject):
         if 'name' already exists, a KeyError is raised
         if 'package' doesn't exist, a KeyError is raised
         '''
-        existing_devices = self.get_devices()
-        if name in existing_devices:
-            raise KeyError(f"device '{name}' already exists")
-
         existing_packages = self.get_packages()
         if package not in existing_packages:
             raise KeyError(f"package '{package}' doesn't exist")
@@ -991,7 +1000,6 @@ class ProjectNavigation(QObject):
     def get_device_dies(self, device):
         definition = self.get_device_definition(device)
         return definition['dies_in_package']
-
 
     def trace_device(self, name):
         '''
@@ -1143,7 +1151,7 @@ class ProjectNavigation(QObject):
             self.cur.execute(query, (name, hardware, Type, base, blob, rel_path))
             self.con.commit()
             self.database_changed.emit(TableId.Flow())
-        except:
+        except Exception:
             raise
         else:
             return rel_path
@@ -1160,19 +1168,15 @@ class ProjectNavigation(QObject):
         else:
             raise Exception(f"{name} not a standard test ... WTF!")
 
-
-    def add_test(self, name, hardware, base, test_type, definition, is_enabled=True):
+    def add_or_update_test(self, name, hardware, base, test_type, definition, is_enabled=True):
         '''
         given the name, hardware, base and test_numbers for a test,
         create the test based on the supplied info and add the info to
         the database.
         '''
-        from ATE.org.coding import test_generator
-
-        relative_path = test_generator(self.project_directory, name, hardware, base, definition)
-        query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path, is_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+        query = '''INSERT OR REPLACE INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
-        self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path, is_enabled))
+        self.cur.execute(query, (name, hardware, base, test_type, blob, is_enabled))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 
@@ -1195,20 +1199,35 @@ class ProjectNavigation(QObject):
         from ATE.org.actions_on.tests import standard_test_names
 
         for potential_test in potential_tests:
-            if potential_test.upper().endswith('.PY'): # ends with .PY, .py, .Py or .pY
-                if not '_' in potential_test.upper().replace('.PY', ''): # name doesn't contain an underscore
-                    if not '.' in potential_test.upper().replace('.PY', ''): # name doesn't contain extra dot(s)
-                        if test_type=='all':
+            if potential_test.upper().endswith('.PY'):  # ends with .PY, .py, .Py or .pY
+                if '_' not in potential_test.upper().replace('.PY', ''):  # name doesn't contain an underscore
+                    if '.' not in potential_test.upper().replace('.PY', ''):  # name doesn't contain extra dot(s)
+                        if test_type == 'all':
                             retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
-                        elif test_type=='standard':
+                        elif test_type == 'standard':
                             if '.'.join(potential_test.split('.')[0:-1]) in standard_test_names:
                                 retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
-                        elif test_type=='custom':
+                        elif test_type == 'custom':
                             if '.'.join(potential_test.split('.')[0:-1]) not in standard_test_names:
                                 retval[potential_test.split('.')[0]] = os.path.join(tests_directory, potential_test)
                         else:
                             raise Exception('unknown test type !!!')
         return retval
+
+    def get_test_definition(self, name):
+        get_blob_query = '''SELECT hardware, type, base, definition FROM tests WHERE name = ?'''
+        self.cur.execute(get_blob_query, (name,))
+        definition = {}
+        retval = self.cur.fetchone()
+        definition['name'] = name
+        definition['hardware'] = retval[0]
+        definition['type'] = retval[1]
+        definition['base'] = retval[2]
+        in_out_param = pickle.loads(retval[3])
+        definition['input_parameters'] = in_out_param['input_parameters']
+        definition['output_parameters'] = in_out_param['output_parameters']
+        definition['docstring'] = in_out_param['docstring']
+        return definition
 
     def get_test_hardware(self, name):
         get_blob_query = '''SELECT hardware FROM tests WHERE name = ?'''
@@ -1303,24 +1322,70 @@ class ProjectNavigation(QObject):
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def insert_program_owner(self, program_name, owner_name):
-        query = '''INSERT INTO program_owner (prog_name, owner_name) VALUES(?,?)'''
-        self.cur.execute(query, (program_name, owner_name))
+    def insert_program_owner(self, program_name, owner_name, order):
+        query = '''INSERT INTO program_owner (prog_name, owner_name, prog_order) VALUES(?,?,?)'''
+        self.cur.execute(query, (program_name, owner_name, order))
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def delete_program_owner(self, program_name, owner_name):
-        query = '''DELETE from program_owner WHERE prog_name=? and owner_name=?'''
-        self.cur.execute(query, (program_name, owner_name))
+    def delete_program_owner(self, program_name, owner_name, program_order):
+        query = '''DELETE from program_owner WHERE prog_name=? and owner_name=? and prog_order = ?'''
+        self.cur.execute(query, (program_name, owner_name, program_order))
         self.con.commit()
+        order = program_order
+        for index in range(order, self._get_program_owner_element_count(owner_name)):
+            self._update_program_owner_order(owner_name, index + 1, index)
+
         self.database_changed.emit(TableId.Flow())
+
+    def move_program_owner(self, program_name, owner_name, program_order, is_up):
+        query = '''SELECT prog_order, id from program_owner where owner_name = ? and prog_order = ?'''
+        self.cur.execute(query, (owner_name, program_order))
+        result = self.cur.fetchone()
+        order = result[0]
+        prog_id = result[1]
+
+        count = self._get_program_owner_element_count(owner_name)
+        if is_up:
+            if order == 0:
+                return
+
+            self._update_elements(owner_name, order, order - 1, prog_id)
+        else:
+            if order == count - 1:
+                return
+
+            self._update_elements(owner_name, order, order + 1, prog_id)
+
+        self.database_changed.emit(TableId.Flow())
+
+    def _update_elements(self, owner_name, prev_order, order, prog_id):
+        self._update_program_owner_order(owner_name, prev_order, order)
+        self._update_program_owner_order_neighbour(owner_name, order, prev_order, prog_id)
+
+    def _update_program_owner_order_neighbour(self, owner_name, prev_order, order, prog_id):
+        query = '''UPDATE program_owner SET prog_order = ? where owner_name = ? and prog_order = ? and id != ?'''
+        self.cur.execute(query, (order, owner_name, prev_order, prog_id))
+        self.con.commit()
+
+    def _update_program_owner_order(self, owner_name, prev_order, order):
+        query = '''UPDATE program_owner SET prog_order = ? where owner_name = ? and prog_order = ?'''
+        self.cur.execute(query, (order, owner_name, prev_order))
+        self.con.commit()
+
+    def _get_program_owner_element_count(self, owner_name):
+        query = '''SELECT COUNT (*) FROM program_owner where owner_name = ?'''
+        self.cur.execute(query, (owner_name,))
+        rowcount = self.cur.fetchone()[0]
+        return rowcount
 
     def get_programs_for_owner(self, owner_name):
-        query = '''SELECT prog_name from program_owner where owner_name = ?'''
+        query = '''SELECT prog_name from program_owner where owner_name = ? ORDER BY prog_order'''
         self.cur.execute(query, (owner_name,))
         retval = []
         for row in self.cur.fetchall():
-            retval.append((row[0]))
+            retval.append(row[0])
+
         return retval
 
     def get_available_testers(self):
@@ -1408,6 +1473,22 @@ class ProjectNavigation(QObject):
 
         return deps
 
+    def get_testprograms_for_test(self):
+        pass
+
+    def get_dependant_objects_for_test(self, test):
+        return {}
+        deps = {'testprograms': []}
+        products = self.get_products()
+        for name in products:
+            product = self.get_testprograms_for_test(test)
+            deps['testprograms'] = product
+
+        if len(deps['testprograms']) == 0:
+            return {}
+
+        return deps
+
     def _get_state(self, name, type):
         query = f"SELECT name, is_enabled FROM {type}"
         self.cur.execute(query,)
@@ -1475,3 +1556,12 @@ class ProjectNavigation(QObject):
     def update_test_state(self, name, state):
         update_query = "UPDATE tests SET is_enabled = ? WHERE name = ?"
         self._update_state(update_query, name, state)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if not self.con:
+            return
+
+        self.con.close()

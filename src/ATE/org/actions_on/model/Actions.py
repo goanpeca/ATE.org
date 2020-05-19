@@ -20,4 +20,8 @@ ACTIONS = {MenuActionTypes.Edit(): (qta.icon('mdi.lead-pencil', color='orange'),
            MenuActionTypes.Move(): (qta.icon('mdi.file-move', color='orange'), "Move"),
            MenuActionTypes.DeleteFile(): (qta.icon('mdi.file-remove', color='orange'), "Remove"),
            MenuActionTypes.Obsolete(): (qta.icon('mdi.block-helper', color='orange'), "Obsolete"),
-           MenuActionTypes.Enable(): (qta.icon('mdi.check', color='orange'), "Activate")}
+           MenuActionTypes.Enable(): (qta.icon('mdi.check', color='orange'), "Activate"),
+           MenuActionTypes.MoveUp(): (qta.icon('mdi.arrow-up-bold-box', color='orange'), "Move Up"),
+           MenuActionTypes.MoveDown(): (qta.icon('mdi.arrow-down-bold-box', color='orange'), "Move Down"),
+           MenuActionTypes.OpenFile(): (qta.icon('mdi.book-open', color='orange'), "Open"),
+           MenuActionTypes.AddTestprogram(): (qta.icon('mdi.plus', color='orange'), "New Testprogram")}

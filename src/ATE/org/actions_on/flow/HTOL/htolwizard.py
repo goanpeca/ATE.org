@@ -3,7 +3,8 @@
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
-
+from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 quali_flow_name = "qualification_HTOL_flow"
 quali_flow_listentry_name = "HTOL"
@@ -15,6 +16,7 @@ class HTOLWizard(wizardbase.wizardbase):
     # is usable by the wizard.
     def _get_wizard_parameters(self) -> list:
         return [writeoncetextparam.WriteOnceTextParam("name"),
+                optionparam.OptionParam("Reference Measurement", self._get_possible_references()),
                 intparam.IntParam("Temperature (°C)", 0, 0, 200),
                 intparam.IntParam("Length (hours)", 0, 0, 10000),
                 intparam.IntParam("Testwindow (hours)", 0, 0, 500),
@@ -27,6 +29,16 @@ class HTOLWizard(wizardbase.wizardbase):
 
     def _get_data_type(self) -> str:
         return quali_flow_name
+
+    def _get_possible_references(self) -> []:
+        htols = self.storage.get_data_for_qualification_flow(self._get_data_type(), self.datasource["product"])
+        usedHtols = ["ZHM"]
+        for htol in htols:
+            if "name" in self.datasource.keys():
+                if htol[0] == self.datasource["name"]:
+                    continue
+            usedHtols.append(htol[0])
+        return usedHtols
 
 
 def new_item(storage, product: str):
@@ -46,3 +58,20 @@ def view_item(storage, data):
     dialog.set_view_only()
     dialog.exec_()
     del(dialog)
+
+
+def check_delete_constraints(storage, data):
+    # Constraints for deleting a HTOL entry:
+    # No other HTOL entries may refer to it.
+    htols = storage.get_data_for_qualification_flow(quali_flow_name, storage.active_target)
+    for htol in htols:
+        if htol[3]["Reference Measurement"] == data["name"]:
+            dependencyName = data["name"]
+            from PyQt5.QtWidgets import QMessageBox
+            msg = QMessageBox()
+            msg.setWindowTitle("Error")
+            msg.setText(f"Cannot delete HTOL Entry {dependencyName}. The HTOL entry {htol[0]} depends on it.")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+            return False
+    return True

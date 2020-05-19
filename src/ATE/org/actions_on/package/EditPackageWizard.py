@@ -13,7 +13,7 @@ class EditPackageWizard(NewPackageWizard):
 
     def OKButtonPressed(self):
         configuration = self._get_current_configuration()
-        self.project_info.update_package(configuration['name'], configuration['leads'])
+        self.project_info.update_package(configuration['name'], configuration['leads'], configuration['is_naked_die'])
         self.accept()
 
 

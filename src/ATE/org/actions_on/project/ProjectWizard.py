@@ -9,13 +9,14 @@ import re
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from ATE.org.validation import is_valid_project_name, valid_project_name_regex
-from ATE.org.listings import list_ATE_projects
+
 
 class ProjectWizard(QtWidgets.QDialog):
 
     def __init__(self, parent, navigator, title):
         super().__init__(parent)
 
+        self.project_info = navigator
         my_ui = __file__.replace('.py', '.ui')
         if not os.path.exists(my_ui):
             raise Exception("can not find %s" % my_ui)
@@ -29,7 +30,7 @@ class ProjectWizard(QtWidgets.QDialog):
         self.ProjectName.setText("")
         self.ProjectName.textChanged.connect(self.verify)
 
-        self.existing_projects = navigator.list_ATE_projects(self.parent().workspace_path)
+        self.existing_projects = navigator.list_ATE_projects(navigator.workspace_path)
 
         self.Feedback.setStyleSheet('color: orange')
 
@@ -66,24 +67,15 @@ class ProjectWizard(QtWidgets.QDialog):
     def CancelButtonPressed(self):
         self.reject()
 
+
 def NewProjectDialog(parent, navigator):
     newProjectWizard = ProjectWizard(parent, navigator, 'New Project Wizard')
-    if newProjectWizard.exec_(): # OK button pressed
+    if newProjectWizard.exec_():  # OK button pressed
         project_name = newProjectWizard.project_name
         project_quality = newProjectWizard.project_quality
+        navigator.add_project(project_name, project_quality)
     else:
         project_name = ''
         project_quality = ''
     del(newProjectWizard)
     return project_name, project_quality
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-    from ATE.org.actions.dummy_main import DummyMainWindow
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    dummyMainWindow = DummyMainWindow()
-    dialog = NewProjectWizard(dummyMainWindow)
-    dummyMainWindow.register_dialog(dialog)
-    sys.exit(app.exec_())

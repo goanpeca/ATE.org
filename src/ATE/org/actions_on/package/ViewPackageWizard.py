@@ -17,6 +17,7 @@ class ViewPackageWizard(NewPackageWizard):
         self.packageName.setEnabled(False)
         self.leads.setEnabled(False)
         self.findOnFilesystem.setEnabled(False)
+        self.isNakedDie.setEnabled(False)
 
         self.CancelButton.setEnabled(True)
         self.CancelButton.clicked.connect(self.accept)
@@ -30,6 +31,7 @@ class ViewPackageWizard(NewPackageWizard):
         dialog.packageName.setText(name)
         dialog.leads.setValue(configuration[0])
         dialog.feedback.setText("")
+        dialog.isNakedDie.setChecked(dialog.project_info.is_package_a_naked_die(name))
 
     def _connect_event_handler(self):
         pass

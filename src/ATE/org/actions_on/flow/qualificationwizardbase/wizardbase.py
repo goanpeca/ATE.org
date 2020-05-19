@@ -12,7 +12,6 @@ class wizardbase(QtWidgets.QDialog):
     def __init__(self, datasource: dict, storage):
         super().__init__()
         self.__load_ui()
-        self.setup_parameters()
 
         # The dialog always works on a given set of data.
         # This can be either new data (in this case datasource
@@ -25,6 +24,7 @@ class wizardbase(QtWidgets.QDialog):
         self.datasource = datasource
         self.storage = storage
         self.enable_save = True
+        self.setup_parameters()
 
         saveButton = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         saveButton.clicked.connect(self.__store_data)

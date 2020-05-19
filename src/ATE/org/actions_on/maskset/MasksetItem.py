@@ -6,8 +6,6 @@ from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.model.BaseItem import BaseItem
 from ATE.org.actions_on.utils.StateItem import StateItem
 
-from PyQt5 import QtCore
-
 
 class MasksetItem(BaseItem):
     def __init__(self, project_info, name, parent=None):

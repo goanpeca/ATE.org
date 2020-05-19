@@ -1,20 +1,9 @@
 from PyQt5 import QtCore, QtGui
 
 from ATE.org.actions_on.model.BaseItem import BaseItem
-
-from ATE.org.actions_on.hardwaresetup.HardwaresetupItem import HardwaresetupItem
-from ATE.org.actions_on.maskset.MasksetItem import MasksetItem
-from ATE.org.actions_on.die.DieItem import DieItem
-from ATE.org.actions_on.package.PackageItem import PackageItem
-from ATE.org.actions_on.device.DeviceItem import DeviceItem
-from ATE.org.actions_on.product.ProductItem import ProductItem
-
 from ATE.org.actions_on.model import FlowItem as FlowItem
-
 from ATE.org.actions_on.tests.TestItem import TestItem
 
-from ATE.org.actions_on.documentation.DocumentationObserver import DocumentationObserver
-from ATE.org.actions_on.documentation.DocumentationItem import DocumentationItem
 from ATE.org.constants import TableIds
 
 
@@ -66,13 +55,16 @@ class TreeModel(QtGui.QStandardItemModel):
 
     @QtCore.pyqtSlot(str, str, str)
     def apply_toolbar_change(self, hardware, base, target):
+        rebuild_flows = self.target != target
         self.hardware = hardware
         self.base = base
         self.target = target
 
         self.flows.update()
         self._update_tests()
-        self.update(self.hardware, self.base, self.target)
+
+        if rebuild_flows:
+            self._reset_flows(self.project_info)
 
     def _setup(self):
         project_name = self.project_info.project_name
@@ -81,13 +73,27 @@ class TreeModel(QtGui.QStandardItemModel):
 
         self.root_item = SectionItem(self.project_info, project_name)
         self._setup_definitions()
-        self._setup_documentations()
+        self._setup_documentation()
         self._setup_flow_items(self.project_info)
         self._setup_tests()
         self.appendRow(self.root_item)
 
     def _setup_flow_items(self, project_info):
         self.flows = FlowItem.FlowItem(project_info, "flows")
+        self.root_item.appendRow(self.flows)
+        # Make sure the items have the correct state with respect to
+        # the current toolbar state
+        self._reset_flows(project_info)
+        self.flows.update()
+
+    def _reset_flows(self, project_info):
+        self.flows.removeRows(0, self.flows.row_count())
+        if self.base == '' or self.target == '':
+            self.flows.set_children_hidden(True)
+            return
+
+        self.flows.set_children_hidden(False)
+
         self.production_flows = FlowItem.SimpleFlowItem(project_info, "production")
         self.flows.appendRow(self.production_flows)
         self.engineering_flows = FlowItem.SimpleFlowItem(project_info, "engineering")
@@ -97,33 +103,33 @@ class TreeModel(QtGui.QStandardItemModel):
         self.characterisation_flows = FlowItem.SimpleFlowItem(project_info, "characterisation")
         self.flows.appendRow(self.characterisation_flows)
 
-        self.quali_flows = FlowItem.FlowItem(project_info, "qualification", self.flows)
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ZHM", "Zero Hour Measurements"))
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ABSMAX", "Absolute Maximum Ratings"))
+        if self.base == "FT":
 
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.EC.ecwizard"))
+            package = ''
+            if self.target != '':
+                package = self.project_info.get_device_package(self.target)
 
-        self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "RSH", "Resistance to Solder Heat"))
+            self.quali_flows = FlowItem.FlowItem(project_info, "qualification", self.flows)
+            self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ZHM", "Zero Hour Measurements"))
+            self.quali_flows.appendRow(FlowItem.SimpleFlowItem(project_info, "ABSMAX", "Absolute Maximum Ratings"))
 
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ESD.esdwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTOL.htolwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTSL.htslwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.DR.drwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.RSH.rshwizard"))
-        self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.AC.acwizard"))
+            self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.EC.ecwizard"))
+            self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTOL.htolwizard"))
+            self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HTSL.htslwizard"))
+            self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.DR.drwizard"))
+            self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.AC.acwizard"))
 
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HAST.hastwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ELFR.elfrwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.LU.luwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.TC.tcwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.THB.thbwizard"))
-        self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.LU.luwizard"))
+            self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.HAST.hastwizard"))
+            self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ELFR.elfrwizard"))
+            self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.LU.luwizard"))
+            self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.TC.tcwizard"))
+            self.quali_flows.appendRow(self._make_single_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.THB.thbwizard"))
 
-        self.flows.appendRow(self.quali_flows)
-        self.root_item.appendRow(self.flows)
-        # Make sure the items have the correct state with respect to
-        # the current toolbar state
-        self.flows.update()
+            if not self.project_info.is_package_a_naked_die(package):
+                self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.ESD.esdwizard"))
+                self.quali_flows.appendRow(self._make_multi_instance_quali_flow_item(project_info, "ATE.org.actions_on.flow.RSH.rshwizard"))
+
+            self.flows.appendRow(self.quali_flows)
 
     def _make_single_instance_quali_flow_item(self, parent, module):
         return FlowItem.SingleInstanceQualiFlowItem(parent, "Tmp", module)
@@ -131,18 +137,26 @@ class TreeModel(QtGui.QStandardItemModel):
     def _make_multi_instance_quali_flow_item(self, parent, module):
         return FlowItem.MultiInstanceQualiFlowItem(parent, "Tmp", module)
 
-    def _setup_documentations(self):
+    def _setup_documentation(self):
+        from ATE.org.actions_on.documentation.DocumentationObserver import DocumentationObserver
+        from ATE.org.actions_on.documentation.DocumentationItem import DocumentationItem
         # TODO: do we need a sorting-order (alphabetic, etc...) ?
-        self.documentations_section = DocumentationItem("documentations", self.doc_path, is_editable=False)
-        self.doc_observer = DocumentationObserver(self.doc_path, self.documentations_section)
+        self.documentation_section = DocumentationItem("documentation", self.doc_path, is_editable=False)
+        self.doc_observer = DocumentationObserver(self.doc_path, self.documentation_section)
         self.doc_observer.start_observer()
 
-        self.root_item.insert_item(self.documentations_section)
+        self.root_item.insert_item(self.documentation_section)
 
     def _update_definitions(self):
         self.definition_section.update()
 
     def _setup_definitions(self):
+        from ATE.org.actions_on.hardwaresetup.HardwaresetupItem import HardwaresetupItem
+        from ATE.org.actions_on.maskset.MasksetItem import MasksetItem
+        from ATE.org.actions_on.die.DieItem import DieItem
+        from ATE.org.actions_on.package.PackageItem import PackageItem
+        from ATE.org.actions_on.device.DeviceItem import DeviceItem
+        from ATE.org.actions_on.product.ProductItem import ProductItem
         self.definition_section = SectionItem(self.project_info, "definitions")
 
         self.hardwaresetup = HardwaresetupItem(self.project_info, "hardwaresetups")
@@ -179,8 +193,7 @@ class TreeModel(QtGui.QStandardItemModel):
             self.die.set_children_hidden(False)
         else:
             if self.maskset.has_children() and \
-               self.hardwaresetup.has_children() and \
-               base == 'PR':
+               self.hardwaresetup.has_children():
                 self.die.set_children_hidden(False)
             else:
                 self.die.set_children_hidden(True)
@@ -191,8 +204,7 @@ class TreeModel(QtGui.QStandardItemModel):
         else:
             if self.die.has_children() and \
                self.package.has_children() and \
-               self.hardwaresetup.has_children() and \
-               base == 'FT':
+               self.hardwaresetup.has_children():
                 self.device.set_children_hidden(False)
             else:
                 self.device.set_children_hidden(True)
@@ -202,11 +214,12 @@ class TreeModel(QtGui.QStandardItemModel):
             self.product.set_children_hidden(False)
         else:
             if self.device.has_children() and \
-               self.hardwaresetup.has_children() and \
-               base == 'FT':
+               self.hardwaresetup.has_children():
                 self.product.set_children_hidden(False)
             else:
                 self.product.set_children_hidden(True)
+
+        self._reset_flows(self.project_info)
 
     def _setup_tests(self):
         self.tests_section = TestItem(self.project_info, "tests", self.tests_path, self)

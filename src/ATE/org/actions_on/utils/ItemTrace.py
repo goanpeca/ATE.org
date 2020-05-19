@@ -21,6 +21,7 @@ class ItemTrace(QtWidgets.QDialog):
         self.setFixedSize(self.size())
         self.ok_button.clicked.connect(self.accept)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.feedback.setText(self.message)
         self.feedback.setStyleSheet('color: orange')
         self.tree_view.setHeaderHidden(True)

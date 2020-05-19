@@ -1,0 +1,40 @@
+@import "../../../styles.scss";
+
+.card
+{
+  padding: 10px;
+  width: 100%;
+}
+.columnStyle
+{
+  display : flex;
+  flex-direction: column;
+  & > .header {
+    padding:30px;
+  }
+  & > .body {
+    padding:30px;
+  }
+}
+
+.rowStyle
+{
+  display : flex;
+  flex-direction: row;
+  & > .header {
+    padding:30px;
+    width: 20%;
+    min-width: 300px;
+    background-color: $beige;
+  }
+  & > .body {
+    padding:30px;
+    min-width: 600px;
+    width: 40%;
+  }
+}
+
+.cardShadow {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+  margin: 10px;
+}

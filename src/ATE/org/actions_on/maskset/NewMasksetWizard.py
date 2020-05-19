@@ -15,8 +15,8 @@ from ATE.org.validation import is_valid_maskset_name
 
 from ATE.org.actions_on.maskset.constants import *
 
-standard_flat_height = 7 # mm
-standard_scribe = 100 # um
+standard_flat_height = 7  # mm
+standard_scribe = 100  # um
 
 
 class NewMasksetWizard(QtWidgets.QDialog):
@@ -33,11 +33,12 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self._connect_event_handler()
 
     def _load_ui(self):
-        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)),UI_FILE)
+        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)), UI_FILE)
         uic.loadUi(my_ui, self)
 
     def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         from ATE.org.validation import valid_positive_integer_regex
         rxi = QtCore.QRegExp(valid_positive_integer_regex)
@@ -343,7 +344,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         if not self.is_table_enabled:
             return
         item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
+ 
     @property
     def rows(self):
         return self.bondpadTable.rowCount()
@@ -423,7 +424,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
     def select_analog_pad_type(self):
         self.set_pad_selection(PadType.Analog(), PAD_TYPE_COLUMN)
-        
+
     def select_digital_pad_type(self):
         self.set_pad_selection(PadType.Digital(), PAD_TYPE_COLUMN)
 
@@ -676,21 +677,18 @@ class NewMasksetWizard(QtWidgets.QDialog):
                 }
 
     def OKButtonPressed(self):
-        if self.OKButton.text() == 'OK':
-            name = self.masksetName.text()
-            if self.Type.currentText() == 'ASSP':
-                customer = ''
-            else:  # 'ASIC' so need a customer !
-                customer = self.customer.text()
-            self.project_info.add_maskset(name, customer, self._get_maskset_definition())
-            self.accept()
+        name = self.masksetName.text()
+        if self.Type.currentText() == 'ASSP':
+            customer = ''
+        else:  # 'ASIC' so need a customer !
+            customer = self.customer.text()
+        self.project_info.add_maskset(name, customer, self._get_maskset_definition())
+        self.accept()
 
-        else:  # Import stuff
-            # TODO: add the company specific plugins here
-            print("Import stuff not implemented yet")
-            self.importFor.setCurrentIndex(0)
-            self.OKButton.setText("OK")
-            self.validate()
+        # TODO: add the company specific plugins here
+        # self.importFor.setCurrentIndex(0)
+        # self.OKButton.setText("OK")
+        # self.validate()
 
     def CancelButtonPressed(self):
         self.reject()
@@ -700,15 +698,3 @@ def new_maskset_dialog(parent):
     newMasksetWizard = NewMasksetWizard(parent)
     newMasksetWizard.exec_()
     del(newMasksetWizard)
-
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-    from ATE.org.actions.dummy_main import DummyMainWindow
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    dummyMainWindow = DummyMainWindow()
-    dialog = NewMasksetWizard(dummyMainWindow)
-    dummyMainWindow.register_dialog(dialog)
-    sys.exit(app.exec_())

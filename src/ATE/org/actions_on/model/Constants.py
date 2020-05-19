@@ -21,6 +21,10 @@ class MenuActionTypes(Enum):
     ImportFile = "import_file_item"
     ImportFolder = "import_dir_item"
     Obsolete = "disable_item"
+    MoveUp = "move_up_item"
+    MoveDown = "move_down_item"
+    OpenFile = "open_file_item"
+    AddTestprogram = "add_testprogram"
 
     def __call__(self):
         return self.value

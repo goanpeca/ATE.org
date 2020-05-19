@@ -3,7 +3,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { SystemSiteComponent } from './system-site.component';
 import { SystemState } from '../system-status';
 
-fdescribe('SystemSiteComponent', () => {
+describe('SystemSiteComponent', () => {
   let component: SystemSiteComponent;
   let fixture: ComponentFixture<SystemSiteComponent>;
 

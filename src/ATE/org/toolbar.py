@@ -17,15 +17,13 @@ class ToolBar(QtWidgets.QToolBar):
         self.active_hardware = ''
         self.active_base = ''
         self.active_target = ''
-
+        self.project_info = project_info
         self._setup()
 
     def __call__(self, project_info):
         self.project_info = project_info
-        self.hardware_combo.clear()
-        available_hardwares = self.project_info.get_available_hardwares()
-        self.hardware_combo.addItems(available_hardwares)
-        self.active_hardware = '' if len(available_hardwares) == 0 else available_hardwares[0]
+
+        self._init_hardware()
         self._update_target()
 
         self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
@@ -76,6 +74,13 @@ class ToolBar(QtWidgets.QToolBar):
         self.hardware_combo.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         self.hardware_combo.setCurrentText(self.active_hardware)
         self.addWidget(self.hardware_combo)
+
+    def _init_hardware(self):
+        self.hardware_combo.clear()
+        available_hardwares = self.project_info.get_available_hardwares()
+        self.hardware_combo.addItems(available_hardwares)
+        self.active_hardware = '' if len(available_hardwares) == 0 else available_hardwares[len(available_hardwares) - 1]
+        self.hardware_combo.setCurrentIndex(0 if len(available_hardwares) == 0 else len(available_hardwares) - 1)
 
     def _setup_base(self):
         self.base_label = QtWidgets.QLabel("Base:")
@@ -167,6 +172,8 @@ class ToolBar(QtWidgets.QToolBar):
 
     @QtCore.pyqtSlot(str)
     def _base_changed(self, selected_base):
+        if(self.active_base == selected_base):
+            return
         self.active_base = selected_base
         self.project_info.active_base = selected_base
         self._update_target()

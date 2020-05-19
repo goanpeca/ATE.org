@@ -59,7 +59,7 @@ class FileSystemOperator(QtWidgets.QFileDialog):
 
     def delete_file(self):
         delete = DeleteFileDialog(self.path, "Remove")
-        delete.show()
+        return delete.show()
 
     def delete_dir(self):
         delete = DeleteDirDialog(self.path, "Remove")

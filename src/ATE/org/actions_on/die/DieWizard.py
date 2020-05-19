@@ -48,7 +48,8 @@ class DieWizard(QtWidgets.QDialog):
         self.existing_masksets = self.project_info.get_available_masksets()
         self.fromMaskset.clear()
         self.fromMaskset.addItems(sorted([''] + self.existing_masksets))
-        self.fromMaskset.setCurrentText('')
+        current_maskset = '' if len(self.existing_masksets) == 0 else self.existing_masksets[0]
+        self.fromMaskset.setCurrentText(current_maskset)
 
         # quality
         self.quality.setCurrentText('')
@@ -395,11 +396,3 @@ def new_die_dialog(project_info):
     newDieWizard = DieWizard(project_info)
     newDieWizard.exec_()
     del(newDieWizard)
-
-
-
-if __name__ == "__main__":
-    from ATE.org.navigation import ProjectNavigation, run_dummy_main
-    
-    project_info = ProjectNavigation(r'C:\Users\hoeren\__spyder_workspace__\BROL')
-    run_dummy_main(project_info, DieWizard)
