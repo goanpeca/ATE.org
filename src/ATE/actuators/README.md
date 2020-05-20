@@ -40,27 +40,23 @@ will likely be by hand, `Temperature` comes from a thermo-stream (maybe even ano
 
 Maybe down the line for <ins>Final Test productin</ins> the Cuhu/Rasco SO1000 (this is a so called batch/singulated 
 handler) needs to be replaced by an [In-Line Lead-Frame-handler](https://www.geringer.de/en/products/special-machine-building) ... do we want to touch the code that tests the DUT at such a point? No! We want to use the code developed
-in the development environment and apply it to all above, and other use-cases!
+in the development environment and apply it to all above- and other use-cases!
 
+If you thus use the ATE to control one or more `actuators`, it means that you pull equipment libraries in to the test
+project! (think of keeping them running over the 20 years or so of the life time of a project). Also, regulating a 
+`actuator` means that you maintain a kind of [PID](https://en.wikipedia.org/wiki/PID_controller) loop ... and very 
+quickly you are batteling with [threads](https://simple.wikipedia.org/wiki/Thread_(computer_science))/[processes](https://en.wikipedia.org/wiki/Process_(computing)) that need to work over the lifetime of the prject which is way
+higher than the life time of the "controlling PC" and it's "operating system" ... What is more is that a Chip Designer and a Chip Test Engineer are **NO** software engineers, **nor** automation engineers! They should **not** spend their time on
+`actuators`, they should spend their time on 'silicon problems'!
 
-
-
-
-
-
+We can accomplish that in abstracting the Test-Cell in terms of needed `actuators`.
 
 At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
 
-A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
+more here ...
 
-For example, most handlers/probers can generate `Temperature`, but very few can also do `Magnetic field`. Most commonly one
-does buys a commercial handler and one adds a `module` that generates for example a `Magnetic field`. Now, of course the 
-handler doesn't control the magnetic field (for a varity of reasons, closed source being one of them). The controlling unit
-should be anything, as long as it is **NOT** the ATE! Because if we do so, we create non-portable setups, meaning that in 
-the test code of the ATE we 'control' the actuator but then we can't use the same ATE software anymore to go from one setup 
-(maybe the development environment) to another setup (LAB, Quality, production FT/PR, QC, Qualification) because also the 
-handler type will most likely change. This leads to 'touching the code' ... but this is a huge **no-go** in Automotive, 
-as this means you need to re-qualify **AND** inform your customers! This is a costly (in time as well as money) action 
-that can simply be avoided by abstracting the actuator(s) in the ATE code, and map it at run-time to you test cell. 
+
+
+A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
 
 
