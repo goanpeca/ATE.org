@@ -29,5 +29,5 @@ handler type will most likely change. This leads to 'touching the code' ... but 
 as this means you need to re-qualify **AND** inform your customers! This is a costly (in time as well as money) action 
 that can simply be avoided by abstracting the actuator(s) in the ATE code, and map it at run-time to you test cell. 
 
-Again an example, in our development environment, we might change the DUT's ourselves by hand, the temperature comes from 
-a [thermo-stream](https://www.youtube.com/watch?v=W2OYzQhiLNE) and the  
+Again an example, in our development environment, we might change the DUT's ourselves by hand, the `temperature` comes from 
+a [thermo-stream](https://www.youtube.com/watch?v=W2OYzQhiLNE) and the `magnetic field` from a self-wound
