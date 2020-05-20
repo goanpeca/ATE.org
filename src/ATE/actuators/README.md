@@ -38,7 +38,7 @@ a [thermo-stream](https://www.youtube.com/watch?v=W2OYzQhiLNE) and the `magnetic
 * <ins>In production Probing</ins> (aka Wafer Sort) we use a so called [prober](https://www.google.com/search?q=wafer+prober&tbm=isch&ved=2ahUKEwiOlvWcrMHpAhUKShoKHZhxBJEQ2-cCegQIABAA&oq=wafer+prober&gs_lcp=CgNpbWcQAzIECAAQQzICCAAyAggAMgQIABAYMgQIABAYUOniDFik9Axg3PUMaABwAHgAgAFKiAG8BpIBAjEymAEAoAEBqgELZ3dzLXdpei1pbWc&sclient=img&ei=TY_EXs67EoqUaZjjkYgJ&bih=1287&biw=2560) to change the DUT's. Most likely the prober 
 can apply a `Temperature` to the DUT (hell, to the whole wafer through the [Chuck](https://www.google.com/search?source=univ&tbm=isch&q=prober+chuck&sa=X&ved=2ahUKEwjVvNiarMHpAhVLy6QKHU71CMIQsAR6BAgJEAE&biw=2560&bih=1287)) and we of course don't have a Helmholz coil to generate the `magnetic field` (because the construct of the chuck), but (yet another) coil and probably yet another real current source (adapted to the coil).
 
-* <ins>In Final Test production</ins> we might have a commercial handler like a [Cohu/Rasco SO1000](https://www.cohu.com/so1000) tho switch DUT's. This handler can apply `Temperature` himself, but an adaptation needs to be made to generate the `Magnetic field`. This will
+* <ins>In Final Test production</ins> we might have a commercial handler like a [Cohu/Rasco SO1000](https://www.cohu.com/so1000) to switch DUT's. This handler can apply `Temperature` himself, but an adaptation needs to be made to generate the `Magnetic field`. This will
 be yet another coil (Helmhotz will not work here because of the `plungers`) and probably yet an current/voltage source.
 
 * <ins>In Quality</ins>, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special
