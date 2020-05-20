@@ -7,11 +7,11 @@ Therefore, we make abstraction of the Test-Cell by introducing `actuators` that 
 
 An `actuator` is something that generates a <ins>**non-electrical stimulus**</ins> to our DUT, for example:
   * [Temperature](temperature.py)
-  * Magnetic field
-  * Light
-  * Acceleration
-  * Position 
-  * Pressure 
+  * [Magnetic field](magnetic_field.py)
+  * [Light](light.py)
+  * [Acceleration](acceleration.py)
+  * [Position](position.py) 
+  * [Pressure](pressure.py) 
   * ...
 
 Now, I know that it is **exctreamly tempting** to use the ATE to control the `actuator`! After all measuring a signal and
