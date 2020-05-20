@@ -33,15 +33,15 @@ Again an example:
 * <ins>In our development environment</ins>, we might change the DUT's ourselves by hand, the `temperature` comes from 
 a [thermo-stream](https://www.youtube.com/watch?v=W2OYzQhiLNE) and the `magnetic field` from a [self-wound coil](./../../../docs/pictures/coil.jpg) with a power supply (read: a current limited voltage source) as coil-driver. 
 
-* In QC we might have a nice magnetic field generator based on a [Helmholz coil](https://en.wikipedia.org/wiki/Helmholtz_coil) driven by a real current source and the `temperature` still might come from a thermo-stream, and we change the DUT's by hand.
+* <ins>In production Quality Control</ins> we might have a nice magnetic field generator based on a [Helmholz coil](https://en.wikipedia.org/wiki/Helmholtz_coil) driven by a real current source and the `temperature` still might come from a thermo-stream, and we change the DUT's by hand.
 
-* In Probing (aka Wafer Sort) we use a so called [prober](https://www.google.com/search?q=wafer+prober&tbm=isch&ved=2ahUKEwiOlvWcrMHpAhUKShoKHZhxBJEQ2-cCegQIABAA&oq=wafer+prober&gs_lcp=CgNpbWcQAzIECAAQQzICCAAyAggAMgQIABAYMgQIABAYUOniDFik9Axg3PUMaABwAHgAgAFKiAG8BpIBAjEymAEAoAEBqgELZ3dzLXdpei1pbWc&sclient=img&ei=TY_EXs67EoqUaZjjkYgJ&bih=1287&biw=2560) to change the DUT's. Most likely the prober 
+* <ins>In production Probing</ins> (aka Wafer Sort) we use a so called [prober](https://www.google.com/search?q=wafer+prober&tbm=isch&ved=2ahUKEwiOlvWcrMHpAhUKShoKHZhxBJEQ2-cCegQIABAA&oq=wafer+prober&gs_lcp=CgNpbWcQAzIECAAQQzICCAAyAggAMgQIABAYMgQIABAYUOniDFik9Axg3PUMaABwAHgAgAFKiAG8BpIBAjEymAEAoAEBqgELZ3dzLXdpei1pbWc&sclient=img&ei=TY_EXs67EoqUaZjjkYgJ&bih=1287&biw=2560) to change the DUT's. Most likely the prober 
 can apply a `Temperature` to the DUT (hell, the whole wafer through the [Chuck](https://www.google.com/search?source=univ&tbm=isch&q=prober+chuck&sa=X&ved=2ahUKEwjVvNiarMHpAhVLy6QKHU71CMIQsAR6BAgJEAE&biw=2560&bih=1287)) and we of course don't have a Helmholz coil to generate the `magnetic field` (because the construct of the chuck), but (yet another) coil and probably yet another real current source (adapted to the coil).
 
-* In Final Test we might have a commercial handler like a [Cohu/Rasco SO1000](https://www.cohu.com/so1000) tho switch DUT's. This handler can apply `Temperature` himself, but an adaptation needs to be made to generate the `Magnetic field`. This will
+* <ins>In Final Test production</ins> we might have a commercial handler like a [Cohu/Rasco SO1000](https://www.cohu.com/so1000) tho switch DUT's. This handler can apply `Temperature` himself, but an adaptation needs to be made to generate the `Magnetic field`. This will
 be yet another coil (Helmhotz will not work here because of the `plungers`) and probably yet an current/voltage source.
 
-* In Quality, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special
+* <ins>In Quality</ins>, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special
 designed coil drivers to generate the `magnetic field`, the `Temperature` comes from a thermo-stream, and the DUT's are
 changed by hand.
 
