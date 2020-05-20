@@ -45,18 +45,13 @@ in the development environment and apply it to all above- and other use-cases!
 If you thus use the ATE to control one or more `actuators`, it means that you pull equipment libraries in to the test
 project! (think of keeping them running over the 20 years or so of the life time of a project). Also, regulating a 
 `actuator` means that you maintain a kind of [PID](https://en.wikipedia.org/wiki/PID_controller) loop ... and very 
-quickly you are batteling with [threads](https://simple.wikipedia.org/wiki/Thread_(computer_science))/[processes](https://en.wikipedia.org/wiki/Process_(computing)) that need to work over the lifetime of the prject which is way
-higher than the life time of the "controlling PC" and it's "operating system" ... What is more is that a Chip Designer and a Chip Test Engineer are **NO** software engineers, **nor** automation engineers! They should **not** spend their time on
-`actuators`, they should spend their time on 'silicon problems'!
+quickly you are batteling with [threads](https://simple.wikipedia.org/wiki/Thread_(computer_science))/[processes](https://en.wikipedia.org/wiki/Process_(computing)) that in turn need to work over the lifetime of the prject which-is-way-
+higher than the life time of the "controlling PC" (and then I am not thinking about the "operating system" yet ...) What is more is that a Chip Designer and a Chip Test Engineer are **NO** software engineers, **nor** automation engineers! They should **not** spend their time on `actuators`, they should spend their time on 'silicon problems'!
 
 We can accomplish that in abstracting the Test-Cell in terms of needed `actuators`.
 
 At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
 
-more here ...
+Traditionally (read: for **non-sensor** ASIC testing) a `Test-Cell` is the mariage (monogamie if you want) of a handler/prober with an ATE. One connects the two, they fight a bit and then they start to talk to eachother.
 
-
-
-A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
-
-
+In **sensor** ASIC testing, we have more of a polyamorie situation 🤣 So we have more than 2 participants and then things become more difficult! A `Test-Cell` thus needs a so called `Test Cell Controller` (short TCC). This way all participants can find eachother, and the `TCC` is the one who can "map" the `actuators` to the 'participants'. 
