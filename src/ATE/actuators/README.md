@@ -6,7 +6,7 @@ test suit will be running during it's life time.
 Therefore, we make abstraction of the Test-Cell by introducing `actuators` that we want to use from the tests.
 
 An `actuator` is something that generates a <ins>**non-electrical stimulus**</ins> to our DUT, for example:
-  * Temperature
+  * [Temperature](temperature.py)
   * Magnetic field
   * Light
   * Acceleration
