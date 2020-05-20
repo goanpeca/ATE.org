@@ -41,7 +41,12 @@ can apply a `Temperature` to the DUT (hell, to the whole wafer through the [Chuc
 * <ins>In Final Test production</ins> we might have a commercial handler like a [Cohu/Rasco SO1000](https://www.cohu.com/so1000) to switch DUT's. This handler can apply `Temperature` himself, but an adaptation needs to be made to generate the `Magnetic field`. This will
 be yet another coil (Helmhotz will not work here because of the `plungers`) and probably yet an current/voltage source.
 
-* <ins>In Quality</ins>, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special
-designed coil drivers to generate the `magnetic field`, the `Temperature` comes from a thermo-stream, and the DUT's are
-changed by hand.
+* <ins>In Quality</ins>, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special designed coil drivers to generate the `magnetic field`, the `Temperature` comes from a thermo-stream, and the DUT's are changed by hand.
+
+* <ins>In the LAB</ins>, we might want to [Shmoo](https://en.wikipedia.org/wiki/Shmoo_plot) the tests we developed in
+our `design environment` over `Temperatrue` (goes to '[reliability](https://en.wikipedia.org/wiki/Reliability_(statistics))', '[reproducability](https://en.wikipedia.org/wiki/Reproducibility)' and '[stability](https://en.wikipedia.org/wiki/Numerical_stability)' ... could extend to qualification, aka ACQ100, too ...)
+
+Maybe down the line for <ins>Final Test productin</ins> the Cuhu/Rasco SO1000 (this is a so called batch/singulated 
+handler) needs to be replaced by an [In-Line Lead-Frame-handler](https://www.geringer.de/en/products/special-machine-building) ... do we want to touch the code that tests the DUT at such a point? No! We want to use the code developed
+in the development environment and apply it to all above use-cases!
 
