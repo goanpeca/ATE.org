@@ -14,21 +14,12 @@ An `actuator` is something that generates a <ins>**non-electrical stimulus**</in
   * Pressure 
   * ...
 
-At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
+Now, I know that it is exctreamly tempting to use the ATE to control the `actuator`! After all measuring a signal and
+generate another one that relates to that is the bread and butter of an ATE, however in doing so you make a very costly
+(boath in time and money) mistake! 
 
-A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
+I explain with an example using two actuators : `Temperature` and `Magnetic field`:
 
-For example, most handlers/probers can generate `Temperature`, but very few can also do `Magnetic field`. Most commonly one
-does buys a commercial handler and one adds a `module` that generates for example a `Magnetic field`. Now, of course the 
-handler doesn't control the magnetic field (for a varity of reasons, closed source being one of them). The controlling unit
-should be anything, as long as it is **NOT** the ATE! Because if we do so, we create non-portable setups, meaning that in 
-the test code of the ATE we 'control' the actuator but then we can't use the same ATE software anymore to go from one setup 
-(maybe the development environment) to another setup (LAB, Quality, production FT/PR, QC, Qualification) because also the 
-handler type will most likely change. This leads to 'touching the code' ... but this is a huge **no-go** in Automotive, 
-as this means you need to re-qualify **AND** inform your customers! This is a costly (in time as well as money) action 
-that can simply be avoided by abstracting the actuator(s) in the ATE code, and map it at run-time to you test cell. 
-
-Again an example:
 * <ins>In our development environment</ins>, we might change the DUT's ourselves by hand, the `temperature` comes from 
 a [heatgun](https://www.google.com/search?sa=X&source=univ&tbm=isch&q=heat+gun&ved=2ahUKEwj4jKDKusHpAhWEUBUIHc7iALUQsAR6BAgJEAE&biw=2560&bih=1287)/[cold-spray](https://www.google.com/search?q=cold+spary&tbm=isch&ved=2ahUKEwiMyNbMusHpAhXoMewKHbEZDQ8Q2-cCegQIABAA&oq=cold+spary&gs_lcp=CgNpbWcQAzIGCAAQChAYOgIIKToECAAQQzoCCABQhowCWOWfAmCUpAJoAHAAeACAAUiIAZ4FkgECMTCYAQCgAQGqAQtnd3Mtd2l6LWltZw&sclient=img&ei=X57EXsycIujjsAexs7R4&bih=1287&biw=2560) and the `magnetic field` from a [self-wound coil](./../../../docs/pictures/coil.jpg) with a power supply (read: a current limited voltage source) as coil-driver. 
 
@@ -49,5 +40,27 @@ will likely be by hand, `Temperature` comes from a thermo-stream (maybe even ano
 
 Maybe down the line for <ins>Final Test productin</ins> the Cuhu/Rasco SO1000 (this is a so called batch/singulated 
 handler) needs to be replaced by an [In-Line Lead-Frame-handler](https://www.geringer.de/en/products/special-machine-building) ... do we want to touch the code that tests the DUT at such a point? No! We want to use the code developed
-in the development environment and apply it to all above use-cases!
+in the development environment and apply it to all above, and other use-cases!
+
+
+
+
+
+
+
+
+At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
+
+A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
+
+For example, most handlers/probers can generate `Temperature`, but very few can also do `Magnetic field`. Most commonly one
+does buys a commercial handler and one adds a `module` that generates for example a `Magnetic field`. Now, of course the 
+handler doesn't control the magnetic field (for a varity of reasons, closed source being one of them). The controlling unit
+should be anything, as long as it is **NOT** the ATE! Because if we do so, we create non-portable setups, meaning that in 
+the test code of the ATE we 'control' the actuator but then we can't use the same ATE software anymore to go from one setup 
+(maybe the development environment) to another setup (LAB, Quality, production FT/PR, QC, Qualification) because also the 
+handler type will most likely change. This leads to 'touching the code' ... but this is a huge **no-go** in Automotive, 
+as this means you need to re-qualify **AND** inform your customers! This is a costly (in time as well as money) action 
+that can simply be avoided by abstracting the actuator(s) in the ATE code, and map it at run-time to you test cell. 
+
 
