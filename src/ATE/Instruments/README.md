@@ -1,6 +1,15 @@
 # ATE/instruments
 
-`ATE.org` is a tester (aka ATE) and `instrument` agnostic framework for ATE ASIC testing projects.
+`ATE.org` is a tester/instrument <ins>agnostic</ins> framework for ATE ASIC testing projects.
+
+`ATE.org` support the following 'electronic grades':
+* consumer
+* industrial
+* [automotive](https://en.wikipedia.org/wiki/Automotive_electronics)
+* medical
+* military
+
+It also has **full** support for `sensor` testing !
 
 We need however to foresee that a project (might) need, besides a specific tester also one or more `instruments`.
 The the definition, implementation and maintainence of an `instrument` library is **not** the task of ATE.org, however 
