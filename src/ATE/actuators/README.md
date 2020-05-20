@@ -1,12 +1,11 @@
 ## ATE/actuators
 
-When creating an ATE test (or an ATE test program for that matter), we might have an idea about what handler/prober the test,
-test program or hell the whole test project might be running on initially, but we don't have a crystal ball, so we don't 
-REALLY know on what probers/handlers the tests/programs/project will be running on in it's life time.
+When creating an ATE tests for [sensors](https://en.wikipedia.org/wiki/Sensor), we might have an idea about what Test-Cell(s) these tests will run on initially, but we don't have a crystal ball, so we don't REALLY know how on what Test-Cells the ATE
+test suit will be running during it's life time.
 
-Therefore, we make 100% abstraction of the handler/prober. Instead, we define the `actuators` that we want to use.
+Therefore, we make abstraction of the Test-Cell by introducing the `actuators` that we want to use from the tests.
 
-An actuator is something that generates a non-electrical stimulus to our DUT, for example:
+An `actuator` is something that generates a <ins>**non-electrical stimulus**</ins> to our DUT, for example:
   * Temperature
   * Magnetic field
   * Light
@@ -14,7 +13,10 @@ An actuator is something that generates a non-electrical stimulus to our DUT, fo
   * Position 
   * Pressure 
   * ...
-  
+
+
+
+
 At **RUNTIME** these actuators are mapped to a `Test Cell`.
 
 A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
