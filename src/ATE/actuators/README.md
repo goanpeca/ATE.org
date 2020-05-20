@@ -54,4 +54,4 @@ At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
 
 * Traditionally (read: for **non-sensor** ASIC testing) a `Test-Cell` is the mariage (monogamie if you want) of a handler/prober with an ATE. One connects the two, they fight a bit and then they start to talk to eachother.
 
-* In **sensor** ASIC testing, we have more of a polyamorie situation 🤣 So we have more than 2 participants and then things become more difficult! A `Test-Cell` thus needs a so called `Test Cell Controller` (short TCC). This way all participants can find eachother, and the `TCC` is the one who can "map" the `actuators` to the 'participants'. 
+* In **sensor** ASIC testing, we have more of a polyamorie situation 🤣 So we have more than 2 participants and then things become more difficult! A `Test-Cell` thus needs a so called `Test Cell Controller` (short TCC). This way all participants can find eachother, and the `TCC` is the one who can "map" the `actuators` to his physical 'participants'. 
