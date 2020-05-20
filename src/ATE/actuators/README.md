@@ -45,7 +45,7 @@ be yet another coil (Helmhotz will not work here because of the `plungers`) and 
 * <ins>In Quality</ins>, they might have a [super-duper 3D magnetic field generator](./../../../docs/pictures/qc6d.png) with special designed coil drivers to generate the `magnetic field`, the `Temperature` comes from a thermo-stream, and the DUT's are changed by hand.
 
 * <ins>In the LAB</ins>, we might want to [Shmoo](https://en.wikipedia.org/wiki/Shmoo_plot) the tests we developed in
-our `design environment` over `Temperatrue` (goes to '[reliability](https://en.wikipedia.org/wiki/Reliability_(statistics))', '[reproducability](https://en.wikipedia.org/wiki/Reproducibility)' and '[stability](https://en.wikipedia.org/wiki/Numerical_stability)' ... could extend to qualification, aka ACQ100, too ...) changing DUT's
+our `design environment` over `Temperatrue` (goes to '[reliability](https://en.wikipedia.org/wiki/Reliability_(statistics))', '[reproducability](https://en.wikipedia.org/wiki/Reproducibility)' and '[stability](https://en.wikipedia.org/wiki/Numerical_stability)' ... could extend to qualification, aka [ACQ100](http://www.aecouncil.com/AECDocuments.html), too ...) changing DUT's
 will likely be by hand, `Temperature` comes from a thermo-stream (maybe even another brand/type as in orther departmenst!) and you can bet you ass on it that there will be yet another coil system to generate the `magnetic field`.
 
 Maybe down the line for <ins>Final Test productin</ins> the Cuhu/Rasco SO1000 (this is a so called batch/singulated 
