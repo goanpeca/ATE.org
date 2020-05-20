@@ -14,10 +14,7 @@ An `actuator` is something that generates a <ins>**non-electrical stimulus**</in
   * Pressure 
   * ...
 
-
-
-
-At **RUNTIME** these actuators are mapped to a `Test Cell`.
+At **RUNTIME** these actuators are mapped to the used `Test-Cell`.
 
 A `Test Cell` is a handler/prober, ofcourse the chosen ATE **AND** possibly (extension) actuators.
 
