@@ -17,7 +17,11 @@ It adds the **ATE project type** to Spyder, with which one can organize ATE test
 
 # Description
 
-A longer description of your project goes here...
+`ATE.org` is a tester/instrument **agnostic** framework. This means that the system is **not** build around a
+a specific instrument (let's consider an ATE tester for a moment as a super instrument😋), it rather focuses on 
+organizing (hence the project name: ATE.org) semiconductor testing in such a way that all special corner cases have
+their well known place. This enables the users to focus on the **REAL** work : <ins>writing test</ins> rather than 
+struggling to implement corner cases manually
 
 
 # Note
