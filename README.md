@@ -1,5 +1,6 @@
 # ATE.org
 
+`ATE.org` is a tester/instrument <ins>agnostic</ins> framework for ATE ASIC testing projects.
 
 `ATE.org` support the following 'electronic grades':
 * consumer
@@ -10,12 +11,9 @@
 
 It also has **full** support for `sensor` testing !
 
+It is implemented as a set of libraries **AND** a plug-in system to the [Spyder](https://github.com/spyder-ide/spyder)-IDE (starting from V5).
 
-
-ATE.org is a python package that itself is a plugin for the [Spyder](https://github.com/spyder-ide/spyder) IDE (starting from V5).
-
-It adds the **ATE** project type to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured way. `ATE.org` is 
-
+It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured way. 
 
 # Description
 
