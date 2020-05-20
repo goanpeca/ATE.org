@@ -14,7 +14,7 @@ An `actuator` is something that generates a <ins>**non-electrical stimulus**</in
   * Pressure 
   * ...
 
-Now, I know that it is exctreamly tempting to use the ATE to control the `actuator`! After all measuring a signal and
+Now, I know that it is **exctreamly tempting** to use the ATE to control the `actuator`! After all measuring a signal and
 generate another one that relates to that is the bread and butter of an ATE, however in doing so you make a very costly
 (boath in time and money) mistake! 
 
