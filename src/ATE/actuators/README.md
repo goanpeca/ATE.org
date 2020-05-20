@@ -30,7 +30,7 @@ as this means you need to re-qualify **AND** inform your customers! This is a co
 that can simply be avoided by abstracting the actuator(s) in the ATE code, and map it at run-time to you test cell. 
 
 Again an example:
-* In our development environment, we might change the DUT's ourselves by hand, the `temperature` comes from 
+* <ins>In our development environment</ins>, we might change the DUT's ourselves by hand, the `temperature` comes from 
 a [thermo-stream](https://www.youtube.com/watch?v=W2OYzQhiLNE) and the `magnetic field` from a [self-wound coil](./../../../docs/pictures/coil.jpg) with a power supply (read: a current limited voltage source) as coil-driver. 
 
 * In QC we might have a nice magnetic field generator based on a [Helmholz coil](https://en.wikipedia.org/wiki/Helmholtz_coil) driven by a real current source and the `temperature` still might come from a thermo-stream, and we change the DUT's by hand.
