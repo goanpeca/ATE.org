@@ -9,8 +9,7 @@ a specific instrument (let's consider an ATE tester for a moment as a super inst
 organizing semiconductor testing (hence the project name: ATE.org) in such a way that all special corner cases have
 their well known place. This enables the users to focus on the **REAL** work : <ins>writing test</ins>. 
 
-The `automotive` semiconductor `sensor` industry probably has the toughest demands when it comes to use- and corner-cases. That's why
-`ATE.org` is set up to fully support this industry. There thus will be few use- and corner-cases not covered initially, and 
+The `automotive` semiconductor `sensor` industry has arguably the toughest demands when it comes to use- and corner-cases. That's why `ATE.org` is set up to fully support this industry. There thus will be few use- and corner-cases not covered initially, and 
 of course we will give also those a place in `ATE.org`!
 
 `ATE.org` support the following 'electronic grades':
