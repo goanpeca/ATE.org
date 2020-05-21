@@ -22,9 +22,9 @@ The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on **STDF**/
 
 ### It is also <ins>NOT just a parser</ins>!
 
-In `ATE.org` we also need to <ins>write</ins> **STDF** files!
+In `ATE.org` we also need to **<ins>write</ins>** STDF files!
 
-Infact here are the specifications of the `ATE.org` STDF library:
+Infact here are the specifications of the `ATE.org` **STDF** library:
 
  - [<ins>Endianness</ins>](https://en.wikipedia.org/wiki/Endianness): Little & Big
  - <ins>Versions & Extensions</ins>:
