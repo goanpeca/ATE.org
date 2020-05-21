@@ -1,1 +1,3 @@
-# regmap
+# The RegMap library
+
+##
