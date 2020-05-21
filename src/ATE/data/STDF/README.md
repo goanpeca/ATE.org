@@ -39,7 +39,7 @@ Infact here are the specifications of the `ATE.org` **STDF** library:
    - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) → turns out to be the best to compress STDF files.
    - [bz2](https://www.sourceware.org/bzip2/)
  - <ins>encodings</ins>:
-   - [ASCII](https://en.wikipedia.org/wiki/ASCII) (is the encoding from the standard)
+   - [ASCII](https://en.wikipedia.org/wiki/ASCII)
    - [UTF-8](https://en.wikipedia.org/wiki/UTF-8) (added to support things like 'ηA', 'μV', '°C', '+∞', '-∞', ...)
  - <ins>floating point extensions</ins>:
    - [Not A Number](https://en.wikipedia.org/wiki/NaN) (aka: NaN, nan)
