@@ -18,7 +18,7 @@ Anyway, I did put `pandas` forward, because the rest of `ATE.org` is Python (>=3
 
 ### It is also <ins>NOT just a parser</ins>!
 
-In ATE.org we also need to **write** STDF files!
+In `ATE.org` we also need to **write** STDF files!
 
 Infact here are the specifications of the `ATE.org` STDF library:
 
