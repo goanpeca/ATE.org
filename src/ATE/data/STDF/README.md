@@ -36,7 +36,7 @@ Infact here are the specifications of the `ATE.org` **STDF** library:
  - <ins>Modes</ins>: read & write
  - <ins>compressions</ins>: (in **all** modes!)
    - [gzip](https://www.gnu.org/software/gzip/)
-   - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) → turns out to be the best to compress STDF files.
+   - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) → turns out to be the best compressor for STDF files.
    - [bz2](https://www.sourceware.org/bzip2/)
  - <ins>encodings</ins>:
    - [ASCII](https://en.wikipedia.org/wiki/ASCII)
