@@ -17,6 +17,6 @@ Now, Eprom's (regardless of the type) come with their own 'chalanges'
   
 Bref, if we don't have a library that abstracts these 'chalanges' we are forced to occupy ourselves with (verry error prune) bit-fucking.
 
-`SEDF` defines records (inspired by STDF, hence the library name choice) to store bits and pieces of information. The `SEDF` library enables us to interact with the EPROM without thinking about the details like word-size, hashes (to verify there are no bit-errors), 'addresses' (yes we don't need to pre-define them anymore so forward compatibility is now a fact), data-space, and so on.
+`SEDF` defines records (inspired by STDF, hence the librarie's name choice) to store bits and pieces of information. The `SEDF` library enables us to interact with the EPROM without thinking about the details like word-size, hashes (to verify there are no bit-errors), 'addresses' (yes we don't need to pre-define them anymore so forward compatibility is now a fact), data-space, and so on.
 
 It even has a special 'tally' record, for when you want to keep track of counts like the number of times a relay has switched without wearing out the LSB's in the Eeprom! 😍
