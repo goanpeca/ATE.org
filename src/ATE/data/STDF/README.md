@@ -20,7 +20,7 @@ In any case, `ATE.org` is **ONLY** outputting STDF data, so whatever (legacy) sy
 
 The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on **STDF**/[numpy](https://numpy.org/)/[scipy](https://www.scipy.org/)/[pandas](https://pandas.pydata.org/)/[HDF5](https://www.hdfgroup.org/solutions/hdf5/)/[matplotlib](https://matplotlib.org/) to deliver data analysis tailored to the semiconductor test industry ... in open source!
 
-Eat that Mentor! For years you took our money, and in the end you still screwed us over (cfr PAT), now it is our turn to do some screwing! 😋 
+Eat that Mentor! For years you took our money, and in the end you still screwed us over (cfr. `PAT`), now it is our turn to do some screwing! See how that feels! 😋 
 
 ### It is also <ins>NOT just a parser</ins>!
 
