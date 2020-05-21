@@ -30,7 +30,7 @@ Think of it like this: STDF is a very good format from the point of view of the 
  - Modes: read & write
  - compressions:
    - [gzip](https://www.gnu.org/software/gzip/)
-   - xz
+   - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) (*.xz extension) → turns out to be the best to compress STDF files.
    - [bz2](https://www.sourceware.org/bzip2/)
 
 
