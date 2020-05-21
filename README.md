@@ -3,11 +3,18 @@
 `ATE.org` is a tester/instrument <ins>agnostic</ins> framework for ATE ASIC testing projects.
 
 `ATE.org` support the following 'electronic grades':
-* consumer
-* industrial
-* [automotive](https://en.wikipedia.org/wiki/Automotive_electronics)
-* medical
-* military
+
+| Grade        | Standards           | Temp range | Notes |
+| ------------- |:-------------:| -----:| --- |
+| [Consumer](https://en.wikipedia.org/wiki/Consumer_electronics)       | [CEA](https://ihsmarkit.com/products/cea-standards.html) | 0..70 °C | |
+| [Industrial](http://www.industrial101.com/electronics/)     | centered      | −40..85 °C| |
+| [Automotive](https://en.wikipedia.org/wiki/Automotive_electronics) | [AEC](http://www.aecouncil.com/AECDocuments.html)      | −40..125 °C |①② |
+| [Medical](https://en.wikipedia.org/wiki/Medical_device)| [IEC](https://www.tuvsud.com/en/industries/healthcare-and-medical-devices/medical-devices-and-ivd/medical-device-testing/physical-testing-of-medical-devices/iec-60601-1) | 0..85 °C| ①②|
+| Military | [MIL](https://en.wikipedia.org/wiki/United_States_Military_Standard)| -55..125 °C| ①② |
+
+Notes: 
+ 1. The temperature ranges are case/manufacturer dependent and might change.
+ 2. Additional standards might apply based on use-case.
 
 It also has **full** support for `sensor` testing !
 
