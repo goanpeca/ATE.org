@@ -27,15 +27,25 @@ Notes:
 
 It also has **full** support for `sensor` [testing](https://www.basicairdata.eu/introduction-to-sensor-testing/) !
 
-It is implemented as a set of libraries **AND** a plug-in system to the [Spyder](https://github.com/spyder-ide/spyder)-IDE (starting from V5).
-
-It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured -and equipment agnostic- way.
-
-The `equipment` is brought in by means of plug-ins to ATE.org itself.
+It is implemented as a **set of libraries**, a **plug-in system to** the [Spyder](https://github.com/spyder-ide/spyder)-IDE and a **plug-in system** for the non-agnostic stuff (like: handlers, probers, testers, instrumnets, ...).
 
 ![Plugin-System](docs/ATE.org/Plugin-System.png)
 
 Note: It is very well possible to make a `test program` without a physical instrument! (Think: Part Averaging Test - `PAT`)
+
+## set of libraries
+
+... more desctiption here
+
+## plug-in system to Spyder
+
+It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured -and equipment agnostic- way.
+
+## plug-in system for the non-agnostic stuff
+
+The `equipment` is brought in by means of plug-ins to ATE.org itself.
+
+
 
 ... give me more ...
 
