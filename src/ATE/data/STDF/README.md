@@ -2,7 +2,11 @@
 
 ## Introduction
 
-In writing STDF parsers
+#### This library is **not** intended to be the 'fastes in the world'! 
+
+
+
+#### It is also **not** set up as just a parser! It can read **and** write!
 
 
 ## Support
