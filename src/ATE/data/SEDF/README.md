@@ -1,2 +1,2 @@
-# SEDF : Standard Eprom Data Format
+# SEDF : <ins>S</ins>tandard Eprom Data Format
 
