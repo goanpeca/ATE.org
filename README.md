@@ -34,7 +34,7 @@ Note: It is very well possible to make a `test program` without a physical instr
 ## Set of libraries
 
 The most notable libraries are:
- * STDF: reading/writing from/to the [**S**tandard **T**est **D**ata **F**ormat](https://en.wikipedia.org/wiki/Standard_Test_Data_Format)
+ * [STDF](src/ATE/data/STDF): reading/writing from/to the [**S**tandard **T**est **D**ata **F**ormat](https://en.wikipedia.org/wiki/Standard_Test_Data_Format)
  * Metis
  
 
