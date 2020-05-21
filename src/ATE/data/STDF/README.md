@@ -17,5 +17,5 @@ In writing STDF parsers
    - bz2
 
 ## References:
-* [STDF V4 standard](docs/standards/STDF/STDF-V4-spec.pdf)
+* [STDF V4 standard](/docs/standards/STDF/STDF-V4-spec.pdf)
 * [STDF V4-2007 extension](docs/standards/)
