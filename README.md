@@ -26,6 +26,7 @@ The `equipment` is brought in by means of plug-ins to ATE.org itself.
 
 ![Plugin-System](docs/ATE.org/Plugin-System.png)
 
+Note: It is very well possible to make a `test program` without a physical instrument! (Think: Part Averaging Test - `PAT`)
 
 # Description
 
