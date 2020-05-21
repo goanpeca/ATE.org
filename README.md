@@ -20,7 +20,9 @@ It also has **full** support for `sensor` [testing](https://www.basicairdata.eu/
 
 It is implemented as a set of libraries **AND** a plug-in system to the [Spyder](https://github.com/spyder-ide/spyder)-IDE (starting from V5).
 
-It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured way. 
+It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured -and equipment agnostic- way.
+
+The `equipment` is brought in by means of plug-ins to ATE.org itself.
 
 # Description
 
