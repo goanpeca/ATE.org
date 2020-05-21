@@ -2,7 +2,7 @@
 
 ### This library is NOT intended to be the <ins>fastes in the world</ins>! 
 
-Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking and by all means, hit the wall later on, and at that point you might consider to return! 🤣
+Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking [🔗](https://en.wikipedia.org/wiki/Standard_Test_Data_Format)and by all means, hit the wall later on, and at that point you might consider to return! 🤣
 
 Ok, a `fast` parser is first of all writen in probably [C](https://en.wikipedia.org/wiki/C_(programming_language))/[C++](https://en.wikipedia.org/wiki/C%2B%2B), and it has to dispence of a lot of the checking/correcting in order to become realy fast. However in real life STDF files are **far from perfect**, meaning that fast parsers will **FAIL** to do their intended job! You might tweak them for one or another ATE in your environment, but it will **not** be a can-do-everything parser!
 
