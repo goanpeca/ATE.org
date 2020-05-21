@@ -22,7 +22,8 @@ Think of it like this: STDF is a very good format from the point of view of the 
 ## Support
  - Endians: Little & Big
  - Versions & Extensions:
-   - __V3 : standard, +__
+   - ~~V3:
+     - ~~standard, +~~
    - V4 : standard, V4-2007, Memory:2010.1
  - Modes: read & write
  - compressions:
