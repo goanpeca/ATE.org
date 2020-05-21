@@ -1,4 +1,4 @@
-# Metis
+# The Metis library
 
 ## Mythology [🔗](https://en.wikipedia.org/wiki/Metis_(mythology))
 Metis (/ˈmiːtɪs/; Greek: Μῆτις, "<ins>wisdom</ins>," "<ins>skill</ins>," or "<ins>craft</ins>"), in ancient Greek religion, was a mythical Titaness belonging to the second generation of Titans.
