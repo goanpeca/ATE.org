@@ -1,6 +1,15 @@
 # ATE.org
 
-`ATE.org` is a tester/instrument <ins>agnostic</ins> framework for ATE ASIC testing projects.
+`ATE.org` is a tester/instrument **agnostic** framework for **<ins>ATE ASIC testing</ins>** projects.
+
+# Description
+
+`ATE.org` is a tester/instrument **agnostic** framework. This means that the system is **not** build around a
+a specific instrument (let's consider an ATE tester for a moment as a super instrument😋), it rather focuses on 
+organizing semiconductor testing (hence the project name: ATE.org) in such a way that all special corner cases have
+their well known place. This enables the users to focus on the **REAL** work : <ins>writing test</ins>. The `automotive` semiconductor `sensor` industry probably has the toughest demands when it comes to use- and corner-cases. That's why
+`ATE.org` is set up to fully support this industry. There thus will be few use- and corner-cases not covered initially, and 
+of course we will give also those a place in `ATE.org`!
 
 `ATE.org` support the following 'electronic grades':
 
@@ -27,15 +36,6 @@ The `equipment` is brought in by means of plug-ins to ATE.org itself.
 ![Plugin-System](docs/ATE.org/Plugin-System.png)
 
 Note: It is very well possible to make a `test program` without a physical instrument! (Think: Part Averaging Test - `PAT`)
-
-# Description
-
-`ATE.org` is a tester/instrument **agnostic** framework. This means that the system is **not** build around a
-a specific instrument (let's consider an ATE tester for a moment as a super instrument😋), it rather focuses on 
-organizing semiconductor testing (hence the project name: ATE.org) in such a way that all special corner cases have
-their well known place. This enables the users to focus on the **REAL** work : <ins>writing test</ins>. The `automotive` semiconductor `sensor` industry probably has the toughest demands when it comes to use- and corner-cases. That's why
-`ATE.org` is set up to fully support this industry. There thus will be few use- and corner-cases not covered initially, and 
-of course we will give also those a place `ATE.org`!
 
 ... give me more ...
 
