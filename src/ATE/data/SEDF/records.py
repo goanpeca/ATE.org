@@ -47,6 +47,7 @@ RecordDefinitions = {
     5   : 'GIR', # Generic Integer Record
     6   : 'GFR', # Generic Float Record
     7   : 'GTR', # Generic Time and date Record
+    8   : 'GBR', # Generic BLOB record
     255 : 'MRR', # Master Result Record --------> *MUST* be last record in stream!
 }
 
