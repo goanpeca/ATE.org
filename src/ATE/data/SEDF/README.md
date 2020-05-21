@@ -8,13 +8,15 @@ This is done for a varity of reasons like:
   - store/track maintenance data
   - ...
   
-pro
+Now, Eprom's (regardless of the type) come with their own 'chalanges'
+  - The used word-length (mostly 8 or 16 bit)
+  - Eprom's have a limited number of times we can write to them reliably
+  - Bit faiures might occure
+  - We need to define addresses where we store what (😒 compatibility will be a nightmare)
+  - The data to be storred need always to be packed/unpacked from/to the used type
+  
+Bref, if we don't have a library that abstracts these 'chalanges' we are forced to occupy ourselves with (verry error prune) bit-fucking.
 
-`SEDF` defines records (inspired by STDF, hence the library name choice) to store bits and pieces of information based on a 'key'.
+`SEDF` defines records (inspired by STDF, hence the library name choice) to store bits and pieces of information based on a 'key'. The `SEDF` library enables us to interact with the EPROM without thinking about the details like word-size, hashes (to verify there are no bit-errors), 'addresses', data-space, and so on.
 
-## problem
-
-## solution
-
-### description
-
+It even has a special 'tally' record, for when you want to keep track of counts like the number of times a relay has switched without wearing out the LSB's in the Eeprom! 😍
