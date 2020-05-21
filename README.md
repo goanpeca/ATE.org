@@ -16,7 +16,7 @@ Notes:
  1. The temperature ranges are case/manufacturer dependent and might change.
  2. Additional standards might apply based on use-case.
 
-It also has **full** support for `sensor` testing !
+It also has **full** support for `sensor` [testing](https://www.basicairdata.eu/introduction-to-sensor-testing/) !
 
 It is implemented as a set of libraries **AND** a plug-in system to the [Spyder](https://github.com/spyder-ide/spyder)-IDE (starting from V5).
 
