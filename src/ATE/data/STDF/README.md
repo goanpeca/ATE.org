@@ -1,4 +1,9 @@
-# ATE/data/STDF
+# The ATE.org STDF library
+
+## Introduction
+
+In writing STDF parsers
+
 
 ## Support
  - Endians: Little & Big
@@ -9,4 +14,7 @@
  - compressions:
    - gzip
    - xz
-   - what is the other one again ?!?
+   - bz2
+
+## References:
+* STDF V4 standard
