@@ -16,6 +16,8 @@ Think of it like this: STDF is a very good format from the point of view of the 
 
 Anyway, I did put `pandas` forward, because the rest of `ATE.org` is Python (>=3.6) based, but to be fair one could [also go the SAS- or the R way](https://www.analyticsvidhya.com/blog/2017/09/sas-vs-vs-python-tool-learn/) but those make less sense in the `ATE.org` concept.
 
+In any case, `ATE.org` is **ONLY** outputting STDF data, so whatever (legacy) system you have, `ATE.org` will play nicely!
+
 The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on [numpy](https://numpy.org/)/[scipy](https://www.scipy.org/)/[pandas](https://pandas.pydata.org/)/[HDF5](https://www.hdfgroup.org/solutions/hdf5/)/[matplotlib](https://matplotlib.org/) to deliver data analysis tailored to the semiconductor test industry ... in open source! 
 
 ### It is also <ins>NOT just a parser</ins>!
