@@ -1,6 +1,6 @@
 # The ATE.org STDF library
 
-## This library is NOT intended to be the 'fastes in the world'! 
+## This library is NOT intended to be the <ins>fastes in the world</ins>! 
 
 Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking and by all means, hit the wall later on, and at that point you might consider to return! 🤣
 
