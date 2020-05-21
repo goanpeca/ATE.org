@@ -32,7 +32,7 @@ Infact here are the specifications of the `ATE.org` STDF library:
    - V4
      - [standard](/docs/standards/STDF/STDF-V4-spec.pdf)
      - [V4-2007](/docs/standards/STDF/STDF-V4-2007-spec.pdf)
-     - [Memory:2010.1]()
+     - Memory:2010.1
  - <ins>Modes</ins>: read & write
  - <ins>compressions</ins>:
    - [gzip](https://www.gnu.org/software/gzip/)
@@ -44,5 +44,3 @@ Infact here are the specifications of the `ATE.org` STDF library:
  - <ins>floating point extensions</ins>:
    - [Not A Number](https://en.wikipedia.org/wiki/NaN) (aka: NaN, nan)
    - [IEEE 754-1985](https://en.wikipedia.org/wiki/IEEE_754-1985) (aka: Infinity, Inf, inf)
- 
-
