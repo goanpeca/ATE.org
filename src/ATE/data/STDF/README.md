@@ -20,7 +20,7 @@ Anyway, I did put `pandas` forward, because the rest of `ATE.org` is Python (>=3
 
 In ATE.org we also need to **write** STDF files!
 
-Infact here are the specifications:
+Infact here are the specifications of the `ATE.org` STDF library:
 
  - [<ins>Endianness</ins>](https://en.wikipedia.org/wiki/Endianness): Little & Big
  - <ins>Versions & Extensions</ins>:
