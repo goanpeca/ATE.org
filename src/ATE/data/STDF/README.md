@@ -24,15 +24,13 @@ Think of it like this: STDF is a very good format from the point of view of the 
  - Versions & Extensions:
    - ~~V3~~
    - V4
-     - standard
-     - V4-2007
-     - Memory:2010.1
+     - [standard](/docs/standards/STDF/STDF-V4-spec.pdf)
+     - [V4-2007](/docs/standards/STDF/STDF-V4-2007-spec.pdf)
+     - [Memory:2010.1]()
  - Modes: read & write
  - compressions:
-   - gzip
+   - [gzip](https://www.gnu.org/software/gzip/)
    - xz
-   - bz2
+   - [bz2](https://www.sourceware.org/bzip2/)
 
-## References:
-* [STDF V4 standard](/docs/standards/STDF/STDF-V4-spec.pdf)
-* [STDF V4-2007 extension](docs/standards/)
+
