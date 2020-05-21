@@ -1,4 +1,4 @@
-# SEDF (<ins>S</ins>tandard <ins>E</ins>prom <ins>D</ins>ata <ins>F</ins>ormat)  library
+# The SEDF (<ins>S</ins>tandard <ins>E</ins>prom <ins>D</ins>ata <ins>F</ins>ormat)  library
 
 In the semiconductor test industry, virtually on every [PCB](https://en.wikipedia.org/wiki/Printed_circuit_board) one finds some kind of [EPROM](https://en.wikipedia.org/wiki/EPROM). 
 
