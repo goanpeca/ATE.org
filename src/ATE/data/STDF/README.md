@@ -1,4 +1,4 @@
-# The ATE.org STDF library
+# STDF library (<ins>S</ins>tandard <ins>T</ins>est <ins>D</ins>ata <ins>F</ins>ormat)
 
 ## This library is NOT intended to be the <ins>fastes in the world</ins>! 
 
