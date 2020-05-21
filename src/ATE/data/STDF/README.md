@@ -14,6 +14,8 @@ The point is that STDF data should be converted to a useable format like [pandas
 
 Think of it like this: STDF is a very good format from the point of view of the ATE, because if a test program is crashing, we lost virtually no data! STDF is an un-usable format from the point of view of data analysis! Therefore we need to convert the data to a format that **is** usable. (if now you are thinking '[SQL](https://en.wikipedia.org/wiki/SQL)', then I can confirm that either you are living in the last millennium or you are a die-hard masochist! 🧐)   
 
+Anyway, I did put `pandas` forward, because the rest of ATE.org is Python (3) based, but to be fair one could [also go the SAS way or the R way](https://www.analyticsvidhya.com/blog/2017/09/sas-vs-vs-python-tool-learn/) but those don't make sense in the ATE.org concept. The `ATE.org` [Metis]() library builds numpy/scipy/pandas/matplotlib to do data 
+
 ## It is also <ins>NOT just a parser</ins>!
 
 In ATE.org we also need to **write** STDF files!
