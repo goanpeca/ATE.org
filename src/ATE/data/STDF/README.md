@@ -21,22 +21,22 @@ Think of it like this: STDF is a very good format from the point of view of the 
 In ATE.org we also need to **write** STDF files!
 Infact here are the specifications:
 
- - [Endianness](https://en.wikipedia.org/wiki/Endianness): Little & Big
- - Versions & Extensions:
+ - [<ins>Endianness</ins>](https://en.wikipedia.org/wiki/Endianness): Little & Big
+ - <ins>Versions & Extensions</ins>:
    - ~~V3~~
    - V4
      - [standard](/docs/standards/STDF/STDF-V4-spec.pdf)
      - [V4-2007](/docs/standards/STDF/STDF-V4-2007-spec.pdf)
      - [Memory:2010.1]()
- - Modes: read & write
- - compressions:
+ - <ins>Modes</ins>: read & write
+ - <ins>compressions</ins>:
    - [gzip](https://www.gnu.org/software/gzip/)
-   - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) (*.xz extension) → turns out to be the best to compress STDF files.
+   - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) → turns out to be the best to compress STDF files.
    - [bz2](https://www.sourceware.org/bzip2/)
- - encodings:
+ - <ins>encodings</ins>:
    - [ASCII](https://en.wikipedia.org/wiki/ASCII) (is the encoding from the standard)
    - [UTF-8](https://en.wikipedia.org/wiki/UTF-8) (added to support things like 'μA', '°C', ...)
- - floating point extensions:
+ - <ins>floating point extensions</ins>:
    - [Not A Number](https://en.wikipedia.org/wiki/NaN) (aka: NaN, nan)
    - [IEEE 754-1985](https://en.wikipedia.org/wiki/IEEE_754-1985) (aka: Infinity, Inf, inf)
  
