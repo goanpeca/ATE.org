@@ -24,6 +24,9 @@ It adds the **ATE project type** to Spyder, with which one can organize ATE test
 
 The `equipment` is brought in by means of plug-ins to ATE.org itself.
 
+![Plugin-System](docs/ATE.org/Plugin-System.png)
+
+
 # Description
 
 `ATE.org` is a tester/instrument **agnostic** framework. This means that the system is **not** build around a
