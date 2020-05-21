@@ -28,8 +28,8 @@ Infact here are the specifications of the `ATE.org` **STDF** library:
 
  - [<ins>Endianness</ins>](https://en.wikipedia.org/wiki/Endianness): Little & Big
  - <ins>Versions & Extensions</ins>:
-   - ~~V3~~
-   - V4
+   - ~~V3~~: support depricated
+   - V4:
      - [standard](/docs/standards/STDF/STDF-V4-spec.pdf)
      - [V4-2007](/docs/standards/STDF/STDF-V4-2007-spec.pdf)
      - Memory:2010.1
