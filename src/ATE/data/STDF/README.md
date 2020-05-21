@@ -4,7 +4,7 @@
 
 Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking and by all means, hit the wall later on, and at that point you might consider to return! 🤣
 
-Ok, a `fast` parser is first of all writen in probably [C](https://en.wikipedia.org/wiki/C_(programming_language))/[C++](https://en.wikipedia.org/wiki/C%2B%2B), and it has to dispence of a lot of the checking/correcting in order to become realy fast. However in real life STDF files are **far from perfect**, meaning that fast parsers will **FAIL** to do their intended job!
+Ok, a `fast` parser is first of all writen in probably [C](https://en.wikipedia.org/wiki/C_(programming_language))/[C++](https://en.wikipedia.org/wiki/C%2B%2B), and it has to dispence of a lot of the checking/correcting in order to become realy fast. However in real life STDF files are **far from perfect**, meaning that fast parsers will **FAIL** to do their intended job! You might tweak them for one or another ATE in your environment, but it will **not** be a can-do-everything parser!
 
 In any case, when you start parsing STDF's **at the moment** you want to interact with the data, you are, as they say *too little too late* ... you must still be living in the last century (not to say last millennium 🤪)
 
