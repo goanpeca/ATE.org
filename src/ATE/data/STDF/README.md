@@ -1,8 +1,6 @@
 # The ATE.org STDF library
 
-## Introduction
-
-#### This library is NOT intended to be the 'fastes in the world'! 
+## This library is NOT intended to be the 'fastes in the world'! 
 
 Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking and by all means, hit the wall later on, and at that point you might consider to return! 🤣
 
@@ -16,7 +14,7 @@ The point is that STDF data should be converted to a useable format like [pandas
 
 Think of it like this: STDF is a very good format from the point of view of the ATE, because if a test program is crashing, we lost virtually no data! STDF is an un-usable format from the point of view of data analysis! Therefore we need to convert the data to a format that usable. (if now you are thinking '[SQL](https://en.wikipedia.org/wiki/SQL)', then I can confirm that either you are still living in last millennium or you are a die-hard masochist! 🧐)   
 
-#### It is also <ins>not</ins> just set up as just a parser!
+## It is also <ins>not</ins> just set up as <ins>just a parser</ins>!
 
 In ATE.org we also need to **write** STDF files!
 Infact here are the specifications:
