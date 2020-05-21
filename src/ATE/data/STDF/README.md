@@ -1,6 +1,6 @@
 # STDF (<ins>S</ins>tandard <ins>T</ins>est <ins>D</ins>ata <ins>F</ins>ormat)  library
 
-## This library is NOT intended to be the <ins>fastes in the world</ins>! 
+### This library is NOT intended to be the <ins>fastes in the world</ins>! 
 
 Often people are searching for 'the fastest' STDF parser. If this is what you are after, keep on looking and by all means, hit the wall later on, and at that point you might consider to return! 🤣
 
@@ -16,7 +16,7 @@ Think of it like this: STDF is a very good format from the point of view of the 
 
 Anyway, I did put `pandas` forward, because the rest of `ATE.org` is Python (>=3.6) based, but to be fair one could [also go the SAS way or the R way](https://www.analyticsvidhya.com/blog/2017/09/sas-vs-vs-python-tool-learn/) but those don't make sense in the `ATE.org` concept. The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on [numpy](https://numpy.org/)/[scipy](https://www.scipy.org/)/[pandas](https://pandas.pydata.org/)/[HDF5](https://www.hdfgroup.org/solutions/hdf5/)/[matplotlib](https://matplotlib.org/) to deliver data analysis tailored to the semiconductor test industry ... in open source! 
 
-## It is also <ins>NOT just a parser</ins>!
+### It is also <ins>NOT just a parser</ins>!
 
 In ATE.org we also need to **write** STDF files!
 
