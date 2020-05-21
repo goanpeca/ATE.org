@@ -16,13 +16,12 @@ The point is that STDF data should be converted to a useable format like [pandas
 
 Think of it like this: STDF is a very good format from the point of view of the ATE, because if a test program is crashing, we lost virtually no data! STDF is an un-usable format from the point of view of data analysis! Therefore we need to convert the data to a format that usable. (if now you are thinking '[SQL](https://en.wikipedia.org/wiki/SQL)', then I can confirm that either you are still living in last millennium or you are a die-hard masochist! 🧐)   
 
-#### It is also <ins>not</ins> set up as just a parser!
+#### It is also <ins>not</ins> just set up as just a parser!
 
 In ATE.org we also need to **write** STDF files!
+Infact here are the specifications:
 
-
-## Support
- - Endians: Little & Big
+ - [Endianness](https://en.wikipedia.org/wiki/Endianness): Little & Big
  - Versions & Extensions:
    - ~~V3~~
    - V4
@@ -34,5 +33,11 @@ In ATE.org we also need to **write** STDF files!
    - [gzip](https://www.gnu.org/software/gzip/)
    - [lzma](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm) (*.xz extension) → turns out to be the best to compress STDF files.
    - [bz2](https://www.sourceware.org/bzip2/)
-
+ - encodings:
+   - [ASCII](https://en.wikipedia.org/wiki/ASCII) (is the encoding from the standard)
+   - [UTF-8](https://en.wikipedia.org/wiki/UTF-8) (added to support things like 'μA', '°C', ...)
+ - floating point extensions:
+   - [Not A Number](https://en.wikipedia.org/wiki/NaN) (aka: NaN, nan)
+   - [IEEE 754-1985](https://en.wikipedia.org/wiki/IEEE_754-1985) (aka: Infinity, Inf, inf)
+ 
 
