@@ -1,4 +1,4 @@
-# ATE/data/libraries
+# ATE.org data manipulating libraries
 
 This directory contains the 'data' libaries of the `ATE.org` framework.
   - [STDF](./STDF/README.md)
