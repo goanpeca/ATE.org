@@ -18,7 +18,7 @@ Anyway, I did put `pandas` forward, because the rest of `ATE.org` is Python (>=3
 
 In any case, `ATE.org` is **ONLY** outputting STDF data, so whatever (legacy) system you have, `ATE.org` will play along nicely!
 
-The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on **STDF**/[numpy](https://numpy.org/)/[scipy](https://www.scipy.org/)/[pandas](https://pandas.pydata.org/)/[HDF5](https://www.hdfgroup.org/solutions/hdf5/)/[matplotlib](https://matplotlib.org/) to deliver data analysis tailored to the semiconductor test industry ... in open source! 
+The `ATE.org` [Metis](/src/ATE/data/Metis/README.md) library builds on **STDF**/[numpy](https://numpy.org/)/[scipy](https://www.scipy.org/)/[pandas](https://pandas.pydata.org/)/[HDF5](https://www.hdfgroup.org/solutions/hdf5/)/[matplotlib](https://matplotlib.org/) to deliver data analysis tailored to the semiconductor test industry ... in open source! (eat that Mentor! you screwed us over, now it is our turn to do some screwing!) 
 
 ### It is also <ins>NOT just a parser</ins>!
 
