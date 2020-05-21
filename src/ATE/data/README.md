@@ -5,4 +5,6 @@ This directory contains the 'data' libaries of the `ATE.org` framework.
   - SEDF
   - RegMap
   - Measurements
+  - [Metis](./Metis/README.md)
+  
   
