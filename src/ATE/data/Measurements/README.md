@@ -1,4 +1,4 @@
-# Measurements
+# The Measurements library
 
 The measurement library is a library that combines features of other existing
 libraries when it comes to measurments.
