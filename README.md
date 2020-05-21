@@ -31,15 +31,18 @@ Notes:
 
 Note: It is very well possible to make a `test program` without a physical instrument! (Think: Part Averaging Test - `PAT`)
 
-## set of libraries
+## Set of libraries
 
-... more desctiption here
+The most notable libraries are:
+ * STDF: reading/writing from/to the [**S**tandard **T**est **D**ata **F**ormat](https://en.wikipedia.org/wiki/Standard_Test_Data_Format)
+ * Metis
+ 
 
-## plug-in system to Spyder
+## Plug-in system to Spyder
 
 It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured -and equipment agnostic- way.
 
-## plug-in system for the non-agnostic stuff
+## Plug-in system for the non-agnostic stuff
 
 The `equipment` is brought in by means of plug-ins to ATE.org itself.
 
