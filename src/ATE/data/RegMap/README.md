@@ -1,7 +1,7 @@
 # The RegMap library
 
 ## xxx
-When dealing with modern ASIC's we actually deal with SoC's (System On Chip). A SoC always has a so called register-map associated with it. Most of the interaction with the ASIC is thus done by reading/writing from/to these registers.
+When dealing with modern ASIC's we actually deal with SoC's ([System On a Chip](https://en.wikipedia.org/wiki/System_on_a_chip)). A SoC always has a so called register-map associated with it. Most of the interaction with the ASIC is thus done by reading/writing from/to these registers.
 
 There is many attempts made to define a format for these register-maps.
 
