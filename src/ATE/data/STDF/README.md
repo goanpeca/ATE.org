@@ -34,7 +34,7 @@ Infact here are the specifications:
    - [bz2](https://www.sourceware.org/bzip2/)
  - <ins>encodings</ins>:
    - [ASCII](https://en.wikipedia.org/wiki/ASCII) (is the encoding from the standard)
-   - [UTF-8](https://en.wikipedia.org/wiki/UTF-8) (added to support things like 'μA', '°C', ...)
+   - [UTF-8](https://en.wikipedia.org/wiki/UTF-8) (added to support things like 'ηA', 'μV', '°C', '+∞', '-∞', ...)
  - <ins>floating point extensions</ins>:
    - [Not A Number](https://en.wikipedia.org/wiki/NaN) (aka: NaN, nan)
    - [IEEE 754-1985](https://en.wikipedia.org/wiki/IEEE_754-1985) (aka: Infinity, Inf, inf)
