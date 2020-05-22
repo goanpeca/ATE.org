@@ -13,10 +13,15 @@ What if we would 'cast' Spyder into it's own conda environment (maybe called `_s
 
 <ins>**Disadvantages:**</ins> Changes are needed
   * Spyder needs to spawn the spyder-kernels in another environment like :
-```sh     
-/usr/bin/conda run -n anaconda spyder-kernels
-```
+  ```sh     
+  /usr/bin/env conda run -n anaconda spyder-kernels
+  ```
   * Spyder launch script needs to change to something like :
-```sh
-/usr/bin/conda run -n _spyder_ spyder
-```
+  ```sh
+  /usr/bin/env conda run -n _spyder_ spyder
+  ```
+  * Spyder install script needs to create the _spyder_ environment like:
+  ```
+  /usr/bin/env conda create -f _spyder_.yml
+  ```
+  Where the _spyder_.yml contains the (base) `spyder` environment dictated by `spyder`
