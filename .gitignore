@@ -25,6 +25,7 @@ tags
 .flake8
 .gitlab-ci.yml
 mypy.ini
+src/.lastproject
 
 # Package files
 *.egg
