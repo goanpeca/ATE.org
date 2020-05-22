@@ -64,12 +64,12 @@ class TestItem(BaseItem):
                                    active_hardware, active_base)
 
         files = []
-        for _, _, filenames in walk(test_directory):
-            files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py' and '_' not in x])
+        for _, directories, filenames in walk(test_directory):
+            files = directories
             break
 
-        print(files)
-        print(test_directory)
+            # files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py' and '_' not in x])
+            # break
 
         return files, test_directory
 
@@ -99,7 +99,15 @@ class TestItemChild(StateItem):
         edit_test_dialog(self.project_info, definition)
 
     def open_file_item(self):
-        self.model().edit_file.emit(self.path)
+        path = os.path.dirname(self.path)
+        dirname, _ = os.path.splitext(os.path.basename(self.path))
+        filename = os.path.basename(self.path)
+        print(path)
+        print(dirname)
+        print(filename)
+        path = os.path.join(path, filename)
+
+        self.model().edit_file.emit(path)
 
     def delete_item(self):
         if not self.file_system_operator.delete_file():
