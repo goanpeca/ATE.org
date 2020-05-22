@@ -68,6 +68,9 @@ class TestItem(BaseItem):
             files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py' and '_' not in x])
             break
 
+        print(files)
+        print(test_directory)
+
         return files, test_directory
 
     def add_standard_test_item(self):
@@ -119,6 +122,8 @@ class TestItemChild(StateItem):
         dependency_list = {}
 
         hw = self.project_info.get_test_hardware(self.text())
+        if not hw:
+            return dependency_list
         hw_enabled = self.project_info.get_hardware_state(hw[0])
 
         if not hw_enabled:

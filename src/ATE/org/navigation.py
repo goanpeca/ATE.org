@@ -1147,15 +1147,14 @@ class ProjectNavigation(QObject):
             raise e
 
         # add to database on pass
-        query = '''INSERT INTO tests(name, hardware, base, type, definition, relative_path, is_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+        query = '''INSERT INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
         name = definition['name']
         hardware = definition['hardware']
         base = definition['base']
         test_type = definition['type']
         blob = pickle.dumps(definition, 4)
-        relative_path = os.path.join('src', definition['hardware'], definition['base'], definition['name'])
 
-        self.cur.execute(query, (name, hardware, base, test_type, blob, relative_path, is_enabled))
+        self.cur.execute(query, (name, hardware, base, test_type, blob, is_enabled))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 

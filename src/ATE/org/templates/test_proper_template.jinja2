@@ -9,7 +9,7 @@ import {{ definition['name'] }}_BC
 
 
 class {{ definition['name'] }}({{ definition['name'] }}_BC):
-    '''{{ definition['doc_string'][0] }}
+    '''{{ definition['docstring'][0] }}
     {% for i in range(1, definition['doc_string'].__len__()) %}
     {{ definition['doc_string'][i] }}
     {% endfor %}
