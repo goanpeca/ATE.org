@@ -6,6 +6,7 @@ Created on Tue Mar  3 14:08:04 2020
 """
 
 import os
+import platform
 import sqlite3
 import pickle
 import shutil
@@ -30,13 +31,28 @@ class ProjectNavigation(QObject):
     hardware_removed = pyqtSignal(str)
     update_target = pyqtSignal()
 
+    verbose = True
+
     def __init__(self, project_directory, workspace_path, parent, project_quality=''):
         super().__init__(parent)
         self.workspace_path = workspace_path
         self.__call__(project_directory, project_quality)
 
     def __call__(self, project_directory, project_quality=''):
+        # determine OS, determine user & desktop
+        self.os = platform.system()
+        if self.os == 'Windows':
+            self.desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        elif self.os == 'Linux':
+            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        elif self.os == 'Darwin':  # TODO: check on mac if this works
+            self.desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        else:
+            raise Exception("unrecognized operating system")
+        self.user = self.desktop_path.split(os.sep)[-2]
         self.template_directory = os.path.join(os.path.dirname(__file__), 'templates')
+
+        # TODO: take the keychain in here ?!?
 
         if project_directory == '':
             self.project_directory = ''
@@ -76,6 +92,19 @@ class ProjectNavigation(QObject):
                 self._set_folder_structure()
                 self.con = sqlite3.connect(self.db_file)
                 self.cur = self.con.cursor()
+
+        if self.verbose:
+            print(f"operating system = '{self.os}'")
+            print(f"user = '{self.user}'")
+            print(f"desktop path = '{self.desktop_path}'")
+            print(f"template path = '{self.template_directory}'")
+            print(f"project path = '{self.project_directory}'")
+            print(f"active target = '{self.active_target}'")
+            print(f"active hardware = '{self.active_hardware}'")
+            print(f"active base = '{self.active_base}'")
+            print(f"project name = '{self.project_name}'")
+            print(f"project grade = '{self.project_quality}'")
+            print(f"project db file = '{self.db_file}'")
 
     def update_toolbar_elements(self, active_hardware, active_base, active_target):
         self.active_hardware = active_hardware
@@ -250,7 +279,7 @@ class ProjectNavigation(QObject):
                          "customer"	TEXT NOT NULL,
                          "definition"	BLOB NOT NULL,
                          "is_enabled" BOOL,
-                         
+
                          PRIMARY KEY("name")
                          );''')
         self.con.commit()

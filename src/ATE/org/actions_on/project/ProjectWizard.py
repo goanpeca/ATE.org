@@ -3,10 +3,10 @@ Created on Nov 18, 2019
 
 @author: hoeren
 '''
-import os
-import re
 
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+import qtawesome as qta
 
 from ATE.org.validation import is_valid_project_name, valid_project_name_regex
 
@@ -23,6 +23,13 @@ class ProjectWizard(QtWidgets.QDialog):
         uic.loadUi(my_ui, self)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(title)
+
+        self.browseRepository.setIcon(qta.icon('mdi.search-web', color='orange'))
+        self.browseRepository.setEnabled(True)
+
+        self.userName.setPlaceholderText(self.project_info.user)
+
+        # TODO: based on title, need to decide if we are creating or editing.
 
         rxProjectName = QtCore.QRegExp(valid_project_name_regex)
         ProjectName_validator = QtGui.QRegExpValidator(rxProjectName, self)
@@ -69,6 +76,7 @@ class ProjectWizard(QtWidgets.QDialog):
 
 
 def NewProjectDialog(parent, navigator):
+    """This dialog is called when we want to create a new project"""
     newProjectWizard = ProjectWizard(parent, navigator, 'New Project Wizard')
     if newProjectWizard.exec_():  # OK button pressed
         project_name = newProjectWizard.project_name
@@ -79,3 +87,7 @@ def NewProjectDialog(parent, navigator):
         project_quality = ''
     del(newProjectWizard)
     return project_name, project_quality
+
+def EditProjectDialog(parent, navigator):
+    """This dialog is called when we want to edit the project "quality" (name can not be edited)"""
+    pass
