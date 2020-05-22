@@ -1591,6 +1591,7 @@ def new_test_dialog(project_info):
     newTestWizard = TestWizard(project_info)
     if newTestWizard.exec_():  # OK button pressed, thus exited with accept() and **NOT** with reject()
         definition = newTestWizard.definition
+
         generator(project_info.project_directory, definition)
     del(newTestWizard)
 
