@@ -14,6 +14,6 @@ What if we would 'cast' Spyder into it's own conda environment (maybe called `_s
 <ins>**Disadvantages:**</ins> Changes are needed
   * Spyder needs to spawn the spyder-kernels in another environment!
      
-     something like: `/usr/bin/conda run -n anaconda spyder-kernels
+        something like: `/usr/bin/conda run -n anaconda spyder-kernels
   
   * Spyder launch script needs to change to something like `#!/usr/bin/conda run -n _spyder_ spyder`
