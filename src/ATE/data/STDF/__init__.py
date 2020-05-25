@@ -1,29 +1,8 @@
-import os
+import sys
 
-from ATE.data.STDF.records import (
-    ATR,
-    BPS,
-    DTR,
-    EPS,
-    FAR,
-    FTR,
-    GDR,
-    HBR,
-    MIR,
-    MPR,
-    MRR,
-    PCR,
-    PGR,
-    PIR,
-    PLR,
-    PMR,
-    PRR,
-    PTR,
-    RDR,
-    SBR,
-    SDR,
-    TSR,
-    WCR,
-    WIR,
-    WRR
-)
+python_version = sys.verion_info
+if python_version.major < 3:
+    raise Exception("The STDF library is made for Python 3")
+elif python_version.minor < 6:
+    raise Exception("The STDF library is made for Python >= 3.6")
+
