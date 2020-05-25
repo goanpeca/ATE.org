@@ -34,7 +34,7 @@ Note: It is very well possible to make a `test program` without a physical instr
 ## Set of libraries
 
 The most notable libraries are:
- - [STDF](/src/ATE/data/STDF/README.md): **S**tandard **T**est **D**ata **F**ormat
+ - [STDF](/src/ATE/data/STDF/): **S**tandard **T**est **D**ata **F**ormat
  - [SEDF](/src/ATE/data/SEDF/README.md): **S**tandard **E**prom **D**ata **F**ormat
  - [RegMap](/src/ATE/data/RegMap/README.md): **Reg**ister **Map**
  - [Measurements](/src/ATE/data/Measurements/README.md)
