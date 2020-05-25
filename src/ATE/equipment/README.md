@@ -1,10 +1,10 @@
+# ATE/Equipment
+
 This package contains EQUIPMENT, so anything that is *NOT* an INSTRUMENT.
 Things that belong here :
-    - probers (drivers)
-    - handler (drivers)
+    - prober (or better the Abstract Base Class for all `Prober` implementations)
+    - handler (or better, the Abstract Base Class for all `handler` implementations)
     - TCC (Test Cell Controller)
-  
-    
-We organize the contents per MANUFACTURER of the equipment
-WE are also a manufacturer in a sense, but this applies only to TCC
-so TCC will be at the top level as a 'Manufacturer' if you want.
+
+Note:
+  - Any plug-in for ATE.org that provedes one or more handler(s)/prober(s) should derive from handlerABC/proberABC.

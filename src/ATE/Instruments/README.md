@@ -1,41 +1,18 @@
-This is a place holder directory where we will copy in all the stuff the
-guys from the LAB and guys like Jonathan and the stuff from InvenSense I
-got is placed.
+# ATE/instruments
 
-basicaly these are primitive API's to some instrumentation
+`ATE.org` is a tester/instrument <ins>agnostic</ins> framework for ATE ASIC testing projects.
 
-We will organize things hereunder in the following way:
+We need however to foresee that a project (might) need, besides a specific tester also one or more `instruments`.
+The the definition, implementation and maintainence of an `instrument` library is **not** the task of ATE.org, however 
+`ATE.org` needs to 'know about it' so it can organize the insturments (besides the hardware)...
 
-    - Manufacturer
-        - Equipment
-            - Implementer
-            
-so that for example one can write in a test (or better, the common.py file) :
+We implement this through a plugin mechanism (based on the `pluggy` python package), in which a plugin can provide (amongst other things) one or more `instruments`.
 
-    from ATE.instruments.Keithley.K2000.Micornas import K2000 
-    
-this 'Implementer' level is needed to let different implementations live
-side by side. The idea is that if a common implementation is used/selected, 
-it will live one level up, so we can also do :
+We define here how the `instrument` part of the plugin should look like.
 
-    from ATE.instruments.Keithley import K2000 
-    
-if one wants the "unified" implementation and still the shit from other 
-implementers is available :-)
+From the point of view of the `hardware_wizard` things look like this:
 
-Also note that in the case of a 'plugin' the above could become:
+ ![hardware_wizard_instruments_tab](hardware_wizard.png)
 
-    from foo.bar.jefke import K2000
+Some preliminary thoughts:
 
-and still the ATE.org system can past this in ! :tada:
-
-now ... the point is that we can't maintain all implementations of everybody
-in the TDK group ... so we will need to work with plug-in's (as we do anyway
-for the 'import' stuff) OK, but when for example IC-Sense makes a test program
-(for Verification to name something), and they use their 'libraries', then 
-Micronas will have a problem running this program as they don't have the
-referenced libraries installed ... we need thus to foresee a 'copy-in' from 
-the libraries to the project !
-
-This way we can define the Equipment level, and the 'Implementer' level is 
-de-coupled, but not disfunctional :-)
