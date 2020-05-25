@@ -8,7 +8,7 @@
 organizing semiconductor testing (hence the project name: ATE.org) in such a way that all special corner cases have
 their well known place. This enables the users to focus on the **REAL** work : <ins>writing test</ins>. 
 
-The code for the individual tests is the **ONLY** code that needs writing, all the rest is `defining` and `configuring`!
+The code for the individual tests is the **ONLY** code that needs writing, all the rest is `defining` and `configuring` by means of `wizards`! The moto behind this is "code is your enemy", meaning the less code you write, the fewer bugs you have. The added benefit is that everything has his 'well known place' which in turn enables us to have beautifull auditing tools running over the project that generate power point presentations, excel books and pdf's 😈 
 
 The `automotive` semiconductor `sensor` industry has arguably the toughest demands when it comes to use- and corner-cases. That's why `ATE.org` is set up to fully support this industry from the beginning. The intend is that there will be only a few use- and corner-cases not covered initially, and of course we will also give those a place in `ATE.org`!
 
