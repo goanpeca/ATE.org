@@ -34,10 +34,12 @@ Note: It is very well possible to make a `test program` without a physical instr
 ## Set of libraries
 
 The most notable libraries are:
- * [STDF](src/ATE/data/STDF): reading/writing from/to the [**S**tandard **T**est **D**ata **F**ormat](https://en.wikipedia.org/wiki/Standard_Test_Data_Format)
- * Metis
+ - [STDF](./STDF/README.md): **S**tandard **T**est **D**ata **F**ormat
+ - [SEDF](./SEDF/README.md): **S**tandard **E**prom **D**ata **F**ormat
+ - [RegMap](./RegMap/README.md): **Reg**ister **Map**
+ - [Measurements](./Measurements/README.md)
+ - [Metis](./Metis/README.md): 🧙
  
-
 ## Plug-in system to Spyder
 
 It adds the **ATE project type** to Spyder, with which one can organize ATE tests, test-programs, test-flows ... in a structured -and equipment agnostic- way.
