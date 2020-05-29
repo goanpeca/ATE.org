@@ -93,7 +93,7 @@
      <item>
       <widget class="QTabWidget" name="testTabs">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="descriptionTab">
         <attribute name="title">
@@ -1359,6 +1359,9 @@ p, li { white-space: pre-wrap; }
          <property name="text">
           <string>OK</string>
          </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -1378,6 +1381,9 @@ p, li { white-space: pre-wrap; }
         <widget class="QPushButton" name="CancelButton">
          <property name="text">
           <string>Cancel</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>

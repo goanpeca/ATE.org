@@ -3,8 +3,8 @@ from PyQt5 import QtCore, QtGui
 from ATE.org.actions_on.model.BaseItem import BaseItem
 from ATE.org.actions_on.model import FlowItem as FlowItem
 from ATE.org.actions_on.tests.TestItem import TestItem
-
 from ATE.org.constants import TableIds
+from ATE.org.plugins.pluginmanager import get_plugin_manager
 
 
 class TreeModel(QtGui.QStandardItemModel):
@@ -19,6 +19,13 @@ class TreeModel(QtGui.QStandardItemModel):
         self.hardware = ''
         self.base = ''
         self.target = ''
+
+        self.plugin_manager = get_plugin_manager()
+
+        installed_plugins = self.plugin_manager.hook.get_plugin_identification()
+        print("Installed plugins:")
+        print(installed_plugins)
+
         import os
         self.doc_path = os.path.join(self.project_info.project_directory, "doc")
         self.tests_path = os.path.join(self.project_info.project_directory, "src")
@@ -30,6 +37,9 @@ class TreeModel(QtGui.QStandardItemModel):
     def on_db_change(self, table_id):
         if table_id == TableIds.Flow():
             self.flows.update()
+
+        if table_id == TableIds.Test():
+            self.tests_section.update()
 
         if table_id == TableIds.Die() or \
            table_id == TableIds.Device():

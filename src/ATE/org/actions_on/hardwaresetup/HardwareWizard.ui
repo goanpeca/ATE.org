@@ -122,7 +122,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pcbsTab">
         <attribute name="title">
@@ -1560,6 +1560,9 @@
                  <property name="text">
                   <string>Check Usage</string>
                  </property>
+                 <property name="autoDefault">
+                  <bool>false</bool>
+                 </property>
                 </widget>
                </item>
               </layout>
@@ -2627,6 +2630,9 @@
          <property name="text">
           <string>OK</string>
          </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -2646,6 +2652,9 @@
         <widget class="QPushButton" name="CancelButton">
          <property name="text">
           <string>Cancel</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>

@@ -18,16 +18,7 @@ FT = 'FT'
 
 
 class HardwareWizard(QtWidgets.QDialog):
-    """ this wizard will create the definition as follows:
-        hardware_definition = {
-            'hardware': 'HW0',
-            'PCB': {},
-            'tester': 'SCT',
-            'instruments': {},
-            'actuators': {}}
-    """
-
-    def __init__(self, project_info, definition={}):
+    def __init__(self, project_info):
         super().__init__()
         self.project_info = project_info
         self._site = None
@@ -39,7 +30,7 @@ class HardwareWizard(QtWidgets.QDialog):
         self.is_active = True
 
         self._load_ui()
-        self._setup(definition)
+        self._setup()
         self._connect_event_handler()
         self._verify()
 
@@ -47,17 +38,14 @@ class HardwareWizard(QtWidgets.QDialog):
         ui = '.'.join(os.path.realpath(__file__).split('.')[:-1]) + '.ui'
         uic.loadUi(ui, self)
 
-    def _setup(self, definition={}):
+    def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, False)
         self.setFixedSize(self.size())
 
     # hardware
-        if definition == {}:
-            self.hardware.setText(self.project_info.get_next_hardware())
-        else:
-            self.hardware.setText(definition['hardware'])
+        self.hardware.setText(self.project_info.get_next_hardware())
         self.hardware.setEnabled(False)
 
         self.probecardLink.setDisabled(True)
@@ -65,55 +53,31 @@ class HardwareWizard(QtWidgets.QDialog):
         rxPCBName = QtCore.QRegExp(valid_pcb_name_regex)
         PCBName_validator = QtGui.QRegExpValidator(rxPCBName, self)
 
-        if definition == {}:
-            self.singlesiteLoadboard.setText('')
-            self.singlesiteProbecard.setText('')
-            self.singlesiteDIB.setText('')
-            self.singleSiteDIBisCable.setChecked(False)
-            self.multisiteLoadboard.setText('')
-            self.multisiteProbecard.setText('')
-            self.multisiteDIB.setText('')
-            self.multiSiteDIBisCable.setChecked(False)
-            self.maxParallelism.setCurrentText('1')
-        else:
-            print(definition)
-            self.singlesiteLoadboard.setText(definition['PCB']['SingleSiteLoadboard'])
-            self.singlesiteProbecard.setText(definition['PCB']['SingleSiteProbecard'])
-            self.singlesiteDIB.setText(definition['PCB']['SingleSiteDIB'])
-            self.singleSiteDIBisCable.setChecked(definition['PCB']['SingleSiteDIBisCable'])
-            self.multisiteLoadboard.setText(definition['PCB']['MultiSiteLoadboard'])
-            self.multisiteProbecard.setText(definition['PCB']['MultiSiteProbecard'])
-            self.multisiteDIB.setText(definition['PCB']['MultiSiteDIB'])
-            self.multiSiteDIBisCable.setChecked(definition['PCB']['MultiSiteDIBisCable'])
-            self.maxParallelism.setCurrentText(str(definition['PCB']['MaxParallelism']))
-
+        self.singlesiteLoadboard.setText('')
         self.singlesiteLoadboard.setValidator(PCBName_validator)
-        self.multisiteLoadboard.setValidator(PCBName_validator)
-        self.singlesiteProbecard.setValidator(PCBName_validator)
-        self.multisiteProbecard.setValidator(PCBName_validator)
-        self.singlesiteDIB.setValidator(PCBName_validator)
-        self.multisiteDIB.setValidator(PCBName_validator)
-
         self.singlesiteLoadboard.setEnabled(True)
+        self.multisiteLoadboard.setText('')
+        self.multisiteLoadboard.setValidator(PCBName_validator)
         self.multisiteLoadboard.setDisabled(True)
+        self.singlesiteProbecard.setText('')
+        self.singlesiteProbecard.setValidator(PCBName_validator)
         self.singlesiteProbecard.setEnabled(True)
+        self.multisiteProbecard.setText('')
+        self.multisiteProbecard.setValidator(PCBName_validator)
         self.multisiteProbecard.setDisabled(True)
+        self.singlesiteDIB.setText('')
+        self.singlesiteDIB.setValidator(PCBName_validator)
         self.singlesiteDIB.setEnabled(True)
+        self.multisiteDIB.setText('')
+        self.multisiteDIB.setValidator(PCBName_validator)
         self.multisiteDIB.setDisabled(True)
+
+        self.maxParallelism.setCurrentText('1')
 
     # Instruments
         self.tester.clear()
         self.tester.addItems([''] + self.project_info.get_available_testers())
-        if definition == {}:
-            self.tester.setCurrentText('')
-        else:
-            if definition['tester'] in self.project_info.get_available_testers():
-                self.tester.setCurrentText(definition['tester'])
-            else:
-                self.tester.setCurrentText('')
-# until here the 'edit' is implemented, after this point I don't see things anymore ...
-
-        # ... rest of instruments
+        self.tester.setCurrentText('')
 
     # Parallelism
         self.finaltestConfiguration.setColumnCount(self._max_parallelism_value)
@@ -150,7 +114,7 @@ class HardwareWizard(QtWidgets.QDialog):
         self.expand.setIcon(qta.icon('mdi.unfold-more-horizontal', color='orange'))
         self.addInstrument.setIcon(qta.icon('mdi.arrow-right-bold', color='orange'))
         self.removeInstrument.setIcon(qta.icon('mdi.arrow-left-bold', color='orange'))
-        # self.usedInstruments.clear()
+        # self.tableWidget.clear()
         # TODO: move from list to tree for this widget!
 
     # Actuator
@@ -190,7 +154,7 @@ class HardwareWizard(QtWidgets.QDialog):
         self.removeInstrument.clicked.connect(self.removingInstrument)
         self.checkInstruments.clicked.connect(self.checkInstrumentUsage)
         self.availableInstruments.itemSelectionChanged.connect(self.availableInstrumentsSelectionChanged)
-        self.usedInstruments.itemSelectionChanged.connect(self.usedInstrumentsSelectionChanged)
+        # self.tableWidget.itemSelectionChanged.connect(self.tableWidgetSelectionChanged)
 
         # Actuator
         self.addActuator.clicked.connect(self.addingActuator)
@@ -559,16 +523,21 @@ class HardwareWizard(QtWidgets.QDialog):
         self.multisiteDIB.setText(value)
 
     def _get_current_configuration(self):
-        return {'SingleSiteLoadboard': self.singlesiteLoadboard.text(),
-                'SingleSiteDIB': self.singlesiteDIB.text(),
-                'SignleSiteProbeCard': self.singlesiteProbecard.text(),
-                'MultiSiteLoadboard': self.multisiteLoadboard.text(),
-                'MultiSiteDIB': self.multisiteDIB.text(),
-                'MultiSiteProbeCard': self.multisiteProbecard.text(),
-                'MaxParallelism': int(self.maxParallelism.currentText()),
+        return {'hardware': self.hardware.text(),
+                'PCB':
+                {'SingleSiteLoadboard': self.singlesiteLoadboard.text(),
+                 'SingleSiteDIB': self.singlesiteDIB.text(),
+                 'SingleSiteDIBisCable': self.singleSiteDIBisCable.isChecked(),
+                 'SignleSiteProbeCard': self.singlesiteProbecard.text(),
+                 'MultiSiteLoadboard': self.multisiteLoadboard.text(),
+                 'MultiSiteDIB': self.multisiteDIB.text(),
+                 'MultiSiteDIBisCable': self.multiSiteDIBisCable.isChecked(),
+                 'MultiSiteProbeCard': self.multisiteProbecard.text(),
+                 'MaxParallelism': int(self.maxParallelism.currentText())},
+                'Parallelism': self._available_pattern,
+                'tester': self.tester.currentText(),
                 'Actuator': {},
-                'Instruments': {},
-                'Parallelism': self._available_pattern}
+                'Instruments': {}}
 
 # instruments
     def testerChanged(self, new_tester):
@@ -586,7 +555,7 @@ class HardwareWizard(QtWidgets.QDialog):
     def checkInstrumentUsage(self):
         print("check Instrument Usage")
 
-    def usedInstrumentsSelectionChanged(self):
+    def tableWidgetSelectionChanged(self):
         print("used instruments selection changed")
 
 # Actuator
@@ -617,64 +586,14 @@ class HardwareWizard(QtWidgets.QDialog):
         self.reject()
 
     def OKButtonPressed(self):
+        self.project_info.add_hardware(self._get_current_configuration())
         self.accept()
 
 
 def new_hardwaresetup_dialog(project_info):
-    """This function does the following:
-
-        1. calls the wizard
-        2. collects the defininition
-        3. calls the navigator method 'add_hardware'
-    """
-    hd = {}
-    nhw = HardwareWizard(project_info)
-    if nhw.exec_():  # OK button pressed
-        hd['hardware'] = nhw.hardware.text()
-        hd['PCB'] = {
-            'SingleSiteLoadboard': nhw.singlesiteLoadboard.text(),
-            'SingleSiteProbecard': nhw.singlesiteProbecard.text(),
-            'SingleSiteDIB': nhw.singlesiteDIB.text(),
-            'SingleSiteDIBisCable': nhw.singleSiteDIBisCable.isChecked(),
-            'MaxParallelism': int(nhw.maxParallelism.currentText()),
-            'MultiSiteLoadboard': nhw.multisiteLoadboard.text(),
-            'MultiSiteProbecard': nhw.multisiteProbecard.text(),
-            'MultiSiteDIB': nhw.multisiteDIB.text(),
-            'MultiSiteDIBisCable': nhw.multiSiteDIBisCable.isChecked()}
-        hd['tester'] = nhw.tester.currentText()
-        # TODO: Instruments
-        # TODO: Actuators
-        # TODO: Parallelism
-    else:  # Cancel button pressed --> returns an empty dictionary.
-        pass
-    nhw.project_info.add_hardware(hd)
-    del(nhw)
-
-
-def edit_hardwaresetup_dialog(project_info, hardware_name):
-    hd = project_info.get_hardware_definition(hardware_name)
-    print(f"edit hardware : {hd}")
-    ehw = HardwareWizard(project_info, hd)
-    if ehw.exec_():  # OK button pressed
-        # hd['hardware'] = ehw.hardware.text() hardware name is not editable !
-        hd['PCB'] = {
-            'SingleSiteLoadboard': ehw.singlesiteLoadboard.text(),
-            'SingleSiteProbecard': ehw.singlesiteProbecard.text(),
-            'SingleSiteDIB': ehw.singlesiteDIB.text(),
-            'SingleSiteDIBisCable': ehw.singleSiteDIBisCable.isChecked(),
-            'MaxParallelism': int(ehw.maxParallelism.currentText()),
-            'MultiSiteLoadboard': ehw.multisiteLoadboard.text(),
-            'MultiSiteProbecard': ehw.multisiteProbecard.text(),
-            'MultiSiteDIB': ehw.multisiteDIB.text(),
-            'MultiSiteDIBisCable': ehw.multiSiteDIBisCable.isChecked()}
-        hd['tester'] = ehw.tester.currentText()
-        # TODO: Instruments
-        # TODO: Actuators
-        # TODO: Parallelism
-    else:  # Cancel button pressed --> returns an empty dictionary.
-        pass
-    ehw.project_info.update_hardware(hd)
-    del(ehw)
+    newHardwaresetupWizard = HardwareWizard(project_info)
+    newHardwaresetupWizard.exec_()
+    del(newHardwaresetupWizard)
 
 
 if __name__ == '__main__':

@@ -12,16 +12,20 @@ USER_TXT = 'H2LHH'
 sampleRate = 1.0
 temperature = '25'
 
+import .commnon
+
 from ATE.org.sequencers import FixedTemperatureSequencer
 fts = FixedTemperatureSequencer(temperature, sampleRate)
 
+# New and improved :)
 import .fubar
-fts.registerTest(fubar, {call_values}, {limits}, {SBINs})
+fts.registerTest(fubar( {call_values}, {limits}, {SBINs}, f"do_{target}"))
 
 import .fu
 fts.registerTest(fu, {CallValues}, {Limits}, {SBINs})
 
 # ...
+
 
 
 {SBINs} = {
@@ -48,5 +52,12 @@ SBIN
 
 
 if __name__ == '__main__':
-	fts.run()
-    fts.registerTCC(...)
+    # MQTT starten
+    common.mqtt.connect(....)
+    fts.set_harness(common.mqtt)
+    common.mqtt.set_sequencer(fts)
+    common.mqtt.run()
+        # "next" --> fts.execute()
+        # "shutdown" --> terminate()
+
+    # fts.registerTCC(...)

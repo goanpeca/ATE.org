@@ -44,14 +44,7 @@ class NewProductWizard(QtWidgets.QDialog):
             if hardware == self.project_info.active_hardware:
                 self.WithHardware.setCurrentIndex(index)
 
-        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
-        self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
-
-        self.FromDevice.clear()
-        self.FromDevice.addItems(self.existing_devices)
-        self.FromDevice.setCurrentText('' if not len(self.existing_devices) else self.existing_devices[0])
-        # TODO: why can't we set the first available device as default ? as below
-        # self.FromDevice.setCurrentIndex(0)  # this is the empty string in the beginning of the list!
+        self._update_device_list()
 
         self.Feedback.setText("No die name")
         self.Feedback.setStyleSheet('color: orange')
@@ -60,22 +53,30 @@ class NewProductWizard(QtWidgets.QDialog):
 
         self._verify()
 
+    def _update_device_list(self):
+        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
+        self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
+        self.FromDevice.clear()
+        self.FromDevice.addItems(self.existing_devices)
+        self.FromDevice.setCurrentText('' if not len(self.existing_devices) else self.existing_devices[0])
+        # TODO: why can't we set the first available device as default ? as below
+        # self.FromDevice.setCurrentIndex(0)  # this is the empty string in the beginning of the list!
+
     def _connect_event_handler(self):
         self.FromDevice.currentIndexChanged.connect(self._verify)
-        self.WithHardware.currentIndexChanged.connect(self.hardware_changed)
+        self.WithHardware.currentTextChanged.connect(self.hardware_changed)
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
         self.OKButton.clicked.connect(self.OKButtonPressed)
 
-    def hardware_changed(self):
+    def hardware_changed(self, hardware):
         '''
         if the selected hardware changes, make sure the active_hardware
         at the parent level is also changed and that the new device list
         (for the new hardware) is loaded.
         '''
-        self.project_info.hardware_activated.emit(self.WithHardware.currentText())
+        self.project_info.hardware_activated.emit(hardware)
 
-        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
-        self.existing_products = self.project_info.get_products_for_hardware(self.project_info.active_hardware)
+        self._update_device_list()
 
     def _verify(self):
         if self.existing_hardwares[0] == '':
@@ -96,6 +97,10 @@ class NewProductWizard(QtWidgets.QDialog):
             else:  # device selected (hardware is always selected)
                 self.Feedback.setText("")
                 self.OKButton.setEnabled(True)
+
+        if not self.ProductName.text():
+            self.Feedback.setText("No product name")
+            self.OKButton.setEnabled(False)
 
     def CancelButtonPressed(self):
         self.accept()

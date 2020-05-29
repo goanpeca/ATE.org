@@ -18,12 +18,6 @@ class DeviceItem(BaseItem):
     def _create_child(self, name, parent):
         return DeviceItemChild(self.project_info, name, parent)
 
-    def _append_children(self):
-        children = self._get_children_names()
-        for child in children:
-            child_item = self._create_child(child, self)
-            self.appendRow(child_item)
-
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
 
@@ -47,7 +41,8 @@ class DeviceItemChild(StateItem):
     def _update_db_state(self, enabled):
         return self.project_info.update_device_state(self.text(), enabled)
 
-    def _get_dependant_objects(self):
+    @property
+    def dependency_list(self):
         return self.project_info.get_dependant_objects_for_device(self.text())
 
     def _are_dependencies_fulfilled(self):

@@ -18,12 +18,6 @@ class ProductItem(BaseItem):
     def _create_child(self, name, parent):
         return ProductItemChild(self.project_info, name, parent)
 
-    def _append_children(self):
-        children = self._get_children_names()
-        for child in children:
-            child_item = self._create_child(child, self)
-            self.appendRow(child_item)
-
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
 
@@ -66,3 +60,7 @@ class ProductItemChild(StateItem):
                 MenuActionTypes.View(),
                 None,
                 MenuActionTypes.Obsolete()]
+
+    @property
+    def dependency_list(self):
+        return {}

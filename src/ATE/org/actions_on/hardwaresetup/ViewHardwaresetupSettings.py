@@ -70,20 +70,23 @@ class ViewHardwaresetupSettings(HardwareWizard):
         dialog.feedback.setText('')
         dialog.feedback.setStyleSheet('')
 
-        dialog.singlesiteLoadboard.setText(hw_configuration["SingleSiteLoadboard"])
-        dialog.singlesiteDIB.setText(hw_configuration["SingleSiteDIB"])
-        dialog.singlesiteProbecard.setText(hw_configuration["SignleSiteProbeCard"])
-        dialog.multisiteLoadboard.setText(hw_configuration["MultiSiteLoadboard"])
-        dialog.multisiteDIB.setText(hw_configuration["MultiSiteDIB"])
-        dialog.multisiteProbecard.setText(hw_configuration["MultiSiteProbeCard"])
-        dialog.maxParallelism.setCurrentIndex(hw_configuration["MaxParallelism"] - 1)
+        dialog.singlesiteLoadboard.setText(hw_configuration["PCB"]["SingleSiteLoadboard"])
+        dialog.singlesiteDIB.setText(hw_configuration["PCB"]["SingleSiteDIB"])
+        dialog.singlesiteProbecard.setText(hw_configuration["PCB"]["SignleSiteProbeCard"])
+        dialog.multisiteLoadboard.setText(hw_configuration["PCB"]["MultiSiteLoadboard"])
+        dialog.multisiteDIB.setText(hw_configuration["PCB"]["MultiSiteDIB"])
+        dialog.multisiteProbecard.setText(hw_configuration["PCB"]["MultiSiteProbeCard"])
+        dialog.maxParallelism.setCurrentIndex(hw_configuration["PCB"]["MaxParallelism"] - 1)
         dialog._available_pattern = hw_configuration["Parallelism"]
-        ViewHardwaresetupSettings._update_availabe_pattern_list(dialog)
+        ViewHardwaresetupSettings._update_available_pattern_list(dialog)
 
     @staticmethod
-    def _update_availabe_pattern_list(dialog):
+    def _update_available_pattern_list(dialog):
         for k, _ in dialog._available_pattern.items():
             dialog.finaltestAvailableConfigurations.addItem(k)
+
+    def OKButtonPressed(self):
+        self.accept()
 
 
 def display_hardware_settings_dialog(hw_name, project_info):

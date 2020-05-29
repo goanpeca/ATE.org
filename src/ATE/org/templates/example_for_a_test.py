@@ -3,6 +3,12 @@
 from ATE.org.abc import testABC
 import .common
 
+#
+    mqtt = mqtt()
+	K2000 = pm.hook.create_proxy("k2000", mqtt)
+	
+#
+
 class fubar(testABC):
 	'''
 	Created on Tuesday, May 5 2020 @ 12:02:50 (Q2 20192)

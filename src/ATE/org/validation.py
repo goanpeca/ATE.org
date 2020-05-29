@@ -17,6 +17,7 @@ valid_test_parameter_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_testprogram_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_project_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_pcb_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
+valid_user_text_name_regex = r"^[a-zA-Z][a-zA-Z0-9]*$"
 valid_positive_integer_regex = r"^[+]?\d*"
 valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
 

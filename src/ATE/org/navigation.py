@@ -218,7 +218,6 @@ class ProjectNavigation(QObject):
                          "customer"	TEXT NOT NULL,
                          "definition"	BLOB NOT NULL,
                          "is_enabled" BOOL,
-
                          PRIMARY KEY("name")
                          );''')
         self.con.commit()
@@ -244,32 +243,38 @@ class ProjectNavigation(QObject):
                          FOREIGN KEY("hardware") REFERENCES "hardware"("name")
                          );''')
         self.con.commit()
-        # programs
-        self.cur.execute('''CREATE TABLE "programs" (
-                         "name"	TEXT NOT NULL,
-                         "hardware"	TEXT NOT NULL,
-                         "base"	TEXT NOT NULL
-                                CHECK(base=='PR' OR base=='FT'),
-                         "definition"	BLOB NOT NULL,
-                         "relative_path"	TEXT NOT NULL,
-                            "is_enabled" BOOL,
-
-                          PRIMARY KEY("name")
+        # sequence
+        self.cur.execute('''CREATE TABLE "sequence" (
+                         "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+                         "owner_name" TEXT NOT NULL,
+                         "prog_name"  TEXT NOT NULL,
+                         "test"     TEXT NOT NULL,
+                         "test_order" INTEGER,
+                         "definition"   BLOB NOT NULL
                          );''')
         self.con.commit()
 
-        # program owers (i.e. the flows who got a given program assigned)
-        self.cur.execute('''CREATE TABLE "program_owner" (
+        # programs
+        self.cur.execute('''CREATE TABLE "programs" (
                          "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
                          "prog_name"	TEXT NOT NULL,
                          "owner_name"	TEXT NOT NULL,
-                         "prog_order" INTEGER
+                         "prog_order" INTEGER,
+                         "hardware"	TEXT NOT NULL,
+                         "base"	TEXT NOT NULL
+                                CHECK(base=='PR' OR base=='FT'),
+                         "target" TEXT NOT NULL,
+                         "usertext" TEXT NOT NULL,
+                         "sequencer_type" TEXT NOT NULL,
+                         "temperature" TEXT NOT NULL,
+                         FOREIGN KEY("hardware") REFERENCES "hardwares"("name"),
+                         FOREIGN KEY("target") REFERENCES "targets"("name")
                          );''')
         self.con.commit()
 
         # tests
         self.cur.execute('''CREATE TABLE "tests" (
-                         "name"	TEXT NOT NULL,
+                         "name"	TEXT NOT NULL UNIQUE,
                          "hardware"	TEXT NOT NULL,
                          "type"	TEXT NOT NULL
                                CHECK(type=='standard' OR type=='custom'),
@@ -278,7 +283,8 @@ class ProjectNavigation(QObject):
                          "definition"	BLOB NOT NULL,
                          "is_enabled" BOOL,
 
-                         PRIMARY KEY("name")
+                         PRIMARY KEY("name"),
+                         FOREIGN KEY("hardware") REFERENCES "hardwares"("name")
                          );''')
         self.con.commit()
 
@@ -348,7 +354,11 @@ class ProjectNavigation(QObject):
         This method returns the name of the Hardware on success and raises an
         exception on fail (no sense of continuing, this should work!)
         '''
-        # print(definition)
+        awaited_name = self.get_next_hardware()
+        new_hardware = definition['hardware']
+        if not awaited_name == new_hardware:
+            raise Exception(f"something wrong with the name !!! '{awaited_name}'<->'{new_hardware}'")
+
         try:  # make the directory structure
             from ATE.org.coding.generators import hardware_generator
             hardware_generator(self.project_directory, definition)
@@ -356,8 +366,10 @@ class ProjectNavigation(QObject):
             print(f"failed to create hardware structure for {definition['hardware']}")
             raise e
 
+        # blob do not have to contain hardware name it's already our primary key
+        # TODO: cleaner impl.
+        definition.pop('hardware')
         # fill the database on success
-        new_hardware = definition['hardware']
         blob = pickle.dumps(definition, 4)
         query = '''INSERT INTO hardwares(name, definition, is_enabled) VALUES (?, ?, ?)'''
         self.cur.execute(query, (new_hardware, blob, is_enabled))
@@ -365,27 +377,27 @@ class ProjectNavigation(QObject):
 
         # let ATE.org know that we have new hardware
         self.hardware_added.emit(new_hardware)
+        self.database_changed.emit(TableId.Hardware())
 
-        # return the new hardware name
-        return new_hardware
-
-    def update_hardware(self, definition, is_enabled=True):
+    def update_hardware(self, hardware, definition):
         '''
         this method will update hardware 'name' with 'definition'
         if name doesn't exist, a KeyError will be thrown
         '''
-        try:
-            from ATE.org.coding.generators import hardware_generator
-            hardware_generator(self.project_directory, definition)
-        except Exception as e:  # explode on fail
-            print(f"failed to update hardware structure for {definition['hardware']}")
-            raise e
+        # try:
+        #     from ATE.org.coding.generators import hardware_generator
+        #     hardware_generator(self.project_directory, definition)
+        # except Exception as e:  # explode on fail
+        #     print(f"failed to update hardware structure for {definition['hardware']}")
+        #     raise e
 
+        # blob do not have to contain hardware name it's already our primary key
+        # TODO: cleaner impl.
+        definition.pop('hardware')
         # update the database on success
-        name = definition['hardware']
         blob = pickle.dumps(definition, 4)
-        update_blob_query = '''UPDATE hardwares SET definition = ?, is_enabled = ? WHERE name = ?'''
-        self.cur.execute(update_blob_query, (blob, is_enabled, name))
+        update_blob_query = '''UPDATE hardwares SET definition = ? WHERE name = ?'''
+        self.cur.execute(update_blob_query, (blob, hardware))
         self.con.commit()
 
     def get_hardwares_info(self):
@@ -997,8 +1009,10 @@ class ProjectNavigation(QObject):
         self.con.commit()
         self.database_changed.emit(TableId.Product())
 
-    def update_product(self, name):
-        pass
+    def update_product(self, name, device, hardware):
+        query = '''UPDATE products SET device = ?, hardware = ? WHERE name = ?'''
+        self.cur.execute(query, (device, hardware, name))
+        self.con.commit()
 
     def update_product_device(self, name, device):
         pass
@@ -1077,14 +1091,14 @@ class ProjectNavigation(QObject):
     def tests_get_info(self):
         '''
         this method will return a DICTIONARY with *ALL* existing tests as key,
-        and as value the tuple (hardware, type, base, definition, relative_path)
+        and as value the tuple (hardware, type, base, definition)
         '''
         retval = {}
-        query = '''SELECT name, hardware, type, base, definition, relative_path FROM tests'''
+        query = '''SELECT name, hardware, type, base, definition FROM tests'''
         self.cur.execute(query)
         for row in self.cur.fetchall():
-            #        name   hardware    type    base     def  relpath
-            retval[row[0]] = (row[1], row[2], row[3], row[4], row[5])
+            #        name   hardware    type    base     def
+            retval[row[0]] = (row[1], row[2], row[3], row[4])
         return retval
 
     def tests_get_standard_tests(self, hardware, base):
@@ -1136,8 +1150,20 @@ class ProjectNavigation(QObject):
                 'dependencies' : {}}
         '''
 
-        if definition['type'] != 'custom':
+        name = definition['name']
+        hardware = definition['hardware']
+        base = definition['base']
+        test_type = definition['type']
+
+        if test_type != 'custom':
             raise Exception(f"not a 'custom' test!!!")
+
+        # TODO: move this check to the wizard
+        tests = self.get_tests_from_db(hardware, base)
+        if name in tests:
+            # use print as a hint until we fix this
+            print('test exists already')
+            return
 
         try:  # generate the test with everythin around it.
             from ATE.org.coding.generators import test_generator
@@ -1148,25 +1174,22 @@ class ProjectNavigation(QObject):
 
         # add to database on pass
         query = '''INSERT INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
-        name = definition['name']
-        hardware = definition['hardware']
-        base = definition['base']
-        test_type = definition['type']
+        # TODO: hack is used, this must be refactored
+        definition.pop('name')
+        definition.pop('hardware')
+        definition.pop('base')
+        definition.pop('type')
         blob = pickle.dumps(definition, 4)
 
         self.cur.execute(query, (name, hardware, base, test_type, blob, is_enabled))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 
-    def add_or_update_test(self, name, hardware, base, test_type, definition, is_enabled=True):
-        '''
-        given the name, hardware, base and test_numbers for a test,
-        create the test based on the supplied info and add the info to
-        the database.
-        '''
-        query = '''INSERT OR REPLACE INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
+    def update_custom_test(self, name, hardware, base, type, definition, is_enabled=True):
+        query = '''REPLACE INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
         blob = pickle.dumps(definition, 4)
-        self.cur.execute(query, (name, hardware, base, test_type, blob, is_enabled))
+
+        self.cur.execute(query, (name, hardware, base, type, blob, is_enabled))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 
@@ -1225,6 +1248,13 @@ class ProjectNavigation(QObject):
 
         return retval
 
+    def get_test_definiton(self, name):
+        get_blob_query = '''SELECT definition FROM tests WHERE name = ?'''
+        self.cur.execute(get_blob_query, (name,))
+        definiton = self.cur.fetchone()
+
+        return pickle.loads(definiton[0])
+
     def get_tests_from_db(self, hardware, base, test_type='all'):
         '''
         given hardware and base, this method will return a dictionary
@@ -1235,37 +1265,45 @@ class ProjectNavigation(QObject):
             'custom' --> custom tests
             'all' --> standard + custom tests
         '''
-        query = '''SELECT name, relative_path FROM tests WHERE hardware = ? AND base = ? AND type = ?'''
         if test_type == 'all':
-            test_type = '*'
-        elif test_type not in ['standard', 'custom']:
+            # query = '''SELECT name FROM tests WHERE hardware = ? AND base = ?'''
+            # TODO: remove this until we set primary keys correctly
+            query = '''SELECT name FROM tests WHERE base = ?'''
+            self.cur.execute(query, (base,))
+        elif test_type in ('standard', 'custom'):
+            # query = '''SELECT name FROM tests WHERE hardware = ? AND base = ? AND type = ?'''
+            # TODO: remove this until we set primary keys correctly
+            query = '''SELECT name FROM tests WHERE base = ? AND type = ?'''
+            self.cur.execute(query, (base, test_type))
+        else:
             raise Exception('unknown test type !!!')
 
-        self.cur.execute(query, (hardware, base, test_type))
-        retval = {}
+        retval = []
         for row in self.cur.fetchall():
-            retval[row[0]] = row[1]
+            retval.append(row[0])
+
         return retval
 
     def remove_test(self, name):
         query = '''DELETE from tests WHERE name=?'''
         self.cur.execute(query, (name,))
+
+        query = '''DELETE from sequence WHERE test=?'''
+        self.cur.execute(query, (name,))
         self.con.commit()
+        self.database_changed.emit(TableId.Test())
 
     def trace_test(self, hardware, base, name):
         pass
 
-    def add_program(self, name):
-        pass
-
-    def update_program(self, name):
-        pass
-
-    def remove_program(self, name):
-        pass
-
     def get_states(self, hardware):
         pass
+
+    def delete_test_from_program(self, test_name):
+        query = '''DELETE from sequence WHERE test = ?'''
+        self.cur.execute(query, (test_name,))
+        self.con.commit()
+        self.database_changed.emit(TableId.Test())
 
     def get_data_for_qualification_flow(self, quali_flow_type, product):
         query = '''SELECT * from qualification_flow_data where type = ? AND product = ?'''
@@ -1309,30 +1347,58 @@ class ProjectNavigation(QObject):
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def insert_program_owner(self, program_name, owner_name, order):
-        query = '''INSERT INTO program_owner (prog_name, owner_name, prog_order) VALUES(?,?,?)'''
-        self.cur.execute(query, (program_name, owner_name, order))
+    def insert_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name, order):
+        query = '''INSERT INTO programs (prog_name, owner_name, prog_order, hardware, base, target, usertext, sequencer_type, temperature) VALUES(?,?,?,?,?,?,?,?,?)'''
+        self.cur.execute(query, (name, owner_name, order, hardware, base, target, usertext, sequencer_typ, temperature))
+
+        self._insert_sequence_informations(owner_name, name, definition)
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def delete_program_owner(self, program_name, owner_name, program_order):
-        query = '''DELETE from program_owner WHERE prog_name=? and owner_name=? and prog_order = ?'''
+    def _insert_sequence_informations(self, owner_name, prog_name, definition):
+        seq_query = '''INSERT INTO sequence(owner_name, prog_name, test, test_order, definition) VALUES (?, ?, ?, ?, ?)'''
+        for index, test in enumerate(definition['sequence']):
+            tuple_test = list(test.items())
+            blob = pickle.dumps(tuple_test[0][1], 4)
+            self.cur.execute(seq_query, (owner_name, prog_name, tuple_test[0][0], index, blob))
+
+    def update_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name):
+        query = '''UPDATE programs set hardware=?, base=?, target=?, usertext=?, sequencer_type=?, temperature=? WHERE owner_name=? and prog_name=?'''
+        self.cur.execute(query, (hardware, base, target, usertext, sequencer_typ, temperature, owner_name, name))
+
+        self._delete_program_sequence(name, owner_name)
+
+        self._insert_sequence_informations(owner_name, name, definition)
+        self.con.commit()
+        self.database_changed.emit(TableId.Flow())
+
+    def _delete_program_sequence(self, prog_name, owner_name):
+        seq_query = '''DELETE FROM sequence WHERE prog_name=? and owner_name=?'''
+        self.cur.execute(seq_query, (prog_name, owner_name))
+        self.con.commit()
+
+    def delete_program(self, program_name, owner_name, program_order):
+        query = '''DELETE from programs WHERE prog_name=? and owner_name=? and prog_order = ?'''
         self.cur.execute(query, (program_name, owner_name, program_order))
-        self.con.commit()
         order = program_order
-        for index in range(order, self._get_program_owner_element_count(owner_name)):
-            self._update_program_owner_order(owner_name, index + 1, index)
+        for index in range(order, self.get_program_owner_element_count(owner_name)):
+            self._update_program_order(owner_name, index + 1, index)
 
+        del_seq_query = '''DELETE from sequence WHERE prog_name = ?'''
+
+        self.cur.execute(del_seq_query, (program_name,))
+
+        self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def move_program_owner(self, program_name, owner_name, program_order, is_up):
-        query = '''SELECT prog_order, id from program_owner where owner_name = ? and prog_order = ?'''
+    def move_program(self, program_name, owner_name, program_order, is_up):
+        query = '''SELECT prog_order, id from programs where owner_name = ? and prog_order = ?'''
         self.cur.execute(query, (owner_name, program_order))
         result = self.cur.fetchone()
         order = result[0]
         prog_id = result[1]
 
-        count = self._get_program_owner_element_count(owner_name)
+        count = self.get_program_owner_element_count(owner_name)
         if is_up:
             if order == 0:
                 return
@@ -1347,31 +1413,79 @@ class ProjectNavigation(QObject):
         self.database_changed.emit(TableId.Flow())
 
     def _update_elements(self, owner_name, prev_order, order, prog_id):
-        self._update_program_owner_order(owner_name, prev_order, order)
-        self._update_program_owner_order_neighbour(owner_name, order, prev_order, prog_id)
+        self._update_program_order(owner_name, prev_order, order)
+        self._update_program_order_neighbour(owner_name, order, prev_order, prog_id)
 
-    def _update_program_owner_order_neighbour(self, owner_name, prev_order, order, prog_id):
-        query = '''UPDATE program_owner SET prog_order = ? where owner_name = ? and prog_order = ? and id != ?'''
+    def _update_program_order_neighbour(self, owner_name, prev_order, order, prog_id):
+        query = '''UPDATE programs SET prog_order = ? where owner_name = ? and prog_order = ? and id != ?'''
         self.cur.execute(query, (order, owner_name, prev_order, prog_id))
         self.con.commit()
 
-    def _update_program_owner_order(self, owner_name, prev_order, order):
-        query = '''UPDATE program_owner SET prog_order = ? where owner_name = ? and prog_order = ?'''
+    def _update_program_order(self, owner_name, prev_order, order):
+        query = '''UPDATE programs SET prog_order = ? where owner_name = ? and prog_order = ?'''
         self.cur.execute(query, (order, owner_name, prev_order))
         self.con.commit()
 
-    def _get_program_owner_element_count(self, owner_name):
-        query = '''SELECT COUNT (*) FROM program_owner where owner_name = ?'''
+    def get_program_owner_element_count(self, owner_name):
+        query = '''SELECT COUNT (*) FROM programs where owner_name = ?'''
         self.cur.execute(query, (owner_name,))
         rowcount = self.cur.fetchone()[0]
         return rowcount
 
     def get_programs_for_owner(self, owner_name):
-        query = '''SELECT prog_name from program_owner where owner_name = ? ORDER BY prog_order'''
+        query = '''SELECT prog_name from programs where owner_name = ? ORDER BY prog_order'''
         self.cur.execute(query, (owner_name,))
         retval = []
         for row in self.cur.fetchall():
             retval.append(row[0])
+
+        return retval
+
+    def get_program_configuration_for_owner(self, owner_name, prog_name):
+        query = '''SELECT hardware, base, target, usertext, sequencer_type, temperature from programs where owner_name = ? and prog_name = ?'''
+        self.cur.execute(query, (owner_name, prog_name))
+        return self.cur.fetchone()
+
+    def get_program_test_configuration(self, program, owner):
+        query = '''SELECT test, test_order, definition FROM sequence WHERE prog_name=? and owner_name=?'''
+        self.cur.execute(query, (program, owner))
+        retval = []
+        for row in self.cur.fetchall():
+            tests = {}
+            tests[row[0]] = pickle.loads(row[2])
+            retval.insert(row[1], tests)
+
+        return retval
+
+    def get_tests_for_program(self, prog_name, owner_name):
+        query = '''SELECT test from sequence where prog_name = ? and owner_name= ?'''
+        self.cur.execute(query, (prog_name, owner_name))
+        retval = []
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+
+        return retval
+
+    def get_programs_for_test(self, test_name):
+        query = '''SELECT prog_name, owner_name from sequence WHERE test=?'''
+        self.cur.execute(query, (test_name,))
+        retval = {}
+
+        for row in self.cur.fetchall():
+            if retval.get(row[1]) and row[0] in retval[row[1]]:
+                continue
+
+            retval.setdefault(row[1], []).append(row[0])
+
+        return retval
+
+    def get_programs_for_hardware(self, hardware):
+        query = '''SELECT prog_name, owner_name from programs WHERE hardware = ?'''
+        self.cur.execute(query, (hardware,))
+        retval = {}
+
+        for row in self.cur.fetchall():
+            retval.setdefault(row[1], []).append(row[0])
 
         return retval
 
@@ -1411,10 +1525,13 @@ class ProjectNavigation(QObject):
         return tree
 
     def get_dependant_objects_for_hardware(self, hardware):
-        dependant_objects = ['devices', 'dies', 'products', 'programs', 'tests']
+        dependant_objects = ['devices', 'dies', 'products', 'tests']
         node_type = 'hardware'
 
-        return self._get_dependant_objects_for_node(hardware, dependant_objects, node_type)
+        programs = {'programs': self.get_programs_for_hardware(hardware)}
+        objs = self._get_dependant_objects_for_node(hardware, dependant_objects, node_type)
+        objs.update(programs)
+        return objs
 
     def get_dependant_objects_for_maskset(self, maskset):
         dependant_objects = ['dies']
@@ -1460,21 +1577,8 @@ class ProjectNavigation(QObject):
 
         return deps
 
-    def get_testprograms_for_test(self):
-        pass
-
     def get_dependant_objects_for_test(self, test):
-        return {}
-        deps = {'testprograms': []}
-        products = self.get_products()
-        for name in products:
-            product = self.get_testprograms_for_test(test)
-            deps['testprograms'] = product
-
-        if len(deps['testprograms']) == 0:
-            return {}
-
-        return deps
+        return self.get_programs_for_test(test)
 
     def _get_state(self, name, type):
         query = f"SELECT name, is_enabled FROM {type}"

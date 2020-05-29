@@ -11,6 +11,7 @@ from ATE.org.actions_on.device.NewDeviceWizard import NewDeviceWizard
 from ATE.org.actions_on.product.NewProductWizard import NewProductWizard
 from ATE.org.actions_on.flow.HTOL.htolwizard import HTOLWizard
 from ATE.org.actions_on.tests.TestWizard import TestWizard
+from ATE.org.actions_on.program.TestProgramWizard import TestProgramWizard
 
 import os
 import shutil
@@ -56,7 +57,9 @@ def debug_visual(window, qtbot):
 def project_navigation():
     root_name = os.path.dirname(__file__)
     dir_name = os.path.join(root_name, 'smoke_test')
-    shutil.rmtree(dir_name, ignore_errors=True)
+    if os.path.exists(dir_name):
+        shutil.rmtree(dir_name)
+
     with ProjectNavigation(dir_name, root_name, None) as project_info:
         yield project_info
 
@@ -84,11 +87,6 @@ def project(qtbot, project_navigation):
 
 def test_create_new_project_cancel_before_enter_name(project, qtbot):
     qtbot.mouseClick(project.CancelButton, QtCore.Qt.LeftButton)
-
-
-def test_create_new_project_enter_name(project, qtbot):
-    qtbot.keyClicks(project.ProjectName, 'smoke')
-    qtbot.mouseClick(project.OKButton, QtCore.Qt.LeftButton)
 
 
 @pytest.fixture
@@ -244,6 +242,8 @@ def test_changed_hardware_state(model):
     assert not model.project_info.get_product_state(definitions['product'])
     assert model.project_info.get_maskset_state(definitions['maskset'])
     assert model.project_info.get_package_state(definitions['package'])
+    # enable hw
+    model.hardwaresetup.get_child(definitions['hardware'])._set_state(True)
 
 
 # without using this hack, observer will prevent shutill to clean up
@@ -267,7 +267,7 @@ def test_update_toolbar_parameters_with_base_and_target(qtbot, model, project_na
 
 
 @pytest.fixture
-def new_test(qtbot, mocker, project_navigation):
+def new_test(qtbot, project_navigation):
     project_navigation.active_hardware = definitions['hardware']
     project_navigation.active_base = 'PR'
     dialog = TestWizard(project_navigation)
@@ -288,3 +288,29 @@ def test_create_new_test_enter_name(new_test, qtbot):
 
 def test_does_test_exist(project_navigation):
     assert project_navigation.get_test_state(definitions['test'])
+
+
+@pytest.fixture
+def new_test_program(mocker, qtbot, project_navigation):
+    project_navigation.active_hardware = definitions['hardware']
+    project_navigation.active_base = 'FT'
+    project_navigation.active_target = definitions['device']
+    mocker.patch.object(ProjectNavigation, 'get_devices_for_hardware', return_value=[definitions['device']])
+    dialog = TestProgramWizard(project_navigation, 'production' + 'PR')
+    qtbot.addWidget(dialog)
+    return dialog
+
+
+def test_create_new_test_program_cancel_before_enter_name(new_test_program, qtbot):
+    qtbot.mouseClick(new_test_program.CancelButton, QtCore.Qt.LeftButton)
+
+
+def test_create_new_test_program_enter_name(new_test_program, qtbot):
+    new_test_program.selectedTests.addItem(definitions['test'])
+    new_test_program._verify()
+
+    qtbot.mouseClick(new_test_program.OKButton, QtCore.Qt.LeftButton)
+
+
+def test_does_test_program_exist(project_navigation):
+    assert project_navigation.get_programs_for_hardware(definitions['hardware'])

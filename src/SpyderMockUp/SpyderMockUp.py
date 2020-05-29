@@ -15,14 +15,14 @@ import platform
 import re
 import sys
 
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
 import qdarkstyle
 import qtawesome as qta
 
 from ATE.org.navigation import ProjectNavigation
 from ATE.org.validation import is_ATE_project
-from SpyderMockUp.ScreenCasting.QtScreenCast import ScreenCastToolButton
+from ScreenCasting.QtScreenCast import ScreenCastToolButton
 
 show_workspace = False
 

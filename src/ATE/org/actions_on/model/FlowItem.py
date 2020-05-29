@@ -12,7 +12,7 @@ def generate_item_name(item):
     if None in [item.project_info.active_target, item.project_info.active_base]:
         return None
 
-    owner_name = item.text() + item.project_info.active_target + item.project_info.active_base
+    owner_name = item.text() + '_' + item.project_info.active_target.upper() + '_' + item.project_info.active_base.upper()
     return owner_name
 
 
@@ -28,12 +28,10 @@ def append_test_program_nodes(item):
         item.appendRow(TestprogramTreeItem(item.project_info, program, owner_name, index))
 
 
-def add_testprogram_impl(item):
-    import ATE.org.actions_on.program.NewProgramWizard as np
-    result = np.new_program_dialog(None)
-    if result is not None:
-        itemname = generate_item_name(item)
-        item.project_info.insert_program_owner(result, itemname, len(item.project_info.get_programs_for_owner(itemname)))
+def add_testprogram_impl(project_info, item):
+    import ATE.org.actions_on.program.TestProgramWizard as np
+    test_program_owner = generate_item_name(item)
+    np.new_program_dialog(project_info, test_program_owner, None)
 
 
 class FlowItem(BaseItem):
@@ -67,8 +65,18 @@ class SimpleFlowItem(FlowItem):
         self.removeRows(0, self.row_count())
         append_test_program_nodes(self)
 
+    def _get_children_names(self):
+        return self.project_info.get_programs_for_owner(generate_item_name(self))
+
+    def _append_children(self):
+        owner_name = generate_item_name(self)
+
+        programs = self.project_info.get_programs_for_owner(owner_name)
+        for index, program in enumerate(programs):
+            self.appendRow(TestprogramTreeItem(self.project_info, program, owner_name, index))
+
     def add_testprogram(self):
-        add_testprogram_impl(self)
+        add_testprogram_impl(self.project_info, self)
 
     def _get_menu_items(self):
         return [MenuActionTypes.AddTestprogram()]
@@ -113,7 +121,7 @@ class SingleInstanceQualiFlowItem(QualiFlowItemBase):
         self._generate_sub_items()
 
     def add_testprogram(self):
-        add_testprogram_impl(self)
+        add_testprogram_impl(self.project_info, self)
         self.update()
 
     def _generate_sub_items(self):
@@ -173,7 +181,7 @@ class QualiFlowSubitemInstance(BaseItem):
         self.project_info.delete_qualifiaction_flow_instance(self.data)
 
     def add_testprogram(self):
-        add_testprogram_impl(self)
+        add_testprogram_impl(self.project_info, self)
 
     def _generate_sub_items(self):
         append_test_program_nodes(self)
@@ -194,16 +202,18 @@ class TestprogramTreeItem(BaseItem):
                 MenuActionTypes.Delete()]
 
     def edit_item(self):
-        pass
+        import ATE.org.actions_on.program.EditTestProgramWizard as edit
+        edit.edit_program_dialog(self.text(), self.project_info, self.owner)
 
     def display_item(self):
-        pass
+        import ATE.org.actions_on.program.ViewTestProgramWizard as view
+        view.view_program_dialog(self.text(), self.project_info, self.owner)
 
     def delete_item(self):
-        self.project_info.delete_program_owner(self.text(), self.owner, self.order)
+        self.project_info.delete_program(self.text(), self.owner, self.order)
 
     def move_up_item(self):
-        self.project_info.move_program_owner(self.text(), self.owner, self.order, True)
+        self.project_info.move_program(self.text(), self.owner, self.order, True)
 
     def move_down_item(self):
-        self.project_info.move_program_owner(self.text(), self.owner, self.order, False)
+        self.project_info.move_program(self.text(), self.owner, self.order, False)

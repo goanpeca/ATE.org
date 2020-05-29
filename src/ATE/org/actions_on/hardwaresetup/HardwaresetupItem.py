@@ -20,12 +20,6 @@ class HardwaresetupItem(BaseItem):
     def _create_child(self, name, parent):
         return HardwaresetupItemChild(self.project_info, name, parent)
 
-    def _append_children(self):
-        children = self._get_children_names()
-        for child in children:
-            child_item = self._create_child(child, self)
-            self.appendRow(child_item)
-
     def new_item(self):
         new_hardwaresetup_dialog(self.project_info)
 
@@ -38,7 +32,8 @@ class HardwaresetupItemChild(StateItem):
         super().__init__(project_info, name, parent=parent)
         self.definition = self._get_definition()
 
-    def _get_dependant_objects(self):
+    @property
+    def dependency_list(self):
         return self.project_info.get_dependant_objects_for_hardware(self.text())
 
     def activate_item(self):
@@ -49,10 +44,6 @@ class HardwaresetupItemChild(StateItem):
 
     def display_item(self):
         display_hardware_settings_dialog(self.text(), self.project_info)
-
-    def trace_item(self):
-        from ATE.org.actions_on.utils.ItemTrace import ItemTrace
-        ItemTrace(self.dependency_list, self.text())
 
     def is_enabled(self):
         return self.project_info.get_hardware_state(self.text())

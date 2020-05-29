@@ -113,37 +113,27 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         else:
             self.OKButton.setEnabled(False)
 
-
     def CancelButtonPressed(self):
         self.reject()
 
     def OKButtonPressed(self):
-        name = self.StandardTestName.currentText()
-        hardware = self.ForHardwareSetup.currentText()
-        type = 'standard'
-        base = self.WithBase.currentText()
-        definition = {'doc_string': [], # list of lines
-                      'input_parameters': {},
-                      'output_parameters': {}}
+        # TODO: fix me
+        # name = self.StandardTestName.currentText()
+        # hardware = self.ForHardwareSetup.currentText()
+        # type = 'standard'
+        # base = self.WithBase.currentText()
+        # definition = {'doc_string': [], # list of lines
+        #               'input_parameters': {},
+        #               'output_parameters': {}}
 
-        self.project_info.standard_test_add(name, hardware, base)
+        # self.project_info.add_standard_test(name, hardware, base)
+
+        # use print as hint
+        print('Standard test cannot be stored, fix it !!!')
         self.accept()
 
 
 def new_standard_test_dialog(project_info):
     newStandardTestWizard = NewStandardTestWizard(project_info)
-    if newStandardTestWizard.exec_():
-        pass
+    newStandardTestWizard.exec_()
     del(newStandardTestWizard)
-
-if __name__ == '__main__':
-    # import sys, qdarkstyle
-    # from ATE.org.actions.dummy_main import DummyMainWindow
-
-    # app = QtWidgets.QApplication(sys.argv)
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    # dummyMainWindow = DummyMainWindow()
-    # dialog = NewTestWizard(dummyMainWindow)
-    # dummyMainWindow.register_dialog(dialog)
-    # sys.exit(app.exec_())
-    pass

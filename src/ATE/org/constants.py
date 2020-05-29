@@ -11,6 +11,7 @@ class TableIds(Enum):
     Package = 7
     Die = 8
     Test = 9
+    Program = 10
 
     def __call__(self):
         return self.value

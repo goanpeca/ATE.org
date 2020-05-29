@@ -10,7 +10,6 @@ class StateItem(BaseItem):
 
         self._set_current_state()
         self._set_tree_state(self.is_enabled())
-        self.dependency_list = self._get_dependant_objects()
 
     def _set_current_state(self):
         if len(self._are_dependencies_fulfilled()) == 0:
@@ -44,12 +43,9 @@ class StateItem(BaseItem):
 
     def trace_item(self):
         from ATE.org.actions_on.utils.ItemTrace import ItemTrace
-        ItemTrace(self.dependency_list, self.text())
+        ItemTrace(self.dependency_list, self.text()).exec_()
 
     def _are_dependencies_fulfilled(self):
-        return {}
-
-    def _get_dependant_objects(self):
         return {}
 
     def _disabled_item_menu(self):

@@ -49,14 +49,18 @@ class PadStandardSize(Enum):
 
 DEFAULT_ROW = ['', 0, 0, '100', '100', PadType.Analog()[0], PadDirection.Input()[0]]
 
-PAD_NAME_COLUMN = 0
-PAD_TYPE_COLUMN = 5
-PAD_DIRECTION_COLUMN = 6
-PAD_POS_X_COLUMN = 1
-PAD_POS_Y_COLUMN = 2
-PAD_SIZE_X_COLUMN = 3
-PAD_SIZE_Y_COLUMN = 4
 
-NAME_COL_SIZE = 390
-REF_COL_SIZE = 50
-DIR_COL_SIZE = 60
+class PAD_INFO(Enum):
+    PAD_NAME_COLUMN = 0
+    PAD_TYPE_COLUMN = 5
+    PAD_DIRECTION_COLUMN = 6
+    PAD_POS_X_COLUMN = 1
+    PAD_POS_Y_COLUMN = 2
+    PAD_SIZE_X_COLUMN = 3
+    PAD_SIZE_Y_COLUMN = 4
+    NAME_COL_SIZE = 390
+    REF_COL_SIZE = 50
+    DIR_COL_SIZE = 60
+
+    def __call__(self):
+        return self.value

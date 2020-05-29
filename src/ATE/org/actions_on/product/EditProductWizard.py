@@ -12,9 +12,9 @@ class EditProductWizard(NewProductWizard):
         ViewProductWizard._setup_dialog_fields(self, name)
 
     def OKButtonPressed(self):
-        configuration = self._get_current_configuration()
-        self.project_info.update_device(configuration['name'], configuration['hardware'],
-                                        configuration['package'], configuration['definition'])
+        configuration = self._get_actual_defintion()
+        self.project_info.update_product(configuration['name'], configuration['device'],
+                                         configuration['hardware'])
         self.accept()
 
 
