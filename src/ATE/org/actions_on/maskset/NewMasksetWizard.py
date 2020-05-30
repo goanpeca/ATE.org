@@ -13,7 +13,9 @@ import qtawesome as qta
 
 from ATE.org.validation import is_valid_maskset_name
 
-from ATE.org.actions_on.maskset.constants import *
+from ATE.org.actions_on.maskset.constants import PAD_INFO, UI_FILE, DEFAULT_ROW, PadType, PadDirection, PadStandardSize
+
+from ATE.org.plugins.pluginmanager import get_plugin_manager
 
 standard_flat_height = 7  # mm
 standard_scribe = 100  # um
@@ -22,6 +24,8 @@ standard_scribe = 100  # um
 class NewMasksetWizard(QtWidgets.QDialog):
     def __init__(self, project_info, read_only=False):
         super().__init__()
+        self.plugin_manager = get_plugin_manager()
+        self.plugin_names = []
         self.prev_item = None
 
         self.selected_cell = None
@@ -126,14 +130,18 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
         # resize cell columns
         for c in range(self.columns):
-            if c == PAD_NAME_COLUMN:
-                self.bondpadTable.setColumnWidth(c, NAME_COL_SIZE)
+            if c == PAD_INFO.PAD_NAME_COLUMN():
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.NAME_COL_SIZE())
 
-            elif c in (PAD_POS_X_COLUMN, PAD_POS_Y_COLUMN, PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN, PAD_TYPE_COLUMN):
-                self.bondpadTable.setColumnWidth(c, REF_COL_SIZE)
+            elif c in (PAD_INFO.PAD_POS_X_COLUMN(),
+                       PAD_INFO.PAD_POS_Y_COLUMN(),
+                       PAD_INFO.PAD_SIZE_X_COLUMN(),
+                       PAD_INFO.PAD_SIZE_Y_COLUMN(),
+                       PAD_INFO.PAD_TYPE_COLUMN()):
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.REF_COL_SIZE())
 
-            elif c == PAD_DIRECTION_COLUMN:
-                self.bondpadTable.setColumnWidth(c, DIR_COL_SIZE)
+            elif c == PAD_INFO.PAD_DIRECTION_COLUMN():
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.DIR_COL_SIZE())
 
         self.bondpadTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.bondpadTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
@@ -144,9 +152,13 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.viewDieButton.clicked.connect(self.viewDie)
 
     # import For
-        companies = ['', 'Micronas', 'InvenSense', 'IC-Sense', '...']
+        importer_name_lists = self.plugin_manager.hook.get_importer_names()
         self.importFor.clear()
-        self.importFor.addItems(companies)
+        self.importFor.addItem('')
+        for importer_name_list in importer_name_lists:
+            for importer_name in importer_name_list:
+                self.importFor.addItem(importer_name["Display_name"])
+                self.plugin_names.append(importer_name)
         self.importFor.setCurrentIndex(0)  # empty string
 
     # feedback
@@ -195,21 +207,21 @@ class NewMasksetWizard(QtWidgets.QDialog):
             return
 
         column = item.column()
-        if column == PAD_NAME_COLUMN:
-            self.create_menu(self.pad_type, self.pad_direction)   
+        if column == PAD_INFO.PAD_NAME_COLUMN():
+            self.create_menu(self.pad_type, self.pad_direction)
             return
 
-        if column == PAD_TYPE_COLUMN:  # type
+        if column == PAD_INFO.PAD_TYPE_COLUMN():  # type
             self.create_menu(self.pad_type)
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             return
 
-        if column == PAD_DIRECTION_COLUMN:  # direction
+        if column == PAD_INFO.PAD_DIRECTION_COLUMN():  # direction
             self.create_menu(self.pad_direction)
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             return
 
-        if column in (PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN):
+        if column in (PAD_INFO.PAD_SIZE_X_COLUMN(), PAD_INFO.PAD_SIZE_Y_COLUMN()):
             self.create_menu(self.pad_standard_size)
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             return
@@ -218,7 +230,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         for item in self.bondpadTable.selectedItems():
             row = item.row()
             for c in range(self.columns):
-                if c in (PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN):
+                if c in (PAD_INFO.PAD_SIZE_X_COLUMN(), PAD_INFO.PAD_SIZE_Y_COLUMN()):
                     self.bondpadTable.item(row, c).setText(value)
 
     def _standard_1_selected(self):
@@ -235,9 +247,9 @@ class NewMasksetWizard(QtWidgets.QDialog):
             return
 
         column = item.column()
-        if column == PAD_TYPE_COLUMN:
+        if column == PAD_INFO.PAD_TYPE_COLUMN():
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        elif column == PAD_DIRECTION_COLUMN:
+        elif column == PAD_INFO.PAD_DIRECTION_COLUMN():
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         else:
             self._create_checkable_cell(item)
@@ -259,7 +271,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         checkable_widget = QtWidgets.QLineEdit()
         checkable_widget.setText(item.text())
 
-        if column == PAD_NAME_COLUMN:
+        if column == PAD_INFO.PAD_NAME_COLUMN():
             checkable_widget.setValidator(self.maskset_name_validator)
         else:
             checkable_widget.setValidator(self.positive_integer_validator)
@@ -275,7 +287,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
             self._update_row(row)
             return
 
-        if column == PAD_NAME_COLUMN:
+        if column == PAD_INFO.PAD_NAME_COLUMN():
             # name must be unique
             self._validate_name(checkable_widget, row, column=0)
             if not self._is_defined_only_once(column=0):
@@ -287,10 +299,10 @@ class NewMasksetWizard(QtWidgets.QDialog):
                 return
 
         success = True
-        if column in (PAD_POS_X_COLUMN, PAD_POS_Y_COLUMN):
+        if column in (PAD_INFO.PAD_POS_X_COLUMN(), PAD_INFO.PAD_POS_Y_COLUMN()):
             success = self._handle_pos_cols(checkable_widget, row, column)
 
-        elif column in (PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN):
+        elif column in (PAD_INFO.PAD_SIZE_X_COLUMN(), PAD_INFO.PAD_SIZE_Y_COLUMN()):
             success = self._validate_pads_size_references(checkable_widget, row, column)
 
         self._update_row(row)
@@ -301,23 +313,35 @@ class NewMasksetWizard(QtWidgets.QDialog):
 
     def _handle_pos_cols(self, checkable_widget, row, column):
         success = True
-        if column == PAD_POS_X_COLUMN:
+        if column == PAD_INFO.PAD_POS_X_COLUMN():
             success = self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeX.text())
+            item_x = checkable_widget.text()
+            item_y = self.bondpadTable.item(row, PAD_INFO.PAD_POS_Y_COLUMN()).text()
 
-        if column == PAD_POS_Y_COLUMN:
+        if column == PAD_INFO.PAD_POS_Y_COLUMN():
             success = self._validate_pads_position_references(checkable_widget, row, column, self.dieSizeY.text())
+            item_x = self.bondpadTable.item(row, PAD_INFO.PAD_POS_X_COLUMN()).text()
+            item_y = checkable_widget.text()
+
+        if success:
+            success = self._are_coordinates_valid(item_x, item_y, row, column)
 
         if not success:
             checkable_widget.clear()
 
         return success
 
-    def _check_if_pos_defined_only_once(self):
-        pos_list = []
-        for r in range(self.rows):
-            pos_list.append((self.table_item(r, PAD_POS_X_COLUMN).text(), self.table_item(r, PAD_POS_Y_COLUMN).text()))
+    def _are_coordinates_valid(self, item_x, item_y, current_row, current_col):
+        for row in range(self.rows):
+            if current_row == row:
+                continue
+            if self.bondpadTable.item(row, PAD_INFO.PAD_POS_X_COLUMN()).text() == item_x and \
+               self.bondpadTable.item(row, PAD_INFO.PAD_POS_Y_COLUMN()).text() == item_y:
+                self.bondpadTable.item(current_row, current_col).setText('')
+                self.feedback.setText("coordinates are already occupied")
+                return False
 
-        return len(set(pos_list)) == len(pos_list)
+        return True
 
     def _update_row(self, row):
         elements = []
@@ -361,9 +385,9 @@ class NewMasksetWizard(QtWidgets.QDialog):
         for r in range(self.rows):
             pos_list.append(self.table_item(r, column).text())
 
-        availabe_items = [x for x in pos_list if x]
+        available_items = [x for x in pos_list if x]
 
-        return len(set(availabe_items)) == len(availabe_items)
+        return len(set(available_items)) == len(available_items)
 
     def _validate_name(self, checkable_widget, row, column=0):
         self.bondpadTable.item(row, column).setText(str(checkable_widget.text()))
@@ -410,29 +434,29 @@ class NewMasksetWizard(QtWidgets.QDialog):
             item.setText(pad_type[0])
 
         # special case: user friendly option to change Type and Direction directly from name column
-        for item in [item for item in self.bondpadTable.selectedItems() if item.column() == PAD_NAME_COLUMN]:
+        for item in [item for item in self.bondpadTable.selectedItems() if item.column() == PAD_INFO.PAD_NAME_COLUMN()]:
             self.bondpadTable.item(item.row(), column).setText(pad_type[0])
 
     def select_input_direction(self):
-        self.set_pad_selection(PadDirection.Input(), PAD_DIRECTION_COLUMN)
+        self.set_pad_selection(PadDirection.Input(), PAD_INFO.PAD_DIRECTION_COLUMN())
 
     def select_output_direction(self):
-        self.set_pad_selection(PadDirection.Output(), PAD_DIRECTION_COLUMN)
+        self.set_pad_selection(PadDirection.Output(), PAD_INFO.PAD_DIRECTION_COLUMN())
 
     def select_bidirectional_direction(self):
-        self.set_pad_selection(PadDirection.Bidirectional(), PAD_DIRECTION_COLUMN)
+        self.set_pad_selection(PadDirection.Bidirectional(), PAD_INFO.PAD_DIRECTION_COLUMN())
 
     def select_analog_pad_type(self):
-        self.set_pad_selection(PadType.Analog(), PAD_TYPE_COLUMN)
+        self.set_pad_selection(PadType.Analog(), PAD_INFO.PAD_TYPE_COLUMN())
 
     def select_digital_pad_type(self):
-        self.set_pad_selection(PadType.Digital(), PAD_TYPE_COLUMN)
+        self.set_pad_selection(PadType.Digital(), PAD_INFO.PAD_TYPE_COLUMN())
 
     def select_mixed_pad_type(self):
-        self.set_pad_selection(PadType.Mixed(), PAD_TYPE_COLUMN)
+        self.set_pad_selection(PadType.Mixed(), PAD_INFO.PAD_TYPE_COLUMN())
 
     def select_power_pad_type(self):
-        self.set_pad_selection(PadType.Power(), PAD_TYPE_COLUMN)
+        self.set_pad_selection(PadType.Power(), PAD_INFO.PAD_TYPE_COLUMN())
 
     def _connect_event_handler(self):
         self.masksetName.textChanged.connect(self.nameChanged)
@@ -550,7 +574,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         else:
             self.OKButton.setText("Import")
             self.OKButton.setEnabled(True)
-            self.feedback.setText("About to import a MaskSet from the {self.importFor.currentText()} system")
+            self.feedback.setText(f"About to import a Maskset from using the {self.importFor.currentText()} plugin")
 
     def validateTable(self):
         '''
@@ -677,18 +701,38 @@ class NewMasksetWizard(QtWidgets.QDialog):
                 }
 
     def OKButtonPressed(self):
-        name = self.masksetName.text()
-        if self.Type.currentText() == 'ASSP':
-            customer = ''
-        else:  # 'ASIC' so need a customer !
-            customer = self.customer.text()
-        self.project_info.add_maskset(name, customer, self._get_maskset_definition())
-        self.accept()
+        if self.OKButton.text() == "Import":
+            if self.importFor.currentIndex() < 1:
+                return
 
-        # TODO: add the company specific plugins here
-        # self.importFor.setCurrentIndex(0)
-        # self.OKButton.setText("OK")
-        # self.validate()
+            # nasty to do this text based, but here we go.
+            importerIndex = self.importFor.currentIndex() - 1
+
+            if len(self.plugin_names) <= importerIndex:
+                return
+
+            importerName = self.plugin_names[importerIndex]
+            importer = self.plugin_manager.hook.get_importer(importer_name=importerName["name"])
+
+            if len(importer) != 1:
+                self.feedback.setText("Failed to load importer. The respective plugin failed to provide exactly one instance.")
+                return
+
+            result = importer[0].do_import()
+            if not result:
+                self.feedback.setText(f"Failed to import, reason: {importer[0].get_abort_reason()}")
+            else:
+                self.importFor.setCurrentIndex(0)
+                self.OKButton.setText("OK")
+                self.validate()
+        else:
+            name = self.masksetName.text()
+            if self.Type.currentText() == 'ASSP':
+                customer = ''
+            else:  # 'ASIC' so need a customer !
+                customer = self.customer.text()
+            self.project_info.add_maskset(name, customer, self._get_maskset_definition())
+            self.accept()
 
     def CancelButtonPressed(self):
         self.reject()

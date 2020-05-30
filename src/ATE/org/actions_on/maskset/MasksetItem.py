@@ -18,12 +18,6 @@ class MasksetItem(BaseItem):
     def _create_child(self, name, parent):
         return MasksetItemChild(self.project_info, name, parent)
 
-    def _append_children(self):
-        children = self._get_children_names()
-        for child in children:
-            child_item = self._create_child(child, self)
-            self.appendRow(child_item)
-
     def new_item(self):
         new_maskset_dialog(self.project_info)
 
@@ -36,7 +30,8 @@ class MasksetItemChild(StateItem):
         super().__init__(project_info, name, parent=parent)
         self.definition = self._get_definition()
 
-    def _get_dependant_objects(self):
+    @property
+    def dependency_list(self):
         return self.project_info.get_dependant_objects_for_maskset(self.text())
 
     def edit_item(self):

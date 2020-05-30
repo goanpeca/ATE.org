@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, uic
 from enum import Enum
 
-from ATE.org.actions_on.maskset.constants import *
+from ATE.org.actions_on.maskset.constants import PAD_INFO, UI_FILE, DEFINITION
 
 
 class ErrorMessage(Enum):
@@ -64,14 +64,14 @@ class ViewMasksetSettings(QtWidgets.QDialog):
 
         # resize cell columns
         for c in range(self.bondpadTable.columnCount()):
-            if c == PAD_NAME_COLUMN:
-                self.bondpadTable.setColumnWidth(c, NAME_COL_SIZE)
+            if c == PAD_INFO.PAD_NAME_COLUMN():
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.NAME_COL_SIZE())
 
-            elif c in (PAD_POS_X_COLUMN, PAD_POS_Y_COLUMN, PAD_SIZE_X_COLUMN, PAD_SIZE_Y_COLUMN, PAD_TYPE_COLUMN):
-                self.bondpadTable.setColumnWidth(c, REF_COL_SIZE)
+            elif c in (PAD_INFO.PAD_POS_X_COLUMN(), PAD_INFO.PAD_POS_Y_COLUMN(), PAD_INFO.PAD_SIZE_X_COLUMN(), PAD_INFO.PAD_SIZE_Y_COLUMN(), PAD_INFO.PAD_TYPE_COLUMN()):
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.REF_COL_SIZE())
 
-            elif c == PAD_DIRECTION_COLUMN:
-                self.bondpadTable.setColumnWidth(c, DIR_COL_SIZE)
+            elif c == PAD_INFO.PAD_DIRECTION_COLUMN():
+                self.bondpadTable.setColumnWidth(c, PAD_INFO.DIR_COL_SIZE())
 
         self.bondpadTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
         self.bondpadTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
@@ -87,11 +87,10 @@ class ViewMasksetSettings(QtWidgets.QDialog):
     def _setup_dialog_fields(dialog, maskset_configuration, maskset_name):
         if not ViewMasksetSettings.is_valid_configuration(maskset_configuration):
             dialog.feedback.setText(ErrorMessage.InvalidConfigurationElements())
-            dialog.feedback.setStyleSheet('color: red')
+            dialog.feedback.setStyleSheet('color: orange')
             return
 
         dialog.feedback.setText('')
-        dialog.feedback.setStyleSheet('')
 
         index = dialog.waferDiameter.findText(str(maskset_configuration["WaferDiameter"]), QtCore.Qt.MatchFixedString)
         if index >= 0:
@@ -102,16 +101,16 @@ class ViewMasksetSettings(QtWidgets.QDialog):
 
         dialog.bondpads.setValue((maskset_configuration["Bondpads"]))
 
-        dialog.dieSizeX.setText(str(maskset_configuration["DieSize"][0])) # tuple
+        dialog.dieSizeX.setText(str(maskset_configuration["DieSize"][0]))  # tuple
         dialog.dieSizeY.setText(str(maskset_configuration["DieSize"][1]))
 
-        dialog.dieRefX.setText(str(maskset_configuration["DieRef"][0])) # tuple
+        dialog.dieRefX.setText(str(maskset_configuration["DieRef"][0]))  # tuple
         dialog.dieRefY.setText(str(maskset_configuration["DieRef"][1]))
 
-        dialog.scribeX.setText(str(maskset_configuration["Scribe"][0])) # tuple
+        dialog.scribeX.setText(str(maskset_configuration["Scribe"][0]))  # tuple
         dialog.scribeY.setText(str(maskset_configuration["Scribe"][1]))
 
-        dialog.xOffset.setText(str(maskset_configuration["Offset"][0])) # tuple
+        dialog.xOffset.setText(str(maskset_configuration["Offset"][0]))  # tuple
         dialog.yOffset.setText(str(maskset_configuration["Offset"][1]))
 
         dialog.flat.setText(str(maskset_configuration["Flat"]))

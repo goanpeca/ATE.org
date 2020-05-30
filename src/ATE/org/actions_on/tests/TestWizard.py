@@ -64,33 +64,32 @@ class NameDelegator(Delegator):
 class TestWizard(QtWidgets.QDialog):
     """Wizard to work with 'Test' definitions."""
 
-    def __init__(self, project_info, definition=None):
-
+    def __init__(self, project_info, definition=None, read_only=False):
         super().__init__()
 
         my_ui = __file__.replace('.py', '.ui')
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
         uic.loadUi(my_ui, self)
+
+        self.read_only = read_only
+        self.project_info = project_info
+
+        if definition is None:
+            definition = make_blank_definition(project_info)
+        else:
+            self.TestName.setText(definition['name'])
+            self.TestName.setEnabled(False)
+
+        self.Feedback.setStyleSheet('color: orange')
+
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.project_info = project_info
-        if definition is None:
-            definition = make_blank_definition(project_info)
-
-    # Feedback
-        self.Feedback.setStyleSheet('color: orange')
-
     # TestName
         TestName_validator = QtGui.QRegExpValidator(QtCore.QRegExp(valid_test_name_regex), self)
-        self.TestName.setText("")
         self.TestName.setValidator(TestName_validator)
-        self.TestName.textChanged.connect(self.verify)
 
     # ForHardwareSetup
         existing_hardwares = self.project_info.get_hardwares()
-        self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(existing_hardwares)
         self.ForHardwareSetup.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
@@ -100,11 +99,9 @@ class TestWizard(QtWidgets.QDialog):
         else:
             self.ForHardwareSetup.setCurrentText(sorted(existing_hardwares)[-1])
             self.ForHardwareSetup.setEnabled(True)
-        self.ForHardwareSetup.blockSignals(False)
 
     # WithBase
         existing_bases = ['PR', 'FT']
-        self.WithBase.blockSignals(True)
         self.WithBase.clear()
         self.WithBase.addItems(existing_bases)
         self.WithBase.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
@@ -114,25 +111,19 @@ class TestWizard(QtWidgets.QDialog):
         else:
             self.WithBase.setCurrentText(definition['PR'])
             self.WithBase.setEnabled(False)
-        self.WithBase.blockSignals(False)
 
     # DescriptionTab
-        self.description.blockSignals(True)
         self.description.clear()
         self.description.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)  # https://doc.qt.io/qt-5/qtextedit.html#LineWrapMode-enum
         # TODO: add a line at 80 characters (PEP8/E501) (https://stackoverflow.com/questions/30371613/draw-vertical-lines-on-qtextedit-in-pyqt)
         self.description.setPlainText('\n'.join(definition['docstring']))
-        self.description.blockSignals(False)
 
     # Delegators
         self.nameDelegator = Delegator(valid_test_parameter_name_regex, self)
-
         self.fmtDelegator = Delegator(valid_fmt_regex, self)
-
         self.minDelegator = Delegator(valid_min_float_regex, self)
         self.defaultDelegator = Delegator(valid_default_float_regex, self)
         self.maxDelegator = Delegator(valid_max_float_regex, self)
-
         self.LSLDelegator = Delegator(valid_min_float_regex, self)
         self.LTLDelegator = Delegator(valid_min_float_regex, self)
         self.NomDelegator = Delegator(valid_default_float_regex, self)
@@ -142,34 +133,27 @@ class TestWizard(QtWidgets.QDialog):
     # InputParametersTab
         self.inputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
         self.inputParameterMoveUp.setToolTip('Move selected parameter Up')
-        self.inputParameterMoveUp.clicked.connect(self.moveInputParameterUp)
 
         self.inputParameterAdd.setIcon(qta.icon('mdi.plus-box-outline', color='orange'))
         self.inputParameterAdd.setToolTip('Add a parameter')
-        self.inputParameterAdd.clicked.connect(self.addInputParameter)
 
         self.inputParameterUnselect.setIcon(qta.icon('mdi.select-off', color='orange'))
         self.inputParameterUnselect.setToolTip('Clear selection')
-        self.inputParameterUnselect.clicked.connect(self.unselectInputParameter)
 
         self.inputParameterFormat.setIcon(qta.icon('mdi.settings', color='orange'))
         self.inputParameterFormat.setToolTip('Show parameter formats')
-        self.inputParameterFormat.clicked.connect(self.toggleInputParameterFormatVisible)
         self.inputParameterFormatVisible = False
 
         self.inputParameterMoveDown.setIcon(qta.icon('mdi.arrow-down-bold-box-outline', color='orange'))
         self.inputParameterMoveDown.setToolTip('Move selected parameter Down')
-        self.inputParameterMoveDown.clicked.connect(self.moveInputParameterDown)
 
         self.inputParameterDelete.setIcon(qta.icon('mdi.minus-box-outline', color='orange'))
         self.inputParameterDelete.setToolTip('Delete selected parameter')
-        self.inputParameterDelete.clicked.connect(self.deleteInputParameter)
 
         inputParameterHeaderLabels = ['Name', 'Min', 'Default', 'Max', '10ᵡ', 'Unit', 'fmt']
         self.inputParameterModel = QtGui.QStandardItemModel()
         self.inputParameterModel.setObjectName('inputParameters')
         self.inputParameterModel.setHorizontalHeaderLabels(inputParameterHeaderLabels)
-        self.inputParameterModel.itemChanged.connect(self.inputParameterItemChanged)
 
         self.inputParameterView.horizontalHeader().setVisible(True)
         self.inputParameterView.verticalHeader().setVisible(True)
@@ -177,8 +161,6 @@ class TestWizard(QtWidgets.QDialog):
         self.inputParameterView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)  # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionBehavior-enum
         self.inputParameterView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)  # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionMode-enum
         self.inputParameterView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # https://doc.qt.io/qt-5/qt.html#ContextMenuPolicy-enum
-        self.inputParameterView.customContextMenuRequested.connect(self.inputParameterContextMenu)
-        self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged)  # https://doc.qt.io/qt-5/qitemselectionmodel.html
 
         self.inputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
         self.inputParameterView.setItemDelegateForColumn(1, self.minDelegator)
@@ -193,34 +175,27 @@ class TestWizard(QtWidgets.QDialog):
     # OutputParametersTab
         self.outputParameterMoveUp.setIcon(qta.icon('mdi.arrow-up-bold-box-outline', color='orange'))
         self.outputParameterMoveUp.setToolTip('Move selected parameter Up')
-        self.outputParameterMoveUp.clicked.connect(self.moveOutputParameterUp)
 
         self.outputParameterAdd.setIcon(qta.icon('mdi.plus-box-outline', color='orange'))
         self.outputParameterAdd.setToolTip('Add a parameter')
-        self.outputParameterAdd.clicked.connect(self.addOutputParameter)
 
         self.outputParameterUnselect.setIcon(qta.icon('mdi.select-off', color='orange'))
         self.outputParameterUnselect.setToolTip('Clear selection')
-        self.outputParameterUnselect.clicked.connect(self.unselectOutputParameter)
 
         self.outputParameterFormat.setIcon(qta.icon('mdi.settings', color='orange'))
         self.outputParameterFormat.setToolTip('Show parameter formats')
-        self.outputParameterFormat.clicked.connect(self.toggleOutputParameterFormatVisible)
         self.outputParameterFormatVisible = False
 
         self.outputParameterMoveDown.setIcon(qta.icon('mdi.arrow-down-bold-box-outline', color='orange'))
         self.outputParameterMoveDown.setToolTip('Move selected parameter Down')
-        self.outputParameterMoveDown.clicked.connect(self.moveOutputParameterDown)
 
         self.outputParameterDelete.setIcon(qta.icon('mdi.minus-box-outline', color='orange'))
         self.outputParameterDelete.setToolTip('Delete selected parameter')
-        self.outputParameterDelete.clicked.connect(self.deleteOutputParameter)
 
         outputParameterHeaderLabels = ['Name', 'LSL', '(LTL)', 'Nom', '(UTL)', 'USL', '10ᵡ', 'Unit', 'fmt']
         self.outputParameterModel = QtGui.QStandardItemModel()
         self.outputParameterModel.setObjectName('outputParameters')
         self.outputParameterModel.setHorizontalHeaderLabels(outputParameterHeaderLabels)
-        self.outputParameterModel.itemChanged.connect(self.outputParameterItemChanged)
 
         self.outputParameterView.horizontalHeader().setVisible(True)
         self.outputParameterView.verticalHeader().setVisible(True)
@@ -228,8 +203,6 @@ class TestWizard(QtWidgets.QDialog):
         self.outputParameterView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)  # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionBehavior-enum
         self.outputParameterView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)  # https://doc.qt.io/qt-5/qabstractitemview.html#SelectionMode-enum
         self.outputParameterView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # https://doc.qt.io/qt-5/qt.html#ContextMenuPolicy-enum
-        self.outputParameterView.customContextMenuRequested.connect(self.outputParameterContextMenu)
-        self.outputParameterView.selectionModel().selectionChanged.connect(self.outputParameterSelectionChanged)  # https://doc.qt.io/qt-5/qitemselectionmodel.html
 
         self.outputParameterView.setItemDelegateForColumn(0, self.nameDelegator)
         self.outputParameterView.setItemDelegateForColumn(1, self.LSLDelegator)
@@ -247,7 +220,6 @@ class TestWizard(QtWidgets.QDialog):
         #   and the '0' is the FTR 🙂
 
     # Tabs
-        self.testTabs.currentChanged.connect(self.testTabChanged)
         self.testTabs.setTabEnabled(self.testTabs.indexOf(self.dependenciesTab), False)
 
     # buttons
@@ -255,9 +227,31 @@ class TestWizard(QtWidgets.QDialog):
         self.OKButton.clicked.connect(self.OKButtonPressed)
         self.OKButton.setEnabled(False)
 
-        self.show()
+        self._connect_event_handler()
         self.resize(735, 400)
         self.verify()
+
+    def _connect_event_handler(self):
+        self.outputParameterMoveUp.clicked.connect(self.moveOutputParameterUp)
+        self.outputParameterAdd.clicked.connect(self.addOutputParameter)
+        self.outputParameterUnselect.clicked.connect(self.unselectOutputParameter)
+        self.outputParameterFormat.clicked.connect(self.toggleOutputParameterFormatVisible)
+        self.outputParameterMoveDown.clicked.connect(self.moveOutputParameterDown)
+        self.outputParameterDelete.clicked.connect(self.deleteOutputParameter)
+        self.outputParameterModel.itemChanged.connect(self.outputParameterItemChanged)
+        self.outputParameterView.customContextMenuRequested.connect(self.outputParameterContextMenu)
+        self.outputParameterView.selectionModel().selectionChanged.connect(self.outputParameterSelectionChanged)  # https://doc.qt.io/qt-5/qitemselectionmodel.html
+        self.testTabs.currentChanged.connect(self.testTabChanged)
+        self.inputParameterView.customContextMenuRequested.connect(self.inputParameterContextMenu)
+        self.inputParameterModel.itemChanged.connect(self.inputParameterItemChanged)
+        self.inputParameterMoveUp.clicked.connect(self.moveInputParameterUp)
+        self.inputParameterAdd.clicked.connect(self.addInputParameter)
+        self.inputParameterUnselect.clicked.connect(self.unselectInputParameter)
+        self.inputParameterFormat.clicked.connect(self.toggleInputParameterFormatVisible)
+        self.inputParameterMoveDown.clicked.connect(self.moveInputParameterDown)
+        self.inputParameterDelete.clicked.connect(self.deleteInputParameter)
+        self.inputParameterView.selectionModel().selectionChanged.connect(self.inputParameterSelectionChanged)  # https://doc.qt.io/qt-5/qitemselectionmodel.html
+        self.TestName.textChanged.connect(self.verify)
 
     def testTabChanged(self, activatedTabIndex):
         """Slot for when the Tab is changed."""
@@ -1499,7 +1493,7 @@ class TestWizard(QtWidgets.QDialog):
                 self.Feedback.setText("Select a 'base'")
 
         # 3. Check if we have a test name
-        if self.Feedback.text() == "":
+        if not self.read_only and self.Feedback.text() == "":
             if self.TestName.text() == '':
                 self.Feedback.setText("Supply a name for the test")
 
@@ -1552,124 +1546,16 @@ class TestWizard(QtWidgets.QDialog):
         self.definition['docstring'] = self.description.toPlainText().split('\n')
         self.definition['input_parameters'] = self.getInputParameters()
         self.definition['output_parameters'] = self.getOutputParameters()
-        self.definition['dependencies'] = {}  # TODO: implement
-        # self.project_info.add_test(name, hardware, base, test_type, test_data)
-        self.accept()
-
-
-class NewStandardTestWizard(QtWidgets.QDialog):
-
-    def __init__(self, project_info, fixed=True):
-        super().__init__()
-
-        my_ui = __file__.replace('.py', '.ui')
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
-        uic.loadUi(my_ui, self)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-
-        self.project_info = project_info
-
-    # ForHardwareSetup ComboBox
-        self.existing_hardwaresetups = self.project_info.get_available_hardwares()
-        self.ForHardwareSetup.blockSignals(True)
-        self.ForHardwareSetup.clear()
-        self.ForHardwareSetup.addItems(self.existing_hardwaresetups)
-        # TODO: fix this
-        self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.active_hardware))
-        # TODO:
-        # self.ForHardwareSetup.setDisabled(fixed)
-        self.ForHardwareSetup.setDisabled(False)
-        self.ForHardwareSetup.currentTextChanged.connect(self._verify)
-        self.ForHardwareSetup.blockSignals(False)
-
-    # WithBase ComboBox
-        self.WithBase.blockSignals(True)
-        self.WithBase.clear()
-        self.WithBase.addItems(['PR', 'FT'])
-        # TODO: fix this
-        self.WithBase.setCurrentIndex(self.WithBase.findText(self.project_info.active_base))
-        # self.WithBase.setDisabled(fixed)
-        self.WithBase.setDisabled(False)
-        self.WithBase.currentTextChanged.connect(self._verify)
-        self.WithBase.blockSignals(False)
-
-    # StandardTestName ComboBox
-        self.model = QtGui.QStandardItemModel()
-
-        from ATE.org.coding.standard_tests import names as standard_test_names
-        existing_standard_test_names = \
-            self.project_info.tests_get_standard_tests(
-                self.ForHardwareSetup.currentText(),
-                self.WithBase.currentText())
-
-        for index, standard_test_name in enumerate(standard_test_names):
-            item = QtGui.QStandardItem(standard_test_name)
-            if standard_test_name in existing_standard_test_names:
-                item.setEnabled(False)
-                # TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
-            else:
-                item.setEnabled(True)
-                # TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
-            self.model.appendRow(item)
-
-        self.StandardTestName.blockSignals(True)
-        self.StandardTestName.clear()
-        self.StandardTestName.setModel(self.model)
-        self.StandardTestName.currentTextChanged.connect(self._verify)
-        self.StandardTestName.blockSignals(False)
-
-    # feedback
-        self.feedback.setText("")
-        self.feedback.setStyleSheet('color: orange')
-
-    # buttons
-        self.CancelButton.clicked.connect(self.CancelButtonPressed)
-        self.OKButton.clicked.connect(self.OKButtonPressed)
-        self.OKButton.setEnabled(False)
-
-    # go
-        self._verify()
-        self.show()
-
-    def _verify(self):
-        self.feedback.setText('')
-
-        # hardware
-        if self.feedback.text() == '':
-            if self.ForHardwareSetup.currentText() == '':
-                self.feedback.setText("Select a hardware setup")
-
-        # base
-        if self.feedback.text() == '':
-            if self.WithBase.currentText() not in ['FT', 'PR']:
-                self.feedback.setText("Select the base")
-
-        # standard test
-        if self.feedback.text() == '':
-            if self.StandardTestName.currentText() == '':
-                self.feedback.setText("Select a standard test")
-
-        # buttons
-        if self.feedback.text() == "":
-            self.OKButton.setEnabled(True)
+        self.definition['dependencies'] = {}  # TODO: implement this
+        self.blob_definition = {}
+        self.blob_definition.update({'input_parameters': self.definition['input_parameters']})
+        self.blob_definition.update({'output_parameters': self.definition['output_parameters']})
+        self.blob_definition.update({'docstring': self.definition['docstring']})
+        if not self.read_only:
+            self.project_info.add_custom_test(self.definition)
         else:
-            self.OKButton.setEnabled(False)
-
-    def CancelButtonPressed(self):
-        self.reject()
-
-    def OKButtonPressed(self):
-        name = self.StandardTestName.currentText()
-        hardware = self.ForHardwareSetup.currentText()
-        type = 'standard'
-        base = self.WithBase.currentText()
-        definition = {'doc_string': [],  # list of lines
-                      'input_parameters': {},
-                      'output_parameters': {}}
-
-        self.project_info.standard_test_add(name, hardware, base)
+            self.project_info.update_custom_test(self.definition['name'], self.definition['hardware'], self.definition['base'],
+                                                 self.definition['type'], self.blob_definition)
         self.accept()
 
 
@@ -1698,16 +1584,14 @@ def load_definition_from_file(File):
 
 def new_test_dialog(project_info):
     newTestWizard = TestWizard(project_info)
-    if newTestWizard.exec_():  # OK button pressed, thus exited with accept() and **NOT** with reject()
-        definition = newTestWizard.definition
-        project_info.add_custom_test(definition)
+    newTestWizard.exec_()
     del(newTestWizard)
 
 
-def edit_test_dialog(project_info):  # TODO: add the data still
-    editTestWizard = TestWizard(project_info)
-    editTestWizard.exec_()
-    del(editTestWizard)
+def edit_test_dialog(project_info, definition):
+    edit = TestWizard(project_info, definition=definition, read_only=True)
+    edit.exec_()
+    del(edit)
 
 
 def new_standard_test_dialog(project_info):  # TODO: move the standard test wizard here too !!!
@@ -1716,16 +1600,3 @@ def new_standard_test_dialog(project_info):  # TODO: move the standard test wiza
 
 def edit_standard_test_dialog(project_info):  # TODO: does this make sense ?!? -->yes,open with TestWizard
     pass
-
-
-if __name__ == '__main__':
-    print(make_blank_definition())
-
-    # import sys, qdarkstyle
-    # from ATE.org.actions.dummy_main import DummyMainWindow
-    # app = QtWidgets.QApplication(sys.argv)
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    # dummyMainWindow = DummyMainWindow()
-    # dialog = TestWizard(dummyMainWindow)
-    # dummyMainWindow.register_dialog(dialog)
-    # sys.exit(app.exec_())

@@ -149,7 +149,6 @@ class DieWizard(QtWidgets.QDialog):
         self._verify()
 
     def masksetChanged(self, SelectedMaskset):
-        print(f"masksetChanged --> {SelectedMaskset}")
         if SelectedMaskset == '':
             self.gradeLabel.setDisabled(True)
             self.grade.blockSignals(True)
@@ -170,7 +169,6 @@ class DieWizard(QtWidgets.QDialog):
         else:
             ASIC_masksets = self.project_info.get_ASIC_masksets()
             if SelectedMaskset in ASIC_masksets:
-                print("ASIC")
                 self.gradeLabel.setDisabled(False)
                 self.grade.blockSignals(True)
                 self.grade.setCurrentText('A')
@@ -191,7 +189,6 @@ class DieWizard(QtWidgets.QDialog):
                 self.customer.blockSignals(True)
                 self.isAGrade.setEnabled(True)
             else:
-                print("ASSP")
                 self.gradeLabel.setDisabled(False)
                 self.grade.blockSignals(True)
                 self.grade.setCurrentText('A')

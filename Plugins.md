@@ -35,7 +35,11 @@ A given plugin publishes its functionality by means of Importers/Exporters/Actua
 Where:
 * display_name denotes the string, that is used to display the the object in the ATE.org UI.
 * Version denotes the Version of the code, that is used for the respective object
-* Name: Denotes the actual internal name by which the object is identified within the plugin. The plugin must be able to return an instance of the object when the get_x hook is called with the string name as x_name parameter.
+* Name: Denotes the actual internal name by which the object is identified within the plugin. The plugin must be able to return an instance of the object when the get_x hook is called with the string name as x_name parameter. Note that the object name must be unqique across all plugins. Therefore it is advisable to prefix the objectname with the pluginname. E.g:
+* Plugin: TDK.Micronas
+* Object: CSVFileImporter
+* Name: TDK.Micronas.CSVFileImporter
+
 
 
 #### Importers
@@ -66,10 +70,20 @@ A devicepin importer is used to import the pinset, that is accessible for a give
 
 
 #### Actuators
-An actuator is a piece of hardware, that controls some aspect of the test environment (e.g. magenetic field)
+An actuator is a piece of hardware, that controls some aspect of the test environment (e.g. magenetic field). In addition to the common layout as specified above, each actator will also return a list of "services", that actuator provides. These services are plain strings and are used by the ATE runtime to resolve an actuator that can modify a defined aspect of the testenvironment.
 
 ```
     get_actuator_names() -> []
+```
+
+The complete layout of the results of this function is:
+```
+{
+    display_name: "Display Name"
+    version: "Object Version"
+    name: "Object Name"
+    capabilities: ("MagField", "Temperature")
+}
 ```
 
 #### Instruments
@@ -80,7 +94,7 @@ An instrument is a piece of hardware, that is used to measure a given aspect of 
 ```
 
 ## Instances
-All hooks that deal with the instanciation of objects are provided the name of the plugin that should actually create the instance. The reason is, that pluggy will call each hook for all registered plugins, so a call to "get_importer" will be executed for each plugin, using the same parameter. Since we want to avoid nameclashes of objects we must uniquely identify the actual type of object we want created. E.g., given two plugins P1 and P2, each might contain an importer called "CSV Importer". If we wanted to create an instance of this importer we'd have to call get_importer with "CSV Importer" as importer name. However: Two plugins can provide such an importer, so we can never be sure, which kind of importer we'd get, resulting in possibly unintended behavior. Therefore we use the tuple of plugin_name and importer_name to uniquely identify an objecttype. This means, that each implementation of the hooks in this section will have to check the plugin_name parameter to make sure the call is intended for this plugin. 
+All hooks that deal with the instanciation of objects are provided the name of the plugin that should actually create the instance. The reason is, that pluggy will call each hook for all registered plugins, so a call to "get_importer" will be executed for each plugin, using the same parameter. Since we want to avoid nameclashes of objects we must uniquely identify the actual type of object we want created. See the section on object names for this. 
 
 A note on dependencies:
 Importers and exporters are allowed to depend on PyQt to provide their own UI, if necessary. Actuators, Instruments and Equiments should not depend on PyQt - these objects are created by testcases and usually used in a headless environment (i.e. the tester itself!)
@@ -88,7 +102,7 @@ Importers and exporters are allowed to depend on PyQt to provide their own UI, i
 ### Importers
 
 ```
-get_importer(plugin_name, importer_name) -> Importer
+get_importer(importer_name) -> Importer
 ```
 
 This hook shall return an instance of an importer with the given name.
@@ -103,7 +117,7 @@ The importer shall show it's own import dialog (which may well be just a file ch
 
 ### Exporters
 ```
-get_exporter(plugin_name, exporter_name) -> Exporter
+get_exporter(exporter_name) -> Exporter
 ```
 This hook shall return an instance of an exporter with the given name. 
 
@@ -116,7 +130,7 @@ The exporter shall show it's own export dialog (which may well be just a file ch
 
 ### Equipments
 ```
-get_equipment(plugin_name, equipment_name) -> EquipmentInstance
+get_equipment(equipment_name) -> EquipmentInstance
 ```
 This hook shall return an instance of a given equipment. The returned instance has no specified interface. This hook is intended for use in tests only.
 
@@ -124,7 +138,7 @@ If the plugin is unable to resolve the equipment name it shall *immediatly* thro
 
 ### Devicepins
 ```
-get_devicepin_importer(plugin_name, importer_name) -> Importer
+get_devicepin_importer(importer_name) -> Importer
 ```
 This hook shall return an instance of a given importer. The returned instance has no specified interface. This hook is intended for use in tests only.
 
@@ -140,15 +154,20 @@ The importer shall show it's own import dialog (which may well be just a file ch
 
 ### Actuators
 ```
-get_actuator(plugin_name, actuator_name) -> ActuatorInstance
+get_actuator(required_capability) -> ActuatorInstance
+get_actuator_proxy(required_capability) -> ActuatorInstance
 ```
-This hook shall return an instance of a given actuator. The returned instance has no specified interface. This hook is intended for use in tests only.
+This hook shall return an instance of an actuator that provides the required capability. The returned instance has no specified interface. This hook is intended for use in tests only. If the environment cannot resolve the service (e.g. because none is available) it shall *immediatly* throw an exception containing the missing capability. Do not return None in this case as it makes diagnostics harder than a well thought out error string.
 
-If the plugin is unable to resolve the actuator name it shall *immediatly* throw an exception containing the missing actuator's name. Do not return None in this case as it makes diagnostics harder than a well thought out error string.
+A note on actuator capabilities: The capabilities are stored by the runtime environment. If a test asks for an actuator that provides a given capability, the test environemt shall find actuator that best matches this request, taking into account:
+* The physical hardware on which the test is running
+* The available actuators
+* The physical location & connection of the actuators
 
 ### Instruments
 ```
-get_instrument(plugin_name, instrument_name) -> InstrumentInstance
+get_instrument(instrument_name) -> InstrumentInstance
+get_instrument_proxy(instrument_name) -> InstrumentInstance
 ```
 This hook shall return an instance of a given instrument. The returned instance has no specified interface. This hook is intended for use in tests only.
 
@@ -169,12 +188,16 @@ get_devicepin_importer_names() -> []
 get_actuator_names() -> []
 get_instrument_names() -> []
 
-get_importer(plugin_name, importer_name) -> Importer
-get_exporter(plugin_name, exporter_name) -> Exporter
-get_equipment(plugin_name, equipment_name) -> EquipmentInstance
-get_devicepin_importer(plugin_name, importer_name) -> Importer
-get_actuator(plugin_name, actuator_name) -> ActuatorInstance
-get_instrument(plugin_name, instrument_name) -> InstrumentInstance
+get_importer(importer_name) -> Importer
+get_exporter(exporter_name) -> Exporter
+get_equipment(equipment_name) -> EquipmentInstance
+get_devicepin_importer(importer_name) -> Importer
+
+get_actuator(required_capability) -> ActuatorInstance
+get_actuator_proxy(required_capability) -> ActuatorProxy
+
+get_instrument(instrument_name) -> InstrumentInstance
+get_instrument_proxy(required_capability) -> InstrumentProxy
 ```
 
 The hookspecmarker is "ate.org"
@@ -219,27 +242,35 @@ class ThePlugin(object):
         return []
 
     @hookspec.ate.hookimpl
-    def get_importer(plugin_name, importer_name) -> Importer:
+    def get_importer(importer_name) -> Importer:
         throw NotImplementedError
 
     @hookspec.ate.hookimpl
-    def get_exporter(plugin_name, exporter_name) -> Exporter:
+    def get_exporter(exporter_name) -> Exporter:
         throw NotImplementedError
 
     @hookspec.ate.hookimpl
-    def get_equipment(plugin_name, equipment_name) -> EquipmentInstance:
+    def get_equipment(equipment_name) -> EquipmentInstance:
         throw NotImplementedError
 
     @hookspec.ate.hookimpl
-    def get_devicepin_importer(plugin_name, importer_name) -> Importer:
+    def get_devicepin_importer(importer_name) -> Importer:
         throw NotImplementedError
     
     @hookspec.ate.hookimpl
-    def get_actuator(plugin_name, actuator_name) -> ActuatorInstance:
+    def get_actuator(required_capability) -> ActuatorInstance:
         throw NotImplementedError
 
     @hookspec.ate.hookimpl
-    def get_instrument(plugin_name, instrument_name) -> InstrumentInstance:
+    def get_actuator_proxy(required_capability) -> ActuatorInstance:
+        throw NotImplementedError
+
+    @hookspec.ate.hookimpl
+    def get_instrument(instrument_name) -> InstrumentInstance:
+        throw NotImplementedError
+
+    @hookspec.ate.hookimpl
+    def get_instrument_proxy(instrument_name) -> InstrumentInstance:
         throw NotImplementedError
 ```
 

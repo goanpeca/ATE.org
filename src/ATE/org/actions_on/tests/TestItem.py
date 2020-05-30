@@ -43,10 +43,10 @@ class TestItem(BaseItem):
 
     def update(self):
         active_hardware = self.project_info.active_hardware
-        active_target = self.project_info.active_target
+        active_base = self.project_info.active_base
 
         if not active_hardware or \
-           not active_target:
+           not active_base:
             self.set_children_hidden(True)
             if self.observer is not None:
                 self.observer.stop_observer()
@@ -63,15 +63,12 @@ class TestItem(BaseItem):
         test_directory = path.join(self.project_info.project_directory, 'src',
                                    active_hardware, active_base)
 
-        files = []
-        for _, directories, filenames in walk(test_directory):
-            files = directories
+        file_names = []
+        for _, directories, _ in walk(test_directory):
+            file_names = [x for x in directories if '_' not in x]
             break
 
-            # files.extend([path.splitext(x)[0] for x in filenames if not x == '__init__.py' and path.splitext(x)[1] == '.py' and '_' not in x])
-            # break
-
-        return files, test_directory
+        return file_names, test_directory
 
     def add_standard_test_item(self):
         new_standard_test_dialog(self.project_info)
@@ -85,7 +82,7 @@ class TestItem(BaseItem):
 class TestItemChild(StateItem):
     def __init__(self, name, path, parent, project_info):
         super().__init__(project_info, name, parent)
-        self.path = os.path.join(path, name + '.py')
+        self.path = os.path.join(path, name, name + '.py')
         self.file_system_operator = FileSystemOperator(self.path)
 
     def update_item(self, path):
@@ -102,22 +99,24 @@ class TestItemChild(StateItem):
         path = os.path.dirname(self.path)
         dirname, _ = os.path.splitext(os.path.basename(self.path))
         filename = os.path.basename(self.path)
-        print(path)
-        print(dirname)
-        print(filename)
         path = os.path.join(path, filename)
 
         self.model().edit_file.emit(path)
 
     def delete_item(self):
-        if not self.file_system_operator.delete_file():
+        from ATE.org.actions_on.utils.ItemTrace import ItemTrace
+        if not ItemTrace(self.dependency_list, self.text(), message=f"Are you sure you want to delete ?").exec_():
             return
 
+        # emit event to update tab view
         self.model().delete_file.emit(self.path)
-        # TODO: can we delete test here or just set obsolete as used in definiton section
+
+        import shutil
+        shutil.rmtree(os.path.dirname(self.path))
         self.project_info.remove_test(self.text())
 
-    def _get_dependant_objects(self):
+    @property
+    def dependency_list(self):
         return self.project_info.get_dependant_objects_for_test(self.text())
 
     def is_enabled(self):
@@ -132,6 +131,7 @@ class TestItemChild(StateItem):
         hw = self.project_info.get_test_hardware(self.text())
         if not hw:
             return dependency_list
+
         hw_enabled = self.project_info.get_hardware_state(hw[0])
 
         if not hw_enabled:

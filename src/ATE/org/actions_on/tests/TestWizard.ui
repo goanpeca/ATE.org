@@ -830,6 +830,9 @@ p, li { white-space: pre-wrap; }
          <property name="text">
           <string>OK</string>
          </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -849,6 +852,9 @@ p, li { white-space: pre-wrap; }
         <widget class="QPushButton" name="CancelButton">
          <property name="text">
           <string>Cancel</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>

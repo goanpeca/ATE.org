@@ -69,6 +69,9 @@ class ProjectWizard(QtWidgets.QDialog):
     def OKButtonPressed(self):
         self.project_name = self.ProjectName.text()
         self.project_quality = self.projectQuality.currentText()
+        if self.project_name:
+            self.project_info.add_project(self.project_name, self.project_quality)
+
         self.accept()
 
     def CancelButtonPressed(self):
@@ -81,12 +84,12 @@ def NewProjectDialog(parent, navigator):
     if newProjectWizard.exec_():  # OK button pressed
         project_name = newProjectWizard.project_name
         project_quality = newProjectWizard.project_quality
-        navigator.add_project(project_name, project_quality)
     else:
         project_name = ''
         project_quality = ''
     del(newProjectWizard)
     return project_name, project_quality
+
 
 def EditProjectDialog(parent, navigator):
     """This dialog is called when we want to edit the project "quality" (name can not be edited)"""

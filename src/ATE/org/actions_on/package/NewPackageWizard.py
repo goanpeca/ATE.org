@@ -2,6 +2,7 @@
 """
 Created on Tue Nov 26 18:18:41 2019
 
+        current_target_index = self.target.findText(self.project_info.active_target, QtCore.Qt.MatchExactly)
 @author: hoeren
 """
 import os
@@ -61,10 +62,7 @@ class NewPackageWizard(QtWidgets.QDialog):
         self.feedback.setText("")
         self.feedback.setStyleSheet('color: orange')
 
-        self.OKButton.setEnabled(False)
-
         self.validate()
-        self.show()
 
     def _connect_event_handler(self):
         self.OKButton.clicked.connect(self.OKButtonPressed)

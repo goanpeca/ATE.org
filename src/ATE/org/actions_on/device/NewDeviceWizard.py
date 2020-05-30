@@ -34,9 +34,8 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.hardware.addItems(self.existing_hardwares)
         self.hardware.setCurrentText(self.project_info.active_hardware)
 
-        # if fixed:
-        #     self.hardware.setEnabled(False)
-        # name
+        self.existing_dies = self.project_info.get_dies_for_hardware(self.project_info.active_hardware)
+
         rxDeviceName = QtCore.QRegExp(valid_device_name_regex)
         DeviceName_validator = QtGui.QRegExpValidator(rxDeviceName, self)
         self.deviceName.setValidator(DeviceName_validator)
@@ -130,6 +129,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         self.availableDies.clearSelection()
         self.availableDies.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.availableDies.blockSignals(False)
+        self._verify()
 
     def nameChanged(self, DeviceName):
         pass
@@ -167,12 +167,16 @@ class NewDeviceWizard(QtWidgets.QDialog):
             self.dualDie.setEnabled(False)
 
     def _verify(self):
-        if len(self.existing_hardwares) == 0:
+        if not self.existing_hardwares:
             self.feedback.setText("No hardware is available")
             return
 
-        if len(self.existing_packages) == 0:
+        if not self.existing_packages:
             self.feedback.setText("No package is available")
+            return
+
+        if not self.existing_dies:
+            self.feedback.setText("no die is availabe for the current hardware")
             return
 
         self.feedback.setText('')
@@ -193,14 +197,13 @@ class NewDeviceWizard(QtWidgets.QDialog):
         if self.feedback.text() == '':
             if self.package.currentText() == '':
                 self.feedback.setText("Select a Package")
-    # Check Dies
     # Check Pins
     # Check Type
 
         if self.feedback.text() == '':
             package_name = self.package.currentText()
             if package_name == '':
-                feedback = "No package selected"
+                self.feedback.setText("No package selected")
             elif package_name != 'Naked Die':
                 number_of_dies_in_device = self.diesInDevice.count()
                 if not self.dualDie.checkState():  # no dual die

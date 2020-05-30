@@ -459,115 +459,124 @@ def prepare_output_parameters_ppd(op):
     return retval
 
 
-class test_proper_generator:
+class BaseTestGenerator:
+    """Generator for the Test Base Class."""
+
+    def __init__(self, project_path, definition, file_name):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        template = env.get_template(template_name)
+        self.definition = definition
+
+        rel_path_to_dir = self._generate_relative_path()
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        render_data = self._generate_render_data(abs_path_to_dir)
+        msg = self._render(template, render_data)
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as f:
+            f.write(msg)
+
+    def _generate_relative_path(self):
+        return ''
+
+    def _generate_render_data(self, abs_path=''):
+        return {}
+
+    def _render(self, template, render_data):
+        return ''
+
+
+class test_proper_generator(BaseTestGenerator):
     """Generator for the Test Class."""
 
     def __init__(self, project_path, definition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
+        file_name = f"{definition['name']}.py"
+        super().__init__(project_path, definition, file_name)
 
-        hardware = definition['hardware']
-        base = definition['base']
-        name = definition['name']
-        file_name = f"{name}.py"
+    def _generate_relative_path(self):
+        hardware = self.definition['hardware']
+        base = self.definition['base']
+        name = self.definition['name']
 
-        rel_path_to_dir = os.path.join('src', hardware, base, name)
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+        return os.path.join('src', hardware, base, name)
 
-        msg = template.render(
-            module_doc_string=prepare_module_docstring(),
-            input_parameter_table=prepare_input_parameters_table(definition['input_parameters']),
-            output_parameter_table=prepare_output_parameters_table(definition['output_parameters']),
-            definition=definition)
+    def _generate_render_data(self, abs_path=''):
+        return {'module_doc_string': prepare_module_docstring(),
+                'input_parameter_table': prepare_input_parameters_table(self.definition['input_parameters']),
+                'output_parameter_table': prepare_output_parameters_table(self.definition['output_parameters']),
+                'definition': self.definition}
 
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def _render(self, template, render_data):
+        return template.render(module_doc_string=render_data['module_doc_string'],
+                               input_parameter_table=render_data['input_parameter_table'],
+                               output_parameter_table=render_data['output_parameter_table'],
+                               definition=self.definition)
 
 
-class test_base_generator:
+class test_base_generator(BaseTestGenerator):
     """Generator for the Test Base Class."""
 
     def __init__(self, project_path, definition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
+        file_name = f"{definition['name']}_BC.py"
+        super().__init__(project_path, definition, file_name)
 
-        hardware = definition['hardware']
-        base = definition['base']
-        name = definition['name']
-        file_name = f"{name}_BC.py"
+    def _generate_relative_path(self):
+        hardware = self.definition['hardware']
+        base = self.definition['base']
+        name = self.definition['name']
 
-        rel_path_to_dir = os.path.join('src', hardware, base, name)
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+        return os.path.join('src', hardware, base, name)
 
-        msg = template.render(
-            module_doc_string=prepare_module_docstring(),
-            ipppd=prepare_input_parameters_ppd(definition['input_parameters']),
-            opppd=prepare_output_parameters_ppd(definition['output_parameters']),
-            definition=definition)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def _generate_render_data(self, abs_path=''):
+        return {'module_doc_string': prepare_module_docstring(),
+                'ipppd': prepare_input_parameters_ppd(self.definition['input_parameters']),
+                'opppd': prepare_output_parameters_ppd(self.definition['output_parameters']),
+                'definition': self.definition}
 
 
-class test__init__generator:
+class test__init__generator(BaseTestGenerator):
     """Generator for the __init__.py file of a given test."""
 
     def __init__(self, project_path, definition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
-
-        hardware = definition['hardware']
-        base = definition['base']
-        name = definition['name']
         file_name = '__init__.py'
+        super().__init__(project_path, definition, file_name)
+        self.defintion = definition
 
-        rel_path_to_dir = os.path.join('src', hardware, base, name)
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+    def _generate_relative_path(self):
+        hardware = self.definition['hardware']
+        base = self.definition['base']
+        name = self.definition['name']
 
+        return os.path.join('src', hardware, base, name)
+
+    def _generate_render_data(self, abs_path):
         imports = []
-        for item in os.listdir(abs_path_to_dir):
+        for item in os.listdir(abs_path):
             if item.upper().endswith('_BC.PY'):
                 what = '.'.join(item.split('.')[:-1])
                 imports.append(f"from {what} import {what}")
 
-        msg = template.render(
-            hardware=hardware,
-            base=base,
-            name=name,
-            imports=imports)
+        return {'hardware': self.definition['hardware'],
+                'base': self.definition['base'],
+                'name': self.definition['name'],
+                'imports': imports}
 
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def _render(self, template, render_data):
+        return template.render(hardware=render_data['hardware'],
+                               base=render_data['base'],
+                               name=render_data['name'],
+                               imports=render_data['imports'])
 
 
 def project_root_generator(project_path):
@@ -609,10 +618,47 @@ def project_spyder_generator(project_path):
     copydir(spyder_src_path, spyder_dst_path)
 
 
-class project__main__generator:
+class BaseGenerator:
+    """ Base Geneartor """
+
+    def __init__(self, project_path, definition, file_name):
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = template_name.replace('generator', 'template') + '.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+
+        self.definition = definition
+
+        rel_path_to_dir = self._generate_relative_path()
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        msg = template.render(definition=self.definition)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(msg)
+
+    def _generate_relative_path(self):
+        return ''
+
+
+class BaseProjectGenerator:
     """Generator for the project's __main__.py file."""
 
-    def __init__(self, project_path):
+    def __init__(self, project_path, file_name):
         template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
         file_loader = FileSystemLoader(template_path)
         env = Environment(loader=file_loader)
@@ -627,78 +673,44 @@ class project__main__generator:
 
         project_name = os.path.basename(project_path)
 
-        file_name = '__main__.py'
-        abs_path_to_dir = project_path
+        rel_path_to_dir = self._generate_relative_path()
+        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
         abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
 
         msg = template.render(project_name=project_name)
 
         if not os.path.exists(abs_path_to_dir):
             os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as f:
+            f.write(msg)
+
+    def _generate_relative_path(self):
+        return ''
 
 
-class project__init__generator:
+class project__main__generator(BaseProjectGenerator):
+    """Generator for the project's __main__.py file."""
+
+    def __init__(self, project_path, file_name='__main__.py'):
+        super().__init__(project_path, file_name)
+
+
+class project__init__generator(BaseProjectGenerator):
     """Generator for the project's __init__.py file."""
 
-    def __init__(self, project_path):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
-
-        project_name = os.path.basename(project_path)
-
-        file_name = '__init__.py'
-        abs_path_to_dir = project_path
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        msg = template.render(project_name=project_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def __init__(self, project_path, file_name='__init__.py'):
+        super().__init__(project_path, file_name)
 
 
-class project_gitignore_generator:
+class project_gitignore_generator(BaseProjectGenerator):
     """Generator for the project's .gitignore file."""
 
-    def __init__(self, project_path):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
-
-        file_name = '.gitignore'
-
-        abs_path_to_dir = project_path
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        msg = template.render()
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def __init__(self, project_path, file_name='.gitignore'):
+        super().__init__(project_path, file_name)
 
 
-class src__init__generator:
+class src__init__generator(BaseProjectGenerator):
     """Generator for the __init__.py file of the src (root)
 
     This file contains nothing more than "system wide" 'constants'
@@ -706,34 +718,14 @@ class src__init__generator:
     This generator should be called upon the creation of a new project.
     """
 
-    def __init__(self, project_path):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
+    def __init__(self, project_path, file_name='__init__.py'):
+        super().__init__(project_path, file_name)
 
-        file_name = '__init__.py'
-
-        rel_path_to_dir = 'src'
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        msg = template.render()
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def _generate_relative_path(self):
+        return 'src'
 
 
-class src_common_generator:
+class src_common_generator(src__init__generator):
     """Generator for the common.py file of the src (root)
 
     This file contains nothing more than "system wide" functionality.
@@ -741,229 +733,59 @@ class src_common_generator:
     This generator should be called upon the creation of a new project.
     """
 
-    def __init__(self, project_path):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
-
-        file_name = 'common.py'
-
-        rel_path_to_dir = 'src'
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        msg = template.render()
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-        f = open(abs_path_to_file, 'w', encoding='utf-8')
-        f.write(msg)
+    def __init__(self, project_path, file_name='common.py'):
+        super().__init__(project_path, file_name)
 
 
-class HW__init__generator:
+class HW__init__generator(BaseGenerator):
     """Generator for the __init__.py file of the hardware proper."""
 
-    def __init__(self, project_path, definition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
+    def __init__(self, project_path, definition, file_name="__init__.py"):
+        super().__init__(project_path, definition, file_name)
 
-        file_name = '__init__.py'
-
-        print(definition)
-
-        rel_path_to_dir = os.path.join('src', definition['hardware'])
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(definition=definition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def _generate_relative_path(self):
+        return os.path.join('src', self.definition['hardware'])
 
 
-class HW_common_generator:
+class HW_common_generator(HW__init__generator):
     """Generator for the common.py file of of the hardware proper."""
 
-    def __init__(self, project_path, definition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        if not os.path.exists(os.path.join(template_path, template_name)):
-            raise Exception(f"couldn't find the template : {template_name}")
-        template = env.get_template(template_name)
-
-        file_name = 'common.py'
-
-        rel_path_to_dir = os.path.join('src', definition['hardware'])
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(definition=definition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def __init__(self, project_path, definition, file_name='common.py'):
+        super().__init__(project_path, definition, file_name)
 
 
-class PR__init__generator:
+class PR__init__generator(BaseGenerator):
     """Generator for the __init__.py file of 'PR' for the given hardware."""
 
-    def __init__(self, project_path, HWdefinition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
+    def __init__(self, project_path, definition, file_name='__init__.py'):
+        super().__init__(project_path, definition, file_name)
 
-        hardware = HWdefinition['hardware']
-        file_name = '__init__.py'
-        rel_path_to_dir = os.path.join('src', hardware, 'PR')
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(HWdefinition=HWdefinition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def _generate_relative_path(self):
+        return os.path.join('src', self.definition['hardware'], 'PR')
 
 
-class PR_common_generator:
+class PR_common_generator(PR__init__generator):
     """Generator for the common.py file of 'PR' for the given hardware."""
 
-    def __init__(self, project_path, HWdefinition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
-
-        hardware = HWdefinition['hardware']
-        file_name = 'common.py'
-        rel_path_to_dir = os.path.join('src', hardware, 'PR')
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(HWdefinition=HWdefinition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def __init__(self, project_path, definition):
+        super().__init__(project_path, definition, file_name='common.py')
 
 
-class FT__init__generator:
+class FT__init__generator(BaseGenerator):
     """Generator for the __init__.py file of 'FT' for the given hardware."""
 
-    def __init__(self, project_path, HWdefinition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
+    def __init__(self, project_path, definition, file_name='__init__.py'):
+        super().__init__(project_path, definition, file_name)
 
-        hardware = HWdefinition['hardware']
-        file_name = '__init__.py'
-        rel_path_to_dir = os.path.join('src', hardware, 'FT')
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(HWdefinition=HWdefinition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def _generate_relative_path(self):
+        return os.path.join('src', self.definition['hardware'], 'FT')
 
 
-class FT_common_generator:
+class FT_common_generator(FT__init__generator):
     """Generator for the common.py file of 'FT' for the given hardware."""
 
-    def __init__(self, project_path, HWdefinition):
-        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
-        file_loader = FileSystemLoader(template_path)
-        env = Environment(loader=file_loader)
-        env.trim_blocks = True
-        env.lstrip_blocks = True
-        env.rstrip_blocks = True
-        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
-        template_name = template_name.replace('generator', 'template') + '.jinja2'
-        template = env.get_template(template_name)
-
-        hardware = HWdefinition['hardware']
-        file_name = 'common.py'
-        rel_path_to_dir = os.path.join('src', hardware, 'FT')
-        abs_path_to_dir = os.path.join(project_path, rel_path_to_dir)
-        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
-
-        if not os.path.exists(abs_path_to_dir):
-            os.makedirs(abs_path_to_dir)
-
-        if os.path.exists(abs_path_to_file):
-            os.remove(abs_path_to_file)
-
-        msg = template.render(HWdefinition=HWdefinition)
-
-        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
-            fd.write(msg)
+    def __init__(self, project_path, definition):
+        super().__init__(project_path, definition, file_name='common.py')
 
 
 if __name__ == '__main__':

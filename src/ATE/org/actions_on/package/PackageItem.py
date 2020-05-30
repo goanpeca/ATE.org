@@ -18,12 +18,6 @@ class PackageItem(BaseItem):
     def _create_child(self, name, parent):
         return PackageItemChild(self.project_info, name, parent)
 
-    def _append_children(self):
-        children = self._get_children_names()
-        for child in children:
-            child_item = self._create_child(child, self)
-            self.appendRow(child_item)
-
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
 
@@ -48,5 +42,6 @@ class PackageItemChild(StateItem):
     def is_enabled(self):
         return self.project_info.get_package_state(self.text())
 
-    def _get_dependant_objects(self):
+    @property
+    def dependency_list(self):
         return self.project_info.get_dependant_objects_for_package(self.text())

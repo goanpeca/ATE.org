@@ -34,6 +34,8 @@ class MenuDialog(QtWidgets.QDialog):
         self.setWindowTitle(self.action)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on=False)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on=False)
         self.setFixedSize(self.size())
         self.ok_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         self.cancel_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel)

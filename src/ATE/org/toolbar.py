@@ -49,7 +49,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.addWidget(self.tester_combo)
 
         self.tester_mode_combo = QtWidgets.QComboBox()
-        tester_modes = ['Direct Mode', 'Iteractive Mode']
+        tester_modes = ['Direct Mode', 'Interactive Mode']
         self.tester_mode_combo.addItems(tester_modes)
         self.tester_mode_combo.setCurrentText('Direct Mode')
         width = self.tester_mode_combo.minimumSizeHint().width()
@@ -154,9 +154,11 @@ class ToolBar(QtWidgets.QToolBar):
         self.tester_combo.clear()
         self.tester_combo.addItems(tester_list)
         if self.active_tester in tester_list:
-            self.tester_combo.setText(self.active_tester)
+            current_target_index = self.tester_combo.findText(self.project_info.active_target, QtCore.Qt.MatchExactly)
+            self.tester_combo.setCurrentIndex(current_target_index)
         else:
-            self.tester_combo.setText('')
+            # TODO: what to do here ?
+            self.tester_combo.setCurrentIndex(0)
         self.tester_combo.blockSignals(False)
 
     @QtCore.pyqtSlot(str)

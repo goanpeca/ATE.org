@@ -10,7 +10,6 @@ class ItemTrace(QtWidgets.QDialog):
         self.message = message
         self._load_ui()
         self._setup()
-        self._show()
 
     def _load_ui(self):
         ui_file = '.'.join(os.path.realpath(__file__).split('.')[:-1]) + '.ui'
@@ -19,20 +18,39 @@ class ItemTrace(QtWidgets.QDialog):
     def _setup(self):
         self.setWindowTitle(self.name)
         self.setFixedSize(self.size())
-        self.ok_button.clicked.connect(self.accept)
-        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on=False)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on=False)
         self.feedback.setText(self.message)
         self.feedback.setStyleSheet('color: orange')
         self.tree_view.setHeaderHidden(True)
         for key, elements in self.dependency_list.items():
             parent = QtWidgets.QTreeWidgetItem(self.tree_view)
-            parent.setExpanded(True)
             parent.setText(0, key)
-            for element in elements:
-                child = QtWidgets.QTreeWidgetItem()
-                child.setText(0, element)
-                parent.addChild(child)
+            parent.setExpanded(True)
 
-    def _show(self):
-        self.exec_()
+            # special case as test-program could have the same name in different sections
+            if key == "programs":
+                for k in elements.keys():
+                    p = self._generate_node(parent, k)
+                    p.setExpanded(True)
+                    for element in elements[k]:
+                        self._generate_node(p, element)
+
+                continue
+
+            for element in elements:
+                self._generate_node(parent, element)
+
+        self.ok_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
+        self.ok_button.clicked.connect(self.accept)
+
+        self.cancel_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel)
+        self.cancel_button.clicked.connect(self.reject)
+
+    def _generate_node(self, parent, name):
+        node = QtWidgets.QTreeWidgetItem()
+        node.setText(0, name)
+        parent.addChild(node)
+        return node
