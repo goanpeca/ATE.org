@@ -8,7 +8,7 @@ Ok, a `fast` parser is first of all writen in probably [C](https://en.wikipedia.
 
 In any case, when you start parsing STDF's **at the moment** you want to interact with the data, you are, as they say, *too little too late* ... you must still be living in the last century (not to say last millennium 🤪)
 
-A `good` parser is written in a higher level language (like [Python](https://www.python.org/)) and it does an awefull lot of checking (and if needed correcting) to return reliably with meaningfull and correct data. This of course makes it slower. One can optimize that a bit by using [Cython](https://cython.org/) or maybe [numba](http://numba.pydata.org/) but that is besides the point.
+A `good` parser is written in a higher level language (like [Python](https://www.python.org/)) and it does an awefull lot of checking (and if needed correcting) and doesn't throw any information away, so as to return reliably with meaningfull and correct data. This of course makes it slower. One can optimize that a bit by using [Cython](https://cython.org/) or maybe [numba](http://numba.pydata.org/) but that is besides the point.
 
 The point is that STDF data should be converted to a useable format like [pandas](https://pandas.pydata.org/) ([numpy](https://numpy.org/) alone will not do as plenty of data is not numerical) **WHILE** the data is being generated, <ins>preferrably not</ins> post-factum and <ins>definitely not</ins> pre-usage!
 
