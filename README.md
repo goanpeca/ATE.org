@@ -3,4 +3,4 @@
 organizing semiconductor testing (hence the project name: ATE.org) in such a way that all special corner cases have
 their well known place. This enables the users (read: TE's & PE's) to focus on the **REAL** work : <ins>writing test</ins>. 
 
-Still interested? Visit the wiki.
+Still interested? Visit the [wiki](https://github.com/ate-org/ATE.org/wiki).
