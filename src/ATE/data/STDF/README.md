@@ -6,7 +6,7 @@ Often people are searching for 'the fastest' STDF parser. If this is what you ar
 
 Ok, a `fast` parser is first of all writen in probably [C](https://en.wikipedia.org/wiki/C_(programming_language))/[C++](https://en.wikipedia.org/wiki/C%2B%2B), and it has to dispence of a lot of the checking/correcting in order to become realy fast, and probably throwing away information not deemed interesting enough (and later turns out to be vital). However in real life STDF files are **far from perfect**, meaning that fast parsers will **FAIL** to do their intended job! You might tweak them for one or another ATE in your environment, but it will **not** be a can-do-everything parser!
 
-In any case, when you start parsing STDF's **at the moment** you want to interact with the data, you are, as they say *too little too late* ... you must still be living in the last century (not to say last millennium 🤪)
+In any case, when you start parsing STDF's **at the moment** you want to interact with the data, you are, as they say, *too little too late* ... you must still be living in the last century (not to say last millennium 🤪)
 
 A `good` parser is written in a higher level language (like [Python](https://www.python.org/)) and it does an awefull lot of checking (and if needed correcting) to return reliably with meaningfull and correct data. This of course makes it slower. One can optimize that a bit by using [Cython](https://cython.org/) or maybe [numba](http://numba.pydata.org/) but that is besides the point.
 
