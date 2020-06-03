@@ -37,10 +37,17 @@ Project_Hardware_Base_Target_Flow_Designator.py
   | Q    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_Q_2 ➜ Final Test, quality program #2 |
   | q    | **see below**    |                                                        |
 
+| q-flow | Designator | Example |
+|:-------|:-----------|:--------|
+| ZHM    | ZMH1, ZMH2, ... | CTCA_HW1_FT_XYZ_q_ZMH1 ➜ Qualification, **Z**ero **H**our **M**easurements #1 |
+| ABSMAX | ABSMAX1, ... | CTCA_HW1_FT_XYZ_q_ABSMAX1 ➜ Qualification, **ABS**olute **MAX**imum #1 |
+| EC     | EC1, EC2, ... | CTCA_HW1_FT_XYZ_q_EC1 ➜ Qualification, **E**ndurance **C**ycling #1 |
+| HTOL   | **see below** | |
+| HTSL   | 
+
 
 
 # TODO
-
   - [ ] Add a 'checker' flow for PR
   - [ ] Add a 'checker' flow for FT
   - [ ] add a 'maintenance' flow for PR
@@ -55,6 +62,12 @@ Project_Hardware_Base_Target_Flow_Designator.py
     - validation
     - quality
     - qualification (only present for FT, as already implemented)
+  - [ ] change 'Prog' into the project name for all 'Add Program' actions
+  - [ ] flows/production : if only one program exists, the 'Move Up' and 'Move Down' must be disabled
+  - [ ] flows/production : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
+  - [ ] flows/engineering : if only one program exists, the 'Move Up' and 'Move Down' must be disabled
+  - [ ] flows/engineering : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
+
 
 # Notes
 
