@@ -69,12 +69,12 @@ Project_Hardware_Base_Target_Flow_Designator.py
   - [ ] flows/engineering : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
 
 
-  - [ ] set the default USER_TXT as follows (depending on the `Flow`)
+  - [ ] set the default `USER_TXT` as follows (depending on the `Flow`)
     - [ ]  'C' = f"Checker program for {Target} in {Base} at {Temperature}"
-    - [ ]  'M' = f"Maintenance program for {Target} in {Base} at {Temperature}" |
-    - [ ]  'P' = f"Production program #{Designator} for {Target} in {Base} at {Temperature}" |
-    - [ ]  'E' = f"Engineering program #{Designator} for {Target} in {Base} at {Temperature}" |
-    - [ ]  'V' = f"Validation program #{Designator} for {Target} in {Base} at {Temperature}" |
-    - [ ]  'Q' = f"Quality program #{Designator} for {Target} in {Base} at {Temperature}" |
-    - [ ]  'q' = f"Quality program #{Designator} for {Target} in {Base} at {Temperature}" |
+    - [ ]  'M' = f"Maintenance program for {Target} in {Base} at {Temperature}"
+    - [ ]  'P' = f"Production program #{Designator} for {Target} in {Base} at {Temperature}"
+    - [ ]  'E' = f"Engineering program #{Designator} for {Target} in {Base} at {Temperature}
+    - [ ]  'V' = f"Validation program #{Designator} for {Target} in {Base} at {Temperature}"
+    - [ ]  'Q' = f"Quality program #{Designator} for {Target} in {Base} at {Temperature}"
+    - [ ]  'q' = f"Quality program #{Designator} for {Target} in {Base} at {Temperature}"
   
