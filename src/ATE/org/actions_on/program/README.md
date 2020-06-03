@@ -35,7 +35,7 @@ Project_Hardware_Base_Target_Flow_Designator.py
   | E    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_E_7 ➜ Final Test, engineering program #7 |
   | V    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_V_3 ➜ Final Test, validation program #3 |
   | Q    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_Q_2 ➜ Final Test, quality program #2 |
-  | q    | **see below**    |                                                        |
+  | q    | **see below**    | [reference](https://github.com/ate-org/ATE.org/blob/master/docs/Qualification_flow.xlsx) |
 
 | q-flow | Designator | Example |
 |:-------|:-----------|:--------|
