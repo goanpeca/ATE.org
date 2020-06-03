@@ -64,9 +64,9 @@ Project_Hardware_Base_Target_Flow_Designator.py
     - qualification (only present for FT, as already implemented)
   - [ ] change 'Prog' into the project name for all 'Add Program' actions
   - [ ] flows/production : if only one program exists, the 'Move Up' and 'Move Down' must be disabled
-  - [ ] flows/production : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
+  - [ ] flows/production/program : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
   - [ ] flows/engineering : if only one program exists, the 'Move Up' and 'Move Down' must be disabled
-  - [ ] flows/engineering : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
+  - [ ] flows/engineering/program : on 'Edit', Hardware, Base and Target should **not** be editable, the rest **is** editable
 
 
   - [ ] set the default `USER_TXT` as follows (depending on the `Flow`)
