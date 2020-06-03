@@ -54,7 +54,7 @@ Project_Hardware_Base_Target_Flow_Designator.py
     - engineering
     - validation
     - quality
-    - qualification (only present for FT)
+    - qualification (only present for FT, as already implemented)
 
 # Notes
 
