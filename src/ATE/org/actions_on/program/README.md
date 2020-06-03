@@ -1,6 +1,6 @@
 # Test Program Name Definition
 
-Project_Hardware_Base_Target_Flow_Designator
+Project_Hardware_Base_Target_Flow_Designator.py
 
 `Project`
 
