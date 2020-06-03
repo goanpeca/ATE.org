@@ -25,7 +25,7 @@ Project_Hardware_Base_Target_Flow_Designator.py
   
   - 'q' = Qualification ➜ holds the programs for the Qualification Engineers, thus the **QUALIFICATION department**.
   
-`Designator` ➜ MIR/FLOW_ID, depends on the `Flow`
+`Designator` ➜ MIR/FLOW_ID (possibilities depend on the `Flow`)
 
   | Flow | Designator       | Examples  |
   |:-----|:-----------------|:------------|
