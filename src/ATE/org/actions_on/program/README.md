@@ -41,12 +41,12 @@ Project_Hardware_Base_Target_Flow_Designator.py
 
 # TODO
 
-  [ ] Add a 'checker' flow for PR
-  [ ] Add a 'checker' flow for FT
-  [ ] add a 'maintenance' flow for PR
-  [ ] add a 'maintenance' flow for FT
-  [ ] rename 'characterisation' to 'quality' for PR
-  [ ] rename 'characterisation' to 'quality' for FT
+  [  ] Add a 'checker' flow for PR
+  [  ] Add a 'checker' flow for FT
+  [  ] add a 'maintenance' flow for PR
+  [  ] add a 'maintenance' flow for FT
+  [  ] rename 'characterisation' to 'quality' for PR
+  [  ] rename 'characterisation' to 'quality' for FT
 
 # Notes
 
