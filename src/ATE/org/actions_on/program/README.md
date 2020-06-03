@@ -47,14 +47,14 @@ Project_Hardware_Base_Target_Flow_Designator.py
   - [ ] add a 'maintenance' flow for FT
   - [ ] rename 'characterisation' to 'quality' for PR
   - [ ] rename 'characterisation' to 'quality' for FT
-  - [ ] make sure the flows are organized, to to bottom:
-    1. checker
-    2. mainenance
-    3. production
-    4. engineering
-    5. validation
-    6. quality
-    7. qualification (only present for FT)
+  - [ ] make sure the flows are organized as follows (to to bottom):
+    - checker
+    - mainenance
+    - production
+    - engineering
+    - validation
+    - quality
+    - qualification (only present for FT)
 
 # Notes
 
