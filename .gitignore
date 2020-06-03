@@ -16,6 +16,7 @@ __pycache__/*
 
 # Project files
 .spyproject/*
+.spyproject\*
 .ropeproject
 .project
 .pydevproject
