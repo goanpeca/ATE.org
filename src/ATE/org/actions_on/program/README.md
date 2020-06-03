@@ -27,12 +27,27 @@ Project_Hardware_Base_Target_Flow_Designator.py
   
 `Designator` ➜ MIR/FLOW_ID, depends on the `Flow`
 
-  | Flow | Designator       | Examples  | `USER_TXT` |
-  |:-----|:-----------------|:------------|:---------|
-  | C    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_C_1 ➜ Final Test, first checker program | set manually |
-  | M    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_M_1 ➜ Final Test, first maintenance program | set manually |
-  | P    | 1, 2, 3, ... [QC]| CTCA_HW1_FT_XYZ_P_1 ➜ Final Test, production, first program<br> CTCA_HW1_FT_XYZ_P_QC ➜ Final Test, Production, Quality Check | leave auto<br> leave auto |
-  | E    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_E_7 ➜ Final Test, engineering program #7 | set manually |
-  | V    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_V_3 ➜ Final Test, validation program #3 | set manually |
-  | Q    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_Q_2 ➜ Final Test, quality program #2 | set manually |
-  | q    |                  |                                                        |           |
+  | Flow | Designator       | Examples  |
+  |:-----|:-----------------|:------------|
+  | C    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_C_1 ➜ Final Test, first checker program |
+  | M    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_M_1 ➜ Final Test, first maintenance program |
+  | P    | 1, 2, 3, ... [QC]| CTCA_HW1_FT_XYZ_P_1 ➜ Final Test, production, first program<br> CTCA_HW1_FT_XYZ_P_QC ➜ Final Test, Production, Quality Check |
+  | E    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_E_7 ➜ Final Test, engineering program #7 |
+  | V    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_V_3 ➜ Final Test, validation program #3 |
+  | Q    | 1, 2, 3, ...     | CTCA_HW1_FT_XYZ_Q_2 ➜ Final Test, quality program #2 |
+  | q    | **see below**    |                                                        |
+
+# Notes
+
+## USER_TXT
+
+  | Flow | Default user text |
+  |:-----|:------------------|
+  | C    | f"Checker program for {Target} in {Base} at {Temperature}" |
+  | M    | f"Maintenance program for {Target} in {Base} at {Temperature}" |
+  | P    | f"Production program #{Designator} for {Target} in {Base} at {Temperature}" |
+  | E    | f"Engineering program #{Designator} for {Target} in {Base} at {Temperature}" |
+  | V    | f"Validation program #{Designator} for {Target} in {Base} at {Temperature}" |
+  | Q    | f"Quality program #{Designator} for {Target} in {Base} at {Temperature}" |
+  | q    | f"Quality program #{Designator} for {Target} in {Base} at {Temperature}" |
+  
