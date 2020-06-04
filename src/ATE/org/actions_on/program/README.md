@@ -50,12 +50,12 @@ Project_Hardware_Base_Target_Flow_Designator.py
 **H**igh **T**emperature **O**perating **L**ife
 
 Here we are interested to see (in a Highley Accelerated Lifetime Test) at some 'points in time' how many devices die.
-We thus need a few groups of HTOL program(s). The difference is usually in how many hours we accelerated the life time. The 'Designator' is thus a bit more complex than all the other cases.
+We thus need a few groups of HTOL program(s) that are infact the 'points in time'. The difference is (usually) in how many hours we accelerated the life time since a reference. The 'Designator' is thus a bit more complex than all the other cases.
 
 HTOL1008h1 ➜ 'HTOL' + '1008h' + '1' 
   - 'HTOL' is fixed
   - '1008h' is the `name` of the HTOL group
-  - '1' is the sequence of the program in the HTOL group
+  - '1' is the sequence of the program in the HTOL group (a group with only one program has the '1' also present)
 
 # TODO
   - [ ] Add a 'checker' flow for PR
