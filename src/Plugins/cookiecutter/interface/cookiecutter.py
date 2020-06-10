@@ -39,7 +39,7 @@ cookeicutter = {
         },
         "instruments" : {
             "Jonathan Bradford" : {
-                "K2000" : (  # ---> TDKMicronas.JonathanBranford.K2000
+                "K2000" : (  # ---> TDKMicronas.Jonathan_Branford.K2000
                     "Tektronix",  # manufacturere
                     "Keithley 2000",  # display name
                 ),
@@ -90,11 +90,7 @@ cookeicutter = {
 if __name__ == '__main__':
 
     # Importers
-    from Micronas import maskset as maskset_importer
-
-
-
-
+    print("Importers")
     for importer in cookiecutter['implementation']['importers']:
         implementation, package, channel = cookiecutter['implementation']['importers'][importer]
         print(f"   {importer}: ('{implementation}', '{package}', '{channel}')")
@@ -109,3 +105,5 @@ if __name__ == '__main__':
         for library in cookiecutter['implementation']['instruments'][implementer]:
             manufacturer, instrument = cookiecutter['implementation']['instruments'][implementer][library]
             print(f"   {library}: ({implementer}, {instrument}, {manufacturer})")
+
+
