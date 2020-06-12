@@ -108,6 +108,30 @@ def test_create_new_hardware_enter_name(hardware, qtbot):
     qtbot.mouseClick(hardware.OKButton, QtCore.Qt.LeftButton)
 
 
+def test_add_actuator_to_pr(hardware, qtbot):
+    hardware.hardware.clear()
+    hardware.hardware.setEnabled(True)
+    qtbot.keyClicks(hardware.hardware, 'HW1')
+    qtbot.keyClicks(hardware.singlesiteLoadboard, 'abc')
+    for row in range(0, hardware.usedActuators.rowCount()):
+        hardware.usedActuators.item(row, 1).setCheckState(0)
+        hardware.usedActuators.item(row, 2).setCheckState(0)
+    qtbot.mouseClick(hardware.OKButton, QtCore.Qt.LeftButton)
+    hardware.usedActuators.item(1, 1).setCheckState(2)
+
+
+def test_add_actuator_to_ft(hardware, qtbot):
+    hardware.hardware.clear()
+    hardware.hardware.setEnabled(True)
+    qtbot.keyClicks(hardware.hardware, 'HW2')
+    qtbot.keyClicks(hardware.singlesiteLoadboard, 'abc')
+    for row in range(0, hardware.usedActuators.rowCount()):
+        hardware.usedActuators.item(row, 1).setCheckState(0)
+        hardware.usedActuators.item(row, 2).setCheckState(0)
+    qtbot.mouseClick(hardware.OKButton, QtCore.Qt.LeftButton)
+    hardware.usedActuators.item(1, 2).setCheckState(2)
+
+
 @pytest.fixture
 def maskset(qtbot, mocker, project_navigation):
     dialog = NewMasksetWizard(project_navigation)

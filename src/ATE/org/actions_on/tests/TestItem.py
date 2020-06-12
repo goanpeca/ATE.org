@@ -12,9 +12,9 @@ import os
 
 class TestItem(BaseItem):
     def __init__(self, project_info, name, path, parent=None):
+        self.observer = None
         super().__init__(project_info, name, parent)
         self.set_children_hidden(True)
-        self.observer = None
         self.file_system_operator = FileSystemOperator(path)
 
     def _append_children(self):

@@ -39,7 +39,7 @@ class StateItem(BaseItem):
         self._set_state(enabled)
         if not enabled:
             from ATE.org.actions_on.utils.ItemTrace import ItemTrace
-            ItemTrace(dependencies, self.text(), 'item depends on')
+            ItemTrace(dependencies, self.text(), 'item depends on the elemnt(s) \nabove which is(are) disabled').exec_()
 
     def trace_item(self):
         from ATE.org.actions_on.utils.ItemTrace import ItemTrace
@@ -68,4 +68,13 @@ class StateItem(BaseItem):
                 MenuActionTypes.View(),
                 MenuActionTypes.Trace(),
                 None,
-                MenuActionTypes.Obsolete()]
+                self._dependant_menu_type()]
+
+    def _dependant_menu_type(self):
+        if not len(self.dependency_list):
+            return MenuActionTypes.Delete()
+        else:
+            return MenuActionTypes.Obsolete()
+
+    def delete_item(self):
+        self.project_info.delete_item(self.type, self.text())

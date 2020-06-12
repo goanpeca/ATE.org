@@ -31,6 +31,10 @@ class MasksetItemChild(StateItem):
         self.definition = self._get_definition()
 
     @property
+    def type(self):
+        return "masksets"
+
+    @property
     def dependency_list(self):
         return self.project_info.get_dependant_objects_for_maskset(self.text())
 
@@ -39,7 +43,7 @@ class MasksetItemChild(StateItem):
 
     def display_item(self):
         configuration = self._get_definition()
-        display_maskset_settings_dialog(configuration, self.text())
+        display_maskset_settings_dialog(self.project_info, configuration, self.text())
 
     def is_enabled(self):
         return self.project_info.get_maskset_state(self.text())

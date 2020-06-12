@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-import os
 import re
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtWidgets
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 
 # wizardbase is the baseclass for qualification wizards.
 # It serves as a generic ui to host parameter entry, editing
 # and storing
-class wizardbase(QtWidgets.QDialog):
+class wizardbase(BaseDialog):
 
     def __init__(self, datasource: dict, storage):
-        super().__init__()
-        self.__load_ui()
+        super().__init__(__file__)
 
         # The dialog always works on a given set of data.
         # This can be either new data (in this case datasource
@@ -26,6 +25,7 @@ class wizardbase(QtWidgets.QDialog):
         self.enable_save = True
         self.setup_parameters()
 
+        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', self.__class__.__name__)))
         saveButton = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         saveButton.clicked.connect(self.__store_data)
 
@@ -43,16 +43,6 @@ class wizardbase(QtWidgets.QDialog):
         for p in self.wizard_parameters:
             p.disable_ui_components()
 
-    def get_ui_file(self) -> str:
-        return __file__.replace('.py', '.ui')
-
-    def __load_ui(self):
-        my_ui = self.get_ui_file()
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
-        uic.loadUi(my_ui, self)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', self.__class__.__name__)))
 
     def setup_parameters(self):
         self.wizard_parameters = self._get_wizard_parameters()

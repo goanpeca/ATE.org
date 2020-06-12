@@ -31,7 +31,12 @@ class TreeModel(QtGui.QStandardItemModel):
         self.tests_path = os.path.join(self.project_info.project_directory, "src")
         self._setup()
         self._connect_action_handler()
-        self.update(self.hardware, self.base, self.target)
+
+        hardware, base, target = self.project_info.load_project_settings()
+        # hack: trigger signal to update the toolbar components
+        self.project_info.update_settings.emit(hardware, base, target)
+
+        self.update(hardware, base, target)
 
     @QtCore.pyqtSlot(int)
     def on_db_change(self, table_id):

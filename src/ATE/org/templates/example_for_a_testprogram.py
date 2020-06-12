@@ -50,14 +50,16 @@ SBIN
 11 - ...
 
 
-
 if __name__ == '__main__':
-    # MQTT starten
-    common.mqtt.connect(....)
-    fts.set_harness(common.mqtt)
-    common.mqtt.set_sequencer(fts)
-    common.mqtt.run()
-        # "next" --> fts.execute()
-        # "shutdown" --> terminate()
+    # Assumptions:
+    # * common.mqtt contains an already constructed SequencerMqttClient
+    #   Note, that we assume, that any other business objects that need mqtt
+    #   have been given the very same client instance!
+    # * We've received the final mqtt settings (i.e. broker port etc. via cmdline)
+    # * The sequencer has been constructed with all relevant testcases
 
-    # fts.registerTCC(...)
+    # Start MQTT using the sequencer.
+    # Note that run_from_command_line_with_sequencer will
+    # only return when the program should terminate.
+    from ATE.org.sequencers.SequencerMqttClient import SequencerMqttClient
+    SequencerMqttClient.run_from_command_line_with_sequencer(sys.argv, common.mqtt, fts)

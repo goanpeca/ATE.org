@@ -14,6 +14,7 @@ import re
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import qtawesome as qta
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 from ATE.org.validation import (
     is_valid_test_name,
@@ -61,14 +62,11 @@ class NameDelegator(Delegator):
             pass
 
 
-class TestWizard(QtWidgets.QDialog):
+class TestWizard(BaseDialog):
     """Wizard to work with 'Test' definitions."""
 
     def __init__(self, project_info, definition=None, read_only=False):
-        super().__init__()
-
-        my_ui = __file__.replace('.py', '.ui')
-        uic.loadUi(my_ui, self)
+        super().__init__(__file__)
 
         self.read_only = read_only
         self.project_info = project_info
@@ -81,7 +79,6 @@ class TestWizard(QtWidgets.QDialog):
 
         self.Feedback.setStyleSheet('color: orange')
 
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
     # TestName
@@ -89,28 +86,16 @@ class TestWizard(QtWidgets.QDialog):
         self.TestName.setValidator(TestName_validator)
 
     # ForHardwareSetup
-        existing_hardwares = self.project_info.get_hardwares()
-        self.ForHardwareSetup.clear()
-        self.ForHardwareSetup.addItems(existing_hardwares)
-        self.ForHardwareSetup.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.ForHardwareSetup.setStyleSheet("font-weight: bold;")
+        self.ForHardwareSetup.setText(self.project_info.active_hardware)
         if definition['hardware'] != '':
-            self.ForHardwareSetup.setCurrentText(definition['hardware'])
-            self.ForHardwareSetup.setEnabled(False)
-        else:
-            self.ForHardwareSetup.setCurrentText(sorted(existing_hardwares)[-1])
-            self.ForHardwareSetup.setEnabled(True)
+            self.ForHardwareSetup.setText(definition['hardware'])
 
     # WithBase
-        existing_bases = ['PR', 'FT']
-        self.WithBase.clear()
-        self.WithBase.addItems(existing_bases)
-        self.WithBase.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.WithBase.setStyleSheet("font-weight: bold")
+        self.WithBase.setText(self.project_info.active_base)
         if definition['base'] != '':
-            self.WithBase.setCurrentText(definition['base'])
-            self.WithBase.setEnabled(False)
-        else:
-            self.WithBase.setCurrentText(definition['PR'])
-            self.WithBase.setEnabled(False)
+            self.WithBase.setText(definition['base'])
 
     # DescriptionTab
         self.description.clear()
@@ -664,7 +649,7 @@ class TestWizard(QtWidgets.QDialog):
         if name == 'Temperature':
             Fmt = '.0f'
             fmt_item.setData(Fmt, QtCore.Qt.DisplayRole)
-            fmt_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            fmt_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
             fmt_item.setFlags(QtCore.Qt.NoItemFlags)
         else:
             if 'fmt' not in attributes:
@@ -672,7 +657,7 @@ class TestWizard(QtWidgets.QDialog):
             else:
                 Fmt = attributes['fmt']
             fmt_item.setData(Fmt, QtCore.Qt.DisplayRole)
-            fmt_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            fmt_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
             fmt_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Min
@@ -708,7 +693,7 @@ class TestWizard(QtWidgets.QDialog):
                     min_item.setData(f"{Min:{Fmt}}", QtCore.Qt.DisplayRole)
             else:
                 raise Exception("type(attribute['Min']) = {type(attribute['Min'])}, which is not (str, float or int) ... WTF?!?")
-        min_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        min_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         min_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Max
@@ -744,7 +729,7 @@ class TestWizard(QtWidgets.QDialog):
                     max_item.setData(f"{Max:{Fmt}}", QtCore.Qt.DisplayRole)
             else:
                 raise Exception("type(attribute['Max']) = {type(attribute['Max'])}, which is not (str, float or int) ... WTF?!?")
-        max_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        max_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         max_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Default
@@ -795,12 +780,12 @@ class TestWizard(QtWidgets.QDialog):
                 if Default < Min:
                     Default = Min
         default_item.setData(f"{Default:{Fmt}}", QtCore.Qt.DisplayRole)
-        default_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        default_item.setData(int(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         default_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # name
         name_item.setData(name, QtCore.Qt.DisplayRole)  # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
-        name_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        name_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         if name == 'Temperature':  # Shmoo is always enabled, user can not change
             name_item.setData(QtCore.Qt.Checked, QtCore.Qt.CheckStateRole)  # https://doc.qt.io/qt-5/qt.html#CheckState-enum
             name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable)  # https://doc.qt.io/qt-5/qt.html#ItemFlag-enum
@@ -814,7 +799,7 @@ class TestWizard(QtWidgets.QDialog):
     # Multiplier
         if name == 'Temperature':  # fixed regardless what the attributes say
             multiplier_item.setData('', QtCore.Qt.DisplayRole)
-            multiplier_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            multiplier_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
             multiplier_item.setFlags(QtCore.Qt.NoItemFlags)
         else:
             multiplier_item.setData(str(attributes['10ᵡ']), QtCore.Qt.DisplayRole)
@@ -823,11 +808,11 @@ class TestWizard(QtWidgets.QDialog):
     # Unit
         if name == 'Temperature':  # fixed regardless what the attribues say
             unit_item.setData('°C', QtCore.Qt.DisplayRole)
-            unit_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            unit_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
             unit_item.setFlags(QtCore.Qt.NoItemFlags)
         else:
             unit_item.setData(str(attributes['Unit']), QtCore.Qt.DisplayRole)
-            unit_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+            unit_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
             unit_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
         self.inputParameterModel.blockSignals(False)
@@ -1164,7 +1149,7 @@ class TestWizard(QtWidgets.QDialog):
         else:
             Fmt = attributes['fmt']
         fmt_item.setData(Fmt, QtCore.Qt.DisplayRole)
-        fmt_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        fmt_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         fmt_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # LSL
@@ -1184,7 +1169,7 @@ class TestWizard(QtWidgets.QDialog):
         else:
             raise Exception(f"type(attributes['LSL']) = {type(attributes['LSL'])}, which is not (NoneType, float or int) ... WTF?!?")
         LSL_item.setData(LSL, QtCore.Qt.DisplayRole)
-        LSL_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        LSL_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         LSL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # LTL
@@ -1214,7 +1199,7 @@ class TestWizard(QtWidgets.QDialog):
         else:
             raise Exception(f"type(attributes['LTL']) = {type(attributes['LTL'])}, which is not (str, NoneType, float or int) ... WTF?!?")
         LTL_item.setData(LTL, QtCore.Qt.DisplayRole)
-        LTL_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        LTL_item.setData(int(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         LTL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # USL
@@ -1234,7 +1219,7 @@ class TestWizard(QtWidgets.QDialog):
         else:
             raise Exception(f"type(attributes['USL']) = {type(attributes['USL'])}, which is not (NoneType, float or int) ... WTF?!?")
         USL_item.setData(USL, QtCore.Qt.DisplayRole)
-        USL_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        USL_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         USL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # UTL
@@ -1264,7 +1249,7 @@ class TestWizard(QtWidgets.QDialog):
         else:
             raise Exception(f"type(attributes['UTL']) = {type(attributes['UTL'])}, which is not (str, NoneType, float or int) ... WTF?!?")
         UTL_item.setData(UTL, QtCore.Qt.DisplayRole)
-        UTL_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        UTL_item.setData(int(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         UTL_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Nom
@@ -1299,21 +1284,21 @@ class TestWizard(QtWidgets.QDialog):
         # complience to SL
         Nom = f"{Nom_:{Fmt}}"
         Nom_item.setData(Nom, QtCore.Qt.DisplayRole)
-        Nom_item.setData(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        Nom_item.setData(int(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         Nom_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # name
         name_item.setData(name, QtCore.Qt.DisplayRole)  # https://doc.qt.io/qt-5/qt.html#ItemDataRole-enum
-        name_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        name_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         name_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
     # Multiplier
         multiplier_item.setData(str(attributes['10ᵡ']), QtCore.Qt.DisplayRole)
-        multiplier_item.setData(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        multiplier_item.setData(int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         multiplier_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
     # Unit
         unit_item.setData(str(attributes['Unit']), QtCore.Qt.DisplayRole)
-        unit_item.setData(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, QtCore.Qt.TextAlignmentRole)
+        unit_item.setData(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter), QtCore.Qt.TextAlignmentRole)
         unit_item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
 
         self.outputParameterModel.blockSignals(False)
@@ -1484,12 +1469,12 @@ class TestWizard(QtWidgets.QDialog):
     def verify(self):
         self.Feedback.setText("")
         # 1. Check that we have a hardware selected
-        if self.ForHardwareSetup.currentText() == '':
+        if self.ForHardwareSetup.text() == '':
             self.Feedback.setText("Select a 'hardware'")
 
         # 2. Check that we have a base selected
         if self.Feedback.text() == "":
-            if self.WithBase.currentText() == '':
+            if self.WithBase.text() == '':
                 self.Feedback.setText("Select a 'base'")
 
         # 3. Check if we have a test name
@@ -1541,8 +1526,8 @@ class TestWizard(QtWidgets.QDialog):
         self.definition = {}
         self.definition['name'] = self.TestName.text()
         self.definition['type'] = "custom"
-        self.definition['hardware'] = self.ForHardwareSetup.currentText()
-        self.definition['base'] = self.WithBase.currentText()
+        self.definition['hardware'] = self.ForHardwareSetup.text()
+        self.definition['base'] = self.WithBase.text()
         self.definition['docstring'] = self.description.toPlainText().split('\n')
         self.definition['input_parameters'] = self.getInputParameters()
         self.definition['output_parameters'] = self.getOutputParameters()

@@ -472,7 +472,7 @@
         <widget class="QLabel" name="temperature_feedback">
          <property name="minimumSize">
           <size>
-           <width>171</width>
+           <width>202</width>
            <height>0</height>
           </size>
          </property>

@@ -60,7 +60,17 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="ForHardwareSetup"/>
+        <widget class="QLabel" name="ForHardwareSetup">
+         <property name="minimumSize">
+          <size>
+           <width>44</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string> </string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_7">
@@ -73,7 +83,17 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="WithBase"/>
+        <widget class="QLabel" name="WithBase">
+         <property name="minimumSize">
+          <size>
+           <width>62</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

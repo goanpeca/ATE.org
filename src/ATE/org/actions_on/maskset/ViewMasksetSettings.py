@@ -1,7 +1,8 @@
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets
 from enum import Enum
 
-from ATE.org.actions_on.maskset.constants import PAD_INFO, UI_FILE, DEFINITION
+from ATE.org.actions_on.maskset.constants import PAD_INFO, DEFINITION
+from ATE.org.actions_on.maskset.NewMasksetWizard import NewMasksetWizard
 
 
 class ErrorMessage(Enum):
@@ -12,31 +13,16 @@ class ErrorMessage(Enum):
         return self.value
 
 
-class ViewMasksetSettings(QtWidgets.QDialog):
-    def __init__(self, maskset_configuration, maskset_name):
+class ViewMasksetSettings(NewMasksetWizard):
+    def __init__(self, project_info, maskset_configuration, maskset_name):
+        super().__init__(project_info, read_only=True)
         self.maskset_configuration = maskset_configuration
         self.maskset_name = maskset_name
-
-    def __call__(self):
-        super().__init__()
-        self._load_ui()
-        self._setup(self.maskset_name)
-        self._connect_event_handler()
+        self._setup_item(self.maskset_name)
         ViewMasksetSettings._setup_dialog_fields(self, self.maskset_configuration, self.maskset_name)
 
-    def _load_ui(self):
-        import os
-        my_ui = f"{os.path.dirname(os.path.realpath(__file__))}\{UI_FILE}"
-        uic.loadUi(my_ui, self)
-
-    def _connect_event_handler(self):
-        self.OKButton.clicked.connect(self.accept)
-        self.CancelButton.clicked.connect(self.accept)
-
-    def _setup(self, maskset_name):
+    def _setup_item(self, maskset_name):
         self.setWindowTitle("Maskset Setting")
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
 
         self.masksetName.setText(maskset_name)
         self.masksetName.setEnabled(False)
@@ -52,6 +38,10 @@ class ViewMasksetSettings(QtWidgets.QDialog):
         self.yOffset.setEnabled(False)
         self.flat.setEnabled(False)
         self.Type.setEnabled(False)
+        self.editWaferMapButton.setEnabled(False)
+        self.importFor.setEnabled(False)
+        self.XYFlipButton.setEnabled(False)
+        self.viewDieButton.setEnabled(False)
 
         self.bondpadTable.setRowCount(len(self.maskset_configuration["BondpadTable"]))
         row = self.bondpadTable.rowCount()
@@ -75,6 +65,7 @@ class ViewMasksetSettings(QtWidgets.QDialog):
 
         self.bondpadTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
         self.bondpadTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self.bondpadTable.setEnabled(False)
 
     @staticmethod
     def is_valid_configuration(maskset_configuration):
@@ -124,9 +115,13 @@ class ViewMasksetSettings(QtWidgets.QDialog):
             for c in range(column):
                 dialog.bondpadTable.item(r, c).setText(str(table_infos[r + 1][c]))
 
+        dialog.OKButton.setEnabled(True)
 
-def display_maskset_settings_dialog(maskset_configuration, maskset_name):
-    maskset_wizard = ViewMasksetSettings(maskset_configuration, maskset_name)
-    maskset_wizard()  # provoke __call__ function
+    def OKButtonPressed(self):
+        self.accept()
+
+
+def display_maskset_settings_dialog(project_info, maskset_configuration, maskset_name):
+    maskset_wizard = ViewMasksetSettings(project_info, maskset_configuration, maskset_name)
     maskset_wizard.exec_()
     del(maskset_wizard)

@@ -11,25 +11,20 @@ import re
 import tempfile
 
 from ATE.org.validation import valid_package_name_regex
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 
-class NewPackageWizard(QtWidgets.QDialog):
+class NewPackageWizard(BaseDialog):
     def __init__(self, project_info, read_only=False):
-        super(NewPackageWizard, self).__init__()
+        super().__init__(__file__)
         self.project_info = project_info
         self.read_only = read_only
 
-        self._load_ui()
         self._setup()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        my_ui = __file__.replace('.py', '.ui')
-        uic.loadUi(my_ui, self)
-
     def _setup(self):
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         # create a temporary directory to store the drawing(s)

@@ -18,6 +18,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.active_base = ''
         self.active_target = ''
         self.project_info = project_info
+
         self._setup()
 
     def __call__(self, project_info):
@@ -26,7 +27,6 @@ class ToolBar(QtWidgets.QToolBar):
         self._init_hardware()
         self._update_target()
 
-        self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
         self._connect_event_handler()
 
     def _setup(self):
@@ -113,8 +113,6 @@ class ToolBar(QtWidgets.QToolBar):
         self.settings_action.setCheckable(False)
         self.addAction(self.settings_action)
 
-        # self.show()
-
     def _connect_event_handler(self):
         self.tester_combo.currentTextChanged.connect(self._tester_changed)
         self.hardware_combo.currentTextChanged.connect(self._hardware_changed)
@@ -128,6 +126,13 @@ class ToolBar(QtWidgets.QToolBar):
         self.project_info.hardware_activated.connect(self._update_hardware)
         self.project_info.hardware_removed.connect(self._remove_hardware)
         self.project_info.update_target.connect(self._target_update)
+        self.project_info.update_settings.connect(self._settings_update)
+
+    @QtCore.pyqtSlot(str, str, str)
+    def _settings_update(self, hardware, base, target):
+        self.hardware_combo.setCurrentText(hardware)
+        self.base_combo.setCurrentText(base)
+        self.target_combo.setCurrentText(target)
 
     @QtCore.pyqtSlot(str)
     def _add_new_hardware(self, hardware):

@@ -70,15 +70,15 @@ class SequencerBase:
         #       we might want to set "ERROR" instead!
         self.harness.send_status("IDLE")
 
-    def run(self, execution_policy):
+    def run(self, execution_policy, test_settings=None):
+        if test_settings is not None:
+            self.test_settings = test_settings
         if execution_policy is None:
             raise Exception("No Execution Policy set")
         if not issubclass(type(execution_policy), ExecutionPolicyABC):
             raise Exception("Need an execution policy type object")
 
-        self.harness.send_status("TESTING")
         execution_policy.run(self)
-        self.harness.send_status("IDLE")
 
     def after_test_cb(self, test_instance, test_index, test_result):
         """

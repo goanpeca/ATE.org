@@ -7,23 +7,24 @@ Created on Nov 20, 2019
 import os
 import re
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import qtawesome as qta
 
 from ATE.org.validation import is_valid_maskset_name
 
-from ATE.org.actions_on.maskset.constants import PAD_INFO, UI_FILE, DEFAULT_ROW, PadType, PadDirection, PadStandardSize
+from ATE.org.actions_on.maskset.constants import PAD_INFO, DEFAULT_ROW, PadType, PadDirection, PadStandardSize
 
 from ATE.org.plugins.pluginmanager import get_plugin_manager
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 standard_flat_height = 7  # mm
 standard_scribe = 100  # um
 
 
-class NewMasksetWizard(QtWidgets.QDialog):
+class NewMasksetWizard(BaseDialog):
     def __init__(self, project_info, read_only=False):
-        super().__init__()
+        super().__init__(__file__)
         self.plugin_manager = get_plugin_manager()
         self.plugin_names = []
         self.prev_item = None
@@ -32,17 +33,11 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.read_only = read_only
         self.is_active = True
         self.project_info = project_info
-        self._load_ui()
         self._setup()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        my_ui = os.path.join(os.path.dirname(os.path.realpath(__file__)), UI_FILE)
-        uic.loadUi(my_ui, self)
-
     def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         from ATE.org.validation import valid_positive_integer_regex
         rxi = QtCore.QRegExp(valid_positive_integer_regex)
@@ -67,7 +62,6 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.customerLabel.setVisible(False)
         self.customer.setText('')
         self.customer.setVisible(False)
-        self.customer.setValidator(self.maskset_name_validator)
 
     # wafer diameter
         self.waferDiameter.setCurrentIndex(self.waferDiameter.findText('200'))
@@ -157,7 +151,7 @@ class NewMasksetWizard(QtWidgets.QDialog):
         self.importFor.addItem('')
         for importer_name_list in importer_name_lists:
             for importer_name in importer_name_list:
-                self.importFor.addItem(importer_name["Display_name"])
+                self.importFor.addItem(importer_name["display_name"])
                 self.plugin_names.append(importer_name)
         self.importFor.setCurrentIndex(0)  # empty string
 
@@ -186,9 +180,9 @@ class NewMasksetWizard(QtWidgets.QDialog):
             item = QtWidgets.QTableWidgetItem(elements[column])
             self.bondpadTable.setItem(row, column, item)
             if column == 0:
-                item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+                item.setTextAlignment(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter))
             else:
-                item.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+                item.setTextAlignment(int(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter))
 
     def _bondpads_changed(self, Bondpads):
         if self.rows < Bondpads:

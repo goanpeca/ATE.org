@@ -42,6 +42,10 @@ class DeviceItemChild(StateItem):
         return self.project_info.update_device_state(self.text(), enabled)
 
     @property
+    def type(self):
+        return 'devices'
+
+    @property
     def dependency_list(self):
         return self.project_info.get_dependant_objects_for_device(self.text())
 

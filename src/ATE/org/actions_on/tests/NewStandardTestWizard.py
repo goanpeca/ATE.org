@@ -7,21 +7,14 @@ Created on Wed Mar 18 12:26:00 2020
 import os
 import re
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtGui
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
-import qtawesome as qta
 
-
-class NewStandardTestWizard(QtWidgets.QDialog):
-
+class NewStandardTestWizard(BaseDialog):
     def __init__(self, project_info, fixed=True):
-        super().__init__()
+        super().__init__(__file__)
 
-        my_ui = __file__.replace('.py', '.ui')
-        if not os.path.exists(my_ui):
-            raise Exception("can not find %s" % my_ui)
-        uic.loadUi(my_ui, self)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         self.project_info = project_info
@@ -33,12 +26,12 @@ class NewStandardTestWizard(QtWidgets.QDialog):
         self.ForHardwareSetup.addItems(self.existing_hardwaresetups)
         # TODO: fix this
         self.ForHardwareSetup.setCurrentIndex(self.ForHardwareSetup.findText(self.project_info.active_hardware))
-        # TODO: 
+        # TODO:
         # self.ForHardwareSetup.setDisabled(fixed)
         self.ForHardwareSetup.setDisabled(False)
         self.ForHardwareSetup.currentTextChanged.connect(self._verify)
         self.ForHardwareSetup.blockSignals(False)
-        
+
     # WithBase ComboBox
         self.WithBase.blockSignals(True)
         self.WithBase.clear()
@@ -52,7 +45,7 @@ class NewStandardTestWizard(QtWidgets.QDialog):
 
     # StandardTestName ComboBox
         self.model = QtGui.QStandardItemModel()
-    
+
         from ATE.org.coding.standard_tests import names as standard_test_names
         existing_standard_test_names = \
             self.project_info.tests_get_standard_tests(
@@ -63,16 +56,16 @@ class NewStandardTestWizard(QtWidgets.QDialog):
             item = QtGui.QStandardItem(standard_test_name)
             if standard_test_name in existing_standard_test_names:
                 item.setEnabled(False)
-                #TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
+                # TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
             else:
                 item.setEnabled(True)
-                #TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
+                # TODO: maybe also use the flags (Qt::ItemIsSelectable) ?!?
             self.model.appendRow(item)
-                
+
         self.StandardTestName.blockSignals(True)
         self.StandardTestName.clear()
         self.StandardTestName.setModel(self.model)
-        self.StandardTestName.currentTextChanged.connect(self._verify)            
+        self.StandardTestName.currentTextChanged.connect(self._verify)
         self.StandardTestName.blockSignals(False)
 
     # feedback
@@ -87,22 +80,21 @@ class NewStandardTestWizard(QtWidgets.QDialog):
     # go
         self._verify()
         self.show()
-        
-        
+
     def _verify(self):
         self.feedback.setText('')
-        
-        # hardware        
+
+        # hardware
         if self.feedback.text() == '':
-            if self.ForHardwareSetup.currentText()=='':
+            if self.ForHardwareSetup.currentText() == '':
                 self.feedback.setText("Select a hardware setup")
 
-        # base        
+        # base
         if self.feedback.text() == '':
             if self.WithBase.currentText() not in ['FT', 'PR']:
                 self.feedback.setText("Select the base")
 
-        # standard test        
+        # standard test
         if self.feedback.text() == '':
             if self.StandardTestName.currentText() == '':
                 self.feedback.setText("Select a standard test")

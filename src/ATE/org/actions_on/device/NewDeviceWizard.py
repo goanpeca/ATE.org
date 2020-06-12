@@ -5,27 +5,23 @@ Created on Wed Nov 27 15:09:41 2019
 @author: hoeren
 """
 from ATE.org.validation import valid_device_name_regex
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import qtawesome as qta
 import os
 import re
 
-class NewDeviceWizard(QtWidgets.QDialog):
+
+class NewDeviceWizard(BaseDialog):
     def __init__(self, project_info, read_only=False):
-        super().__init__()
+        super().__init__(__file__)
         self.project_info = project_info
         self.read_only = read_only
-        self._load_ui()
         self._setup()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        my_ui = __file__.replace('.py', '.ui')
-        uic.loadUi(my_ui, self)
-
     def _setup(self):
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         # hardware
@@ -40,7 +36,7 @@ class NewDeviceWizard(QtWidgets.QDialog):
         DeviceName_validator = QtGui.QRegExpValidator(rxDeviceName, self)
         self.deviceName.setValidator(DeviceName_validator)
         self.deviceName.setText('')
-        self.existing_devices = self.project_info.get_devices_for_hardware(self.hardware.currentText())
+        self.existing_devices = self.project_info.get_devices_for_hardwares()
 
         # packages
         self.existing_packages = self.project_info.get_available_packages()

@@ -3,6 +3,11 @@ import sys
 import os
 import re
 from enum import Enum
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
+
+
+ORANGE = (255, 127, 39)
+RED = (237, 28, 36)
 
 
 class Action(Enum):
@@ -10,6 +15,15 @@ class Action(Enum):
     Down = 'Down'
     Left = 'Left'
     Right = 'Right'
+
+    def __call__(self):
+        return self.value
+
+
+class Range(Enum):
+    In_Range = 0
+    Out_Of_Range = 1
+    Limited_Range = 2
 
     def __call__(self):
         return self.value
@@ -34,7 +48,8 @@ class ErrorMessage(Enum):
     NoTestSelected = 'no test was selected'
     MultipleTestSelection = 'multiple tests are selected'
     EmtpyTestList = 'no test was choosen'
-    TestProgramExists = 'test program name exists already'
+    NoValidTestRange = 'test range is not valid'
+    TemperatureNotValidated = 'temperature(s) could not be validated'
 
     def __call__(self):
         return self.value
@@ -43,9 +58,9 @@ class ErrorMessage(Enum):
 DEFAULT_TEMPERATURE = '25'
 
 
-class TestProgramWizard(QtWidgets.QDialog):
-    def __init__(self, project_info, owner, parent=None, read_only=False, edit_on=True):
-        super().__init__(parent)
+class TestProgramWizard(BaseDialog):
+    def __init__(self, project_info, owner, parent=None, read_only=False, edit_on=True, prog_name=''):
+        super().__init__(__file__)
         self.project_info = project_info
         self.owner = owner
 
@@ -53,24 +68,17 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.selected_tests = []
         self.read_only = read_only
         self.edit_on = edit_on
+        self.prog_name = prog_name
 
         self.current_selected_test = None
         self.result = None
+        self._is_dynamic_range_valid = True
 
-        self._load_ui()
         self._setup()
         self._view()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        ui = __file__.replace('.py', '.ui')
-        uic.loadUi(ui, self)
-
     def _setup(self):
-        # windows setup
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
-
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
         self.setWindowTitle("Test Program Configuration")
 
@@ -88,6 +96,11 @@ class TestProgramWizard(QtWidgets.QDialog):
         from ATE.org.validation import valid_float_regex
         regx = QtCore.QRegExp(valid_float_regex)
         self.positive_float_validator = QtGui.QRegExpValidator(regx, self)
+
+        from ATE.org.validation import valid_integer_regex
+        regx = QtCore.QRegExp(valid_integer_regex)
+        integer_validator = QtGui.QRegExpValidator(regx, self)
+        self.temperature.setValidator(integer_validator)
 
         self.existing_programs = self.project_info.get_programs_for_owner(self.owner)
 
@@ -145,7 +158,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.sequencerType.addItems([Sequencer.Static(), Sequencer.Dynamic()])
         self.temperature.setText(DEFAULT_TEMPERATURE)
 
-        self.availableTests.addItems(self._get_available_tests())
+        self._update_test_list()
         self.Feedback.setText('')
         self.Feedback.setStyleSheet('color:orange')
         self.usertext_feedback.setStyleSheet('color:orange')
@@ -181,8 +194,18 @@ class TestProgramWizard(QtWidgets.QDialog):
     @QtCore.pyqtSlot(int)
     def _sequencer_type_changed(self, index):
         if self.sequencerType.itemText(index) == Sequencer.Static():
+            from ATE.org.validation import valid_integer_regex
+            regx = QtCore.QRegExp(valid_integer_regex)
+            integer_validator = QtGui.QRegExpValidator(regx, self)
+            self.temperature.setValidator(integer_validator)
             self.temperature.setText(DEFAULT_TEMPERATURE)
             return
+
+        from ATE.org.validation import valid_temp_sequence_regex
+        regx = QtCore.QRegExp(valid_temp_sequence_regex)
+        integer_validator = QtGui.QRegExpValidator(regx, self)
+        self.temperature.setValidator(integer_validator)
+        self.temperature.setText(DEFAULT_TEMPERATURE)
 
         self.temperature.setText(f'{DEFAULT_TEMPERATURE},')
 
@@ -201,8 +224,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         self._handle_selection(self.selectedTests, self.availableTests, item)
 
     def _handle_selection(self, selected_list, second_list, item):
-        for index in range(second_list.count()):
-            second_list.item(index).setSelected(False)
+        self._deselect_items(second_list)
 
         if len(selected_list.selectedItems()) > 1:
             self.parametersInput.setRowCount(0)
@@ -211,6 +233,10 @@ class TestProgramWizard(QtWidgets.QDialog):
             return
 
         self._update_tables_parameters(item)
+
+    def _deselect_items(self, selected_list):
+        for index in range(selected_list.count()):
+            selected_list.item(index).setSelected(False)
 
     def _update_tables_parameters(self, item):
         self.current_selected_test = item
@@ -295,9 +321,9 @@ class TestProgramWizard(QtWidgets.QDialog):
             item = self.selectedTests.takeItem(self.selectedTests.currentRow())
             self.parametersInput.setRowCount(0)
             self.parametersOutput.setRowCount(0)
-            self._remove_test(item)
+            self._remove_test(item.text())
 
-        self._verify()
+        self._update_test_list()
 
     @QtCore.pyqtSlot()
     def _add_to_testprogram(self):
@@ -309,52 +335,132 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.selectedTests.addItem(f'{item.text()}')
             self.selected_tests.append(self._generate_test_struct(item.text()))
 
-        self._verify()
+        self._update_test_list()
 
     @QtCore.pyqtSlot(str)
     def _verify_temperature(self, text):
+        self.parametersInput.setRowCount(0)
+        self.parametersOutput.setRowCount(0)
+        self._deselect_items(self.availableTests)
+        self._deselect_items(self.selectedTests)
+
         if not text:
             self.temperature_feedback.setText(ErrorMessage.TemperatureMissed())
-            return
 
         if self.sequencer_type == Sequencer.Static():
-            if self._get_static_temp(text) is None:
+            if not len(self.temperature.text()):
                 self.temperature_feedback.setText(ErrorMessage.InvalidTemperature())
-                return
 
         if self.sequencer_type == Sequencer.Dynamic():
             if self._get_dynamic_temp(text) is None:
                 self.temperature_feedback.setText(ErrorMessage.InvalidTemperature())
-                return
 
-        self.temperature_feedback.setText('')
-        self.OKButton.setEnabled(True)
+        self._update_test_list()
 
-    def _get_static_temp(self, text):
-        try:
-            temp = int(text)
+    def _update_test_list(self):
+        self.availableTests.clear()
+        availabe_tests = self._get_available_tests()
+        self.availableTests.addItems(availabe_tests)
+        for index in range(self.selectedTests.count()):
+            item = self.selectedTests.item(index)
+            item.setForeground(QtCore.Qt.white)
 
-        except ValueError:
-            self.temperature.setText(text[:-1])
-            return None
+        self._update_feedback('')
+        self._is_dynamic_range_valid = True
+        for test in self.selected_tests:
+            test_name = list(test.items())[0][0]
+            self._validate_test(test_name, True)
+            if self.sequencer_type == Sequencer.Dynamic():
+                which_range = self._is_temperature_in_range(test_name, self._get_dynamic_temp(self.temperature.text()))
+                if which_range == Range.Out_Of_Range():
+                    self._set_test_state(test_name, RED)
+                    self._is_dynamic_range_valid = False
 
-        return [temp]
+                if which_range == Range.Limited_Range():
+                    self._set_test_state(test_name, ORANGE)
 
-    # TODO: do we have to support other variant for dynamic temperature input
-    # 25..100 ?
+                continue
+
+            if test_name in availabe_tests:
+                continue
+
+            self._set_test_state(test_name, RED)
+            self._validate_test(test_name, False)
+
+        self._verify()
+        self._is_valid_range()
+
+    def _is_valid_range(self):
+        for test in self.selected_tests:
+            if not list(test.items())[1][1]:
+                self._update_feedback(ErrorMessage.NoValidTestRange())
+                self.OKButton.setEnabled(False)
+                break
+
+    def _set_test_state(self, test_name, color):
+        for index in range(self.selectedTests.count()):
+            item = self.selectedTests.item(index)
+            if item.text() != test_name:
+                continue
+
+            item.setForeground(self._generate_color(color))
+
+    def _validate_test(self, test_name, is_value):
+        for test in self.selected_tests:
+            name = list(test.items())[0][0]
+            if name != test_name:
+                continue
+
+            test['is_valid'] = is_value
+
+    def _remove_from_selected_list_widget(self, test_name):
+        # hack: takeItem changes the size and the index of elements dinamically
+        #       therefore we call this function recursively each time we take out an element
+        again = False
+        for index in range(self.selectedTests.count()):
+            item = self.selectedTests.item(index)
+            if not item:
+                continue
+
+            if item.text() != test_name:
+                continue
+
+            self.selectedTests.takeItem(index)
+            again = True
+            break
+
+        if again:
+            self._remove_from_selected_list_widget(test_name)
+
+    def _validate_temperature_input(self, text, pattern):
+        index = text.rfind(pattern)
+        if index == -1:
+            return
+
+        text_list = list(text)
+        text_list[index] = ''
+        if not text_list[len(text_list) - 1].isdigit():
+            text_list[len(text_list) - 1] = ''
+
+        self.temperature.setText(''.join(text_list))
+
     def _get_dynamic_temp(self, text):
         temp_vars = []
         try:
+            self._validate_temperature_input(text, ',,')
             temps = text.split(',')
             if len(temps) == 0:
                 return None
 
             for i in temps:
+                if i == '-':
+                    return
+
                 if i != '':
                     temp_vars.append(int(i))
 
         except ValueError:
-            self.temperature.setText(text[:-1])
+            self._validate_temperature_input(text, '--')
             return None
 
         return temp_vars
@@ -363,9 +469,26 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.SelectedTests.addItem(f'{self.current_selected_test.text()}: {test}')
 
     def _get_available_tests(self):
-        return self.project_info.get_tests_from_db(self.hardware.currentText(),
-                                                   self.base.currentText(),
-                                                   'custom')  # TODO: test type is missed, we use custon as default
+        available_tests = []
+        tests = self.project_info.get_tests_from_db(self.hardware.currentText(),
+                                                    self.base.currentText())
+
+        if self.sequencerType.currentText() == Sequencer.Static():
+            temps = [int(self.temperature.text())]
+        else:
+            temps = self._get_dynamic_temp(self.temperature.text())
+
+        if temps is None:
+            return tests
+
+        for test in tests:
+            min, max = self.project_info.get_test_temp_limits(test)
+            for temp in temps:
+                if temp > (min - 1) and temp < max + 1 and \
+                   test not in available_tests:
+                    available_tests.append(test)
+
+        return available_tests
 
     def _set_sample_visible_mode(self, is_visible):
         self.sample.setVisible(is_visible)
@@ -388,17 +511,16 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.target_feedback.setText(ErrorMessage.TargetMissed())
             success = False
 
-        if not self.temperature.text():
-            self.temperature_feedback.setText(ErrorMessage.TemperatureMissed())
-            success = False
-
         if not self.selectedTests.count():
             self._update_feedback(ErrorMessage.EmtpyTestList())
             success = False
 
-        # TODO: implement when test-program name specified
-        if self.edit_on and self.program_name in self.existing_programs:
-            self._update_feedback(ErrorMessage.TestProgramExists())
+        if not self._is_dynamic_range_valid:
+            self._update_feedback(ErrorMessage.NoValidTestRange())
+            success = False
+
+        if not self.temperature.text() or not self._is_valid_temperature():
+            self.temperature_feedback.setText(ErrorMessage.TemperatureNotValidated())
             success = False
 
         if success:
@@ -409,6 +531,12 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(True)
         else:
             self.OKButton.setEnabled(False)
+
+    def _is_valid_temperature(self):
+        if self.sequencer_type == Sequencer.Dynamic():
+            return self._get_dynamic_temp(self.temperature.text())
+        else:
+            return self.temperature.text()
 
     @property
     def program_name(self):
@@ -426,6 +554,52 @@ class TestProgramWizard(QtWidgets.QDialog):
 
         self.Feedback.setStyleSheet('')
         self.Feedback.setText('')
+
+    def _is_temperature_in_range(self, test, temps):
+        if temps is None:
+            return Range.In_Range()
+
+        min, max = self.project_info.get_test_temp_limits(test)
+        temps.sort()
+
+        in_range_list = [x for x in temps if x >= min and x <= max]
+
+        if len(in_range_list) == len(temps):
+            return Range.In_Range()
+        elif not len(in_range_list):
+            return Range.Out_Of_Range()
+        else:
+            return Range.Limited_Range()
+
+    def _generate_color(self, color):
+        return QtGui.QBrush(QtGui.QColor(color[0], color[1], color[2]))
+
+    def _item_out_of_range(self, item, color):
+        item.setBackground(self._generate_color(color))
+        item.setForeground(QtCore.Qt.black)
+
+    def _generate_temperature_item(self, fmt):
+        if self.sequencer_type == Sequencer.Static():
+            if not len(self.temperature.text()):
+                temps = []
+            else:
+                temps = [int(self.temperature.text())]
+            text = '' if not len(temps) else self._get_text(temps[0], fmt)
+        else:
+            temps = self._get_dynamic_temp(self.temperature.text())
+            temps.sort()
+            text = '' if temps is None else f"{self._get_text(temps[0], fmt)}..{self._get_text(temps[len(temps) - 1], fmt)}"
+
+        item = QtWidgets.QTableWidgetItem(text)
+        if len(text):
+            which_range = self._is_temperature_in_range(self.current_selected_test.text(), temps)
+            if which_range == Range.Out_Of_Range():
+                self._item_out_of_range(item, RED)
+
+            if which_range == Range.Limited_Range():
+                self._item_out_of_range(item, ORANGE)
+
+        return item
 
     def _fill_input_parameter_table(self):
         self._clear_table_content(self.parametersInput)
@@ -448,7 +622,11 @@ class TestProgramWizard(QtWidgets.QDialog):
                 elif col == 1:
                     item = QtWidgets.QTableWidgetItem(str(self._get_text(value['Min'], fmt)))
                 elif col == 2:
-                    item = self._generate_configurable_table_cell(value['Default'], fmt, 2)
+                    if key == 'Temperature':
+                        item = self._generate_temperature_item(fmt)
+                        item.setFlags(QtCore.Qt.NoItemFlags)
+                    else:
+                        item = self._generate_configurable_table_cell(value['Default'], fmt, 2)
                 elif col == 3:
                     item = QtWidgets.QTableWidgetItem(str(self._get_text(value['Max'], fmt)))
                 elif col == 4:
@@ -591,7 +769,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         import numpy as np
 
         if str(self.output_parameters[param_type]['UTL']) == str(np.nan) and limit != 'UTL' or \
-           str(self.output_parameters[param_type]['LTL']) == str(np.nan) and limut != 'LTL':
+           str(self.output_parameters[param_type]['LTL']) == str(np.nan) and limit != 'LTL':
             return True
 
         if limit == 'LTL':
@@ -637,15 +815,15 @@ class TestProgramWizard(QtWidgets.QDialog):
 
         return selected_tests
 
-    def _remove_test(self, item):
-        index = self._get_test_index(item.text())
+    def _remove_test(self, text):
+        index = self._get_test_index(text)
         if index == -1:
             return
 
         self.selected_tests.pop(index)
 
     def _generate_test_struct(self, test_name):
-        sturct = {test_name: {'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}}}
+        sturct = {test_name: {'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}}, 'is_valid': True}
         parameters = self.project_info.get_test_definiton(test_name)
         inputs = {}
         outputs = {}
@@ -675,16 +853,21 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.selected_tests[index][test_name][type][parameter_name][limit] = value
 
     def _get_configuration(self):
-        configuration = {'name': f'Prog_{self.hardware.currentText()}_{self.base.currentText()}_{self.target.currentText()}_{self.usertext.text()}',
+        count = self.project_info.get_program_owner_element_count(self.owner) + 1
+        prefix = self.owner[0].upper()
+        configuration = {'name': f'{self.hardware.currentText()}_{self.base.currentText()}_{self.target.currentText()}_{prefix}_{str(count)}',
                          'hardware': self.hardware.currentText(),
                          'base': self.base.currentText(),
                          'target': self.target.currentText(),
                          'usertext': self.usertext.text(),
                          'sequencer_type': self.sequencer_type,
-                         'temperature': self.temperature.text(),
+
+                         'temperature': self.temperature.text() if self.sequencer_type == Sequencer.Static()
+                                 else self._get_dynamic_temp(self.temperature.text()),
+
                          'sample': self.sample.suffix()}
 
-        definition = {'sequence': self.selected_tests}
+        definition = {'sequence': [test for test in self.selected_tests if list(test.items())[1][1]]}
 
         return configuration, definition
 
@@ -699,7 +882,7 @@ class TestProgramWizard(QtWidgets.QDialog):
                                              configuration['usertext'], configuration['sequencer_type'], configuration['temperature'],
                                              definition, self.owner, self.project_info.get_program_owner_element_count(self.owner))
         else:
-            self.project_info.update_program(configuration['name'], configuration['hardware'], configuration['base'],
+            self.project_info.update_program(self.prog_name, configuration['hardware'], configuration['base'],
                                              configuration['target'], configuration['usertext'], configuration['sequencer_type'],
                                              configuration['temperature'], definition, self.owner)
 

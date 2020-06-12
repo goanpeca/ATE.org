@@ -9,7 +9,10 @@ import os
 import re
 
 from ATE.org.validation import valid_pcb_name_regex
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
+from ATE.org.plugins.pluginmanager import get_plugin_manager
+from ATE.org.actions_on.hardwaresetup.InstrumentListItem import InstrumentListItem
 import qtawesome as qta
 
 
@@ -17,9 +20,9 @@ PR = 'PR'
 FT = 'FT'
 
 
-class HardwareWizard(QtWidgets.QDialog):
+class HardwareWizard(BaseDialog):
     def __init__(self, project_info):
-        super().__init__()
+        super().__init__(__file__)
         self.project_info = project_info
         self._site = None
         self._pattern_type = None
@@ -27,21 +30,19 @@ class HardwareWizard(QtWidgets.QDialog):
         self._available_pattern = {}
         self._available_definiton = None
         self._selected_available_item = ''
+        self._plugin_manager = get_plugin_manager()
+
+        # These lists store the unique names of
+        # plugin based instruments and actuators
+        self._availableInstruments = []
         self.is_active = True
 
-        self._load_ui()
         self._setup()
         self._connect_event_handler()
         self._verify()
 
-    def _load_ui(self):
-        ui = '.'.join(os.path.realpath(__file__).split('.')[:-1]) + '.ui'
-        uic.loadUi(ui, self)
-
     def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, False)
         self.setFixedSize(self.size())
 
     # hardware
@@ -79,6 +80,16 @@ class HardwareWizard(QtWidgets.QDialog):
         self.tester.addItems([''] + self.project_info.get_available_testers())
         self.tester.setCurrentText('')
 
+        # At this point instruments will be displayed as a plain list
+        # -> in the prototype the instruments where grouped as tree
+        # using the manufacterer of the respective Instrument.
+        # We might need something similar here too, but as of now, the
+        # Plugin API does not provide us with a means of extracting a group
+        instrument_lists = self._plugin_manager.hook.get_instrument_names()
+        for instrument_list in instrument_lists:
+            for instrument in instrument_list:
+                self._append_instrument_to_manufacturer(instrument)
+
     # Parallelism
         self.finaltestConfiguration.setColumnCount(self._max_parallelism_value)
         self.finaltestConfiguration.setRowCount(self._max_parallelism_value)
@@ -103,6 +114,23 @@ class HardwareWizard(QtWidgets.QDialog):
         self.OKButton.setEnabled(False)
         self.CancelButton.setEnabled(True)
 
+    def _get_manufacturer_node(self, manufacterer):
+        for mfg in range(0, self.availableInstruments.topLevelItemCount()):
+            item = self.availableInstruments.topLevelItem(mfg)
+            if item.text(0) == manufacterer:
+                return item
+
+        # Manufacturer does not exist yet, create it and return it:
+        the_manufacturer = QtWidgets.QTreeWidgetItem([manufacterer])
+        self.availableInstruments.addTopLevelItem(the_manufacturer)
+        return the_manufacturer
+
+    def _append_instrument_to_manufacturer(self, instrument):
+        manufacturer = instrument["manufacturer"]
+        manufacturer_node = self._get_manufacturer_node(manufacturer)
+        instrumentNode = InstrumentListItem(manufacturer_node, instrument)
+        manufacturer_node.addChild(instrumentNode)
+
     def _set_icons(self):
         self.right_button.setIcon(qta.icon('mdi.arrow-right-bold', color='orange'))
         self.left_button.setIcon(qta.icon('mdi.arrow-left-bold', color='orange'))
@@ -118,9 +146,6 @@ class HardwareWizard(QtWidgets.QDialog):
         # TODO: move from list to tree for this widget!
 
     # Actuator
-        # TODO: initialize this section
-        self.addActuator.setIcon(qta.icon('mdi.arrow-right-bold', color='orange'))
-        self.removeActuator.setIcon(qta.icon('mdi.arrow-left-bold', color='orange'))
         self.probecardLink.setIcon(qta.icon('mdi.link', color='orange'))
 
     def _connect_event_handler(self):
@@ -154,14 +179,14 @@ class HardwareWizard(QtWidgets.QDialog):
         self.removeInstrument.clicked.connect(self.removingInstrument)
         self.checkInstruments.clicked.connect(self.checkInstrumentUsage)
         self.availableInstruments.itemSelectionChanged.connect(self.availableInstrumentsSelectionChanged)
-        # self.tableWidget.itemSelectionChanged.connect(self.tableWidgetSelectionChanged)
+        self.availableInstruments.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.availableInstruments.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+
+        self.usedInstruments.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.usedInstruments.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
         # Actuator
-        self.addActuator.clicked.connect(self.addingActuator)
-        self.removeActuator.clicked.connect(self.removingActuator)
         self.checkActuators.clicked.connect(self.checkActuatorUsage)
-        self.availableActuators.itemSelectionChanged.connect(self.availableActuatorSelectionChanged)
-        self.usedActuators.itemSelectionChanged.connect(self.usedActuatorSelectionChanged)
 
         # general
         self.CancelButton.clicked.connect(self.CancelButtonPressed)
@@ -522,6 +547,25 @@ class HardwareWizard(QtWidgets.QDialog):
     def _multi_site_dib_value(self, value):
         self.multisiteDIB.setText(value)
 
+    def _collect_instruments(self):
+        retVal = []
+        for row in range(0, self.usedInstruments.rowCount()):
+            item = self.usedInstruments.item(row, 2)
+            retVal.append(item.text())
+        return retVal
+
+    def _collect_actuators(self):
+        retVal = {'PR': [], 'FT': []}
+        for row in range(0, self.usedActuators.rowCount()):
+            actuator_type = self.usedActuators.item(row, 0).text()
+            used_in_probing = self.usedActuators.item(row, 1).checkState() == 2
+            used_in_final = self.usedActuators.item(row, 2).checkState() == 2
+            if used_in_probing:
+                retVal['PR'].append(actuator_type)
+            if used_in_final:
+                retVal['FT'].append(actuator_type)
+        return retVal
+
     def _get_current_configuration(self):
         return {'hardware': self.hardware.text(),
                 'PCB':
@@ -536,8 +580,8 @@ class HardwareWizard(QtWidgets.QDialog):
                  'MaxParallelism': int(self.maxParallelism.currentText())},
                 'Parallelism': self._available_pattern,
                 'tester': self.tester.currentText(),
-                'Actuator': {},
-                'Instruments': {}}
+                'Actuator': self._collect_actuators(),
+                'Instruments': self._collect_instruments()}
 
 # instruments
     def testerChanged(self, new_tester):
@@ -547,20 +591,58 @@ class HardwareWizard(QtWidgets.QDialog):
         print("available Instruments selection changed")
 
     def addingInstrument(self):
-        print("adding instrument")
+        theInstrument = self.availableInstruments.currentItem()
+        if type(theInstrument) is InstrumentListItem:
+            self.__add_instrument(theInstrument)
+
+    def __add_instrument(self, instrument):
+        rowPosition = self.usedInstruments.rowCount()
+        # Don't add the instrument, if it was added before
+        for i in range(0, rowPosition):
+            used_intrument_name = self.usedInstruments.item(i, 2).text()
+            if used_intrument_name == instrument.instrument_data["name"]:
+                return
+
+        self.usedInstruments.insertRow(rowPosition)
+        self.usedInstruments.setItem(rowPosition, 0, QtWidgets.QTableWidgetItem(instrument.instrument_data["display_name"]))
+        self.usedInstruments.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(instrument.instrument_data["manufacturer"]))
+        self.usedInstruments.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(instrument.instrument_data["name"]))
+        for i in range(0, 3):
+            theItem = self.usedInstruments.item(rowPosition, i)
+            theItem.setFlags(theItem.flags() & ~ QtCore.Qt.ItemIsEditable)
+
+    def populate_selected_instruments(self, instrument_list):
+        # The instrumentlist contains just the names of the instrument, we
+        # need to find them in the available instrument lists
+        for i in range(0, self.availableInstruments.topLevelItemCount()):
+            manufacturer_node = self.availableInstruments.topLevelItem(i)
+            for i in range(0, manufacturer_node.childCount()):
+                instrument_node = manufacturer_node.child(i)
+                if type(instrument_node) is InstrumentListItem:
+                    if instrument_node.instrument_data["name"] in instrument_list:
+                        self.__add_instrument(instrument_node)
 
     def removingInstrument(self):
-        print("removing instrument")
+        self.usedInstruments.removeRow(self.usedInstruments.currentRow())
 
     def checkInstrumentUsage(self):
         print("check Instrument Usage")
 
-    def tableWidgetSelectionChanged(self):
-        print("used instruments selection changed")
-
 # Actuator
-    def availableActuatorSelectionChanged(self):
-        print("available Actuator selection changed")
+    def populate_selected_actuators(self, actuator_settings):
+        for row in range(0, self.usedActuators.rowCount()):
+            actuator_type = self.usedActuators.item(row, 0).text()
+            if 'PR' in actuator_settings:
+                if actuator_type in actuator_settings['PR']:
+                    self.usedActuators.item(row, 1).setCheckState(2)
+                else:
+                    self.usedActuators.item(row, 1).setCheckState(0)
+
+            if 'FT' in actuator_settings:
+                if actuator_type in actuator_settings['FT']:
+                    self.usedActuators.item(row, 2).setCheckState(2)
+                else:
+                    self.usedActuators.item(row, 2).setCheckState(0)
 
     def collapseAvailableInstruments(self):
         print("collapse available Instruments")
@@ -568,17 +650,8 @@ class HardwareWizard(QtWidgets.QDialog):
     def expandAvailableInstruments(self):
         print("exapnding available Instruments")
 
-    def addingActuator(self):
-        print("adding Actuator")
-
-    def removingActuator(self):
-        print("removing Actuator")
-
     def checkActuatorUsage(self):
         print("check Actuator Usage")
-
-    def usedActuatorSelectionChanged(self):
-        print("used Actuator selection changed")
 
 # Parallelism
 # General
