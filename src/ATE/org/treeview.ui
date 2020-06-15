@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>224</width>
+    <height>670</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QTreeWidget" name="treeWidget">
+     <column>
+      <property name="text">
+       <string>project</string>
+      </property>
+     </column>
+     <item>
+      <property name="text">
+       <string>documentation</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>New Subitem</string>
+       </property>
+      </item>
+     </item>
+     <item>
+      <property name="text">
+       <string>definitions</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>New Subitem</string>
+       </property>
+      </item>
+     </item>
+     <item>
+      <property name="text">
+       <string>flows</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>production</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>a</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>b</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>c</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>engineering</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>a</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>b</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>c</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>validation</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>a</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>b</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>c</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>characterisation</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>a</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>b</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>c</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>qualification</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>ZMH</string>
+        </property>
+        <property name="toolTip">
+         <string>Zero Hour Measurements</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>F1C</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>F2C</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>F3C</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>F2LAH</string>
+         </property>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>ABSMAX</string>
+        </property>
+        <property name="toolTip">
+         <string>Absolute Maximum Ratings</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>HTOL</string>
+        </property>
+        <property name="toolTip">
+         <string>High Temperature Operating Life</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>1008h</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F1LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LHH</string>
+          </property>
+         </item>
+        </item>
+        <item>
+         <property name="text">
+          <string>2016h</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F1LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LHH</string>
+          </property>
+         </item>
+        </item>
+        <item>
+         <property name="text">
+          <string>3024h</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F1LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LHH</string>
+          </property>
+         </item>
+        </item>
+        <item>
+         <property name="text">
+          <string>4032h</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F1LHH</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LHH</string>
+          </property>
+         </item>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>ESD</string>
+        </property>
+        <property name="toolTip">
+         <string>Electro Static Discharge</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>HBM</string>
+         </property>
+         <property name="toolTip">
+          <string>Human Body Model</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHA</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LAA</string>
+          </property>
+         </item>
+        </item>
+        <item>
+         <property name="text">
+          <string>CDM</string>
+         </property>
+         <property name="toolTip">
+          <string>Charged Device Model</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>F3LHA</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>F2LAA</string>
+          </property>
+         </item>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>LU</string>
+        </property>
+        <property name="toolTip">
+         <string>Latch Up</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>New Subitem</string>
+         </property>
+        </item>
+       </item>
+      </item>
+     </item>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
