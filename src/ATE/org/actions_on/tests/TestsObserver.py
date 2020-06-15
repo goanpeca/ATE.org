@@ -30,7 +30,11 @@ class EventHandler(EventHandlerBase):
             return
 
         file_name = os.path.basename(os.path.splitext(path)[0])
-        child = self.section_root.get_child(file_name)
+        if '_' in file_name and '_BC' not in file_name:
+            child = self.section_root.get_child(file_name.split('_')[0]).get_child(file_name)
+        else:
+            child = self.section_root.get_child(file_name)
+
         row = child.row()
         cloned_child = self.section_root.takeChild(row)
         self.section_root.removeRow(row)

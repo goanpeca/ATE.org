@@ -175,7 +175,8 @@ class TestProgramWizard(BaseDialog):
             existing_targets = self.project_info.get_devices_for_hardware(self.hardware.currentText())
 
         self.target.addItems(existing_targets)
-        self.target.setCurrentIndex(0)
+        current_target_index = self.target.findText(self.project_info.active_target, QtCore.Qt.MatchExactly)
+        self.target.setCurrentIndex(current_target_index)
 
     @QtCore.pyqtSlot(str)
     def _usertext_changed(self, text):
@@ -205,7 +206,6 @@ class TestProgramWizard(BaseDialog):
         regx = QtCore.QRegExp(valid_temp_sequence_regex)
         integer_validator = QtGui.QRegExpValidator(regx, self)
         self.temperature.setValidator(integer_validator)
-        self.temperature.setText(DEFAULT_TEMPERATURE)
 
         self.temperature.setText(f'{DEFAULT_TEMPERATURE},')
 
@@ -852,10 +852,14 @@ class TestProgramWizard(BaseDialog):
         else:
             self.selected_tests[index][test_name][type][parameter_name][limit] = value
 
-    def _get_configuration(self):
+    def _generate_target_prefix(self):
         count = self.project_info.get_program_owner_element_count(self.owner) + 1
         prefix = self.owner[0].upper()
-        configuration = {'name': f'{self.hardware.currentText()}_{self.base.currentText()}_{self.target.currentText()}_{prefix}_{str(count)}',
+        return f"{self.target.currentText()}_{prefix}_{str(count)}"
+
+    def _get_configuration(self):
+        self.target_prefix = self._generate_target_prefix()
+        configuration = {'name': f'{self.hardware.currentText()}_{self.base.currentText()}_{self.target_prefix}',
                          'hardware': self.hardware.currentText(),
                          'base': self.base.currentText(),
                          'target': self.target.currentText(),
@@ -867,7 +871,11 @@ class TestProgramWizard(BaseDialog):
 
                          'sample': self.sample.suffix()}
 
-        definition = {'sequence': [test for test in self.selected_tests if list(test.items())[1][1]]}
+        definition = {'sequence': []}
+        for test in self.selected_tests:
+            # pop the "is_valid"-flag out, as it is not needed any more
+            test.pop('is_valid', None)
+            definition['sequence'].append(test)
 
         return configuration, definition
 
@@ -880,11 +888,12 @@ class TestProgramWizard(BaseDialog):
         if not self.read_only and self.edit_on:
             self.project_info.insert_program(configuration['name'], configuration['hardware'], configuration['base'], configuration['target'],
                                              configuration['usertext'], configuration['sequencer_type'], configuration['temperature'],
-                                             definition, self.owner, self.project_info.get_program_owner_element_count(self.owner))
+                                             definition, self.owner, self.project_info.get_program_owner_element_count(self.owner), self.target_prefix)
         else:
+            target_name = self.target.currentText() + '_' + self.owner[0].upper() + '_' + self.prog_name[-1]
             self.project_info.update_program(self.prog_name, configuration['hardware'], configuration['base'],
                                              configuration['target'], configuration['usertext'], configuration['sequencer_type'],
-                                             configuration['temperature'], definition, self.owner)
+                                             configuration['temperature'], definition, self.owner, target_name)
 
         self.accept()
 

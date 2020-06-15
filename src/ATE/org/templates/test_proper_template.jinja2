@@ -13,15 +13,15 @@ class {{ definition['name'] }}({{ definition['name'] }}_BC):
     {% for i in range(1, definition['doc_string'].__len__()) %}
     {{ definition['doc_string'][i] }}
     {% endfor %}
-    '''
 
     {% for line in input_parameter_table %}
-    # {{ line }}
+    {{ line }}
     {% endfor%}
 
     {% for line in output_parameter_table %}
-    # {{ line }}
+    {{ line }}
     {% endfor %}
+    '''
 
     def do(self, ip, op):
         """Default implementation for the '{{ definition['name'] }}' test."""

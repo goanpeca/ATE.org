@@ -883,3 +883,30 @@ if __name__ == '__main__':
     test_generator(project_path, test_definition)
     test_definition['base'] = 'PR'
     test_generator(project_path, test_definition)
+
+
+class test_target_generator(test_proper_generator):
+    """Generator for the Test Class."""
+
+    def __init__(self, project_path, definition):
+        super().__init__(project_path, definition)
+
+    def _generate_relative_path(self):
+        hardware = self.definition['hardware']
+        base = self.definition['base']
+        base_class = self.definition['base_class']
+
+        return os.path.join('src', hardware, base, base_class)
+
+    def _generate_render_data(self, abs_path=''):
+        return {'module_doc_string': prepare_module_docstring(),
+                'input_parameter_table': prepare_input_parameters_table(self.definition['input_parameters']),
+                'output_parameter_table': prepare_output_parameters_table(self.definition['output_parameters']),
+                'definition': self.definition}
+
+    def _render(self, template, render_data):
+        return template.render(module_doc_string=render_data['module_doc_string'],
+                               input_parameter_table=render_data['input_parameter_table'],
+                               output_parameter_table=render_data['output_parameter_table'],
+                               definition=self.definition)
+

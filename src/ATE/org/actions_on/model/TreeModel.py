@@ -43,8 +43,13 @@ class TreeModel(QtGui.QStandardItemModel):
         if table_id == TableIds.Flow():
             self.flows.update()
 
-        if table_id == TableIds.Test():
+        # TODO: update the test section musst be done differently to prevent collapsing
+        #       child-items
+        if table_id == TableIds.NewTest():
             self.tests_section.update()
+
+        if table_id == TableIds.Test():
+            self._update_tests()
 
         if table_id == TableIds.Die() or \
            table_id == TableIds.Device():
@@ -67,6 +72,14 @@ class TreeModel(QtGui.QStandardItemModel):
         self.itemChanged.connect(lambda item: self._update(item, self.hardware, self.base, self.target))
         self.project_info.database_changed.connect(self.on_db_change)
         self.project_info.toolbar_changed.connect(self.apply_toolbar_change)
+        self.project_info.select_target.connect(self._update_test_items)
+        self.project_info.select_base.connect(self._update_test_section)
+        self.project_info.select_hardware.connect(self._update_test_items_hw_changed)
+        self.project_info.test_target_deleted.connect(self._remove_test_target_item)
+
+    @QtCore.pyqtSlot(str)
+    def _update_test_section(self, base):
+        self.tests_section.update()
 
     @QtCore.pyqtSlot(str, str, str)
     def apply_toolbar_change(self, hardware, base, target):
@@ -241,6 +254,50 @@ class TreeModel(QtGui.QStandardItemModel):
         self.root_item.appendRow(self.tests_section)
 
     def _update_tests(self):
+        if not self.tests_section.is_enabled():
+            self.tests_section.update()
+
+        self._update_test_items(self.project_info.active_target)
+
+    @QtCore.pyqtSlot(str)
+    def _update_test_items(self, text):
+        for index in range(self.tests_section.rowCount()):
+            item = self.tests_section.child(index)
+
+            available_test_targets_for_current_test_item = item.get_available_test_targets()
+            actual_test_targets_for_current_test_item = item.get_children()
+            new_items = list(set(available_test_targets_for_current_test_item) - set(actual_test_targets_for_current_test_item))
+
+            for new_item in new_items:
+                item.add_target_item(new_item)
+
+            for test_target_index in range(item.rowCount()):
+                test_target_item = item.child(test_target_index)
+                if test_target_item is None:
+                    continue
+
+                test_target_item.update_state(text)
+
+    @QtCore.pyqtSlot(str, str)
+    def _remove_test_target_item(self, target_name, test_name):
+        for index in range(self.tests_section.rowCount()):
+            test_item = self.tests_section.child(index)
+            if test_item.text() != test_name:
+                continue
+
+            for test_target_index in range(test_item.rowCount()):
+                test_target_item = test_item.child(test_target_index)
+                if target_name != test_target_item.text():
+                    continue
+
+                test_target_item.clean_up()
+                test_item.removeRow(test_target_index)
+
+    @QtCore.pyqtSlot(str)
+    def _update_test_items_hw_changed(self, hardware):
+        for index in range(self.tests_section.rowCount()):
+            self.tests_section.takeChild(index)
+
         self.tests_section.update()
 
     def set_tree_items_state(self, name, dependency_list, enabled):

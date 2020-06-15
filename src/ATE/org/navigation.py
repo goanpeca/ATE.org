@@ -9,8 +9,6 @@ import os
 import platform
 import sqlite3
 import pickle
-import shutil
-from pathlib import Path as create_file
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -30,7 +28,11 @@ class ProjectNavigation(QObject):
     hardware_activated = pyqtSignal(str)
     hardware_removed = pyqtSignal(str)
     update_target = pyqtSignal()
+    select_target = pyqtSignal(str)
+    select_base = pyqtSignal(str)
+    select_hardware = pyqtSignal(str)
     update_settings = pyqtSignal(str, str, str)
+    test_target_deleted = pyqtSignal(str, str)
 
     verbose = True
 
@@ -301,6 +303,21 @@ class ProjectNavigation(QObject):
 
                          PRIMARY KEY("name"),
                          FOREIGN KEY("hardware") REFERENCES "hardwares"("name")
+                         );''')
+
+        # test_targets
+        self.cur.execute('''CREATE TABLE "test_targets" (
+                         "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+                         "name"	TEXT NOT NULL,
+                         "hardware"	TEXT NOT NULL,
+                         "base"	TEXT NOT NULL
+                               CHECK(base=='PR' OR base=='FT'),
+                         "test" TEXT NOT NULL,
+                         "is_default" BOOL,
+                         "is_enabled" BOOL,
+
+                         FOREIGN KEY("hardware") REFERENCES "hardwares"("name")
+                         FOREIGN KEY("test") REFERENCES "tests"("name")
                          );''')
         self.con.commit()
 
@@ -1202,7 +1219,7 @@ class ProjectNavigation(QObject):
 
         self.cur.execute(query, (name, hardware, base, test_type, blob, is_enabled))
         self.con.commit()
-        self.database_changed.emit(TableId.Test())
+        self.database_changed.emit(TableId.NewTest())
 
     def update_custom_test(self, name, hardware, base, type, definition, is_enabled=True):
         query = '''REPLACE INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
@@ -1365,11 +1382,15 @@ class ProjectNavigation(QObject):
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def insert_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name, order):
+    def insert_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name, order, test_target):
         query = '''INSERT INTO programs (prog_name, owner_name, prog_order, hardware, base, target, usertext, sequencer_type, temperature) VALUES(?,?,?,?,?,?,?,?,?)'''
         self.cur.execute(query, (name, owner_name, order, hardware, base, target, usertext, sequencer_typ, pickle.dumps(temperature)))
 
         self._insert_sequence_informations(owner_name, name, definition)
+
+        for index, test in enumerate(definition['sequence']):
+            self.add_test_target(test_target, hardware, base, list(test.items())[0][0], True, False)
+
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
@@ -1380,15 +1401,33 @@ class ProjectNavigation(QObject):
             blob = pickle.dumps(tuple_test[0][1], 4)
             self.cur.execute(seq_query, (owner_name, prog_name, tuple_test[0][0], index, blob))
 
-    def update_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name):
+    def update_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name, test_target):
         query = '''UPDATE programs set hardware=?, base=?, target=?, usertext=?, sequencer_type=?, temperature=? WHERE owner_name=? and prog_name=?'''
         self.cur.execute(query, (hardware, base, target, usertext, sequencer_typ, pickle.dumps(temperature), owner_name, name))
 
+        self._update_test_targets_list(test_target, hardware, base, definition)
         self._delete_program_sequence(name, owner_name)
-
         self._insert_sequence_informations(owner_name, name, definition)
+
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
+
+    def _update_test_targets_list(self, test_target, hardware, base, definition):
+        tests = []
+        for test in definition['sequence']:
+            test.pop('is_valid', None)
+            test_name = list(test.items())[0][0]
+            tests.append(test_name)
+
+        existing_test_targets = self.get_tests_for_test_target(test_target, hardware, base)
+
+        for test_name in existing_test_targets:
+            if test_name not in tests:
+                self.remove_test_target(test_target, test_name, hardware, base)
+
+        for test_name in tests:
+            if test_name not in existing_test_targets:
+                self.add_test_target(test_target, hardware, base, test_name, True, False)
 
     def _delete_program_sequence(self, prog_name, owner_name):
         seq_query = '''DELETE FROM sequence WHERE prog_name=? and owner_name=?'''
@@ -1516,7 +1555,10 @@ class ProjectNavigation(QObject):
         retval.update({"target": row[2]})
         retval.update({"usertext": row[3]})
         retval.update({"sequencer_type": row[4]})
-        retval.update({"temperature": ','.join(str(x) for x in pickle.loads(row[5]))})
+        if row[4] == 'Fixed Temperature':
+            retval.update({"temperature": str(pickle.loads(row[5]))})
+        else:
+            retval.update({"temperature": ','.join(str(x) for x in pickle.loads(row[5]))})
 
         return retval
 
@@ -1575,6 +1617,79 @@ class ProjectNavigation(QObject):
             retval.setdefault(row[1], []).append(row[0])
 
         return retval
+
+    def add_test_target(self, name, hardware, base, test, is_default, is_enabled=False):
+        query_select = '''SELECT name from test_targets WHERE hardware = ? and base = ? and test = ? and name = ?'''
+        self.cur.execute(query_select, (hardware, base, test, name))
+        data = self.cur.fetchall()
+        print(data)
+        if len(data):
+            # TODO: if test target exists already
+            # what should we do in this case ?
+            # just ignore it and return with no error ?
+            print("target exists already")
+            return
+
+        query = '''INSERT INTO test_targets (name, hardware, base, test, is_default, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
+        self.cur.execute(query, (name, hardware, base, test, is_default, is_enabled))
+        self.con.commit()
+        self.database_changed.emit(TableId.Test())
+
+    def remove_test_target(self, name, test, hardware, base):
+        query = '''DELETE FROM test_targets WHERE name = ? and test = ? and hardware = ? and base = ?'''
+        self.cur.execute(query, (name, test, hardware, base))
+        self.con.commit()
+        self.test_target_deleted.emit(name, test)
+
+    def set_test_target_default_state(self, name, hardware, base, test, is_default):
+        if not is_default:
+            self._generate_test_target_file(name, test)
+
+        query = '''UPDATE test_targets SET is_default = ? WHERE name = ? and test = ? and hardware = ? and base = ?'''
+        self.cur.execute(query, (is_default, name, test, hardware, base))
+        self.con.commit()
+        self.database_changed.emit(TableId.TestItem())
+
+    def set_test_target_state(self, name, hardware, base, test, is_enabled):
+        query = '''UPDATE test_targets SET is_enabled = ? WHERE name = ? and test = ? and hardware = ? and base = ?'''
+        self.cur.execute(query, (is_enabled, name, test, hardware, base))
+        self.con.commit()
+
+    def is_test_target_set_to_default(self, name, hardware, base, test):
+        query = '''SELECT is_default FROM test_targets WHERE name = ? and test = ? and hardware = ? and base = ?'''
+        self.cur.execute(query, (name, test, hardware, base))
+        return self.cur.fetchone()[0]
+
+    def get_available_test_targets(self, hardware, base, test):
+        query = '''SELECT name FROM test_targets WHERE hardware = ? and base = ? and test = ?'''
+        retval = []
+        self.cur.execute(query, (hardware, base, test))
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+
+        return retval
+
+    def get_tests_for_test_target(self, target, hardware, base):
+        query = '''SELECT test FROM test_targets WHERE hardware = ? and base = ? and name = ?'''
+        retval = []
+        self.cur.execute(query, (hardware, base, target))
+        for row in self.cur.fetchall():
+            retval.append(row[0])
+
+        return retval
+
+    # TODO: use following arguments after fixing test behaviour (hardware, base)
+    def _generate_test_target_file(self, target_name, test):
+        query = '''SELECT hardware, base, definition  FROM tests WHERE name = ?'''
+        self.cur.execute(query, (test,))
+        test_definition = self.cur.fetchone()
+        definition = pickle.loads(test_definition[2])
+        definition['hardware'] = test_definition[0]
+        definition['base'] = test_definition[1]
+        definition['name'] = target_name
+        definition['base_class'] = test
+        from ATE.org.coding.generators import test_target_generator
+        test_target_generator(self.project_directory, definition)
 
     def get_available_testers(self):
         # TODO: implement once the pluggy stuff is in place.
