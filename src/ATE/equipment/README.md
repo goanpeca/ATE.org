@@ -1,4 +1,4 @@
-# ATE/eaquipment
+# ATE/equipment
 
 An `equipment` is defined in the first place as the `Test Cell Controller` (TCC), which implementation you find in this directory.
 All the elements in a `Test Cell` are covered by the entries:
