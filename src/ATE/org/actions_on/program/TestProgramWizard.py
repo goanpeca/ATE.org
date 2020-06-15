@@ -244,16 +244,26 @@ class TestProgramWizard(BaseDialog):
         self.input_parameters = parameters['input_parameters']
         self.output_parameters = parameters['output_parameters']
 
-        # update table content if content already changed
+        # update table content if content changed
         if item.text() in self._selected_tests_list and \
            len(self.selectedTests.selectedItems()):
             test = self.selected_tests[self.selectedTests.currentRow()]
             input_params = list(test[item.text()]['input_parameters'].items())
             for param in input_params:
+                # hack to prevent using a key value that may not exists any more,
+                # when we edit the parameter names for the respective test
+                if not self.input_parameters.get(param[0]):
+                    continue
+
                 self.input_parameters[param[0]]['Default'] = param[1]
 
             output_params = list(test[item.text()]['output_parameters'].items())
             for param in output_params:
+                # hack to prevent using a key value that may not exists any more,
+                # when we edit the parameter names for the respective test
+                if not self.output_parameters.get(param[0]):
+                    continue
+
                 self.output_parameters[param[0]]['LTL'], self.output_parameters[param[0]]['UTL'] = \
                     test[item.text()]['output_parameters'][param[0]]['LTL'], \
                     test[item.text()]['output_parameters'][param[0]]['UTL']
