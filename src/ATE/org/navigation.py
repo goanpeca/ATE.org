@@ -301,7 +301,7 @@ class ProjectNavigation(QObject):
                          "definition"	BLOB NOT NULL,
                          "is_enabled" BOOL,
 
-                         PRIMARY KEY("name"),
+                         PRIMARY KEY("name", "hardware", "base"),
                          FOREIGN KEY("hardware") REFERENCES "hardwares"("name")
                          );''')
 
@@ -1309,8 +1309,8 @@ class ProjectNavigation(QObject):
         if test_type == 'all':
             # query = '''SELECT name FROM tests WHERE hardware = ? AND base = ?'''
             # TODO: remove this until we set primary keys correctly
-            query = '''SELECT name FROM tests WHERE base = ?'''
-            self.cur.execute(query, (base,))
+            query = '''SELECT name FROM tests WHERE base = ? and hardware = ?'''
+            self.cur.execute(query, (base, hardware))
         elif test_type in ('standard', 'custom'):
             # query = '''SELECT name FROM tests WHERE hardware = ? AND base = ? AND type = ?'''
             # TODO: remove this until we set primary keys correctly

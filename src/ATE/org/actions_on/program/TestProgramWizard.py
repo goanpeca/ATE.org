@@ -609,9 +609,9 @@ class TestProgramWizard(BaseDialog):
         row = 0
         for key, value in self.input_parameters.items():
             for col in range(self.parametersInput.columnCount()):
-                parameter_name = self.parametersInput.item(row, 0)
+                parameter_name = list(self.input_parameters.items())[row][0]
                 if parameter_name:
-                    fmt = self.input_parameters[parameter_name.text()]['fmt']
+                    fmt = self.input_parameters[parameter_name]['fmt']
 
                 if col == 0:
                     name_item = QtWidgets.QTableWidgetItem(key)
@@ -655,14 +655,14 @@ class TestProgramWizard(BaseDialog):
         self.parametersOutput.setRowCount(len(self.output_parameters))
         self.parametersOutput.setColumnCount(7)
         row = 0
-        header = self.parametersInput.horizontalHeader()
+        header = self.parametersOutput.horizontalHeader()
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
         for key, value in self.output_parameters.items():
             for col in range(self.parametersOutput.columnCount()):
-                parameter_name = self.parametersOutput.item(row, 0)
+                parameter_name = list(self.output_parameters.items())[row][0]
                 if parameter_name:
-                    fmt = self.output_parameters[parameter_name.text()]['fmt']
+                    fmt = self.output_parameters[parameter_name]['fmt']
 
                 if col == 0:
                     name_item = QtWidgets.QTableWidgetItem(key)

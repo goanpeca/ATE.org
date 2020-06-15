@@ -1484,10 +1484,15 @@ class TestWizard(BaseDialog):
 
         # 6. Check if the test name holds the word 'Test' in any form
         if self.Feedback.text() == "":
-            if not is_valid_test_name(self.TestName.text()):
+            test_name = self.TestName.text()
+            if not is_valid_test_name(test_name):
                 fb = "The test name can not contain the word 'TEST' in any form!"
                 self.Feedback.setText(fb)
-        #
+
+            # if self._does_test_exists(test_name):
+            #     fb = "test name exists already"
+            #     self.Feedback.setText(fb)
+
         # TODO: Enable again
         # 7. Check if the test name already exists
         # if self.Feedback.text() == "":
@@ -1505,18 +1510,19 @@ class TestWizard(BaseDialog):
         #         self.Feedback.setText(f"Describe the test in at least {minimal_docstring_length} characters (spaces don't count, you have {docstring_length} characters)")
 
         # 9. Check the input parameters
-        if self.Feedback.text() == "":
-            pass
-
         # 10. Check the output parameters
-        if self.Feedback.text() == "":
-            pass
-
         # 11. Enable/disable the OKButton
         if self.Feedback.text() == "":
             self.OKButton.setEnabled(True)
         else:
             self.OKButton.setEnabled(False)
+
+    def _does_test_exists(self, test_name):
+        tests = self.project_info.get_tests_from_db(self.ForHardwareSetup.text(), self.WithBase.text())
+        if test_name in tests:
+            return True
+
+        return False
 
     def CancelButtonPressed(self):
         self.definition = {}
