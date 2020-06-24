@@ -1,9 +1,10 @@
 import { InputConfiguration } from './../../basic-ui-elements/input/input-config';
-import { Component, OnInit, Input, OnChanges } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CheckboxConfiguration } from './../../basic-ui-elements/checkbox/checkbox-config';
 import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
 import { CardConfiguration, CardStyle } from 'src/app/basic-ui-elements/card/card.component';
-import { SystemStatus, SystemState } from '../../system-status';
+import { SystemState } from '../../system-status';
+import { CommunicationService } from './../../services/websocket/communication.service';
 
 export enum TestOptionLabelText {
   stopOnFail = 'Stop on Fail',
@@ -66,8 +67,8 @@ export class TestOption {
   templateUrl: './test-option.component.html',
   styleUrls: ['./test-option.component.scss']
 })
-export class TestOptionComponent implements OnInit, OnChanges {
-  @Input() systemStatus: SystemStatus = new SystemStatus();
+export class TestOptionComponent implements OnInit {
+  systemState: SystemState;
 
   testOptions: Array<TestOption>;
 
@@ -86,7 +87,7 @@ export class TestOptionComponent implements OnInit, OnChanges {
   applyTestOptionButtonConfig: ButtonConfiguration;
   resetOptionButtonConfig: ButtonConfiguration;
 
-  constructor() {
+  constructor(private readonly communicationService: CommunicationService) {
     this.stopOnFailOption = new TestOption('stop_on_fail');
     this.singleStepOption = new TestOption('single_step');
     this.stopAtTestNumberOption = new TestOption('stop_at_test_number');
@@ -106,6 +107,18 @@ export class TestOptionComponent implements OnInit, OnChanges {
     this.testOptions.push(this.triggerForTestNumberOption);
     this.testOptions.push(this.triggerOnFailureOption);
     this.testOptions.push(this.triggerSiteSpecificOption);
+
+    this.systemState = SystemState.connecting;
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
+
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemState !== serverMessage.payload.state) {
+        this.systemState = serverMessage.payload.state;
+        this.updateTestOptionConfigs();
+      }
+    }
   }
 
   ngOnInit() {
@@ -129,17 +142,15 @@ export class TestOptionComponent implements OnInit, OnChanges {
       cardStyle: CardStyle.COLUMN_STYLE,
       labelText: 'Options'
     };
-  }
 
-  ngOnChanges(): void {
     this.updateTestOptionConfigs();
   }
 
   private updateTestOptionConfigs() {
     this.testOptions.forEach(o => {
-      o.checkboxConfig.disabled = this.systemStatus.state !== SystemState.ready;
+      o.checkboxConfig.disabled = this.systemState !== SystemState.ready;
     });
-    if (this.systemStatus.state !== SystemState.ready) {
+    if (this.systemState !== SystemState.ready) {
       this.stopAtTestNumberOption.inputConfig.disabled = true;
       this.triggerForTestNumberOption.inputConfig.disabled = true;
       this.resetTestOptions();
@@ -175,7 +186,8 @@ export class TestOptionComponent implements OnInit, OnChanges {
         });
       }
     });
-    console.log('Have to send ' + JSON.stringify(dataToSend) + ' have to implement websocket servivce for sending');
+    console.log('Have to send ' + JSON.stringify(dataToSend) + ' have to implement websocket service for sending');
+    this.communicationService.send(JSON.stringify(dataToSend));
   }
 
   resetTestOptions() {

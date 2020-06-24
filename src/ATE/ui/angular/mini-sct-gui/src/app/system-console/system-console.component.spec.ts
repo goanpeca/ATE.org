@@ -1,6 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ButtonComponent } from './../basic-ui-elements/button/button.component';
 import { SystemConsoleComponent, IConsoleData } from './system-console.component';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('SystemConsoleComponent', () => {
   let msg: IConsoleData;
@@ -9,7 +10,8 @@ describe('SystemConsoleComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SystemConsoleComponent ]
+      declarations: [ SystemConsoleComponent, ButtonComponent ],
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   }));

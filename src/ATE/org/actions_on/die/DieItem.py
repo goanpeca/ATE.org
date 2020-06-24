@@ -17,7 +17,6 @@ class DieItem(BaseItem):
 
     def _create_child(self, name, parent):
         return DieItemChild(self.project_info, name, parent)
-
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
 

@@ -1,32 +1,31 @@
 <!-- error state -->
-<div *ngIf="visiable">
-    <div class="error" *ngIf="systemStatus.state === mySystemState.error">
-        <button class="btn-close" type="button" (click)="visiable = false">&times;</button>
+<div *ngIf="showError()">
+    <div class="error">
         <h3>{{systemStatus.reason}}</h3>
     </div>
 </div>
 
-<!-- deviders -->
+<!-- dividers -->
 <hr class="blueDivider">
 
 <!-- System Information -->
 <app-card [cardConfiguration]="informationCardConfiguration">
   <!-- connecting state -->
-  <div *ngIf="systemStatus.state === mySystemState.connecting">
+  <div *ngIf="systemStatus.state === systemState.connecting; else systemStateIsNotConnecting">
     <app-card [cardConfiguration]="identifyCardConfiguration">  
       <div class="warn"><strong>Identifying Test System!</strong></div>
     </app-card>
   </div>
       
   <!-- system information -->
-  <div *ngIf="systemStatus.state !> mySystemState.error">
+  <ng-template #systemStateIsNotConnecting>
     <app-card [cardConfiguration]="infoContentCardConfiguration">
-      <app-infomation [informationConfig]="sytemInformationConfiguration"></app-infomation>
-      <app-infomation [informationConfig]="numberOfSitesConfiguration"></app-infomation>
-      <app-infomation [informationConfig]="timeInformationConfiguration"></app-infomation>
-      <app-infomation [informationConfig]="environmentInformationConfiguration"></app-infomation>
-      <app-infomation [informationConfig]="handlerInformationConfiguration"></app-infomation>
+      <app-information [informationConfig]="systemInformationConfiguration"></app-information>
+      <app-information [informationConfig]="numberOfSitesConfiguration"></app-information>
+      <app-information [informationConfig]="timeInformationConfiguration"></app-information>
+      <app-information [informationConfig]="environmentInformationConfiguration"></app-information>
+      <app-information [informationConfig]="handlerInformationConfiguration"></app-information>
     </app-card>
-  </div>  
+  </ng-template>  
 </app-card>
 

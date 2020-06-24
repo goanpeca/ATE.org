@@ -109,6 +109,19 @@ class ProjectNavigation(QObject):
             print(f"project grade = '{self.project_quality}'")
             print(f"project db file = '{self.db_file}'")
 
+        if self.verbose:
+            print(f"operating system = '{self.os}'")
+            print(f"user = '{self.user}'")
+            print(f"desktop path = '{self.desktop_path}'")
+            print(f"template path = '{self.template_directory}'")
+            print(f"project path = '{self.project_directory}'")
+            print(f"active target = '{self.active_target}'")
+            print(f"active hardware = '{self.active_hardware}'")
+            print(f"active base = '{self.active_base}'")
+            print(f"project name = '{self.project_name}'")
+            print(f"project grade = '{self.project_quality}'")
+            print(f"project db file = '{self.db_file}'")
+
     def update_toolbar_elements(self, active_hardware, active_base, active_target):
         self.active_hardware = active_hardware
         self.active_base = active_base
@@ -292,7 +305,8 @@ class ProjectNavigation(QObject):
 
         # tests
         self.cur.execute('''CREATE TABLE "tests" (
-                         "name"	TEXT NOT NULL UNIQUE,
+                         "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+                         "name"	TEXT NOT NULL,
                          "hardware"	TEXT NOT NULL,
                          "type"	TEXT NOT NULL
                                CHECK(type=='standard' OR type=='custom'),
@@ -301,7 +315,6 @@ class ProjectNavigation(QObject):
                          "definition"	BLOB NOT NULL,
                          "is_enabled" BOOL,
 
-                         PRIMARY KEY("name", "hardware", "base"),
                          FOREIGN KEY("hardware") REFERENCES "hardwares"("name")
                          );''')
 
@@ -1222,10 +1235,10 @@ class ProjectNavigation(QObject):
         self.database_changed.emit(TableId.NewTest())
 
     def update_custom_test(self, name, hardware, base, type, definition, is_enabled=True):
-        query = '''REPLACE INTO tests(name, hardware, base, type, definition, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
+        query = '''UPDATE tests SET definition = ?, is_enabled = ? WHERE name = ? and hardware = ? and base = ?'''
         blob = pickle.dumps(definition, 4)
 
-        self.cur.execute(query, (name, hardware, base, type, blob, is_enabled))
+        self.cur.execute(query, (blob, is_enabled, name, hardware, base))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 
@@ -1260,9 +1273,9 @@ class ProjectNavigation(QObject):
                             raise Exception('unknown test type !!!')
         return retval
 
-    def get_test_definition(self, name):
-        get_blob_query = '''SELECT hardware, type, base, definition FROM tests WHERE name = ?'''
-        self.cur.execute(get_blob_query, (name,))
+    def get_test_definition(self, name, hardware, base):
+        get_blob_query = '''SELECT hardware, type, base, definition FROM tests WHERE name = ? and hardware = ? and base = ?'''
+        self.cur.execute(get_blob_query, (name, hardware, base))
         definition = {}
         retval = self.cur.fetchone()
         definition['name'] = name
@@ -1291,8 +1304,8 @@ class ProjectNavigation(QObject):
 
         return pickle.loads(definiton[0])
 
-    def get_test_temp_limits(self, name):
-        test = self.get_test_definition(name)
+    def get_test_temp_limits(self, name, hardware, base):
+        test = self.get_test_definition(name, hardware, base)
         temp = test['input_parameters']['Temperature']
         return int(temp['Min']), int(temp['Max'])
 
@@ -1389,7 +1402,8 @@ class ProjectNavigation(QObject):
         self._insert_sequence_informations(owner_name, name, definition)
 
         for index, test in enumerate(definition['sequence']):
-            self.add_test_target(test_target, hardware, base, list(test.items())[0][0], True, False)
+            base_test_name = list(test.items())[0][0].split('_')[0]
+            self.add_test_target(test_target, hardware, base, base_test_name, True, False)
 
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
@@ -1416,7 +1430,7 @@ class ProjectNavigation(QObject):
         tests = []
         for test in definition['sequence']:
             test.pop('is_valid', None)
-            test_name = list(test.items())[0][0]
+            test_name = list(test.items())[0][0].split('_')[0]
             tests.append(test_name)
 
         existing_test_targets = self.get_tests_for_test_target(test_target, hardware, base)
@@ -1622,7 +1636,6 @@ class ProjectNavigation(QObject):
         query_select = '''SELECT name from test_targets WHERE hardware = ? and base = ? and test = ? and name = ?'''
         self.cur.execute(query_select, (hardware, base, test, name))
         data = self.cur.fetchall()
-        print(data)
         if len(data):
             # TODO: if test target exists already
             # what should we do in this case ?

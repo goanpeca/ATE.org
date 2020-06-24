@@ -12,7 +12,11 @@ class ViewTestProgramWizard(TestProgramWizard):
         self.base.clear()
         self.target.clear()
         self.sequencerType.clear()
+        self.hardware.setEnabled(False)
+        self.base.setEnabled(False)
+        self.target.setEnabled(False)
         self.usertext.setEnabled(False)
+        self.sequencerType.setEnabled(False)
         self.temperature.setEnabled(False)
         self.sample.setEnabled(False)
         self.parametersInput.setEnabled(False)
@@ -26,10 +30,11 @@ class ViewTestProgramWizard(TestProgramWizard):
 
     @staticmethod
     def setup_view(dialog, name):
-        for test in dialog.project_info.get_tests_for_program(name, dialog.owner):
-            dialog.selectedTests.addItem(test)
+        # for test in dialog.project_info.get_tests_for_program(name, dialog.owner):
+        #     dialog.selectedTests.addItem(test)
 
         dialog.selected_tests = dialog.project_info.get_program_test_configuration(name, dialog.owner)
+        dialog._update_test_list_table()
         configuration = dialog.project_info.get_program_configuration_for_owner(dialog.owner, name)
         # TODO: can we edit any of the following property
         dialog.hardware.clear()

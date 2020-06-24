@@ -1,7 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { SystemSiteComponent } from './system-site.component';
 import { SystemState } from '../system-status';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('SystemSiteComponent', () => {
   let component: SystemSiteComponent;
@@ -9,7 +9,8 @@ describe('SystemSiteComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SystemSiteComponent ]
+      declarations: [ SystemSiteComponent ],
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   }));
@@ -17,7 +18,7 @@ describe('SystemSiteComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(SystemSiteComponent);
     component = fixture.componentInstance;
-    component.systemStatus.state = SystemState.initialized;
+    component.systemState = SystemState.initialized;
     fixture.detectChanges();
   });
 

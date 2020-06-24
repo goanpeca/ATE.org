@@ -1,4 +1,4 @@
-import { InfomationComponent } from './basic-ui-elements/infomation/infomation.component';
+import { InformationComponent } from './basic-ui-elements/information/information.component';
 import { CheckboxComponent } from './basic-ui-elements/checkbox/checkbox.component';
 import { ButtonComponent } from './basic-ui-elements/button/button.component';
 import { InputComponent } from './basic-ui-elements/input/input.component';
@@ -36,7 +36,7 @@ describe('AppComponent', () => {
         InputComponent,
         ButtonComponent,
         CheckboxComponent,
-        InfomationComponent,
+        InformationComponent,
         TestOptionComponent
       ],
         schemas: [NO_ERRORS_SCHEMA]

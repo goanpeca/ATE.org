@@ -24,6 +24,8 @@ valid_positive_float_1_regex = r"[+]?\d*\.?\d?"
 valid_integer_regex = r"^[+-]?\d*"
 valid_temp_sequence_regex = r"^([+-]?\d*\,?\d*)*"
 
+valid_test_name_description_regex = r"^[a-zA-Z][a-zA-Z0-9_]*$"
+
 valid_float_regex = "[+-]?(∞|[0-9]+(\\.[0-9]+)?)"
 valid_min_float_regex = "[+-]?(∞|[0-9]+(\\.[0-9]+)?)"
 valid_default_float_regex = "[+-]?([0-9]+(\\.[0-9]+)?)"

@@ -1,7 +1,8 @@
+<hr class="rounded" id="sysControl">
 <div *ngIf="renderSystemControlComponent()">
   <app-card id="control" [cardConfiguration]="systemControlCardConfiguration">
-    <app-lot-handling id="lothandling" [systemStatus]="systemStatus" (loadLotEvent)="loadLot($event)" (unloadLotEvent)="unloadLot()"></app-lot-handling>
-    <app-test-option id="option" [systemStatus]="systemStatus"></app-test-option>
-    <app-test-execution id="testexecution" [systemStatus]="systemStatus" (startDutTestEvent)="startDutTest()"></app-test-execution>
+    <app-lot-handling id="lothandling"></app-lot-handling>
+    <app-test-option id="option"></app-test-option>
+    <app-test-execution id="testexecution"></app-test-execution>
   </app-card>
 </div>

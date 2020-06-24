@@ -78,7 +78,9 @@ class SequencerBase:
         if not issubclass(type(execution_policy), ExecutionPolicyABC):
             raise Exception("Need an execution policy type object")
 
+        self.harness.send_status("TESTING")
         execution_policy.run(self)
+        self.harness.send_status("IDLE")
 
     def after_test_cb(self, test_instance, test_index, test_result):
         """

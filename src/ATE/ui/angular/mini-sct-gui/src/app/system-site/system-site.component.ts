@@ -1,5 +1,20 @@
+import { CommunicationService } from './../services/websocket/communication.service';
 import { Component, OnInit, Input, Pipe, PipeTransform } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status';
+import { SystemState } from '../system-status';
+import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
+
+export enum SourceApp {
+  Master = 'master',
+  Control = 'control',
+  Test = 'test',
+
+}
+
+export interface ISite {
+  type: string;
+  siteId: string;
+  state: string;
+}
 
 @Component({
   selector: 'app-system-site',
@@ -12,21 +27,41 @@ import { SystemStatus, SystemState } from '../system-status';
   pure: true
 })
 export class SystemSiteComponent implements OnInit, PipeTransform {
-
-  constructor() { }
-
-  @Input() msg: JSON;
-  @Input() sites: string[];
-  @Input() systemStatus: SystemStatus = new SystemStatus();
-  mySystemState = SystemState;
+  systemSiteCardConfiguration: CardConfiguration;
 
   sitesControl: ISite[] = [];
   sitesTest: ISite[] = [];
 
+  systemState: SystemState;
+
+  @Input() msg: JSON;
+  @Input() sites: string[];
+
 // sitesObj
-  sitesObj = { Control: this.sitesControl,
-              TestApp: this.sitesTest
-            };
+  sitesObj = {
+    Control: this.sitesControl,
+    TestApp: this.sitesTest
+  };
+
+  constructor(communicationService: CommunicationService) {
+    this.systemSiteCardConfiguration = new CardConfiguration();
+
+    this.systemState = SystemState.connecting;
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemState !== serverMessage.payload.state) {
+        this.systemState = serverMessage.payload.state;
+      }
+    }
+  }
+
+  ngOnInit() {
+    this.systemSiteCardConfiguration.cardStyle = CardStyle.ROW_STYLE;
+    this.systemSiteCardConfiguration.labelText = 'System Sites';
+  }
+
   transform(value: JSON, args?: any): any {
     return this.retrieveData(value);
   }
@@ -62,33 +97,19 @@ export class SystemSiteComponent implements OnInit, PipeTransform {
             siteId: siteNum,
             state: payload.state
           };
-
           const s: ISite[] = this.sitesObj[siteType];
           const num = s.findIndex(x => x.siteId === siteNum);
           if (num !== -1) {
             this.sitesObj[siteType][num] = singleSite;
             return;
           }
-
           this.sitesObj[siteType].push(singleSite);
         }
     }
-
     return source;
   }
 
-  ngOnInit() {}
-}
-
-export enum SourceApp {
-  Master = 'master',
-  Control = 'control',
-  Test = 'test',
-
-}
-
-export interface ISite {
-  type: string;
-  siteId: string;
-  state: string;
+  renderSystemSiteComponent() {
+    return this.systemState !== SystemState.error;
+  }
 }

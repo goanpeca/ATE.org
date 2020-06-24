@@ -42,45 +42,53 @@ describe('TestExecutionComponent', () => {
     expect(component.startDutTestButtonConfig.labelText).toBe(buttonText, 'Should be "Start DUT-Test"');
   });
 
-  it('should have a disabled button if system state is "connecting"', () => {
-    let btnElement = debugElement.nativeElement.querySelectorAll('app-button');
+  describe('When system state is "connecting"', () => {
+    it('should have a disabled start-dut-test-button', () => {
 
-    expect(btnElement.length).toBe(1);
+      // connecting
+      (component as any).handleServerMessage({"payload": {"state":SystemState.connecting}});
+      fixture.detectChanges();
 
-    let systemState = component.systemStatus.state === SystemState.connecting;
+      let startDutTestButton = debugElement.queryAll(By.css('app-button'))
+                                .filter(b => b.nativeElement.innerText === 'Start DUT-Test')[0]
+                                  .nativeElement.querySelector('button');
 
-    if (systemState) {
-      expect(btnElement[0].hasAttribute('disabled')).toBe(false, 'start DUT-Test button is expected to be disabled');
-    }
+      expect(startDutTestButton.hasAttribute('disabled'))
+        .toBeTruthy('start DUT-Test button is expected to be inactive');
+    });
   });
 
   describe('When system state is "ready"', () => {
-    it('button should be active', async(() => {
-      let btnElement = debugElement.nativeElement.querySelector('app-button');
-      expect(btnElement).toBeDefined();
+    it('start-dut-test-button should be active', async(() => {
 
-      let systemState = component.systemStatus.state === SystemState.ready;
+      // ready state
+      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      fixture.detectChanges();
 
-      if (systemState) {
-        fixture.detectChanges();
-        expect(btnElement.hasAttribute('disabled')).toBe(false, 'start DUT-Test button is expected to be active');
-      }
+      let startDutTestButton = debugElement.queryAll(By.css('app-button'))
+                                .filter(b => b.nativeElement.innerText === 'Start DUT-Test')[0]
+                                  .nativeElement.querySelector('button');
+
+      expect(startDutTestButton.hasAttribute('disabled'))
+        .toBeFalsy('start DUT-Test button is expected to be active');
     }));
 
     it('should call method startDutTestButtonClicked when button clicked', async(() => {
-      let spy = spyOn(component, 'startDutTestButtonClicked').and.callThrough();
+      
+      // ready state
+      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      fixture.detectChanges();
 
+      let spy = spyOn(component, 'startDutTest').and.callThrough();
       expect(spy).toHaveBeenCalledTimes(0);
 
-      let btnElement = debugElement.nativeElement.querySelector('app-button');
-      let systemState = component.systemStatus.state === SystemState.ready;
+      let startDutTestButton = debugElement.queryAll(By.css('app-button'))
+                                 .filter(b => b.nativeElement.innerText === 'Start DUT-Test')[0]
+                                  .nativeElement.querySelector('button');
 
-      if (systemState) {
-        btnElement.click();
-        fixture.detectChanges();
-
-        expect(spy).toHaveBeenCalled();
-      }
+      startDutTestButton.click();
+      fixture.detectChanges();
+      expect(spy).toHaveBeenCalled();
     }));
   });
 });

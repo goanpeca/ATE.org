@@ -544,6 +544,12 @@ class test_base_generator(BaseTestGenerator):
                 'opppd': prepare_output_parameters_ppd(self.definition['output_parameters']),
                 'definition': self.definition}
 
+    def _render(self, template, render_data):
+        return template.render(module_doc_string=render_data['module_doc_string'],
+                               ipppd=render_data['ipppd'],
+                               opppd=render_data['opppd'],
+                               definition=self.definition)
+
 
 class test__init__generator(BaseTestGenerator):
     """Generator for the __init__.py file of a given test."""

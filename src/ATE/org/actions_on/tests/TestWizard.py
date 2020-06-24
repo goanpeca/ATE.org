@@ -1489,9 +1489,9 @@ class TestWizard(BaseDialog):
                 fb = "The test name can not contain the word 'TEST' in any form!"
                 self.Feedback.setText(fb)
 
-            # if self._does_test_exists(test_name):
-            #     fb = "test name exists already"
-            #     self.Feedback.setText(fb)
+            if not self.read_only and self._does_test_exist(test_name):
+                fb = "test name exists already"
+                self.Feedback.setText(fb)
 
         # TODO: Enable again
         # 7. Check if the test name already exists
@@ -1517,7 +1517,7 @@ class TestWizard(BaseDialog):
         else:
             self.OKButton.setEnabled(False)
 
-    def _does_test_exists(self, test_name):
+    def _does_test_exist(self, test_name):
         tests = self.project_info.get_tests_from_db(self.ForHardwareSetup.text(), self.WithBase.text())
         if test_name in tests:
             return True

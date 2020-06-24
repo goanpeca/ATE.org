@@ -1,5 +1,7 @@
-import { Component, Output, EventEmitter } from '@angular/core';
-import { SystemStatus } from './system-status';
+import { CommunicationService } from './services/websocket/communication.service';
+import { Component } from '@angular/core';
+import { SystemStatus, SystemState } from './system-status';
+
 
 @Component({
   selector: 'app-root',
@@ -8,87 +10,44 @@ import { SystemStatus } from './system-status';
 })
 
 export class AppComponent {
-constructor() {
+  systemStatus: SystemStatus;
 
-
-    const _SELF = this;
-
-    this.webSocket = new WebSocket('ws://' + location.host + '/ws');
-
-    this.webSocket.onopen = (e) => {
-      console.log('WebSocket connection successfully opened');
-      _SELF.sendData({session: parseInt(_SELF.getSessionId(), 10)});
-    };
-
-    this.webSocket.onerror = (e) => {
-        console.log( 'WebSocket connection caused error. type: ' + e.type );
-    };
-
-    this.webSocket.onclose = (e) => {
-        console.log( 'WebSocket connection has been closed' );
-    };
-
-    this.webSocket.onmessage = (e) => {
-      console.log(e.data + 'typeof e.data: ' + typeof e.data);
-      if ( typeof (e.data) === 'string' ) {
-        const jsonMessage = JSON.parse( e.data );
-        console.log('WebSocket connection received json: ' + JSON.stringify(jsonMessage) );
-        if (jsonMessage.type === 'status') {
-          _SELF.setSystemStatus(jsonMessage.payload);
-        } else if (jsonMessage.type === 'testresults') {
-          _SELF.addTesttesults(jsonMessage.payload);
-        } else if (jsonMessage.type === 'mqtt.onmessage') {
-          _SELF.onMqttProxyMessage(jsonMessage.payload);
-        }
-      } else if ( e.data instanceof ArrayBuffer ) {
-            console.log( 'WebSocket connection received ArrayBuffer' );
-      } else if ( e.data instanceof Blob ) {
-            console.log('WebSocket connection received Blob' );
-      } else {
-            console.log( 'WebSocket connection something else: ' + e.data );
-      }
-
-      console.log('Session id is: ' + _SELF.getSessionId());
-    };
-  }
-  webSocket: WebSocket;
-  systemStatus: SystemStatus = new SystemStatus();
   msg: JSON;
   isSubscribed = false;
   sites: string[] = [];
 
   sessionCache: object;
 
-  loadLot(event) {
-    this.sendData({
-      type: 'cmd',
-      command: 'load',
-      lot_number: event
-    });
-  }
+constructor(private readonly communicationService: CommunicationService) {
+  this.systemStatus = new SystemStatus();
+  this.systemStatus.state = SystemState.connecting;
 
-  startDutTest(event) {
-    this.sendData({
-      type: 'cmd',
-      command: 'next'
-    });
-  }
+  communicationService.message.subscribe((msg: any) => {
+    this.handleServerMessage(msg);
 
-  unloadLot(event) {
-    this.sendData({
-      type: 'cmd',
-      command: 'unload'
-    });
+    if (msg.type === 'status') {
+      this.setSystemStatus(msg.payload);
+    } else if (msg.type === 'testresults') {
+      this.addTesttesults(msg.payload);
+    } else if (msg.type === 'mqtt.onmessage') {
+      this.onMqttProxyMessage(msg.payload);
+    }
+
+    console.log('Session id is: ' + this.getSessionId());
+  });
+}
+
+private handleServerMessage(serverMessage: any) {
+  if (serverMessage.payload.state) {
+    if (this.systemStatus.state !== serverMessage.payload.state) {
+      this.systemStatus.state = serverMessage.payload.state;
+    }
   }
+}
 
   systemStateEventChange(event) {
     this.systemStatus.state = event;
     this.systemStatus = Object.assign({}, this.systemStatus);
-  }
-
-  private sendData(json: object) {
-    console.log('Sending json: ' + json);
-    this.webSocket.send(JSON.stringify(json));
   }
 
   getSessionId() {
@@ -102,20 +61,20 @@ constructor() {
 
   setSystemStatus(json) {
 
-    this.systemStatus.update(json);
+   this.systemStatus.update(json);
 
     // make a new instance of system state in order to detect changes by angular
-    let copySystemStatus = new SystemStatus();
-    this.systemStatus = Object.assign(copySystemStatus, this.systemStatus);
-    this.systemStatus = copySystemStatus;
+   let copySystemStatus = new SystemStatus();
+   this.systemStatus = Object.assign(copySystemStatus, this.systemStatus);
+   this.systemStatus = copySystemStatus;
 
-    if (this.isSubscribed) { return; }
-    this.initMqttProxy();
-    this.isSubscribed = true;
-    this.sites = this.systemStatus.sites;
+   if (this.isSubscribed) { return; }
+   this.initMqttProxy();
+   this.isSubscribed = true;
+   this.sites = this.systemStatus.sites;
 
     // Uncomment the following line to publish something with the mqqt proxy
-    // this.mqttPublish('TEST/angularwebui_setSystemStatus', json, 1)
+   this.mqttPublish('TEST/angularwebui_setSystemStatus', json, 1);
   }
 
   addTesttesults(siteidtoarrayoftestresultsdicts) {
@@ -143,11 +102,11 @@ constructor() {
   }
 
   mqttSubscribe(topic: string, qos: number= 0) {
-    this.sendData({type: 'mqtt.subscribe', payload: { topic, qos } });
+    this.communicationService.send({type: 'mqtt.subscribe', payload: { topic, qos } });
   }
 
   mqttPublish(topic: string, payload: object, qos: number= 0, retain: boolean= true) {
-    this.sendData({type: 'mqtt.publish', payload: { topic, payload, retain } });
+    this.communicationService.send({type: 'mqtt.publish', payload: { topic, payload, retain } });
   }
 }
 

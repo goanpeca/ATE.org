@@ -203,7 +203,7 @@ class TestprogramTreeItem(BaseItem):
 
     def edit_item(self):
         import ATE.org.actions_on.program.EditTestProgramWizard as edit
-        edit.edit_program_dialog(self.text(), self.project_info, self.owner, self.text())
+        edit.edit_program_dialog(self.text(), self.project_info, self.owner)
 
     def display_item(self):
         import ATE.org.actions_on.program.ViewTestProgramWizard as view

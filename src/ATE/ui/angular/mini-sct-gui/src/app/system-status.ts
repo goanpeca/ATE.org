@@ -66,5 +66,9 @@ export class SystemStatus {
         if (json.state && json.state !== this.state) {
             this.state = json.state;
         }
+
+        if (json.error_message && json.error_message !== this.reason) {
+            this.reason = json.error_message;
+        }
    }
 }

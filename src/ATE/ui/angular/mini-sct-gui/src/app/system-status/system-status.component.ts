@@ -1,7 +1,8 @@
-import { InformationConfiguration } from './../basic-ui-elements/infomation/information-config';
-import { Component, OnInit, Input, OnChanges } from '@angular/core';
+import { InformationConfiguration } from './../basic-ui-elements/information/information-config';
+import { Component, OnInit } from '@angular/core';
 import { SystemStatus, SystemState } from '../system-status';
 import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
+import { CommunicationService } from '../services/websocket/communication.service';
 
 export enum systemInformationLabelText {
   systemLabelText = 'System',
@@ -16,33 +17,49 @@ export enum systemInformationLabelText {
   templateUrl: './system-status.component.html',
   styleUrls: ['./system-status.component.scss']
 })
-export class SystemStatusComponent implements OnInit, OnChanges {
-  @Input() systemStatus: SystemStatus = new SystemStatus();
-
-  protected mySystemState = SystemState;
-  // property for error information
-  visiable = true;
+export class SystemStatusComponent implements OnInit {
+  protected systemState = SystemState;
+  systemStatus: SystemStatus;
 
   informationCardConfiguration: CardConfiguration;
   identifyCardConfiguration: CardConfiguration;
   infoContentCardConfiguration: CardConfiguration;
 
-  sytemInformationConfiguration: InformationConfiguration;
+  systemInformationConfiguration: InformationConfiguration;
   numberOfSitesConfiguration: InformationConfiguration;
   timeInformationConfiguration: InformationConfiguration;
   environmentInformationConfiguration: InformationConfiguration;
   handlerInformationConfiguration: InformationConfiguration;
 
-  constructor() {
+  constructor(private readonly communicationService: CommunicationService) {
+    this.systemStatus = new SystemStatus();
+    this.systemStatus.state = SystemState.connecting;
+
     this.informationCardConfiguration = new CardConfiguration();
     this.identifyCardConfiguration = new CardConfiguration();
     this.infoContentCardConfiguration = new CardConfiguration();
 
-    this.sytemInformationConfiguration = new InformationConfiguration();
+    this.systemInformationConfiguration = new InformationConfiguration();
     this.numberOfSitesConfiguration = new InformationConfiguration();
     this.timeInformationConfiguration = new InformationConfiguration();
     this.environmentInformationConfiguration = new InformationConfiguration();
     this.handlerInformationConfiguration = new InformationConfiguration();
+
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
+
+  handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemStatus.state  !== serverMessage.payload.state) {
+        this.systemStatus.state = serverMessage.payload.state;
+        this.systemStatus.update(serverMessage.payload);
+        this.updateView();
+      }
+    }
+  }
+
+  showError() {
+    return this.systemStatus.state === SystemState.error;
   }
 
   ngOnInit() {
@@ -58,21 +75,16 @@ export class SystemStatusComponent implements OnInit, OnChanges {
     this.infoContentCardConfiguration.cardStyle = CardStyle.COLUMN_STYLE;
     this.infoContentCardConfiguration.shadow = true;
 
-    this.sytemInformationConfiguration.labelText = systemInformationLabelText.systemLabelText;
+    this.systemInformationConfiguration.labelText = systemInformationLabelText.systemLabelText;
     this.numberOfSitesConfiguration.labelText = systemInformationLabelText.sitesLabelText;
     this.timeInformationConfiguration.labelText = systemInformationLabelText.timeLabelText;
     this.environmentInformationConfiguration.labelText = systemInformationLabelText.environmentLabelText;
     this.handlerInformationConfiguration.labelText = systemInformationLabelText.handlerLabelText;
   }
 
-  ngOnChanges() {
-    console.log('system information app detected change');
-    this.updateView();
-  }
-
   updateView() {
     if (this.systemStatus.deviceId) {
-      this.sytemInformationConfiguration.value = this.systemStatus.deviceId;
+      this.systemInformationConfiguration.value = this.systemStatus.deviceId;
     }
 
     if (this.systemStatus.sites) {

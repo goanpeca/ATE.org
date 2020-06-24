@@ -108,6 +108,7 @@ class NewMasksetWizard(BaseDialog):
         self.bondpadTable.itemDoubleClicked.connect(self._double_click_handler)
         self.bondpadTable.itemClicked.connect(self._select_item)
         self.bondpadTable.itemSelectionChanged.connect(self._table_clicked)
+        self.bondpadTable.itemEntered.connect(self._item_entered)
 
         self.pad_type = {PadType.Analog(): self.select_analog_pad_type,
                          PadType.Digital(): self.select_digital_pad_type,
@@ -167,6 +168,11 @@ class NewMasksetWizard(BaseDialog):
         element.setText(text)
         element.setValidator(validator)
         element.blockSignals(False)
+
+    @QtCore.pyqtSlot(QtWidgets.QTableWidgetItem)
+    def _item_entered(self, item):
+        if item.column() in (PAD_INFO.PAD_DIRECTION_COLUMN(), PAD_INFO.PAD_TYPE_COLUMN()):
+            self._update_row(item.row())
 
     def _set_row_elements(self, elements):
         self.bondpadTable.setRowCount(self.bondpads.value())
@@ -643,7 +649,7 @@ class NewMasksetWizard(BaseDialog):
             return
 
         # enable table
-        self._set_table_flags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
+        self._set_table_flags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         self.is_table_enabled = True
         self._validate_table()
 

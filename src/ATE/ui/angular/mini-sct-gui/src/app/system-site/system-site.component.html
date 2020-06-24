@@ -1,30 +1,25 @@
-<div *ngIf="systemStatus.state !> mySystemState.error">
-    <hr id="sysSite">
-    <div class="row">
-        <div class="side">
-            <h2>System Sites</h2>
-            {{ retrieveData(msg) }}
-        </div>
-        <div class="main">
-            <table>
-                <tr>
-                    <th>Type</th>
-                    <th>Site ID</th>
-                    <th>State</th>
-                </tr>
+<hr class="rounded" id="sysSite">
+<div *ngIf="renderSystemSiteComponent()">
+    <app-card id="sysSite" [cardConfiguration]="systemSiteCardConfiguration">
+        {{ retrieveData(msg) }}
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Site ID</th>
+                <th>State</th>
+            </tr>
 
-                <tr *ngFor='let site of sitesControl'>
-                    <td> {{ site.type }} </td>
-                    <td> {{ site.siteId }} </td>
-                    <td> {{ site.state }} </td>
-                </tr>
+            <tr *ngFor='let site of sitesControl'>
+                <td> {{ site.type }} </td>
+                <td> {{ site.siteId }} </td>
+                <td> {{ site.state }} </td>
+            </tr>
 
-                <tr *ngFor='let site of sitesTest'>
-                    <td> {{ site.type }} </td>
-                    <td> {{ site.siteId }} </td>
-                    <td> {{ site.state }} </td>
-                </tr>
-            </table>
-        </div>
-    </div>
+            <tr *ngFor='let site of sitesTest'>
+                <td> {{ site.type }} </td>
+                <td> {{ site.siteId }} </td>
+                <td> {{ site.state }} </td>
+            </tr>
+        </table>
+    </app-card>
 </div>

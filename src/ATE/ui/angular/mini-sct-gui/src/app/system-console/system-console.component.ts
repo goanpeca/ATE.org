@@ -1,5 +1,20 @@
+import { CommunicationService } from './../services/websocket/communication.service';
 import { Component, OnInit, Input, PipeTransform, Pipe } from '@angular/core';
 import {formatDate } from '@angular/common';
+import { ButtonConfiguration } from './../basic-ui-elements/button/button-config';
+import { SystemState } from '../system-status';
+
+export interface IConsoleData {
+  date: string;
+  topic: string;
+  description: string;
+}
+
+export enum MessageTypes {
+  Cmd = 'cmd',
+  Status = 'status',
+  Testresult = 'testresult'
+}
 
 @Component({
   selector: 'app-system-dialog',
@@ -12,12 +27,35 @@ import {formatDate } from '@angular/common';
   pure: true
 })
 export class SystemConsoleComponent implements OnInit, PipeTransform {
+  clearConsoleButtonConfig: ButtonConfiguration;
 
-
-  constructor() {}
+  systemState: SystemState;
 
   @Input() msg: JSON;
+
   msgs: IConsoleData[] = [];
+
+  constructor(communicationService: CommunicationService) {
+    this.clearConsoleButtonConfig = new ButtonConfiguration();
+
+    this.systemState = SystemState.connecting;
+
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
+
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemState !== serverMessage.payload.state) {
+        this.systemState = serverMessage.payload.state;
+      }
+    }
+  }
+
+  ngOnInit() {
+    this.clearConsoleButtonConfig.labelText = 'Clear';
+    this.clearConsoleButtonConfig.disabled = false;
+  }
+
   transform(value: JSON, args?: any): any {
     return this.retrieveData(value);
   }
@@ -63,19 +101,4 @@ export class SystemConsoleComponent implements OnInit, PipeTransform {
   clearConsole() {
     this.msgs.length = 0;
   }
-
-  ngOnInit() {}
-
-}
-
-export interface IConsoleData {
-  date: string;
-  topic: string;
-  description: string;
-}
-
-export enum MessageTypes {
-  Cmd = 'cmd',
-  Status = 'status',
-  Testresult = 'testresult'
 }

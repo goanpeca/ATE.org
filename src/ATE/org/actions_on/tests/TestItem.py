@@ -122,7 +122,7 @@ class TestItemChild(TestBaseItem):
         self.file_system_operator = FileSystemOperator(self.path)
 
     def edit_item(self):
-        definition = self.project_info.get_test_definition(self.text())
+        definition = self.project_info.get_test_definition(self.text(), self.project_info.active_hardware, self.project_info.active_base)
         edit_test_dialog(self.project_info, definition)
 
     def open_file_item(self):
@@ -147,7 +147,8 @@ class TestItemChild(TestBaseItem):
 
     @property
     def dependency_list(self):
-        return self.project_info.get_dependant_objects_for_test(self.text())
+        # hack each used test must start with a 1 as index
+        return self.project_info.get_dependant_objects_for_test(self.text() + '_1')
 
     def is_enabled(self):
         return self.project_info.get_test_state(self.text())

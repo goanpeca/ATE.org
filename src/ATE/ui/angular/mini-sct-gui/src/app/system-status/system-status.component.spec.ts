@@ -1,4 +1,5 @@
-import { InformationConfiguration } from './../basic-ui-elements/infomation/information-config';
+import { InformationConfiguration } from './../basic-ui-elements/information/information-config';
+import { InformationComponent } from '../basic-ui-elements/information/information.component';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { SystemStatusComponent, systemInformationLabelText } from './system-status.component';
 import { NO_ERRORS_SCHEMA, DebugElement, SimpleChange } from '@angular/core';
@@ -13,7 +14,7 @@ describe('SystemStatusComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SystemStatusComponent ],
+      declarations: [ SystemStatusComponent, InformationComponent ],
       schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
@@ -23,7 +24,7 @@ describe('SystemStatusComponent', () => {
     fixture = TestBed.createComponent(SystemStatusComponent);
     component = fixture.componentInstance;
     debugElement = fixture.debugElement;
-    fixture.detectChanges(); // initial binding
+    fixture.detectChanges();
   });
 
   it('should create status component', () => {
@@ -35,19 +36,16 @@ describe('SystemStatusComponent', () => {
   });
 
   it('should show error messages when system state is "error"', () => {
-    let errorMsg = 'system error';
+    expect(component.showError()).toBeDefined();
+
+    let errorMsg = 'system has error';
 
     let errorElement = debugElement.query(By.css('.error h3'));
 
-    if (component.systemStatus.state === SystemState.error) {
-      errorMsg = component.systemStatus.reason;
+    if (component.showError()) {
+      component.systemStatus.reason = errorMsg;
 
-      expect(errorElement.nativeElement.textContent).toEqual('system error');
-      expect(component.visiable).toBe(true);
-    } else {
-      component.visiable = false;
-
-      expect(component.visiable).toBe(false);
+      expect(errorElement.nativeElement.textContent).toBe('system has error');
     }
   });
 
@@ -67,8 +65,7 @@ describe('SystemStatusComponent', () => {
   it('should call method updateView when app detected change', async(() => {
     let spy = spyOn(component, 'updateView');
 
-    component.ngOnChanges();
-    fixture.detectChanges();
+    component.handleServerMessage({payload: {state: SystemState.unloading}});
 
     expect(spy).toHaveBeenCalled();
   }));
@@ -89,63 +86,54 @@ describe('SystemStatusComponent', () => {
   });
 
   describe('When system state is neither "error" nor "connecting"', () => {
-    it('should contain 5 app-infomation tags', async(() => {
-      let infoElement = debugElement.nativeElement.querySelectorAll('app-infomation');
-      let systemState = component.systemStatus.state !== SystemState.error && component.systemStatus.state !== SystemState.connecting;
+    it('should contain 5 app-information tags', async(() => {
 
-      if (systemState) {
-        expect(infoElement).not.toEqual(null);
-        expect(infoElement.length).toBe(5);
-      } else {
-        expect(infoElement.length).toBe(0);
-      }
+      // set system state to something different from error or connecting, i.e. to ready
+      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      fixture.detectChanges();
+
+      let infoElement = debugElement.nativeElement.querySelectorAll('app-information');
+      expect(infoElement.length).toBe(5);
     }));
 
-    it('should display labelText', async(() => {
+    it('should display label texts: "System", "Number of Sites", "Time", "Environment", "Handler"', async(() => {
       expect(component.infoContentCardConfiguration.labelText).toEqual('');
 
-      let infoElement = debugElement.nativeElement.querySelectorAll('app-infomation');
-      let systemState = component.systemStatus.state !== SystemState.error && component.systemStatus.state !== SystemState.connecting;
+      // set system state to something different from error or connecting, i.e. to ready
+      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      fixture.detectChanges();
 
-      if (systemState) {
-        expect(infoElement[0]).toBe('System');
-        expect(infoElement[0]).toEqual(component.sytemInformationConfiguration.labelText);
-        expect(infoElement[1]).toBe('Number of Sites');
-        expect(infoElement[1]).toEqual(component.numberOfSitesConfiguration.labelText);
+      let lableElements = debugElement.queryAll(By.css('app-information h2'));
 
-        expect(infoElement[2]).toBe('Time');
-        expect(infoElement[2]).toEqual(component.timeInformationConfiguration.labelText);
+      let labelTexts = [];
+      lableElements.forEach( l => labelTexts.push(l.nativeElement.innerText));
 
-        expect(infoElement[3]).toBe('Environment');
-        expect(infoElement[3]).toEqual(component.environmentInformationConfiguration.labelText);
+      expect(labelTexts).toEqual(jasmine.arrayWithExactContents(["System", "Number of Sites", "Time", "Environment", "Handler"]));
 
-        expect(infoElement[4]).toBe('Handler');
-        expect(infoElement[4]).toEqual(component.handlerInformationConfiguration.labelText);
-      }
     }));
 
     it('should display value of system information', async(() => {
-      expect(component.sytemInformationConfiguration.value).toEqual('');
+      expect(component.systemInformationConfiguration.value).toEqual('');
 
-      let infoElement = debugElement.nativeElement.querySelectorAll('app-infomation');
-      let systemState = component.systemStatus.state !== SystemState.error && component.systemStatus.state !== SystemState.connecting;
+      // set system state to something different from error or connecting, i.e. to testing
+      (component as any).handleServerMessage(
+        {
+          "payload":{
+            "state":SystemState.testing,
+            "device_id": "Test-Id",
+            "env": "Test-Environment",
+            "handler": "Test-Handler",
+            "sites": ["Test-Site-A", "Test-Site-B"],
+            "systemTime": "Test-SystemTime"
+          }});
+      fixture.detectChanges();
 
-      if (systemState) {
-      expect(infoElement[0]).toBe('invalid');
-      expect(infoElement[0]).toEqual(component.sytemInformationConfiguration.value);
-      expect(infoElement[1]).toBe(0);
-      expect(infoElement[1]).toEqual(component.numberOfSitesConfiguration.value);
+      let valueElements = debugElement.queryAll(By.css('app-information h3'));
 
-      expect(infoElement[2]).toBe('invalid');
-      expect(infoElement[2]).toEqual(component.timeInformationConfiguration.value);
+      let valueTexts = [];
+      valueElements.forEach( v => valueTexts.push(v.nativeElement.innerText));
 
-      expect(infoElement[3]).toBe('invalid');
-      expect(infoElement[3]).toEqual(component.environmentInformationConfiguration.value);
-
-      expect(infoElement[4]).toBe('invalid');
-      expect(infoElement[4]).toEqual(component.handlerInformationConfiguration.value);
-    }
+      expect(valueTexts).toEqual(jasmine.arrayWithExactContents(["Test-Id", "Test-Environment", "Test-Handler", "Test-SystemTime"]));
     }));
   });
-
 });

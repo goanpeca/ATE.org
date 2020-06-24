@@ -4,8 +4,7 @@
     <div class="side">
         <h2>System Console</h2>
         {{retrieveData(msg)}}
-        <button type="button" (click)="clearConsole()">Clear
-        </button>
+        <app-button [buttonConfig]="clearConsoleButtonConfig" (buttonClickEvent)="clearConsole()"></app-button>
     </div>
     <div class="main">
         <div>

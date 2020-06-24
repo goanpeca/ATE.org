@@ -131,6 +131,8 @@ h2 {
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
     height: auto;
+    padding: 10px;
+    width: 100%;
 }
 
 
@@ -138,9 +140,12 @@ h2 {
 
 .side {
     -ms-flex: 10%;
+    flex-direction: row;
     flex: 10%;
     background-color: $beige;
-    padding: 20px;
+    padding: 30px;
+    width: 20%;
+    min-width: 300px;
 }
 
 
@@ -151,7 +156,9 @@ h2 {
     /* IE10 */
     flex: 70%;
     background-color: white;
-    padding: 20px;
+    padding:30px;
+    min-width: 600px;
+    width: 40%;
 }
 
 
@@ -165,14 +172,14 @@ table {
     td,
     th {
         @include solidBorder(1px, $white);
-        text-align: left;
+        text-align: center;
         padding: 5px;
     }
     th {
         text-align: center;
     }
     tr:nth-child(even) {
-        background-color: #dddddd;
+        background-color: $beige;
     }
 }
 
