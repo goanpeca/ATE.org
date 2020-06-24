@@ -61,3 +61,4 @@ MANIFEST
 src/ATE/apps/control_config_file.json
 src/ATE/apps/master_config_file.json
 src/ATE/apps/master_user_settings.json
+.hypothesis
