@@ -1,8 +1,7 @@
-import { CommunicationService } from './../services/websocket/communication.service';
-import { Component, OnInit, Input, PipeTransform, Pipe } from '@angular/core';
+import { CommunicationService } from './../services/communication.service';
+import { Component, OnInit } from '@angular/core';
 import {formatDate } from '@angular/common';
 import { ButtonConfiguration } from './../basic-ui-elements/button/button-config';
-import { SystemState } from '../system-status';
 
 export interface IConsoleData {
   date: string;
@@ -17,38 +16,23 @@ export enum MessageTypes {
 }
 
 @Component({
-  selector: 'app-system-dialog',
+  selector: 'app-system-console',
   templateUrl: './system-console.component.html',
   styleUrls: ['./system-console.component.scss']
 })
 
-@Pipe({
-  name: 'retrieveData',
-  pure: true
-})
-export class SystemConsoleComponent implements OnInit, PipeTransform {
+export class SystemConsoleComponent implements OnInit {
   clearConsoleButtonConfig: ButtonConfiguration;
 
-  systemState: SystemState;
-
-  @Input() msg: JSON;
-
-  msgs: IConsoleData[] = [];
+  private readonly msgs: IConsoleData[] = [];
 
   constructor(communicationService: CommunicationService) {
     this.clearConsoleButtonConfig = new ButtonConfiguration();
-
-    this.systemState = SystemState.connecting;
-
     communicationService.message.subscribe(msg => this.handleServerMessage(msg));
   }
 
   private handleServerMessage(serverMessage: any) {
-    if (serverMessage.payload.state) {
-      if (this.systemState !== serverMessage.payload.state) {
-        this.systemState = serverMessage.payload.state;
-      }
-    }
+    this.retrieveData(serverMessage);
   }
 
   ngOnInit() {
@@ -56,18 +40,14 @@ export class SystemConsoleComponent implements OnInit, PipeTransform {
     this.clearConsoleButtonConfig.disabled = false;
   }
 
-  transform(value: JSON, args?: any): any {
-    return this.retrieveData(value);
-  }
-
-  retrieveData(message) {
+  private retrieveData(message) {
     if (!message) { return; }
 
-    const jsonMessage = JSON.parse(message.payload);
+    const jsonMessage = JSON.parse(JSON.stringify(message));
 
-    const _STATE: string = jsonMessage.state;
+    const _STATE: string = jsonMessage.payload.state;
     const _TOPIC: string = message.topic;
-    const mType: string = jsonMessage.type;
+    const mType: string = jsonMessage.payload.type;
 
     if (!_STATE || !_TOPIC || !mType) {
       return;
@@ -76,25 +56,24 @@ export class SystemConsoleComponent implements OnInit, PipeTransform {
     let data: IConsoleData;
     if (mType === MessageTypes.Status) {
       const description: string = mType + ':      ' + _STATE;
-      data = this.generateMessage(_STATE, description, _TOPIC);
+      data = this.generateMessage(description, _TOPIC);
     } else if (jsonMessage.type === MessageTypes.Cmd) {
       const description: string = mType + ':     ' + jsonMessage.command;
-      data = this.generateMessage(_STATE, description, _TOPIC);
+      data = this.generateMessage(description, _TOPIC);
     } else if (jsonMessage.type === MessageTypes.Testresult) {
       const description: string = mType + ':     ' + jsonMessage.testdata;
-      data = this.generateMessage(_STATE, description, _TOPIC);
+      data = this.generateMessage(description, _TOPIC);
     } else { return; }
 
     this.msgs.push(data);
   }
 
-  generateMessage(state: string, description: string, topic: string): IConsoleData {
+  generateMessage(description: string, topic: string): IConsoleData {
       const DATA: IConsoleData = {
         date: formatDate(Date.now(), 'medium', 'en-US'),
         topic,
         description
       };
-
       return DATA;
   }
 
@@ -102,3 +81,4 @@ export class SystemConsoleComponent implements OnInit, PipeTransform {
     this.msgs.length = 0;
   }
 }
+

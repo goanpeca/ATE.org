@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { SystemControlComponent } from './system-control.component';
 import { InputComponent } from './../basic-ui-elements/input/input.component';
 import { ButtonComponent } from './../basic-ui-elements/button/button.component';
@@ -9,6 +9,7 @@ import { TestOptionComponent } from './test-option/test-option.component';
 import { LotHandlingComponent } from './lot-handling/lot-handling.component';
 import { CheckboxComponent } from '../basic-ui-elements/checkbox/checkbox.component';
 import { By } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 
 describe('SystemControlComponent', () => {
   let component: SystemControlComponent;
@@ -27,9 +28,8 @@ describe('SystemControlComponent', () => {
         ButtonComponent,
         CheckboxComponent
       ],
-      imports: [
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      imports: [FormsModule],
+      schemas: []
     })
     .compileComponents();
   }));

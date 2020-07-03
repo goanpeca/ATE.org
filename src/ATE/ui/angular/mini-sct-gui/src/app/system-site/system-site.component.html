@@ -1,25 +1,15 @@
-<hr class="rounded" id="sysSite">
-<div *ngIf="renderSystemSiteComponent()">
-    <app-card id="sysSite" [cardConfiguration]="systemSiteCardConfiguration">
-        {{ retrieveData(msg) }}
-        <table>
-            <tr>
-                <th>Type</th>
-                <th>Site ID</th>
-                <th>State</th>
-            </tr>
-
-            <tr *ngFor='let site of sitesControl'>
-                <td> {{ site.type }} </td>
-                <td> {{ site.siteId }} </td>
-                <td> {{ site.state }} </td>
-            </tr>
-
-            <tr *ngFor='let site of sitesTest'>
-                <td> {{ site.type }} </td>
-                <td> {{ site.siteId }} </td>
-                <td> {{ site.state }} </td>
-            </tr>
-        </table>
-    </app-card>
-</div>
+<hr class="blueDivider">
+<app-card id="sysSite" [cardConfiguration]="systemSiteCardConfiguration">
+  <table>
+    <tr>
+      <th>Type</th>
+      <th>Site ID</th>
+      <th>State</th>
+    </tr>
+    <tr *ngFor='let entry of entries'>
+      <td> {{entry.type }} </td>
+      <td> {{entry.siteId }} </td>
+      <td> {{entry.state }} </td>
+    </tr>
+  </table>
+</app-card>

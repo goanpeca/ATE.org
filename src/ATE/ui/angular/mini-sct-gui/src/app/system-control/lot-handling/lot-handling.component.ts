@@ -3,7 +3,7 @@ import { SystemState } from '../../system-status';
 import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
 import { CardConfiguration, CardStyle } from './../../basic-ui-elements/card/card.component';
 import { InputConfiguration } from './../../basic-ui-elements/input/input-config';
-import { CommunicationService } from './../../services/websocket/communication.service';
+import { CommunicationService } from './../../services/communication.service';
 
 enum ButtonTextLabel {
   LoadLot = 'Load Lot',
@@ -100,7 +100,6 @@ export class LotHandlingComponent implements OnInit {
     let pattern = /^[1-9][0-9]{5}[.][0-9]{3}$/ ;
 
     if (pattern.test(this.lotNumberInputConfig.value)) {
-      // valid lot number format
       errorMsg.errorText = '';
       return true;
     } else {

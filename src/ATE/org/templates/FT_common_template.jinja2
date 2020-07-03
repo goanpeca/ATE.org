@@ -3,7 +3,7 @@
 {{ definition['hardware'] }}/FT/__init__.py
 """
 
-from . import __init__  # Do **NOT** touch !
-from .. import common  # Do **NOT** toych !
+from ATE.org.sequencers.SequencerMqttClient import SequencerMqttClient
+mqtt = SequencerMqttClient()
 
 # Add your stuff after this line.

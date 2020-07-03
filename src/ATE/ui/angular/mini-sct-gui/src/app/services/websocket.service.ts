@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { Observable, Subject, Observer } from 'rxjs';
-import { delay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'

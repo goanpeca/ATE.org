@@ -5,7 +5,7 @@
 {{ line }}
 {% endfor %}
 """
-import {{ definition['name'] }}_BC
+from {{ definition['name'] }}.{{ definition['name'] }}_BC import {{ definition['name'] }}_BC
 
 
 class {{ definition['name'] }}({{ definition['name'] }}_BC):
@@ -23,18 +23,15 @@ class {{ definition['name'] }}({{ definition['name'] }}_BC):
     {% endfor %}
     '''
 
-    def do(self, ip, op):
+    def do(self):
         """Default implementation for the '{{ definition['name'] }}' test."""
-        print(f"hardware = {ci.hardware}")
-        print(f"base = {ci.base}")
-        print(f"tester = {ci.tester}")
 
         {% for input_parameter in definition['input_parameters'] %}
-        print(ip.{{ input_parameter }})
+        print(self.ip.{{ input_parameter }})
         {% endfor %}
 
         {% for output_parameter in definition['output_parameters'] %}
-        op.{{ output_parameter }} = self.randn('{{ output_parameter}}')
+        self.op.{{ output_parameter }}.randn()
         {% endfor %}
 
 

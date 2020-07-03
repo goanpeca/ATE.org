@@ -1,6 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { InputComponent } from './input.component';
 import { InputType } from './input-config';
@@ -13,7 +13,7 @@ describe('InputComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ InputComponent ],
-      schemas: [NO_ERRORS_SCHEMA],
+      schemas: [],
       imports: [FormsModule]
     })
     .compileComponents();

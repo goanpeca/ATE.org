@@ -538,17 +538,33 @@ class test_base_generator(BaseTestGenerator):
 
         return os.path.join('src', hardware, base, name)
 
+    def _render_parameters(self, parameter_type):
+        paramlist = []
+        for op in self.definition[parameter_type]:
+            the_param = {}
+            the_param['name'] = op
+            the_param.update(self.definition[parameter_type][op])
+            paramlist.append(the_param)
+        return paramlist
+
     def _generate_render_data(self, abs_path=''):
+        output_params = self._render_parameters('output_parameters')
+        input_params = self._render_parameters('input_parameters')
+
         return {'module_doc_string': prepare_module_docstring(),
                 'ipppd': prepare_input_parameters_ppd(self.definition['input_parameters']),
                 'opppd': prepare_output_parameters_ppd(self.definition['output_parameters']),
-                'definition': self.definition}
+                'definition': self.definition,
+                'output_params': output_params,
+                'input_params': input_params}
 
     def _render(self, template, render_data):
-        return template.render(module_doc_string=render_data['module_doc_string'],
+        return template.render(module_doc_String=render_data['module_doc_string'],
+                               definition=self.definition,
                                ipppd=render_data['ipppd'],
                                opppd=render_data['opppd'],
-                               definition=self.definition)
+                               output_params=render_data['output_params'],
+                               input_params=render_data['input_params'])
 
 
 class test__init__generator(BaseTestGenerator):
@@ -916,3 +932,101 @@ class test_target_generator(test_proper_generator):
                                output_parameter_table=render_data['output_parameter_table'],
                                definition=self.definition)
 
+
+class test_program_generator(BaseGenerator):
+    def indexgen(self):
+        self.last_index = self.last_index + 1
+        return self.last_index
+
+    def __init__(self, prog_name, datasource):
+        self.datasource = datasource
+        self.last_index = 0
+        template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+        file_loader = FileSystemLoader(template_path)
+        env = Environment(loader=file_loader)
+        env.trim_blocks = True
+        env.lstrip_blocks = True
+        env.rstrip_blocks = True
+        env.globals.update(idgen=self.indexgen)
+        template_name = str(self.__class__.__name__).split('.')[-1].split(' ')[0]
+        template_name = 'testprogram_template.jinja2'
+        if not os.path.exists(os.path.join(template_path, template_name)):
+            raise Exception(f"couldn't find the template : {template_name}")
+        template = env.get_template(template_name)
+        file_name = f"{prog_name}.py"
+
+        rel_path_to_dir = self._generate_relative_path()
+        abs_path_to_dir = os.path.join(datasource.project_directory, rel_path_to_dir)
+        abs_path_to_file = os.path.join(abs_path_to_dir, file_name)
+
+        if not os.path.exists(abs_path_to_dir):
+            os.makedirs(abs_path_to_dir)
+
+        if os.path.exists(abs_path_to_file):
+            os.remove(abs_path_to_file)
+
+        test_list = self.build_test_entry_list(datasource, prog_name)
+
+        output = template.render(test_list=test_list)
+
+        with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
+            fd.write(output)
+
+    def build_test_entry_list(self, datasource, prog_name):
+        # step 1: Get tests and test params in sequence
+        tests_in_program = datasource.get_tests_for_program(prog_name, "")
+        # step 2: Get all testtargets for progname
+        test_targets = datasource.get_test_targets_for_program(prog_name)
+
+        # step 3: Augment sequences with actual classnames
+        test_list = []
+        for program_entry in tests_in_program:
+            test_class = self.resolve_class_for_test(program_entry[0], test_targets)
+            testinstance_name = self.resolve_instancename_for_test(program_entry[0], test_targets)
+            test_module = self.resolve_module_for_test(program_entry[0], test_targets)
+
+            import pickle
+            params = pickle.loads(program_entry[1])
+            test_list.append({"test_name": program_entry[0],
+                              "test_class": test_class,
+                              "test_module": test_module,
+                              "instance_name": f"{testinstance_name}",
+                              "output_parameters": params['output_parameters'],
+                              "input_parameters": params['input_parameters']})
+        return test_list
+
+    def resolve_class_for_test(self, test_name, test_targets):
+        for target in test_targets:
+            if target[5] == test_name:
+                if target[6]:
+                    return f"{test_name}"
+                return f"{target[1]}"
+        raise Exception(f"Cannot resolve class for test {test_name}")
+
+    def resolve_module_for_test(self, test_name, test_targets):
+        for target in test_targets:
+            if target[5] == test_name:
+                if target[6]:
+                    return f"{test_name}.{test_name}"
+                return f"{test_name}.{target[1]}"
+        raise Exception(f"Cannot resolve module for test {test_name}")
+    
+    def resolve_instancename_for_test(self, test_name, test_targets):
+        for target in test_targets:
+            if target[5] == test_name:
+                if not target[6]:
+                    return f"{test_name}_{self.indexgen()}"
+                return f"{target[1]}_{self.indexgen()}"
+        raise Exception(f"Cannot resolve instancename for test {test_name}")
+
+    def _generate_relative_path(self):
+        hardware = self.datasource.active_hardware
+        base = self.datasource.active_base
+        return os.path.join('src', hardware, base)
+
+    def _generate_render_data(self, abs_path=''):
+        pass
+
+    def _render(self, template, render_data):
+        pass
+    

@@ -1,15 +1,13 @@
-import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
-import { InputConfiguration } from './../../basic-ui-elements/input/input-config';
 import { ButtonComponent } from './../../basic-ui-elements/button/button.component';
-import { async, ComponentFixture, TestBed, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, DebugElement, Component, OnChanges, Input } from '@angular/core';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { TestOptionComponent, TestOptionValue, TestOption } from './test-option.component';
 import { By } from '@angular/platform-browser';
 import { SystemState } from 'src/app/system-status';
-import { createUrlResolverWithoutPackagePrefix } from '@angular/compiler';
-import { toBase64String } from '@angular/compiler/src/output/source_map';
 import { CheckboxComponent } from 'src/app/basic-ui-elements/checkbox/checkbox.component';
 import { InputComponent } from 'src/app/basic-ui-elements/input/input.component';
+import { CardComponent } from 'src/app/basic-ui-elements/card/card.component';
+import { FormsModule } from '@angular/forms';
 
 describe('TestOptionComponent', () => {
   let component: TestOptionComponent;
@@ -18,8 +16,14 @@ describe('TestOptionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TestOptionComponent, ButtonComponent, CheckboxComponent, InputComponent ],
-      schemas: [ NO_ERRORS_SCHEMA ]
+      declarations: [
+        TestOptionComponent,
+        ButtonComponent,
+        CheckboxComponent,
+        InputComponent,
+        CardComponent, ],
+      imports: [FormsModule],
+      schemas: []
     })
     .compileComponents();
   }));
@@ -83,18 +87,18 @@ describe('TestOptionComponent', () => {
   it('should call method resetTestOptions when reset button clicked', async(() => {
 
     // ready
-    (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+    (component as any).handleServerMessage({payload: {state: SystemState.ready}});
     fixture.detectChanges();
 
     let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
-    let checkbox = checkboxes.filter(e => e.nativeElement.innerText === "Stop on Fail")[0].nativeElement.querySelector('.slider');
+    let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('.slider');
 
     checkbox.click();
     fixture.detectChanges();
 
     let buttons = fixture.debugElement.queryAll(By.css('app-button'));
-    let resetButton = buttons.filter(e => e.nativeElement.innerText === "Reset")[0].nativeElement.querySelector('button');
-    
+    let resetButton = buttons.filter(e => e.nativeElement.innerText === 'Reset')[0].nativeElement.querySelector('button');
+
     let spy = spyOn(component, 'resetTestOptions');
     resetButton.click();
     fixture.detectChanges();
@@ -141,11 +145,11 @@ describe('TestOptionComponent', () => {
     it('should be active only when system state is ready', async(() => {
 
       // set ready
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
       fixture.detectChanges();
 
       let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
-      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === "Stop on Fail")[0].nativeElement.querySelector('input');
+      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('input');
 
       expect(checkbox.hasAttribute('disabled')).toBeFalsy();
     }));
@@ -153,18 +157,18 @@ describe('TestOptionComponent', () => {
     it('should call sendOptionsToServer method when apply button clicked', async(() => {
 
       // ready
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
       fixture.detectChanges();
 
       let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
-      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === "Stop on Fail")[0].nativeElement.querySelector('.slider');
+      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('.slider');
 
       checkbox.click();
       fixture.detectChanges();
 
       let buttons = fixture.debugElement.queryAll(By.css('app-button'));
-      let applyButton = buttons.filter(e => e.nativeElement.innerText === "Apply")[0].nativeElement.querySelector('button');
-    
+      let applyButton = buttons.filter(e => e.nativeElement.innerText === 'Apply')[0].nativeElement.querySelector('button');
+
       let spy = spyOn(component, 'sendOptionsToServer');
       applyButton.click();
 

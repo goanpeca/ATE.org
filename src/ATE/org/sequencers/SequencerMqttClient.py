@@ -270,10 +270,11 @@ class TheTestAppMqttClient():
             retain=False)
 
     def publish_result(self, ispass: bool, testdata: object) -> mqtt.MQTTMessageInfo:
+        _topic = self._topic_factory.test_result_topic()
+        _payload = json.dumps(self._topic_factory.test_result_payload(ispass, testdata))
         return self._client.publish(
-            topic=self._topic_factory.test_result_topic(),
-            payload=json.dumps(
-                self._topic_factory.test_result_payload(ispass, testdata)),
+            topic=_topic,
+            payload= _payload,
             qos=2,
             retain=False)
 

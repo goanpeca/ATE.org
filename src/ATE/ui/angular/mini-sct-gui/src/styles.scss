@@ -173,10 +173,10 @@ table {
     th {
         @include solidBorder(1px, $white);
         text-align: center;
-        padding: 5px;
+        padding: 15px;
     }
     th {
-        text-align: center;
+        width: 210px;
     }
     tr:nth-child(even) {
         background-color: $beige;
@@ -208,8 +208,14 @@ option {
     border-bottom: 2px solid $white;
 }
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 900px) {
     .row {
         flex-direction: column;
+        text-align: center;
     }
 }
+
+.blueDivider {
+  @include blueDivider;
+}
+

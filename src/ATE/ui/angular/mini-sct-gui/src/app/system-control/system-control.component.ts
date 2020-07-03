@@ -1,4 +1,4 @@
-import { CommunicationService } from './../services/websocket/communication.service';
+import { CommunicationService } from './../services/communication.service';
 import { SystemState } from './../system-status';
 import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
 import { Component, OnInit } from '@angular/core';

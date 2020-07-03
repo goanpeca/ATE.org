@@ -1,15 +1,23 @@
-import { InformationConfiguration } from './../basic-ui-elements/information/information-config';
 import { Component, OnInit } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status';
-import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
-import { CommunicationService } from '../services/websocket/communication.service';
+import { SystemState } from '../system-status';
+import { CommunicationService } from '../services/communication.service';
 
-export enum systemInformationLabelText {
-  systemLabelText = 'System',
-  sitesLabelText = 'Number of Sites',
-  timeLabelText = 'Time',
-  environmentLabelText = 'Environment',
-  handlerLabelText = 'Handler'
+export enum Colors {
+  red = 'red',
+  yellow = 'yellow',
+  green = 'green'
+}
+
+class RenderedState {
+  description: string;
+  value: SystemState;
+  color: Colors;
+
+  constructor() {
+    this.description = '';
+    this.value = SystemState.connecting;
+    this.color = Colors.yellow;
+  }
 }
 
 @Component({
@@ -17,90 +25,82 @@ export enum systemInformationLabelText {
   templateUrl: './system-status.component.html',
   styleUrls: ['./system-status.component.scss']
 })
+
 export class SystemStatusComponent implements OnInit {
-  protected systemState = SystemState;
-  systemStatus: SystemStatus;
-
-  informationCardConfiguration: CardConfiguration;
-  identifyCardConfiguration: CardConfiguration;
-  infoContentCardConfiguration: CardConfiguration;
-
-  systemInformationConfiguration: InformationConfiguration;
-  numberOfSitesConfiguration: InformationConfiguration;
-  timeInformationConfiguration: InformationConfiguration;
-  environmentInformationConfiguration: InformationConfiguration;
-  handlerInformationConfiguration: InformationConfiguration;
+  private readonly states: Array<RenderedState>;
+  private currentState: SystemState;
+  private renderedState: RenderedState;
 
   constructor(private readonly communicationService: CommunicationService) {
-    this.systemStatus = new SystemStatus();
-    this.systemStatus.state = SystemState.connecting;
+    this.states = [
+      {
+        description: 'Connecting',
+        value: SystemState.connecting,
+        color: Colors.yellow
+      },
+      {
+        description : 'Tester initialized',
+        value: SystemState.initialized,
+        color: Colors.green
+      },
+      {
+        description : 'Loading Test Program',
+        value : SystemState.loading,
+        color: Colors.yellow
+      },
+      {
+        description : 'Ready for DUT Test',
+        value : SystemState.ready,
+        color: Colors.green
+      },
+      {
+        description : 'Test Execution',
+        value : SystemState.testing,
+        color: Colors.red
+      },
+      {
+        description : 'Test paused',
+        value : SystemState.paused,
+        color: Colors.yellow
+      },
+      {
+        description : 'Unloading Test Program',
+        value : SystemState.unloading,
+        color: Colors.yellow
+      },
+      {
+        description: 'Error',
+        value: SystemState.error,
+        color: Colors.red
+      }
+    ];
 
-    this.informationCardConfiguration = new CardConfiguration();
-    this.identifyCardConfiguration = new CardConfiguration();
-    this.infoContentCardConfiguration = new CardConfiguration();
-
-    this.systemInformationConfiguration = new InformationConfiguration();
-    this.numberOfSitesConfiguration = new InformationConfiguration();
-    this.timeInformationConfiguration = new InformationConfiguration();
-    this.environmentInformationConfiguration = new InformationConfiguration();
-    this.handlerInformationConfiguration = new InformationConfiguration();
-
+    this.currentState = SystemState.connecting;
+    this.updateRenderedState();
     communicationService.message.subscribe(msg => this.handleServerMessage(msg));
   }
 
-  handleServerMessage(serverMessage: any) {
-    if (serverMessage.payload.state) {
-      if (this.systemStatus.state  !== serverMessage.payload.state) {
-        this.systemStatus.state = serverMessage.payload.state;
-        this.systemStatus.update(serverMessage.payload);
-        this.updateView();
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage && serverMessage.payload && serverMessage.payload.state) {
+      if (this.stateChanged(serverMessage.payload.state)) {
+        this.changeState(serverMessage.payload.state);
       }
     }
   }
 
-  showError() {
-    return this.systemStatus.state === SystemState.error;
+  private updateRenderedState(): void {
+    this.renderedState = this.states.filter(s => s.value === this.currentState)[0];
+  }
+
+  private stateChanged(receivedState: SystemState): boolean {
+    return this.currentState !== receivedState;
+  }
+
+  private changeState(state: SystemState) {
+    this.currentState = state;
+    this.updateRenderedState();
   }
 
   ngOnInit() {
-    this.informationCardConfiguration.cardStyle = CardStyle.ROW_STYLE;
-    this.informationCardConfiguration.labelText = 'System Information';
-
-    this.identifyCardConfiguration = {
-      shadow: true,
-      cardStyle: CardStyle.COLUMN_STYLE,
-      labelText: 'System Identification'
-    };
-
-    this.infoContentCardConfiguration.cardStyle = CardStyle.COLUMN_STYLE;
-    this.infoContentCardConfiguration.shadow = true;
-
-    this.systemInformationConfiguration.labelText = systemInformationLabelText.systemLabelText;
-    this.numberOfSitesConfiguration.labelText = systemInformationLabelText.sitesLabelText;
-    this.timeInformationConfiguration.labelText = systemInformationLabelText.timeLabelText;
-    this.environmentInformationConfiguration.labelText = systemInformationLabelText.environmentLabelText;
-    this.handlerInformationConfiguration.labelText = systemInformationLabelText.handlerLabelText;
-  }
-
-  updateView() {
-    if (this.systemStatus.deviceId) {
-      this.systemInformationConfiguration.value = this.systemStatus.deviceId;
-    }
-
-    if (this.systemStatus.sites) {
-      this.numberOfSitesConfiguration.value = this.systemStatus.sites.length;
-    }
-
-    if (this.systemStatus.time) {
-      this.timeInformationConfiguration.value = this.systemStatus.time;
-    }
-
-    if (this.systemStatus.env) {
-      this.environmentInformationConfiguration.value = this.systemStatus.env;
-    }
-
-    if (this.systemStatus.handler) {
-      this.handlerInformationConfiguration.value = this.systemStatus.handler;
-    }
   }
 }

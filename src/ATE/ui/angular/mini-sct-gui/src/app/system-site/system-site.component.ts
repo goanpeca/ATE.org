@@ -1,19 +1,21 @@
-import { CommunicationService } from './../services/websocket/communication.service';
-import { Component, OnInit, Input, Pipe, PipeTransform } from '@angular/core';
-import { SystemState } from '../system-status';
+import { CommunicationService } from './../services/communication.service';
+import { Component, OnInit } from '@angular/core';
 import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
 
-export enum SourceApp {
-  Master = 'master',
-  Control = 'control',
-  Test = 'test',
-
-}
-
-export interface ISite {
+export class SystemSiteEntry {
   type: string;
   siteId: string;
   state: string;
+
+  constructor(type: string, siteId: string, state: string) {
+    this.type = type;
+    this.siteId = siteId;
+    this.state = state;
+  }
+
+  equals(other: SystemSiteEntry): boolean {
+    return other.siteId === this.siteId && other.type === this.type;
+  }
 }
 
 @Component({
@@ -22,94 +24,63 @@ export interface ISite {
   styleUrls: ['./system-site.component.scss']
 })
 
-@Pipe({
-  name: 'retrieveData',
-  pure: true
-})
-export class SystemSiteComponent implements OnInit, PipeTransform {
+export class SystemSiteComponent implements OnInit {
   systemSiteCardConfiguration: CardConfiguration;
 
-  sitesControl: ISite[] = [];
-  sitesTest: ISite[] = [];
+  private readonly entries: SystemSiteEntry[];
 
-  systemState: SystemState;
-
-  @Input() msg: JSON;
-  @Input() sites: string[];
-
-// sitesObj
-  sitesObj = {
-    Control: this.sitesControl,
-    TestApp: this.sitesTest
-  };
-
-  constructor(communicationService: CommunicationService) {
+  constructor(private readonly communicationService: CommunicationService) {
     this.systemSiteCardConfiguration = new CardConfiguration();
+    this.entries = [];
 
-    this.systemState = SystemState.connecting;
     communicationService.message.subscribe(msg => this.handleServerMessage(msg));
   }
   private handleServerMessage(serverMessage: any) {
-    if (serverMessage.payload.state) {
-      if (this.systemState !== serverMessage.payload.state) {
-        this.systemState = serverMessage.payload.state;
+    if ( serverMessage.topic && serverMessage.payload && serverMessage.payload.state && (serverMessage.type === 'mqtt.onmessage')) {
+      let id = this.extractId(serverMessage.topic);
+      if (id) {
+        if (serverMessage.topic.includes('TestApp')) {
+          this.updateTestApp(id, serverMessage.payload.state);
+        } else if (serverMessage.topic.includes('Control')) {
+          this.updateControl(id, serverMessage.payload.state);
+        }
       }
     }
   }
 
   ngOnInit() {
-    this.systemSiteCardConfiguration.cardStyle = CardStyle.ROW_STYLE;
+    this.systemSiteCardConfiguration.cardStyle = CardStyle.ROW_STYLE_FOR_SYSTEM;
     this.systemSiteCardConfiguration.labelText = 'System Sites';
   }
 
-  transform(value: JSON, args?: any): any {
-    return this.retrieveData(value);
+  private extractId(mqttTopic: string): string {
+    const topicSplit: string[] = mqttTopic.split('/');
+    let result: string = topicSplit[topicSplit.length - 1].replace(/site/g, '');
+    return result;
   }
 
-  retrieveData(message) {
-    if (!message) { return; }
-    const jsonMessage = message.payload;
-    const payload = JSON.parse(jsonMessage);
-    const topic = message.topic;
+  private  updateControl(id: string, state: string): void {
+    this.updateEntry('Control', id, state);
+  }
 
-    if (payload.type !== 'status') {
-      return;
+  private  updateTestApp(id: string, state: string): void {
+    this.updateEntry('TestApp', id, state);
+  }
+
+  private updateEntry(entryName: string, id: string , state: string): void {
+    let entry = new SystemSiteEntry(entryName, id, state);
+    let found = false;
+
+    for (let i = 0; i < this.entries.length; ++i) {
+      if (this.entries[i].equals(entry)) {
+        this.entries[i].state = entry.state;
+        found = true;
+        break;
+      }
     }
-
-    this.getMessageinfos(topic, payload);
-  }
-
-  getMessageinfos(topic: string, payload) {
-    const source = '';
-    const topicSplit: string[] = topic.split('/');
-    const site: string = topicSplit[topicSplit.length - 1];
-
-    // we ignore master status, it will be handled somewehere else
-    if (topic.includes('Master')) { return; }
-
-    if (topic.includes('site')) {
-      const siteNum = site.replace(/^\D+/g, '');
-      const siteType = topicSplit[2];
-      if (this.sites.find(x => x === siteNum)) {
-          let singleSite: ISite;
-          singleSite = {
-            type: topicSplit[2],
-            siteId: siteNum,
-            state: payload.state
-          };
-          const s: ISite[] = this.sitesObj[siteType];
-          const num = s.findIndex(x => x.siteId === siteNum);
-          if (num !== -1) {
-            this.sitesObj[siteType][num] = singleSite;
-            return;
-          }
-          this.sitesObj[siteType].push(singleSite);
-        }
+    if (!found) {
+      console.log('Adding new entry ' + JSON.stringify(entry));
+      this.entries.push(entry);
     }
-    return source;
-  }
-
-  renderSystemSiteComponent() {
-    return this.systemState !== SystemState.error;
   }
 }

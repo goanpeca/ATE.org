@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { SystemState } from '../../system-status';
 import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
 import { CardConfiguration, CardStyle } from './../../basic-ui-elements/card/card.component';
-import { CommunicationService } from './../../services/websocket/communication.service';
+import { CommunicationService } from './../../services/communication.service';
 
 @Component({
   selector: 'app-test-execution',

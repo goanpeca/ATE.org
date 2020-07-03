@@ -322,6 +322,7 @@ class ProjectNavigation(QObject):
         self.cur.execute('''CREATE TABLE "test_targets" (
                          "id"	INTEGER PRIMARY KEY AUTOINCREMENT,
                          "name"	TEXT NOT NULL,
+                         "prog_name" TEXT NOT NULL,
                          "hardware"	TEXT NOT NULL,
                          "base"	TEXT NOT NULL
                                CHECK(base=='PR' OR base=='FT'),
@@ -1402,8 +1403,8 @@ class ProjectNavigation(QObject):
         self._insert_sequence_informations(owner_name, name, definition)
 
         for index, test in enumerate(definition['sequence']):
-            base_test_name = list(test.items())[0][0].split('_')[0]
-            self.add_test_target(test_target, hardware, base, base_test_name, True, False)
+            base_test_name = test['name']
+            self.add_test_target(name, test_target, hardware, base, base_test_name, True, False)
 
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
@@ -1411,26 +1412,26 @@ class ProjectNavigation(QObject):
     def _insert_sequence_informations(self, owner_name, prog_name, definition):
         seq_query = '''INSERT INTO sequence(owner_name, prog_name, test, test_order, definition) VALUES (?, ?, ?, ?, ?)'''
         for index, test in enumerate(definition['sequence']):
-            tuple_test = list(test.items())
-            blob = pickle.dumps(tuple_test[0][1], 4)
-            self.cur.execute(seq_query, (owner_name, prog_name, tuple_test[0][0], index, blob))
+            # ToDo: Why protocol version 4?
+            blob = pickle.dumps(test, 4)
+            self.cur.execute(seq_query, (owner_name, prog_name, test['name'], index, blob))
 
     def update_program(self, name, hardware, base, target, usertext, sequencer_typ, temperature, definition, owner_name, test_target):
         query = '''UPDATE programs set hardware=?, base=?, target=?, usertext=?, sequencer_type=?, temperature=? WHERE owner_name=? and prog_name=?'''
         self.cur.execute(query, (hardware, base, target, usertext, sequencer_typ, pickle.dumps(temperature), owner_name, name))
 
-        self._update_test_targets_list(test_target, hardware, base, definition)
+        self._update_test_targets_list(name, test_target, hardware, base, definition)
         self._delete_program_sequence(name, owner_name)
         self._insert_sequence_informations(owner_name, name, definition)
 
         self.con.commit()
         self.database_changed.emit(TableId.Flow())
 
-    def _update_test_targets_list(self, test_target, hardware, base, definition):
+    def _update_test_targets_list(self, program_name, test_target, hardware, base, definition):
         tests = []
         for test in definition['sequence']:
             test.pop('is_valid', None)
-            test_name = list(test.items())[0][0].split('_')[0]
+            test_name = test['name']
             tests.append(test_name)
 
         existing_test_targets = self.get_tests_for_test_target(test_target, hardware, base)
@@ -1441,7 +1442,7 @@ class ProjectNavigation(QObject):
 
         for test_name in tests:
             if test_name not in existing_test_targets:
-                self.add_test_target(test_target, hardware, base, test_name, True, False)
+                self.add_test_target(program_name, test_target, hardware, base, test_name, True, False)
 
     def _delete_program_sequence(self, prog_name, owner_name):
         seq_query = '''DELETE FROM sequence WHERE prog_name=? and owner_name=?'''
@@ -1581,18 +1582,16 @@ class ProjectNavigation(QObject):
         self.cur.execute(query, (program, owner))
         retval = []
         for row in self.cur.fetchall():
-            tests = {}
-            tests[row[0]] = pickle.loads(row[2])
-            retval.insert(row[1], tests)
+            retval.append(pickle.loads(row[2]))
 
         return retval
 
     def get_tests_for_program(self, prog_name, owner_name):
-        query = '''SELECT test from sequence where prog_name = ? and owner_name= ?'''
-        self.cur.execute(query, (prog_name, owner_name))
+        query = '''SELECT test, definition from sequence where prog_name = ?  ORDER BY test_order'''
+        self.cur.execute(query, (prog_name,))
         retval = []
         for row in self.cur.fetchall():
-            retval.append(row[0])
+            retval.append((row[0], row[1]))
 
         return retval
 
@@ -1632,7 +1631,7 @@ class ProjectNavigation(QObject):
 
         return retval
 
-    def add_test_target(self, name, hardware, base, test, is_default, is_enabled=False):
+    def add_test_target(self, prog_name, name, hardware, base, test, is_default, is_enabled=False):
         query_select = '''SELECT name from test_targets WHERE hardware = ? and base = ? and test = ? and name = ?'''
         self.cur.execute(query_select, (hardware, base, test, name))
         data = self.cur.fetchall()
@@ -1643,8 +1642,8 @@ class ProjectNavigation(QObject):
             print("target exists already")
             return
 
-        query = '''INSERT INTO test_targets (name, hardware, base, test, is_default, is_enabled) VALUES (?, ?, ?, ?, ?, ?)'''
-        self.cur.execute(query, (name, hardware, base, test, is_default, is_enabled))
+        query = '''INSERT INTO test_targets (name, prog_name, hardware, base, test, is_default, is_enabled) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+        self.cur.execute(query, (name, prog_name, hardware, base, test, is_default, is_enabled))
         self.con.commit()
         self.database_changed.emit(TableId.Test())
 
@@ -1679,6 +1678,18 @@ class ProjectNavigation(QObject):
         self.cur.execute(query, (hardware, base, test))
         for row in self.cur.fetchall():
             retval.append(row[0])
+
+        return retval
+
+    def get_test_targets_for_program(self, prog_name):
+        query = '''SELECT * FROM test_targets WHERE prog_name = ? '''
+        retval = []
+        self.cur.execute(query, (prog_name, ))
+        for row in self.cur.fetchall():
+            row_value = []
+            for val in row:
+                row_value.append(val)
+            retval.append(row_value)
 
         return retval
 

@@ -1,139 +1,88 @@
-import { InformationConfiguration } from './../basic-ui-elements/information/information-config';
-import { InformationComponent } from '../basic-ui-elements/information/information.component';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { SystemStatusComponent, systemInformationLabelText } from './system-status.component';
-import { NO_ERRORS_SCHEMA, DebugElement, SimpleChange } from '@angular/core';
-import { TestOptionComponent } from './../system-control/test-option/test-option.component';
-import { SystemState } from '../system-status';
+import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { SystemStatusComponent } from './system-status.component';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { CommunicationService } from '../services/communication.service';
+import { MockServerService } from '../services/mockserver.service';
+import * as constants from '../services/mockserver-constants';
+import { waitUntil } from '../test-stuff/auxillary-test-functions';
 
 describe('SystemStatusComponent', () => {
   let component: SystemStatusComponent;
   let fixture: ComponentFixture<SystemStatusComponent>;
   let debugElement: DebugElement;
+  let mockServerService: MockServerService;
+  let originalJasmineTimeout: number;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SystemStatusComponent, InformationComponent ],
-      schemas: [NO_ERRORS_SCHEMA]
+      declarations: [ SystemStatusComponent ],
+      providers: [ CommunicationService ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
+    mockServerService = new MockServerService();
     fixture = TestBed.createComponent(SystemStatusComponent);
     component = fixture.componentInstance;
     debugElement = fixture.debugElement;
     fixture.detectChanges();
+    originalJasmineTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+  });
+
+  afterEach( () => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalJasmineTimeout;
+    document.getElementById(constants.MOCK_SEVER_SERVICE_NEVER_REMOVABLE_ID).remove();
   });
 
   it('should create status component', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display "System Information" as label text', () => {
-    expect(component.informationCardConfiguration.labelText).toBe('System Information');
-  });
+  it('should show a correct circle color', async () => {
 
-  it('should show error messages when system state is "error"', () => {
-    expect(component.showError()).toBeDefined();
-
-    let errorMsg = 'system has error';
-
-    let errorElement = debugElement.query(By.css('.error h3'));
-
-    if (component.showError()) {
-      component.systemStatus.reason = errorMsg;
-
-      expect(errorElement.nativeElement.textContent).toBe('system has error');
+    // condition when we found our green circle
+    function foundCircle(color: string): boolean {
+      let element = debugElement.query(By.css('span.' + color));
+      if (element) {
+        return true;
+      }
+      return false;
     }
-  });
 
-  it('should support hr tag', () => {
-    let hrElement = debugElement.nativeElement.querySelector('hr');
+    let spy = spyOn<any>(component, 'changeState').and.callThrough();
 
-    expect(hrElement).toBeTruthy();
-  });
+    // send initialized message
+    mockServerService.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_INITIALIZED]);
 
-  it('should contain 2 app-card tags', async(() => {
-    let cardElement = debugElement.nativeElement.querySelectorAll('app-card');
+    let success = await waitUntil(
+      () => {
+        fixture.detectChanges();
+        component.ngOnInit();
+      },
+      () => foundCircle('green'),
+      300,
+      6000);
 
-    expect(cardElement).not.toEqual(null);
-    expect(cardElement.length).toEqual(2);
-  }));
-
-  it('should call method updateView when app detected change', async(() => {
-    let spy = spyOn(component, 'updateView');
-
-    component.handleServerMessage({payload: {state: SystemState.unloading}});
-
+    expect(success).toBeTruthy();
     expect(spy).toHaveBeenCalled();
-  }));
 
-  it('current system status is "connecting"', async(() => {
-    expect(component.systemStatus.state).toBe(SystemState.connecting);
-  }));
+    // send error message
+    mockServerService.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_ERROR]);
 
-  describe('When system state is "connecting"', () => {
-    it('should support heading', async(() => {
-      let headingElement = debugElement.nativeElement.querySelector('app-card');
-      expect(headingElement.textContent).toBe('Identifying Test System!');
-    }));
+    success = await waitUntil(
+      () => {
+        fixture.detectChanges();
+        component.ngOnInit();
+      },
+      () => foundCircle('red'),
+      300,
+      6000);
 
-    it('should display labelText "System Identification"', async(() => {
-      expect(component.identifyCardConfiguration.labelText).toBe('System Identification');
-    }));
+    expect(success).toBeTruthy();
+    expect(spy).toHaveBeenCalled();
   });
 
-  describe('When system state is neither "error" nor "connecting"', () => {
-    it('should contain 5 app-information tags', async(() => {
-
-      // set system state to something different from error or connecting, i.e. to ready
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
-      fixture.detectChanges();
-
-      let infoElement = debugElement.nativeElement.querySelectorAll('app-information');
-      expect(infoElement.length).toBe(5);
-    }));
-
-    it('should display label texts: "System", "Number of Sites", "Time", "Environment", "Handler"', async(() => {
-      expect(component.infoContentCardConfiguration.labelText).toEqual('');
-
-      // set system state to something different from error or connecting, i.e. to ready
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
-      fixture.detectChanges();
-
-      let lableElements = debugElement.queryAll(By.css('app-information h2'));
-
-      let labelTexts = [];
-      lableElements.forEach( l => labelTexts.push(l.nativeElement.innerText));
-
-      expect(labelTexts).toEqual(jasmine.arrayWithExactContents(["System", "Number of Sites", "Time", "Environment", "Handler"]));
-
-    }));
-
-    it('should display value of system information', async(() => {
-      expect(component.systemInformationConfiguration.value).toEqual('');
-
-      // set system state to something different from error or connecting, i.e. to testing
-      (component as any).handleServerMessage(
-        {
-          "payload":{
-            "state":SystemState.testing,
-            "device_id": "Test-Id",
-            "env": "Test-Environment",
-            "handler": "Test-Handler",
-            "sites": ["Test-Site-A", "Test-Site-B"],
-            "systemTime": "Test-SystemTime"
-          }});
-      fixture.detectChanges();
-
-      let valueElements = debugElement.queryAll(By.css('app-information h3'));
-
-      let valueTexts = [];
-      valueElements.forEach( v => valueTexts.push(v.nativeElement.innerText));
-
-      expect(valueTexts).toEqual(jasmine.arrayWithExactContents(["Test-Id", "Test-Environment", "Test-Handler", "Test-SystemTime"]));
-    }));
-  });
 });

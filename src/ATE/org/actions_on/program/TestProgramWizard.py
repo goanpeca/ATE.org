@@ -29,6 +29,8 @@ class Range(Enum):
         return self.value
 
 
+# ToDo: Add numeric type! These strings are display values that
+# are bound to change, which would break all projects.
 class Sequencer(Enum):
     Static = 'Fixed Temperature'  # 'Static'
     Dynamic = 'Variable Temperature'  # 'Dynamic'
@@ -236,10 +238,7 @@ class TestProgramWizard(BaseDialog):
         self.parametersInput.setEnabled(False)
         self.parametersOutput.setEnabled(False)
 
-        self._update_tables_parameters(item.text() + '_1', is_default=True)
-
-    def _update_table_default(self):
-        pass
+        self._update_tables_parameters(item.text(), item.text() + "_1", is_default=True)
 
     @QtCore.pyqtSlot(QtWidgets.QTableWidgetItem)
     def _test_selected(self, item):
@@ -256,8 +255,9 @@ class TestProgramWizard(BaseDialog):
 
     def _handle_selection(self, selected_list, second_list, item):
         test_name = self.selectedTests.item(item.row(), 0).text()
+        test_instance_name = self.selectedTests.item(item.row(), 1).text()
         self._deselect_items(second_list)
-        self._update_tables_parameters(test_name)
+        self._update_tables_parameters(test_name, test_instance_name)
 
     def _deselect_items(self, selected_list):
         for index in range(selected_list.count()):
@@ -275,8 +275,8 @@ class TestProgramWizard(BaseDialog):
     def _extract_test_sequence(self, indexed_test_name):
         return indexed_test_name.split('_')[1]
 
-    def _update_tables_parameters(self, text, is_default=False):
-        test_name = self._extract_base_test_name(text)
+    def _update_tables_parameters(self, the_test_name, test_instance_name, is_default=False):
+        test_name = self._extract_base_test_name(the_test_name)
         self.current_selected_test = test_name
         parameters = self.project_info.get_test_definiton(test_name)
         self.input_parameters = parameters['input_parameters']
@@ -289,11 +289,11 @@ class TestProgramWizard(BaseDialog):
 
         # update table content if content changed
         for test in test_list:
-            name = list(test.items())[0][0]
-            if name != text:
+            name = test['description']
+            if name != test_instance_name:
                 continue
 
-            input_params = list(test[text]['input_parameters'].items())
+            input_params = test['input_parameters'].items()
             for param in input_params:
                 # hack to prevent using a key value that may not exists any more,
                 # when we edit the parameter names for the respective test
@@ -302,7 +302,7 @@ class TestProgramWizard(BaseDialog):
 
                 self.input_parameters[param[0]]['Default'] = param[1]
 
-            output_params = list(test[text]['output_parameters'].items())
+            output_params = test['output_parameters'].items()
             for param in output_params:
                 # hack to prevent using a key value that may not exists any more,
                 # when we edit the parameter names for the respective test
@@ -310,13 +310,16 @@ class TestProgramWizard(BaseDialog):
                     continue
 
                 self.output_parameters[param[0]]['LTL'], self.output_parameters[param[0]]['UTL'] = \
-                    test[text]['output_parameters'][param[0]]['LTL'], \
-                    test[text]['output_parameters'][param[0]]['UTL']
+                    test['output_parameters'][param[0]]['LTL'], \
+                    test['output_parameters'][param[0]]['UTL']
             break
 
         self._fill_input_parameter_table()
         self._fill_output_parameter_table()
 
+    # ToDo: Improve Exception handling, as all exceptions
+    #       thrown in handlers will be discarded and replaced
+    #       by "action not recognized"
     @QtCore.pyqtSlot(str)
     def _move_test(self, action):
         try:
@@ -328,6 +331,7 @@ class TestProgramWizard(BaseDialog):
         except Exception:
             raise (f'action "{action}" not recognized')
 
+    # Naming: Name is confusing
     def _is_selected(self, test_list):
         selected_items = len(test_list.selectedItems())
         if not selected_items:
@@ -352,6 +356,7 @@ class TestProgramWizard(BaseDialog):
 
         self._update_test_list_table()
 
+    # ToDo: Naming: What does this method actually do`?
     def _fit_test_sequence(self, index, new_index):
         clicked_item = self.selected_tests[index]
         element2 = self.selected_tests[new_index]
@@ -365,20 +370,19 @@ class TestProgramWizard(BaseDialog):
     def _rename_after_reorder(self, name, index, new_index):
         base_name = self._extract_base_test_name(name)
 
-        test_name1 = list(self.selected_tests[index].items())[0][0]
-        test_name2 = list(self.selected_tests[new_index].items())[0][0]
+        test_name1 = self.selected_tests[index]['description']
+        test_name2 = self.selected_tests[new_index]['description']
         if not (base_name in test_name1 and base_name in test_name2):
             return
 
         clicked_item = self.selected_tests[index]
         element = self.selected_tests[new_index]
-        element[test_name1] = element.pop(test_name2)
-        if element[test_name1]['description'] == test_name2:
-            element[test_name1]['description'] = test_name1
 
-        clicked_item[test_name2] = clicked_item.pop(test_name1)
-        if clicked_item[test_name2]['description'] == test_name1:
-            clicked_item[test_name2]['description'] = test_name2
+        if element['description'] == test_name2:
+            element['description'] = test_name1
+
+        if clicked_item['description'] == test_name1:
+            clicked_item['description'] = test_name2
 
     @QtCore.pyqtSlot()
     def _move_down(self):
@@ -410,51 +414,10 @@ class TestProgramWizard(BaseDialog):
         self.parametersInput.setRowCount(0)
         self.parametersOutput.setRowCount(0)
 
-        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
-        for index, test in enumerate(self.selected_tests):
-            if list(test.items())[0][0] != test_name:
-                continue
-
-            del self.selected_tests[index]
-            self._update_test_sequence(test_name)
-            break
-
+        test_index = self.selectedTests.currentRow()
+        del self.selected_tests[test_index]
         self._update_test_list_table()
         self.selectedTests.blockSignals(False)
-
-    def _update_test_sequence(self, indexed_test_name):
-        test_name = self._extract_base_test_name(indexed_test_name)
-        sequence = int(self._extract_test_sequence(indexed_test_name))
-        test_list = []
-        for test in self.selected_tests:
-            name = list(test.items())[0][0]
-            if self._extract_base_test_name(name) != test_name:
-                continue
-
-            test_list.append(name)
-
-        if not len(test_list):
-            return
-
-        test_list.sort()
-
-        for test in test_list:
-            if int(self._extract_test_sequence(test)) < sequence:
-                continue
-
-            for sel_test in self.selected_tests:
-                name = list(sel_test.items())[0][0]
-                if name != test:
-                    continue
-
-                new_test_name = f'{self._extract_base_test_name(name)}_{sequence}'
-                sel_test[new_test_name] = sel_test.pop(name)
-                if sel_test[new_test_name]['description'] == name:
-                    sel_test[new_test_name]['description'] = new_test_name
-
-            sequence += 1
-
-        # self.selectedTests.setRowCount(len(self.selected_tests))
 
     @QtCore.pyqtSlot()
     def _add_to_testprogram(self):
@@ -486,6 +449,7 @@ class TestProgramWizard(BaseDialog):
                 self.temperature_feedback.setText(ErrorMessage.InvalidTemperature())
 
         self._update_test_list_table()
+        self._update_test_list()
 
     def _update_test_list(self):
         self.availableTests.clear()
@@ -493,14 +457,7 @@ class TestProgramWizard(BaseDialog):
         self.availableTests.addItems(availabe_tests)
 
         for test in availabe_tests:
-            self.available_tests.append(self._generate_test_struct(test))
-
-    def _is_valid_range(self):
-        for test in self.selected_tests:
-            if not list(test.items())[1][1]:
-                self._update_feedback(ErrorMessage.NoValidTestRange())
-                self.OKButton.setEnabled(False)
-                break
+            self.available_tests.append(self._generate_test_struct(test, test))
 
     def _validate_temperature_input(self, text, pattern):
         index = text.rfind(pattern)
@@ -549,7 +506,7 @@ class TestProgramWizard(BaseDialog):
             return tests
 
         for test in tests:
-            min, max = self.project_info.get_test_temp_limits(test, self.project_info.active_hardware, self.prog_name.active_base)
+            min, max = self.project_info.get_test_temp_limits(test, self.project_info.active_hardware, self.project_info.active_base)
             for temp in temps:
                 if temp > (min - 1) and temp < max + 1 and \
                    test not in available_tests:
@@ -622,6 +579,7 @@ class TestProgramWizard(BaseDialog):
         self.Feedback.setStyleSheet('')
         self.Feedback.setText('')
 
+    # ToDo Encapsulate temperature range into class
     def _is_temperature_in_range(self, test, temps):
         if temps is None:
             return Range.In_Range()
@@ -641,6 +599,7 @@ class TestProgramWizard(BaseDialog):
     def _generate_color(self, color):
         return QtGui.QBrush(QtGui.QColor(color[0], color[1], color[2]))
 
+    # ToDo: Name this function better!
     def _item_out_of_range(self, item, color):
         item.setBackground(self._generate_color(color))
         item.setForeground(QtCore.Qt.black)
@@ -808,7 +767,7 @@ class TestProgramWizard(BaseDialog):
     def _edit_cell_done(self, test_name, table, table_type, checkable_widget, row, column):
         if table_type == 'description':
             self.selectedTests.item(row, column).setText(str(checkable_widget.text()))
-            self._update_test_description(test_name, checkable_widget.text())
+            self._update_test_description(row, checkable_widget.text())
             self._update_row(row)
         else:
             param_type = table.item(row, 0).text()
@@ -818,13 +777,8 @@ class TestProgramWizard(BaseDialog):
             else:
                 self._validate_output_parameter(test_name, value, param_type, column)
 
-    def _update_test_description(self, test_name, desctiption):
-        for test in self.selected_tests:
-            name = list(test.items())[0][0]
-            if name != test_name:
-                continue
-
-            test[name]['description'] = desctiption
+    def _update_test_description(self, test_row, new_description):
+        self.selected_tests[test_row]['description'] = new_description
 
     def _update_row(self, row):
         test_name = self.selectedTests.item(row, 0).text()
@@ -897,8 +851,8 @@ class TestProgramWizard(BaseDialog):
 
         return float(left_limit) <= value <= float(right_limit)
 
-    def _generate_test_struct(self, test_name):
-        sturct = {test_name: {'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}, 'description': test_name, 'is_valid': True}}
+    def _generate_test_struct(self, test_name, test_description):
+        sturct = {'name': test_name, 'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}, 'description': test_description, 'is_valid': True}
         parameters = self.project_info.get_test_definiton(self._extract_base_test_name(test_name))
         inputs = {}
         outputs = {}
@@ -908,23 +862,15 @@ class TestProgramWizard(BaseDialog):
         for key, value in parameters['output_parameters'].items():
             outputs[key] = {'LTL': value['LTL'], 'UTL': value['UTL']}
 
-        sturct[test_name].update({'input_parameters': inputs})
-        sturct[test_name].update({'output_parameters': outputs})
+        sturct.update({'input_parameters': inputs})
+        sturct.update({'output_parameters': outputs})
         return sturct
-
-    def _get_test_index(self, test_name):
-        for index, test in enumerate(self.selected_tests):
-            test_tuple = list(test.items())
-            if test_tuple[0][0] == test_name:
-                return index
-
-        return -1
 
     def _update_selected_tests_parameters(self, test_name, type, parameter_name, value, limit=''):
         index = self.selectedTests.currentRow()
         element = {}
         try:
-            element = self.selected_tests[index][test_name][type][parameter_name]
+            element = self.selected_tests[index][type][parameter_name]
         except KeyError:
             self._create_new_params(parameter_name, limit, type, index, test_name, value, limit)
 
@@ -933,14 +879,14 @@ class TestProgramWizard(BaseDialog):
         else:
             element[limit] = value
 
-        self.selected_tests[index][test_name][type][parameter_name] = element
+        self.selected_tests[index][type][parameter_name] = element
 
     def _create_new_params(self, parameter_name, limit, type, index, test_name, value, limit_type=''):
         if not limit_type:
-            self.selected_tests[index][test_name][type][parameter_name] = value
+            self.selected_tests[index][type][parameter_name] = value
         else:
-            self.selected_tests[index][test_name][type][parameter_name] = {'UTL': '', 'LTL': ''}
-            self.selected_tests[index][test_name][type][parameter_name][limit] = value
+            self.selected_tests[index][type][parameter_name] = {'UTL': '', 'LTL': ''}
+            self.selected_tests[index][type][parameter_name][limit] = value
 
     def _clear_test_list_table(self):
         if not self.selectedTests.rowCount():
@@ -954,9 +900,9 @@ class TestProgramWizard(BaseDialog):
         self.selectedTests.setRowCount(len(self.selected_tests))
         count = 0
         for test in self.selected_tests:
-            test_name = list(test.items())[0][0]
+            test_name = test['name']
             item_name = self._generate_test_name_item(test_name)
-            item_description = self._generate_test_description_item(test[test_name]['description'])
+            item_description = self._generate_test_description_item(test['description'])
             temps = self._get_temps()
             which_range = self._is_temperature_in_range(self._extract_base_test_name(test_name), temps)
             if which_range == Range.Out_Of_Range():
@@ -988,23 +934,14 @@ class TestProgramWizard(BaseDialog):
     def _generate_selected_test_name(self, test_name):
         count = 1
         for test in self.selected_tests:
-            params = list(test.items())
-            if test_name in params[0][0]:
+            if test_name in test['name']:
                 count += 1
 
         return f"{test_name}_{count}"
 
     def _add_test_tuple_items(self, test_name):
         indexed_test = self._generate_selected_test_name(test_name)
-        item_name, item_description = self._generate_test_tuple_items(indexed_test)
-        self._add_table_items(item_name, item_description)
-        self.selected_tests.append(self._generate_test_struct(indexed_test))
-
-    def _add_table_items(self, item_name, item_description):
-        row = len(self.selected_tests)
-        self.selectedTests.setRowCount(row + 1)
-        self.selectedTests.setItem(row, 0, item_name)
-        self.selectedTests.setItem(row, 1, item_description)
+        self.selected_tests.append(self._generate_test_struct(test_name, indexed_test))
 
     def _insert_test_tuple_items(self, row, test_name, test_description):
         self.selectedTests.setItem(row, 0, self._generate_test_name_item(test_name))
@@ -1021,12 +958,9 @@ class TestProgramWizard(BaseDialog):
         name_item.setFlags(QtCore.Qt.NoItemFlags | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         return name_item
 
-    def _generate_test_tuple_items(self, test_name):
-        name_item = self._generate_test_name_item(test_name)
-        description_item = self._generate_test_description_item(test_name)
-
-        return name_item, description_item
-
+    # ToDo: This function creates a suffix.
+    # ToDo: This should be integrated into the program_name propery (the latter returns an invalid value not containing
+    #       the actual program name.
     def _generate_target_prefix(self):
         count = self.project_info.get_program_owner_element_count(self.owner) + 1
         prefix = self.owner[0].upper()
@@ -1061,6 +995,7 @@ class TestProgramWizard(BaseDialog):
             return
 
         if not self.read_only and self.edit_on:
+            self.prog_name = configuration['name']
             self.project_info.insert_program(configuration['name'], configuration['hardware'], configuration['base'], configuration['target'],
                                              configuration['usertext'], configuration['sequencer_type'], configuration['temperature'],
                                              definition, self.owner, self.project_info.get_program_owner_element_count(self.owner), self.target_prefix)
@@ -1070,10 +1005,16 @@ class TestProgramWizard(BaseDialog):
                                              configuration['target'], configuration['usertext'], configuration['sequencer_type'],
                                              configuration['temperature'], definition, self.owner, target_name)
 
+        self._generate_test_program(configuration)
+
         self.accept()
 
     def _cancel(self):
         self.reject()
+
+    def _generate_test_program(self, configuration):
+        from ATE.org.coding.generators import test_program_generator
+        test_program_generator(self.prog_name, self.project_info)
 
 
 def new_program_dialog(project_info, owner, parent):

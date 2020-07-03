@@ -1,60 +1,43 @@
 @import "../../styles.scss";
 
-.error {
-  background-color: $red;
-  color: $white;
-  text-align: center;
-  margin: 15px;
-  height: 200px;
+.systemStatusContainer {
+  display: block;
+  position: fixed;
+  /* top: 291px; */
+  top: 244px;
+  right: 0;
+  width: auto;
+  height: auto;
+  background-color: beige;
+  text-align: left;
+  padding: 10px;
 }
 
-h3 {
-  text-align: center;
-  padding-top: 90px;
+h2 {
+  display: inline-block;
+  margin-left: 10px;
 }
 
-.btn-close {
-  margin-left: 15px;
-  padding: 5px;
-  color: #0046AD;
-  font-weight: bold;
-  float: right;
-  font-size: 22px;
-  line-height: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-    :hover {
-    color: $black;
-  }
+span {
+  @include solidBorder(1px, beige);
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  float: left;
 }
 
-.warn {
-  padding: 20px;
-  background-color: $warn;
-  text-align: center;
-  animation-name: blinkingText;
-  animation-iteration-count: infinite;
-  animation-duration: 1.2s;
+.green {
+  background-color: green;
+}
+.yellow {
+  background-color: #FFBC58;
+}
+.red {
+  background-color: red;
 }
 
-@keyframes blinkingText {
-  0% {
-    color: $black;
+@media screen and (max-width: 600px) {
+  .systemStatusContainer {
+      top: 270px;
   }
-  49% {
-    color: $black;
-  }
-  60% {
-    color: transparent;
-  }
-  99% {
-    color: transparent;
-  }
-  100% {
-    color: $black;
-  }
-}
-
-.blueDivider {
-  @include blueDivider;
 }

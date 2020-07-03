@@ -1,9 +1,10 @@
 import { ButtonComponent } from './../../basic-ui-elements/button/button.component';
 import { async, ComponentFixture, TestBed, ComponentFixtureNoNgZone } from '@angular/core/testing';
 import { TestExecutionComponent } from './test-execution.component';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { SystemState } from 'src/app/system-status';
+import { CardComponent } from 'src/app/basic-ui-elements/card/card.component';
 
 
 describe('TestExecutionComponent', () => {
@@ -13,8 +14,8 @@ describe('TestExecutionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TestExecutionComponent, ButtonComponent ],
-      schemas: [NO_ERRORS_SCHEMA]
+      declarations: [ TestExecutionComponent, ButtonComponent, CardComponent ],
+      schemas: []
     })
     .compileComponents();
   }));
@@ -46,7 +47,7 @@ describe('TestExecutionComponent', () => {
     it('should have a disabled start-dut-test-button', () => {
 
       // connecting
-      (component as any).handleServerMessage({"payload": {"state":SystemState.connecting}});
+      (component as any).handleServerMessage({payload: {state: SystemState.connecting}});
       fixture.detectChanges();
 
       let startDutTestButton = debugElement.queryAll(By.css('app-button'))
@@ -62,7 +63,7 @@ describe('TestExecutionComponent', () => {
     it('start-dut-test-button should be active', async(() => {
 
       // ready state
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
       fixture.detectChanges();
 
       let startDutTestButton = debugElement.queryAll(By.css('app-button'))
@@ -74,9 +75,9 @@ describe('TestExecutionComponent', () => {
     }));
 
     it('should call method startDutTestButtonClicked when button clicked', async(() => {
-      
+
       // ready state
-      (component as any).handleServerMessage({"payload": {"state":SystemState.ready}});
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
       fixture.detectChanges();
 
       let spy = spyOn(component, 'startDutTest').and.callThrough();

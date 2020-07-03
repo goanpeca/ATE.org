@@ -1,16 +1,14 @@
 @import '../../../styles.scss';
 
-/* Footer */
-
 .footer {
-    padding: 20px;
     text-align: center;
-    background: $colorFooter;
+    background-color: $colorFooter;
+    padding: 10px;
 }
 
-
-/* blue hr */
-
-hr {
-    @include blueDivider;
+#fixedFooter {
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    position: fixed;
 }
