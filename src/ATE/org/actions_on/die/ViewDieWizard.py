@@ -26,7 +26,7 @@ class ViewDieWizard(DieWizard):
         self.dieName.setEnabled(False)
         self.fromMaskset.setEnabled(False)
         self.quality.setEnabled(False)
-        self.isAGrade.setChecked(False)
+        self.isAGrade.setChecked(True)
         self.isAGrade.setEnabled(False)
         self.referenceGrade.setEnabled(False)
         self.grade.setEnabled(False)
@@ -47,24 +47,30 @@ class ViewDieWizard(DieWizard):
         dialog.withHardware.setCurrentText(configuration[0])
         dialog.fromMaskset.setCurrentText(configuration[1])
         if not configuration[2] == 'A':
+            dialog.isAGrade.setChecked(False)
             dialog.grade.setHidden(False)
             dialog.gradeLabel.setHidden(False)
             dialog.gradeLabel.setEnabled(True)
             dialog.referenceGrade.setHidden(False)
             dialog.referenceGradeLabel.setHidden(False)
             dialog.referenceGradeLabel.setEnabled(True)
+
+        dialog.grade.setCurrentText(configuration[2])
+        dialog.referenceGrade.setCurrentText(configuration[3])
+        dialog.quality.setCurrentText(configuration[4])
+
+        if configuration[5] == 'ASSP':
+            dialog.Type.setCurrentText('ASSP')
+        else:
+            dialog.Type.setCurrentText(configuration[5])
+            dialog.customer.setText(configuration[6])
             dialog.customer.setHidden(False)
             dialog.customerLabel.setHidden(False)
             dialog.customerLabel.setEnabled(True)
 
-        dialog.grade.setCurrentText(configuration[2])
-        dialog.referenceGrade.setCurrentText(configuration[2])
-        dialog.quality.setCurrentText(configuration[4])
-        dialog.customer.setText(configuration[5])
-        # TODO: does not exists in db
-        # dialog.Type.setCurrentText(configuration[7])
         dialog.feedback.setText('')
         dialog.OKButton.setEnabled(True)
+        dialog.isAGrade.setEnabled(False)
 
     def _connect_event_handler(self):
         pass

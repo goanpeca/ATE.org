@@ -1,12 +1,13 @@
-import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
-import { InputConfiguration } from './../../basic-ui-elements/input/input-config';
-import { async, ComponentFixture, TestBed, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, DebugElement, Component, OnChanges } from '@angular/core';
+import { ButtonComponent } from './../../basic-ui-elements/button/button.component';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { TestOptionComponent, TestOptionValue, TestOption } from './test-option.component';
 import { By } from '@angular/platform-browser';
 import { SystemState } from 'src/app/system-status';
-import { createUrlResolverWithoutPackagePrefix } from '@angular/compiler';
-import { toBase64String } from '@angular/compiler/src/output/source_map';
+import { CheckboxComponent } from 'src/app/basic-ui-elements/checkbox/checkbox.component';
+import { InputComponent } from 'src/app/basic-ui-elements/input/input.component';
+import { CardComponent } from 'src/app/basic-ui-elements/card/card.component';
+import { FormsModule } from '@angular/forms';
 
 describe('TestOptionComponent', () => {
   let component: TestOptionComponent;
@@ -15,8 +16,14 @@ describe('TestOptionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TestOptionComponent ],
-      schemas: [ NO_ERRORS_SCHEMA ]
+      declarations: [
+        TestOptionComponent,
+        ButtonComponent,
+        CheckboxComponent,
+        InputComponent,
+        CardComponent, ],
+      imports: [FormsModule],
+      schemas: []
     })
     .compileComponents();
   }));
@@ -77,22 +84,26 @@ describe('TestOptionComponent', () => {
     expect(component.testOptions.length).toBe(6, 'Should have 6 test options');
   });
 
-  it('should call methode resetTestOptions when reset button clicked', async(() => {
-    spyOn(component, 'resetTestOptions');
-    expect(component.resetTestOptions).not.toHaveBeenCalled();
+  it('should call method resetTestOptions when reset button clicked', async(() => {
 
-    let buttonElement = debugElement.nativeElement.querySelectorAll('app-button');
-    expect(buttonElement.length).toBe(2);
+    // ready
+    (component as any).handleServerMessage({payload: {state: SystemState.ready}});
+    fixture.detectChanges();
 
-    let systemState = component.systemStatus.state === SystemState.ready;
+    let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
+    let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('.slider');
 
-    if (systemState) {
-      buttonElement[1].click();
-      fixture.detectChanges();
+    checkbox.click();
+    fixture.detectChanges();
 
-      expect(component.resetTestOptions).toHaveBeenCalled();
-      expect(buttonElement[1].hasAttribute('disabled')).toBe(false, 'reset button is expected to be active');
-      }
+    let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    let resetButton = buttons.filter(e => e.nativeElement.innerText === 'Reset')[0].nativeElement.querySelector('button');
+
+    let spy = spyOn(component, 'resetTestOptions');
+    resetButton.click();
+    fixture.detectChanges();
+
+    expect(spy).toHaveBeenCalled();
   }));
 
   describe('Tags of the other component type', () => {
@@ -128,46 +139,41 @@ describe('TestOptionComponent', () => {
       testOption.currentValue.active = component.stopOnFailOption.checkboxConfig.disabled;
       fixture.detectChanges();
 
-      expect(testOption.currentValue.active).toBe(false);
+      expect(testOption.currentValue.active).toBe(true);
     }));
 
     it('should be active only when system state is ready', async(() => {
-      let testOption = new TestOption('stop_on_fail');
-      expect(testOption.currentValue.active).toBe(false);
 
-      testOption.checkboxConfig.disabled = component.systemStatus.state !== SystemState.ready;
+      // set ready
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
+      fixture.detectChanges();
 
-      if (component.systemStatus.state !== SystemState.ready) {
-        expect(testOption.checkboxConfig.disabled).toBe(true);
-        expect(testOption.checkboxConfig.checked).toBe(false);
-      }
+      let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
+      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('input');
+
+      expect(checkbox.hasAttribute('disabled')).toBeFalsy();
     }));
 
     it('should call sendOptionsToServer method when apply button clicked', async(() => {
-      let spy = spyOn(component, 'sendOptionsToServer').and.callThrough();
 
-      let buttonElement = debugElement.queryAll(By.css('app-button'));
-      buttonElement[0].nativeElement.click();
-
-      expect(spy).toHaveBeenCalledTimes(0);
-    }));
-
-    it('should get values when "stop_on_fail" checked and system state is "ready"', async(() => {
-      let testOption = new TestOption('stop_on_fail');
+      // ready
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
       fixture.detectChanges();
 
-      testOption.checkboxConfig.disabled = component.systemStatus.state !== SystemState.ready;
+      let checkboxes = fixture.debugElement.queryAll(By.css('app-checkbox'));
+      let checkbox = checkboxes.filter(e => e.nativeElement.innerText === 'Stop on Fail')[0].nativeElement.querySelector('.slider');
 
-      if (component.systemStatus.state === SystemState.ready) {
-        expect(testOption.checkboxConfig.disabled).toBe(false);
-        expect(testOption.checkboxConfig.checked).toBe(true);
-        expect(component.applyTestOptionButtonConfig.disabled).toBe(false);
-        expect(testOption.toBeAppliedValue.active).toBe(true);
-        expect(testOption.toBeAppliedValue.value).toBe('');
-      } else {
-        expect(component.sendOptionsToServer()).toBeFalsy();
-        expect(component.systemStatus.state).not.toBe(SystemState.ready);
-      }
+      checkbox.click();
+      fixture.detectChanges();
+
+      let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+      let applyButton = buttons.filter(e => e.nativeElement.innerText === 'Apply')[0].nativeElement.querySelector('button');
+
+      let spy = spyOn(component, 'sendOptionsToServer');
+      applyButton.click();
+
+      fixture.detectChanges();
+      expect(spy).toHaveBeenCalled();
     }));
   });
 });

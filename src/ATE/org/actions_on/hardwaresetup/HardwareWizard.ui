@@ -1182,81 +1182,6 @@
                    <string>1</string>
                   </property>
                  </column>
-                 <item>
-                  <property name="text">
-                   <string>Keithley</string>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>K2000</string>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>Micronas</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>InvenSense</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>IC-Sense</string>
-                    </property>
-                   </item>
-                  </item>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Keysight</string>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>foo</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>bar</string>
-                   </property>
-                  </item>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Lecroy</string>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>some instrument</string>
-                   </property>
-                  </item>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Tektronix</string>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>whatever</string>
-                   </property>
-                  </item>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>TTi</string>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>abc</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>def</string>
-                   </property>
-                  </item>
-                 </item>
                 </widget>
                </item>
                <item>
@@ -1486,16 +1411,33 @@
                </item>
                <item>
                 <widget class="QTableWidget" name="usedInstruments">
-                 <row>
-                  <property name="text">
-                   <string>1</string>
-                  </property>
-                 </row>
-                 <row>
-                  <property name="text">
-                   <string>2</string>
-                  </property>
-                 </row>
+                 <property name="sizeAdjustPolicy">
+                  <enum>QAbstractScrollArea::AdjustToContents</enum>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::SingleSelection</enum>
+                 </property>
+                 <property name="selectionBehavior">
+                  <enum>QAbstractItemView::SelectRows</enum>
+                 </property>
+                 <property name="showGrid">
+                  <bool>true</bool>
+                 </property>
+                 <attribute name="horizontalHeaderDefaultSectionSize">
+                  <number>120</number>
+                 </attribute>
+                 <attribute name="horizontalHeaderMinimumSectionSize">
+                  <number>120</number>
+                 </attribute>
+                 <attribute name="horizontalHeaderStretchLastSection">
+                  <bool>true</bool>
+                 </attribute>
+                 <attribute name="verticalHeaderVisible">
+                  <bool>false</bool>
+                 </attribute>
+                 <attribute name="verticalHeaderStretchLastSection">
+                  <bool>false</bool>
+                 </attribute>
                  <column>
                   <property name="text">
                    <string>Instrument</string>
@@ -1511,36 +1453,6 @@
                    <string>Implementation</string>
                   </property>
                  </column>
-                 <item row="0" column="0">
-                  <property name="text">
-                   <string>K2000</string>
-                  </property>
-                 </item>
-                 <item row="0" column="1">
-                  <property name="text">
-                   <string>Keithley</string>
-                  </property>
-                 </item>
-                 <item row="0" column="2">
-                  <property name="text">
-                   <string>Micronas</string>
-                  </property>
-                 </item>
-                 <item row="1" column="0">
-                  <property name="text">
-                   <string>abc</string>
-                  </property>
-                 </item>
-                 <item row="1" column="1">
-                  <property name="text">
-                   <string>TTi</string>
-                  </property>
-                 </item>
-                 <item row="1" column="2">
-                  <property name="text">
-                   <string>Micronas</string>
-                  </property>
-                 </item>
                 </widget>
                </item>
                <item>
@@ -1581,271 +1493,239 @@
          <item row="0" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <layout class="QVBoxLayout" name="availableActuatorsLayout">
-             <item>
-              <widget class="QLabel" name="availableEquipmentLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Available Actuators :</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QListWidget" name="availableActuators">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>85</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="editTriggers">
-                <set>QAbstractItemView::SelectedClicked</set>
-               </property>
-               <property name="showDropIndicator" stdset="0">
-                <bool>false</bool>
-               </property>
-               <property name="selectionMode">
-                <enum>QAbstractItemView::ExtendedSelection</enum>
-               </property>
-               <item>
-                <property name="text">
-                 <string>acceleration</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>light</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>magnetic_field</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>humidity</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>pressure</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_22">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>100</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="actuatorButtonsLayout">
-             <item>
-              <widget class="QLabel" name="label_13">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_13">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Minimum</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QToolButton" name="addActuator">
-               <property name="minimumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>...</string>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_14">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Minimum</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QToolButton" name="removeActuator">
-               <property name="minimumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>...</string>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_15">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Minimum</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_14">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
             <layout class="QVBoxLayout" name="usedActuatorsLayout">
+             <item>
+              <widget class="QTableWidget" name="usedActuators">
+               <property name="rowCount">
+                <number>6</number>
+               </property>
+               <attribute name="verticalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+               <row/>
+               <row/>
+               <row/>
+               <row/>
+               <row/>
+               <row/>
+               <column>
+                <property name="text">
+                 <string>Type</string>
+                </property>
+                <property name="toolTip">
+                 <string>Actuator Type</string>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignLeading|AlignVCenter</set>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Probing</string>
+                </property>
+                <property name="toolTip">
+                 <string>in Probing</string>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignCenter</set>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Final</string>
+                </property>
+                <property name="toolTip">
+                 <string>in Final Test (Pre-Singulation)</string>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignCenter</set>
+                </property>
+               </column>
+               <item row="0" column="0">
+                <property name="text">
+                 <string>Temperature</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="0" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignLeading|AlignVCenter</set>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="0" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="1" column="0">
+                <property name="text">
+                 <string>Magnetic Field</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="1" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="1" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="2" column="0">
+                <property name="text">
+                 <string>Light</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="2" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="2" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="3" column="0">
+                <property name="text">
+                 <string>Acceleration</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="3" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="3" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="4" column="0">
+                <property name="text">
+                 <string>Position</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="4" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="4" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="5" column="0">
+                <property name="text">
+                 <string>Pressure</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="5" column="1">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item row="5" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checkState">
+                 <enum>Checked</enum>
+                </property>
+                <property name="flags">
+                 <set>ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+              </widget>
+             </item>
              <item>
               <widget class="QLabel" name="usedEquipmentLabel">
                <property name="sizePolicy">
@@ -1872,176 +1752,6 @@
                <property name="alignment">
                 <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QTableWidget" name="usedActuators">
-               <attribute name="verticalHeaderVisible">
-                <bool>false</bool>
-               </attribute>
-               <row>
-                <property name="text">
-                 <string>1</string>
-                </property>
-               </row>
-               <row>
-                <property name="text">
-                 <string>2</string>
-                </property>
-               </row>
-               <column>
-                <property name="text">
-                 <string>Type</string>
-                </property>
-                <property name="toolTip">
-                 <string>Actuator Type</string>
-                </property>
-                <property name="textAlignment">
-                 <set>AlignLeading|AlignVCenter</set>
-                </property>
-               </column>
-               <column>
-                <property name="text">
-                 <string>Probing</string>
-                </property>
-                <property name="toolTip">
-                 <string>in Probing</string>
-                </property>
-                <property name="textAlignment">
-                 <set>AlignCenter</set>
-                </property>
-               </column>
-               <column>
-                <property name="text">
-                 <string>Final Pre</string>
-                </property>
-                <property name="toolTip">
-                 <string>in Final Test (Pre-Singulation)</string>
-                </property>
-                <property name="textAlignment">
-                 <set>AlignCenter</set>
-                </property>
-               </column>
-               <column>
-                <property name="text">
-                 <string>Final Post</string>
-                </property>
-                <property name="toolTip">
-                 <string>in Final Test (Post-Singulation)</string>
-                </property>
-                <property name="textAlignment">
-                 <set>AlignCenter</set>
-                </property>
-               </column>
-               <column>
-                <property name="text">
-                 <string>QC</string>
-                </property>
-                <property name="toolTip">
-                 <string>in Quality Check</string>
-                </property>
-                <property name="textAlignment">
-                 <set>AlignCenter</set>
-                </property>
-               </column>
-               <item row="0" column="0">
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-               </item>
-               <item row="0" column="1">
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-                <property name="checkState">
-                 <enum>Checked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsDragEnabled|ItemIsUserCheckable</set>
-                </property>
-               </item>
-               <item row="0" column="2">
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-                <property name="checkState">
-                 <enum>Checked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="0" column="3">
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-                <property name="checkState">
-                 <enum>Checked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="0" column="4">
-                <property name="text">
-                 <string>temperature</string>
-                </property>
-                <property name="checkState">
-                 <enum>PartiallyChecked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="1" column="0">
-                <property name="text">
-                 <string>magnetic_field</string>
-                </property>
-               </item>
-               <item row="1" column="1">
-                <property name="text">
-                 <string>field</string>
-                </property>
-                <property name="checkState">
-                 <enum>Checked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="1" column="2">
-                <property name="text">
-                 <string>field</string>
-                </property>
-                <property name="checkState">
-                 <enum>Checked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="1" column="3">
-                <property name="text">
-                 <string>field</string>
-                </property>
-                <property name="checkState">
-                 <enum>PartiallyChecked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
-               <item row="1" column="4">
-                <property name="text">
-                 <string>field</string>
-                </property>
-                <property name="checkState">
-                 <enum>PartiallyChecked</enum>
-                </property>
-                <property name="flags">
-                 <set>ItemIsSelectable|ItemIsEditable|ItemIsUserCheckable|ItemIsEnabled</set>
-                </property>
-               </item>
               </widget>
              </item>
              <item>

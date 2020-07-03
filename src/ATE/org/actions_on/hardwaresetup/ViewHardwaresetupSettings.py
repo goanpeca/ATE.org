@@ -78,6 +78,8 @@ class ViewHardwaresetupSettings(HardwareWizard):
         dialog.multisiteProbecard.setText(hw_configuration["PCB"]["MultiSiteProbeCard"])
         dialog.maxParallelism.setCurrentIndex(hw_configuration["PCB"]["MaxParallelism"] - 1)
         dialog._available_pattern = hw_configuration["Parallelism"]
+        dialog.populate_selected_instruments(hw_configuration["Instruments"])
+        dialog.populate_selected_actuators(hw_configuration["Actuator"])
         ViewHardwaresetupSettings._update_available_pattern_list(dialog)
 
     @staticmethod

@@ -4,7 +4,7 @@ from ATE.org.actions_on.program.ViewTestProgramWizard import ViewTestProgramWiza
 
 class EditTestProgramWizard(TestProgramWizard):
     def __init__(self, name, project_info, owner):
-        super().__init__(project_info, owner, edit_on=False)
+        super().__init__(project_info, owner, edit_on=False, prog_name=name)
         ViewTestProgramWizard.setup_view(self, name)
 
 

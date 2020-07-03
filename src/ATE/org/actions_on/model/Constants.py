@@ -25,6 +25,9 @@ class MenuActionTypes(Enum):
     MoveDown = "move_down_item"
     OpenFile = "open_file_item"
     AddTestprogram = "add_testprogram"
+    UseCustomImplementation = "use_custom_implementation"
+    UseDefaultImplementation = "use_default_implementation"
+    Select = "select_target_item"
 
     def __call__(self):
         return self.value

@@ -1,26 +1,23 @@
-<hr class="rounded" id="sysConsole">
-
+<hr class="blueDivider">
 <div class="row">
-    <div class="side">
-        <h2>System Console</h2>
-        {{retrieveData(msg)}}
-        <button type="button" (click)="clearConsole()">Clear
-        </button>
+  <div class="side">
+    <h2>System Console</h2>
+    <app-button [buttonConfig]="clearConsoleButtonConfig" (buttonClickEvent)="clearConsole()"></app-button>
+  </div>
+  <div class="main">
+    <div>
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Topic</th>
+          <th>Description</th>
+        </tr>
+        <tr *ngFor='let member of msgs.reverse()'>
+            <td class="date">{{ member.date }}</td>
+            <td class="topic">{{ member.topic }}</td>
+            <td class="description">{{ member.description }}</td>
+        </tr>
+      </table>
     </div>
-    <div class="main">
-        <div>
-            <table>
-                <tr>
-                    <th>Date</th>
-                    <th>Topic</th>
-                    <th>Description</th>
-                </tr>
-                <tr *ngFor='let member of msgs.reverse()'>
-                    <td>{{member.date}}</td>
-                    <td>{{member.topic}}</td>
-                    <td>{{member.description}}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>

@@ -1,11 +1,12 @@
 import { InputComponent } from './../../basic-ui-elements/input/input.component';
 import { ButtonComponent } from './../../basic-ui-elements/button/button.component';
-import { CardConfiguration } from 'src/app/basic-ui-elements/card/card.component';
+import { CardConfiguration, CardComponent } from 'src/app/basic-ui-elements/card/card.component';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { LotHandlingComponent } from './lot-handling.component';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { SystemState } from 'src/app/system-status';
+import { FormsModule } from '@angular/forms';
 
 describe('LotHandlingComponent', () => {
   let component: LotHandlingComponent;
@@ -14,8 +15,9 @@ describe('LotHandlingComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ LotHandlingComponent, ButtonComponent, InputComponent],
-      schemas: [NO_ERRORS_SCHEMA]
+      declarations: [ LotHandlingComponent, ButtonComponent, InputComponent, CardComponent],
+      imports: [FormsModule],
+      schemas: []
     })
     .compileComponents();
   }));
@@ -68,23 +70,62 @@ describe('LotHandlingComponent', () => {
     expect(inputElement.textContent).toBe('A lot number should be in 6.3 format like \"123456.123\"');
   }));
 
-  it('buttons should be disabled', () => {
-    let btnElement = debugElement.nativeElement.querySelectorAll('app-button');
+  it('load lot button should be disabled in states connecting, testing, ready and unloading but enabled in state initialized', () => {
 
-    expect(btnElement.length).toBe(2);
+    // connecting
+    (component as any).handleServerMessage({payload: {state: SystemState.connecting}});
+    fixture.detectChanges();
 
-    let systemState = component.systemStatus.state === SystemState.connecting;
+    let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    let loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+    expect(loadLotButton.hasAttribute('disabled')).toBeTruthy();
 
-    if (systemState) {
-      expect(btnElement[0].hasAttribute('disabled')).toBe(false, 'load lot button is expected to be disabled');
-      expect(btnElement[1].hasAttribute('disabled')).toBe(false, 'unload lot button is expected to be disabled');
-    }
+
+    // testing
+    (component as any).handleServerMessage({payload: {state: SystemState.testing}});
+    fixture.detectChanges();
+
+    buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+    expect(loadLotButton.hasAttribute('disabled')).toBeTruthy();
+
+    // unloading
+    (component as any).handleServerMessage({payload: {state: SystemState.unloading}});
+    fixture.detectChanges();
+
+    buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+    expect(loadLotButton.hasAttribute('disabled')).toBeTruthy();
+
+    // ready
+    (component as any).handleServerMessage({payload: {state: SystemState.ready}});
+    fixture.detectChanges();
+
+    buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+    expect(loadLotButton.hasAttribute('disabled')).toBeTruthy();
+
+    // initialized
+    (component as any).handleServerMessage({payload: {state: SystemState.initialized}});
+    fixture.detectChanges();
+
+    buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+    expect(loadLotButton.hasAttribute('disabled')).toBeFalsy();
   });
 
   it('should call method sendLotNumber when button clicked', async(() => {
+
+    // initialized
+    (component as any).handleServerMessage({payload: {state: SystemState.initialized}});
+    fixture.detectChanges();
+
     let spy = spyOn(component, 'sendLotNumber');
 
-    component.loadLot();
+    let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+    let loadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Load Lot')[0].nativeElement.querySelector('button');
+
+    loadLotButton.click();
     fixture.detectChanges();
 
     expect(spy).toHaveBeenCalled();
@@ -92,32 +133,30 @@ describe('LotHandlingComponent', () => {
 
   describe('When system state is "ready"', () => {
     it('unload lot button should be active', async(() => {
-      let btnElement = debugElement.nativeElement.querySelectorAll('app-button');
 
-      expect(btnElement.length).toBe(2);
+      // ready
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
+      fixture.detectChanges();
 
-      let systemState = component.systemStatus.state === SystemState.ready;
+      let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+      let unloadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Unload Lot')[0].nativeElement.querySelector('button');
 
-      if (systemState) {
-        expect(btnElement[0].hasAttribute('disabled')).toBe(true, 'load lot button is expected to be disabled');
-        expect(btnElement[1].hasAttribute('disabled')).toBe(false, 'unload lot button is expected to be active');
-      }
+      expect(unloadLotButton.hasAttribute('disabled')).toBeFalsy('unload lot button is expected to be active');
     }));
 
     it('should call method unloadLotButtonClicked when button clicked', async(() => {
-      let spy = spyOn(component, 'unloadLot').and.callThrough();
 
-      expect(spy).toHaveBeenCalledTimes(0);
+      // ready
+      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
+      fixture.detectChanges();
+      let spy = spyOn(component, 'unloadLot');
 
-      let btnElement = debugElement.nativeElement.querySelectorAll('app-button');
-      let systemState = component.systemStatus.state === SystemState.ready;
+      let buttons = fixture.debugElement.queryAll(By.css('app-button'));
+      let unloadLotButton = buttons.filter(e => e.nativeElement.innerText === 'Unload Lot')[0].nativeElement.querySelector('button');
+      unloadLotButton.click();
+      fixture.detectChanges();
 
-      if (systemState) {
-        btnElement[1].click();
-        fixture.detectChanges();
-
-        expect(spy).toHaveBeenCalled();
-      }
+      expect(spy).toHaveBeenCalled();
     }));
   });
 });

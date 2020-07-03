@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { SystemControlComponent } from './system-control.component';
 import { InputComponent } from './../basic-ui-elements/input/input.component';
 import { ButtonComponent } from './../basic-ui-elements/button/button.component';
@@ -9,6 +9,7 @@ import { TestOptionComponent } from './test-option/test-option.component';
 import { LotHandlingComponent } from './lot-handling/lot-handling.component';
 import { CheckboxComponent } from '../basic-ui-elements/checkbox/checkbox.component';
 import { By } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 
 describe('SystemControlComponent', () => {
   let component: SystemControlComponent;
@@ -17,7 +18,7 @@ describe('SystemControlComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ 
+      declarations: [
         SystemControlComponent,
         TestExecutionComponent,
         TestOptionComponent,
@@ -27,9 +28,8 @@ describe('SystemControlComponent', () => {
         ButtonComponent,
         CheckboxComponent
       ],
-      imports: [
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      imports: [FormsModule],
+      schemas: []
     })
     .compileComponents();
   }));
@@ -52,12 +52,6 @@ describe('SystemControlComponent', () => {
     let appCardHeader = debugElement.nativeElement.querySelector('app-card .header');
     expect(expectedHeaderText).toEqual(component.systemControlCardConfiguration.labelText);
     expect(appCardHeader.textContent).toContain(expectedHeaderText);
-    
-    // check lot handling label text
-    let expectedLotHandlingLabelText = 'Lot Handling';
-    let lotHandlingAppCardHeader = debugElement.nativeElement.querySelector('#lothandling app-card .header');
-    expect(expectedLotHandlingLabelText).toEqual(component.lotCardConfiguration.labelText);
-    expect(lotHandlingAppCardHeader.textContent).toContain(expectedLotHandlingLabelText);
 
     // check option label text
     let optionDebugElement = debugElement.query(By.directive(TestOptionComponent));
@@ -65,13 +59,6 @@ describe('SystemControlComponent', () => {
     let optionsAppCardHeader = debugElement.nativeElement.querySelector('#option app-card .header');
     expect(expectedOptionsLabelText).toEqual(optionDebugElement.context.testOptionCardConfiguration.labelText);
     expect(optionsAppCardHeader.textContent).toContain(expectedOptionsLabelText);
-
-    // check test execution label text
-    let expectedTestExecutionLabelText = 'Test Execution';
-    let testExecutionAppCardHeader = debugElement.nativeElement.querySelector('#testexecution app-card .header');
-    expect(expectedTestExecutionLabelText).toEqual(component.testExecutionControlCardConfiguration.labelText);
-    expect(testExecutionAppCardHeader.textContent).toContain(expectedTestExecutionLabelText);
-
   }));
 
   describe('Tags of the other component type', () => {
@@ -80,18 +67,18 @@ describe('SystemControlComponent', () => {
       expect(componentElement).not.toEqual(null);
     }));
 
-    it('should contain an app-button tag', async(() => {
-      let componentElement = debugElement.nativeElement.querySelector('app-button');
+    it('should contain an app-lot-handling tag', async(() => {
+      let componentElement = debugElement.nativeElement.querySelector('app-lot-handling');
       expect(componentElement).not.toEqual(null);
     }));
 
-    it('should contain an app-input tag', async(() => {
-      let componentElement = debugElement.nativeElement.querySelector('app-input');
+    it('should contain an app-test-execution tag', async(() => {
+      let componentElement = debugElement.nativeElement.querySelector('app-test-execution');
       expect(componentElement).not.toEqual(null);
     }));
 
     it('should contain an app-test-option tag', async(() => {
-      let componentElement = debugElement.nativeElement.querySelector('app-checkbox');
+      let componentElement = debugElement.nativeElement.querySelector('app-test-option');
       expect(componentElement).not.toEqual(null);
     }));
   });

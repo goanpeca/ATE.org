@@ -1,23 +1,22 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { InfomationComponent } from './infomation.component';
+import { InformationComponent } from './information.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
-describe('InfomationComponent', () => {
-  let component: InfomationComponent;
-  let fixture: ComponentFixture<InfomationComponent>;
+describe('informationComponent', () => {
+  let component: InformationComponent;
+  let fixture: ComponentFixture<InformationComponent>;
   let debugElement: DebugElement;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ InfomationComponent ]
+      declarations: [ InformationComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(InfomationComponent);
+    fixture = TestBed.createComponent(InformationComponent);
     component = fixture.componentInstance;
     debugElement = fixture.debugElement;
     fixture.detectChanges();
@@ -31,10 +30,10 @@ describe('InfomationComponent', () => {
     component.informationConfig.labelText = 'System Information';
     fixture.detectChanges();
 
-    let infomation = debugElement.query(By.css('h2'));
-    let infoElement = infomation.nativeElement;
+    let information = debugElement.query(By.css('h2'));
+    let infoElement = information.nativeElement;
 
-    expect(infoElement).toBeTruthy('It should surpport a heading 2');
+    expect(infoElement).toBeTruthy('It should support a heading 2');
     expect(infoElement.innerHTML).toBe('System Information');
   });
 
@@ -42,10 +41,10 @@ describe('InfomationComponent', () => {
     component.informationConfig.value = 'Test paragraph';
     fixture.detectChanges();
 
-    let infomation = debugElement.query(By.css('h3'));
-    let infoElement = infomation.nativeElement;
+    let information = debugElement.query(By.css('h3'));
+    let infoElement = information.nativeElement;
 
-    expect(infoElement).toBeTruthy('It should surpport a paragraph');
+    expect(infoElement).toBeTruthy('It should support a paragraph');
     expect(infoElement.innerHTML).toBe('Test paragraph');
   });
 

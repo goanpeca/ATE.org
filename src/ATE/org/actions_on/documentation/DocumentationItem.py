@@ -26,7 +26,11 @@ class DocumentationItem(BaseDocumentationItem):
         if self._does_item_already_exist(name):
             return
 
-        item = DocumentationItem(name, path, self)
+        is_editable = True
+        if name in ('audits', 'exports'):
+            is_editable = False
+
+        item = DocumentationItem(name, path, parent=self, is_editable=is_editable)
         self.insertRow(index, item)
 
     def add_file_item(self, name, path, index=0):
@@ -67,7 +71,7 @@ class DocumentationItem(BaseDocumentationItem):
         self.file_system_operator.add_dir()
 
     def _set_icon(self):
-        if not self._is_editable:
+        if self.text() == 'documentation':
             return
 
         from ATE.org.actions_on.documentation.FileIcon import FileIcons

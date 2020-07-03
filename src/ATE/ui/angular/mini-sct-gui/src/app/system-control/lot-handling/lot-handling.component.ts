@@ -1,8 +1,9 @@
-import { Component, OnInit, Input, OnChanges, EventEmitter, Output } from '@angular/core';
-import { SystemStatus, SystemState } from '../../system-status';
+import { Component, OnInit } from '@angular/core';
+import { SystemState } from '../../system-status';
 import { ButtonConfiguration } from 'src/app/basic-ui-elements/button/button-config';
 import { CardConfiguration, CardStyle } from './../../basic-ui-elements/card/card.component';
 import { InputConfiguration } from './../../basic-ui-elements/input/input-config';
+import { CommunicationService } from './../../services/communication.service';
 
 enum ButtonTextLabel {
   LoadLot = 'Load Lot',
@@ -14,7 +15,7 @@ enum ButtonTextLabel {
   templateUrl: './lot-handling.component.html',
   styleUrls: ['./lot-handling.component.scss']
 })
-export class LotHandlingComponent implements OnInit, OnChanges {
+export class LotHandlingComponent implements OnInit {
   lotCardConfiguration: CardConfiguration;
 
   lotNumberInputConfig: InputConfiguration;
@@ -22,11 +23,9 @@ export class LotHandlingComponent implements OnInit, OnChanges {
   loadLotButtonConfig: ButtonConfiguration;
   unloadLotButtonConfig: ButtonConfiguration;
 
-  @Input() systemStatus: SystemStatus = new SystemStatus();
-  @Output() loadLotEvent: EventEmitter<string> = new EventEmitter<string>();
-  @Output() unloadLotEvent: EventEmitter<boolean> = new EventEmitter<boolean>();
+  systemState: SystemState;
 
-  constructor() {
+  constructor(private readonly communicationService: CommunicationService) {
     this.lotCardConfiguration = new CardConfiguration();
 
     this.lotNumberInputConfig = new InputConfiguration();
@@ -34,6 +33,17 @@ export class LotHandlingComponent implements OnInit, OnChanges {
     this.loadLotButtonConfig = new ButtonConfiguration();
     this.unloadLotButtonConfig = new ButtonConfiguration();
 
+    this.systemState = SystemState.connecting;
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemState !== serverMessage.payload.state) {
+        this.systemState = serverMessage.payload.state;
+        this.updateButtonConfigs();
+        this.updateInputConfigs();
+      }
+    }
   }
 
   ngOnInit() {
@@ -47,23 +57,20 @@ export class LotHandlingComponent implements OnInit, OnChanges {
       cardStyle: CardStyle.COLUMN_STYLE,
       labelText: 'Lot Handling'
     };
-  }
-
-  ngOnChanges(): void {
     this.updateButtonConfigs();
     this.updateInputConfigs();
   }
 
   private updateInputConfigs() {
-    this.lotNumberInputConfig.disabled = this.systemStatus.state !== SystemState.initialized;
+    this.lotNumberInputConfig.disabled = this.systemState !== SystemState.initialized;
     this.lotNumberInputConfig = Object.assign({}, this.lotNumberInputConfig);
   }
 
   private updateButtonConfigs() {
-    this.loadLotButtonConfig.disabled = this.systemStatus.state !== SystemState.initialized;
+    this.loadLotButtonConfig.disabled = this.systemState !== SystemState.initialized;
     this.loadLotButtonConfig = Object.assign({}, this.loadLotButtonConfig);
 
-    this.unloadLotButtonConfig.disabled = this.systemStatus.state !== SystemState.ready;
+    this.unloadLotButtonConfig.disabled = this.systemState !== SystemState.ready;
     this.unloadLotButtonConfig = Object.assign({}, this.unloadLotButtonConfig);
   }
 
@@ -74,21 +81,25 @@ export class LotHandlingComponent implements OnInit, OnChanges {
   sendLotNumber() {
     let errorMsg = {errorText: ''};
     if (this.validateLotNumber(errorMsg)) {
-      this.loadLotEvent.emit(this.lotNumberInputConfig.value);
+      this.communicationService.send(
+        {
+          type: 'cmd',
+          command: 'load',
+          lot_number: this.lotNumberInputConfig.value
+      });
     } else {
       this.lotNumberInputConfig.errorMsg = errorMsg.errorText;
     }
   }
 
   unloadLot() {
-    this.unloadLotEvent.emit(true);
+    this.communicationService.send({type: 'cmd', command: 'unload'});
   }
 
   private validateLotNumber(errorMsg: {errorText: string}): boolean {
     let pattern = /^[1-9][0-9]{5}[.][0-9]{3}$/ ;
 
     if (pattern.test(this.lotNumberInputConfig.value)) {
-      // valid lot number format
       errorMsg.errorText = '';
       return true;
     } else {

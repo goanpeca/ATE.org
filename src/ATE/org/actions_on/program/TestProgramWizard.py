@@ -1,8 +1,13 @@
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
+from PyQt5 import QtGui, QtCore, QtWidgets
 import sys
 import os
 import re
 from enum import Enum
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
+
+
+ORANGE = (255, 127, 39)
+RED = (237, 28, 36)
 
 
 class Action(Enum):
@@ -15,6 +20,17 @@ class Action(Enum):
         return self.value
 
 
+class Range(Enum):
+    In_Range = 0
+    Out_Of_Range = 1
+    Limited_Range = 2
+
+    def __call__(self):
+        return self.value
+
+
+# ToDo: Add numeric type! These strings are display values that
+# are bound to change, which would break all projects.
 class Sequencer(Enum):
     Static = 'Fixed Temperature'  # 'Static'
     Dynamic = 'Variable Temperature'  # 'Dynamic'
@@ -34,7 +50,8 @@ class ErrorMessage(Enum):
     NoTestSelected = 'no test was selected'
     MultipleTestSelection = 'multiple tests are selected'
     EmtpyTestList = 'no test was choosen'
-    TestProgramExists = 'test program name exists already'
+    NoValidTestRange = 'test range is not valid'
+    TemperatureNotValidated = 'temperature(s) could not be validated'
 
     def __call__(self):
         return self.value
@@ -43,9 +60,9 @@ class ErrorMessage(Enum):
 DEFAULT_TEMPERATURE = '25'
 
 
-class TestProgramWizard(QtWidgets.QDialog):
-    def __init__(self, project_info, owner, parent=None, read_only=False, edit_on=True):
-        super().__init__(parent)
+class TestProgramWizard(BaseDialog):
+    def __init__(self, project_info, owner, parent=None, read_only=False, edit_on=True, prog_name=''):
+        super().__init__(__file__)
         self.project_info = project_info
         self.owner = owner
 
@@ -53,24 +70,17 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.selected_tests = []
         self.read_only = read_only
         self.edit_on = edit_on
+        self.prog_name = prog_name
 
         self.current_selected_test = None
         self.result = None
+        self._is_dynamic_range_valid = True
 
-        self._load_ui()
         self._setup()
         self._view()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        ui = __file__.replace('.py', '.ui')
-        uic.loadUi(ui, self)
-
     def _setup(self):
-        # windows setup
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
-
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
         self.setWindowTitle("Test Program Configuration")
 
@@ -89,11 +99,38 @@ class TestProgramWizard(QtWidgets.QDialog):
         regx = QtCore.QRegExp(valid_float_regex)
         self.positive_float_validator = QtGui.QRegExpValidator(regx, self)
 
+        from ATE.org.validation import valid_integer_regex
+        regx = QtCore.QRegExp(valid_integer_regex)
+        integer_validator = QtGui.QRegExpValidator(regx, self)
+        self.temperature.setValidator(integer_validator)
+
         self.existing_programs = self.project_info.get_programs_for_owner(self.owner)
+
+        self.selectedTests.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self.selectedTests.horizontalHeader().setStretchLastSection(True)
+        self.selectedTests.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self.selectedTests.itemDoubleClicked.connect(self._double_click_handler)
+        self.selectedTests.itemClicked.connect(self._test_selected)
+        self.selectedTests.itemSelectionChanged.connect(self._table_clicked)
+
+    def _table_clicked(self):
+        if len(self.selectedTests.selectedItems()):
+            return
+
+        self._update_test_list_table()
+
+    def _double_click_handler(self, item):
+        if item.column() == 0:
+            return
+
+        from ATE.org.validation import valid_test_name_description_regex
+        regx = QtCore.QRegExp(valid_test_name_description_regex)
+        name_validator = QtGui.QRegExpValidator(regx, self)
+
+        self._create_checkable_cell(item.text(), self.selectedTests, "description", item, name_validator)
 
     def _connect_event_handler(self):
         self.availableTests.itemClicked.connect(self._available_test_selected)
-        self.selectedTests.itemClicked.connect(self._test_selected)
 
         self.parametersInput.itemDoubleClicked.connect(self._double_click_handler_input_param)
         self.parametersOutput.itemDoubleClicked.connect(self._double_click_handler_output_param)
@@ -145,7 +182,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.sequencerType.addItems([Sequencer.Static(), Sequencer.Dynamic()])
         self.temperature.setText(DEFAULT_TEMPERATURE)
 
-        self.availableTests.addItems(self._get_available_tests())
+        self._update_test_list()
         self.Feedback.setText('')
         self.Feedback.setStyleSheet('color:orange')
         self.usertext_feedback.setStyleSheet('color:orange')
@@ -162,7 +199,8 @@ class TestProgramWizard(QtWidgets.QDialog):
             existing_targets = self.project_info.get_devices_for_hardware(self.hardware.currentText())
 
         self.target.addItems(existing_targets)
-        self.target.setCurrentIndex(0)
+        current_target_index = self.target.findText(self.project_info.active_target, QtCore.Qt.MatchExactly)
+        self.target.setCurrentIndex(current_target_index)
 
     @QtCore.pyqtSlot(str)
     def _usertext_changed(self, text):
@@ -181,8 +219,17 @@ class TestProgramWizard(QtWidgets.QDialog):
     @QtCore.pyqtSlot(int)
     def _sequencer_type_changed(self, index):
         if self.sequencerType.itemText(index) == Sequencer.Static():
+            from ATE.org.validation import valid_integer_regex
+            regx = QtCore.QRegExp(valid_integer_regex)
+            integer_validator = QtGui.QRegExpValidator(regx, self)
+            self.temperature.setValidator(integer_validator)
             self.temperature.setText(DEFAULT_TEMPERATURE)
             return
+
+        from ATE.org.validation import valid_temp_sequence_regex
+        regx = QtCore.QRegExp(valid_temp_sequence_regex)
+        integer_validator = QtGui.QRegExpValidator(regx, self)
+        self.temperature.setValidator(integer_validator)
 
         self.temperature.setText(f'{DEFAULT_TEMPERATURE},')
 
@@ -191,50 +238,88 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.parametersInput.setEnabled(False)
         self.parametersOutput.setEnabled(False)
 
-        self._handle_selection(self.availableTests, self.selectedTests, item)
+        self._update_tables_parameters(item.text(), item.text() + "_1", is_default=True)
 
-    @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
+    @QtCore.pyqtSlot(QtWidgets.QTableWidgetItem)
     def _test_selected(self, item):
         self.parametersInput.setEnabled(True)
         self.parametersOutput.setEnabled(True)
 
+        row = item.row()
+        self.selectedTests.item(row, 0).setSelected(True)
+        self.selectedTests.item(row, 1).setSelected(True)
+
+        self.selected_cell = item
+
         self._handle_selection(self.selectedTests, self.availableTests, item)
 
     def _handle_selection(self, selected_list, second_list, item):
-        for index in range(second_list.count()):
-            second_list.item(index).setSelected(False)
+        test_name = self.selectedTests.item(item.row(), 0).text()
+        test_instance_name = self.selectedTests.item(item.row(), 1).text()
+        self._deselect_items(second_list)
+        self._update_tables_parameters(test_name, test_instance_name)
 
-        if len(selected_list.selectedItems()) > 1:
-            self.parametersInput.setRowCount(0)
-            self.parametersOutput.setRowCount(0)
-            self._update_feedback(ErrorMessage.MultipleTestSelection())
-            return
+    def _deselect_items(self, selected_list):
+        for index in range(selected_list.count()):
+            selected_list.item(index).setSelected(False)
 
-        self._update_tables_parameters(item)
+    def _deselect_table_items(self):
+        for row in range(self.selectedTests.rowCount()):
+            for col in range(self.selectedTests.columnCount()):
+                self.selectedTests.item(row, col).setSelected(False)
 
-    def _update_tables_parameters(self, item):
-        self.current_selected_test = item
-        parameters = self.project_info.get_test_definiton(item.text())
+    def _extract_base_test_name(self, indexed_test_name):
+        # we assume that test name contains only one underscore
+        return indexed_test_name.split('_')[0]
+
+    def _extract_test_sequence(self, indexed_test_name):
+        return indexed_test_name.split('_')[1]
+
+    def _update_tables_parameters(self, the_test_name, test_instance_name, is_default=False):
+        test_name = self._extract_base_test_name(the_test_name)
+        self.current_selected_test = test_name
+        parameters = self.project_info.get_test_definiton(test_name)
         self.input_parameters = parameters['input_parameters']
         self.output_parameters = parameters['output_parameters']
 
-        # update table content if content already changed
-        if item.text() in self._selected_tests_list and \
-           len(self.selectedTests.selectedItems()):
-            test = self.selected_tests[self.selectedTests.currentRow()]
-            input_params = list(test[item.text()]['input_parameters'].items())
+        if not is_default:
+            test_list = self.selected_tests
+        else:
+            test_list = self.available_tests
+
+        # update table content if content changed
+        for test in test_list:
+            name = test['description']
+            if name != test_instance_name:
+                continue
+
+            input_params = test['input_parameters'].items()
             for param in input_params:
+                # hack to prevent using a key value that may not exists any more,
+                # when we edit the parameter names for the respective test
+                if not self.input_parameters.get(param[0]):
+                    continue
+
                 self.input_parameters[param[0]]['Default'] = param[1]
 
-            output_params = list(test[item.text()]['output_parameters'].items())
+            output_params = test['output_parameters'].items()
             for param in output_params:
+                # hack to prevent using a key value that may not exists any more,
+                # when we edit the parameter names for the respective test
+                if not self.output_parameters.get(param[0]):
+                    continue
+
                 self.output_parameters[param[0]]['LTL'], self.output_parameters[param[0]]['UTL'] = \
-                    test[item.text()]['output_parameters'][param[0]]['LTL'], \
-                    test[item.text()]['output_parameters'][param[0]]['UTL']
+                    test['output_parameters'][param[0]]['LTL'], \
+                    test['output_parameters'][param[0]]['UTL']
+            break
 
         self._fill_input_parameter_table()
         self._fill_output_parameter_table()
 
+    # ToDo: Improve Exception handling, as all exceptions
+    #       thrown in handlers will be discarded and replaced
+    #       by "action not recognized"
     @QtCore.pyqtSlot(str)
     def _move_test(self, action):
         try:
@@ -246,6 +331,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         except Exception:
             raise (f'action "{action}" not recognized')
 
+    # Naming: Name is confusing
     def _is_selected(self, test_list):
         selected_items = len(test_list.selectedItems())
         if not selected_items:
@@ -254,50 +340,84 @@ class TestProgramWizard(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def _move_up(self):
-        if len(self.selectedTests.selectedItems()) > 1:
-            return
-
-        if not self._is_selected(self.selectedTests):
+        selected = self.selectedTests.selectedItems()
+        if not len(selected):
             self._update_feedback(ErrorMessage.NotSelected())
             return
 
-        if self.selectedTests.currentRow() > 0:
-            self._update_list_after_move(True)
+        row = selected[0].row()
+        if row == 0:
+            return
+
+        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
+        index = row
+        self._fit_test_sequence(index, index - 1)
+        self._rename_after_reorder(test_name, index, index - 1)
+
+        self._update_test_list_table()
+
+    # ToDo: Naming: What does this method actually do`?
+    def _fit_test_sequence(self, index, new_index):
+        clicked_item = self.selected_tests[index]
+        element2 = self.selected_tests[new_index]
+
+        self.selected_tests.insert(new_index, clicked_item)
+        del self.selected_tests[new_index + 1]
+
+        self.selected_tests.insert(index, element2)
+        del self.selected_tests[index + 1]
+
+    def _rename_after_reorder(self, name, index, new_index):
+        base_name = self._extract_base_test_name(name)
+
+        test_name1 = self.selected_tests[index]['description']
+        test_name2 = self.selected_tests[new_index]['description']
+        if not (base_name in test_name1 and base_name in test_name2):
+            return
+
+        clicked_item = self.selected_tests[index]
+        element = self.selected_tests[new_index]
+
+        if element['description'] == test_name2:
+            element['description'] = test_name1
+
+        if clicked_item['description'] == test_name1:
+            clicked_item['description'] = test_name2
 
     @QtCore.pyqtSlot()
     def _move_down(self):
-        if len(self.selectedTests.selectedItems()) > 1:
-            return
-
-        if not self._is_selected(self.selectedTests):
+        selected = self.selectedTests.selectedItems()
+        if not len(selected):
             self._update_feedback(ErrorMessage.NotSelected())
             return
 
-        if self.selectedTests.currentRow() < self.selectedTests.count() - 1:
-            self._update_list_after_move(False)
+        row = selected[0].row()
+        if row == self.selectedTests.rowCount() - 1:
+            return
 
-    def _update_list_after_move(self, is_up):
-        current_row = self.selectedTests.currentRow()
-        current_row_item = self.selectedTests.currentItem()
-        index = current_row - 1 if is_up else current_row + 1
-        self.selectedTests.takeItem(current_row)
-        self.selectedTests.insertItem(index, current_row_item)
-        self.selectedTests.setCurrentItem(current_row_item)
+        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
+        index = row
+        self._fit_test_sequence(index, index + 1)
+        self._rename_after_reorder(test_name, index, index + 1)
+
+        self._update_test_list_table()
 
     @QtCore.pyqtSlot()
     def _remove_from_testprogram(self):
-        if not self._is_selected(self.selectedTests):
+        # blocking signals for selectedTests table prevent any callback event to fire
+        self.selectedTests.blockSignals(True)
+        selected_items = self.selectedTests.selectedItems()
+        if not len(selected_items):
             self._update_feedback(ErrorMessage.NotSelected())
             return
 
-        selected_items = len(self.selectedTests.selectedItems())
-        for _ in range(selected_items):
-            item = self.selectedTests.takeItem(self.selectedTests.currentRow())
-            self.parametersInput.setRowCount(0)
-            self.parametersOutput.setRowCount(0)
-            self._remove_test(item)
+        self.parametersInput.setRowCount(0)
+        self.parametersOutput.setRowCount(0)
 
-        self._verify()
+        test_index = self.selectedTests.currentRow()
+        del self.selected_tests[test_index]
+        self._update_test_list_table()
+        self.selectedTests.blockSignals(False)
 
     @QtCore.pyqtSlot()
     def _add_to_testprogram(self):
@@ -306,66 +426,93 @@ class TestProgramWizard(QtWidgets.QDialog):
             return
 
         for item in self.availableTests.selectedItems():
-            self.selectedTests.addItem(f'{item.text()}')
-            self.selected_tests.append(self._generate_test_struct(item.text()))
+            self._add_test_tuple_items(item.text())
 
-        self._verify()
+        self._update_test_list_table()
 
     @QtCore.pyqtSlot(str)
     def _verify_temperature(self, text):
+        self.parametersInput.setRowCount(0)
+        self.parametersOutput.setRowCount(0)
+        self._deselect_items(self.availableTests)
+        self._deselect_table_items()
+
         if not text:
             self.temperature_feedback.setText(ErrorMessage.TemperatureMissed())
-            return
 
         if self.sequencer_type == Sequencer.Static():
-            if self._get_static_temp(text) is None:
+            if not len(self.temperature.text()):
                 self.temperature_feedback.setText(ErrorMessage.InvalidTemperature())
-                return
 
         if self.sequencer_type == Sequencer.Dynamic():
             if self._get_dynamic_temp(text) is None:
                 self.temperature_feedback.setText(ErrorMessage.InvalidTemperature())
-                return
 
-        self.temperature_feedback.setText('')
-        self.OKButton.setEnabled(True)
+        self._update_test_list_table()
+        self._update_test_list()
 
-    def _get_static_temp(self, text):
-        try:
-            temp = int(text)
+    def _update_test_list(self):
+        self.availableTests.clear()
+        availabe_tests = self._get_available_tests()
+        self.availableTests.addItems(availabe_tests)
 
-        except ValueError:
-            self.temperature.setText(text[:-1])
-            return None
+        for test in availabe_tests:
+            self.available_tests.append(self._generate_test_struct(test, test))
 
-        return [temp]
+    def _validate_temperature_input(self, text, pattern):
+        index = text.rfind(pattern)
+        if index == -1:
+            return
 
-    # TODO: do we have to support other variant for dynamic temperature input
-    # 25..100 ?
+        text_list = list(text)
+        text_list[index] = ''
+        if not text_list[len(text_list) - 1].isdigit():
+            text_list[len(text_list) - 1] = ''
+
+        self.temperature.setText(''.join(text_list))
+
     def _get_dynamic_temp(self, text):
         temp_vars = []
         try:
+            self._validate_temperature_input(text, ',,')
             temps = text.split(',')
             if len(temps) == 0:
                 return None
 
             for i in temps:
+                if i == '-':
+                    return
+
                 if i != '':
                     temp_vars.append(int(i))
 
         except ValueError:
-            self.temperature.setText(text[:-1])
+            self._validate_temperature_input(text, '--')
             return None
 
         return temp_vars
 
-    def _inset_selected_test(self, test=None):
-        self.SelectedTests.addItem(f'{self.current_selected_test.text()}: {test}')
-
     def _get_available_tests(self):
-        return self.project_info.get_tests_from_db(self.hardware.currentText(),
-                                                   self.base.currentText(),
-                                                   'custom')  # TODO: test type is missed, we use custon as default
+        available_tests = []
+        tests = self.project_info.get_tests_from_db(self.hardware.currentText(),
+                                                    self.base.currentText())
+
+        if self.sequencerType.currentText() == Sequencer.Static():
+            temps = [int(self.temperature.text())]
+        else:
+            temps = self._get_dynamic_temp(self.temperature.text())
+
+        if temps is None:
+            return tests
+
+        for test in tests:
+            min, max = self.project_info.get_test_temp_limits(test, self.project_info.active_hardware, self.project_info.active_base)
+            for temp in temps:
+                if temp > (min - 1) and temp < max + 1 and \
+                   test not in available_tests:
+                    available_tests.append(test)
+
+        return available_tests
 
     def _set_sample_visible_mode(self, is_visible):
         self.sample.setVisible(is_visible)
@@ -388,17 +535,16 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.target_feedback.setText(ErrorMessage.TargetMissed())
             success = False
 
-        if not self.temperature.text():
-            self.temperature_feedback.setText(ErrorMessage.TemperatureMissed())
-            success = False
-
-        if not self.selectedTests.count():
+        if self.selectedTests.rowCount() == 0:
             self._update_feedback(ErrorMessage.EmtpyTestList())
             success = False
 
-        # TODO: implement when test-program name specified
-        if self.edit_on and self.program_name in self.existing_programs:
-            self._update_feedback(ErrorMessage.TestProgramExists())
+        if not self._is_dynamic_range_valid:
+            self._update_feedback(ErrorMessage.NoValidTestRange())
+            success = False
+
+        if not self.temperature.text() or not self._is_valid_temperature():
+            self.temperature_feedback.setText(ErrorMessage.TemperatureNotValidated())
             success = False
 
         if success:
@@ -409,6 +555,12 @@ class TestProgramWizard(QtWidgets.QDialog):
             self.OKButton.setEnabled(True)
         else:
             self.OKButton.setEnabled(False)
+
+    def _is_valid_temperature(self):
+        if self.sequencer_type == Sequencer.Dynamic():
+            return self._get_dynamic_temp(self.temperature.text())
+        else:
+            return self.temperature.text()
 
     @property
     def program_name(self):
@@ -427,6 +579,58 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.Feedback.setStyleSheet('')
         self.Feedback.setText('')
 
+    # ToDo Encapsulate temperature range into class
+    def _is_temperature_in_range(self, test, temps):
+        if temps is None:
+            return Range.In_Range()
+
+        min, max = self.project_info.get_test_temp_limits(test, self.project_info.active_hardware, self.project_info.active_base)
+        temps.sort()
+
+        in_range_list = [x for x in temps if x >= min and x <= max]
+
+        if len(in_range_list) == len(temps):
+            return Range.In_Range()
+        elif not len(in_range_list):
+            return Range.Out_Of_Range()
+        else:
+            return Range.Limited_Range()
+
+    def _generate_color(self, color):
+        return QtGui.QBrush(QtGui.QColor(color[0], color[1], color[2]))
+
+    # ToDo: Name this function better!
+    def _item_out_of_range(self, item, color):
+        item.setBackground(self._generate_color(color))
+        item.setForeground(QtCore.Qt.black)
+
+    def _get_test_info(self, fmt):
+        if self.sequencer_type == Sequencer.Static():
+            if not len(self.temperature.text()):
+                temps = []
+            else:
+                temps = [int(self.temperature.text())]
+            text = '' if not len(temps) else self._get_text(temps[0], fmt)
+        else:
+            temps = self._get_dynamic_temp(self.temperature.text())
+            temps.sort()
+            text = '' if temps is None else f"{self._get_text(temps[0], fmt)}..{self._get_text(temps[len(temps) - 1], fmt)}"
+
+        return text, temps
+
+    def _generate_temperature_item(self, fmt):
+        text, temps = self._get_test_info(fmt)
+        item = QtWidgets.QTableWidgetItem(text)
+        if len(text):
+            which_range = self._is_temperature_in_range(self.current_selected_test, temps)
+            if which_range == Range.Out_Of_Range():
+                self._item_out_of_range(item, RED)
+
+            if which_range == Range.Limited_Range():
+                self._item_out_of_range(item, ORANGE)
+
+        return item
+
     def _fill_input_parameter_table(self):
         self._clear_table_content(self.parametersInput)
         self.parametersInput.setRowCount(len(self.input_parameters))
@@ -435,9 +639,9 @@ class TestProgramWizard(QtWidgets.QDialog):
         row = 0
         for key, value in self.input_parameters.items():
             for col in range(self.parametersInput.columnCount()):
-                parameter_name = self.parametersInput.item(row, 0)
+                parameter_name = list(self.input_parameters.items())[row][0]
                 if parameter_name:
-                    fmt = self.input_parameters[parameter_name.text()]['fmt']
+                    fmt = self.input_parameters[parameter_name]['fmt']
 
                 if col == 0:
                     name_item = QtWidgets.QTableWidgetItem(key)
@@ -448,7 +652,11 @@ class TestProgramWizard(QtWidgets.QDialog):
                 elif col == 1:
                     item = QtWidgets.QTableWidgetItem(str(self._get_text(value['Min'], fmt)))
                 elif col == 2:
-                    item = self._generate_configurable_table_cell(value['Default'], fmt, 2)
+                    if key == 'Temperature':
+                        item = self._generate_temperature_item(fmt)
+                        item.setFlags(QtCore.Qt.NoItemFlags)
+                    else:
+                        item = self._generate_configurable_table_cell(value['Default'], fmt, 2)
                 elif col == 3:
                     item = QtWidgets.QTableWidgetItem(str(self._get_text(value['Max'], fmt)))
                 elif col == 4:
@@ -477,14 +685,14 @@ class TestProgramWizard(QtWidgets.QDialog):
         self.parametersOutput.setRowCount(len(self.output_parameters))
         self.parametersOutput.setColumnCount(7)
         row = 0
-        header = self.parametersInput.horizontalHeader()
+        header = self.parametersOutput.horizontalHeader()
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
         for key, value in self.output_parameters.items():
             for col in range(self.parametersOutput.columnCount()):
-                parameter_name = self.parametersOutput.item(row, 0)
+                parameter_name = list(self.output_parameters.items())[row][0]
                 if parameter_name:
-                    fmt = self.output_parameters[parameter_name.text()]['fmt']
+                    fmt = self.output_parameters[parameter_name]['fmt']
 
                 if col == 0:
                     name_item = QtWidgets.QTableWidgetItem(key)
@@ -517,6 +725,8 @@ class TestProgramWizard(QtWidgets.QDialog):
             row += 1
 
     def _generate_configurable_table_cell(self, value, fmt, cell):
+        if isinstance(value, str) and not len(value):
+            return
         text = str(self._get_text(value, fmt))
         item = QtWidgets.QTableWidgetItem(text)
         # QFontMetrics used to get the pixel size of the text which is used
@@ -533,38 +743,50 @@ class TestProgramWizard(QtWidgets.QDialog):
         return item
 
     def _double_click_handler_input_param(self, item):
-        self._create_checkable_cell(self.parametersInput, 'input', item)
+        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
+        self._create_checkable_cell(test_name, self.parametersInput, 'input', item, self.positive_float_validator)
 
     def _double_click_handler_output_param(self, item):
-        self._create_checkable_cell(self.parametersOutput, 'output', item)
+        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
+        self._create_checkable_cell(test_name, self.parametersOutput, 'output', item, self.positive_float_validator)
 
-    def _create_checkable_cell(self, table, table_type, item):
+    def _create_checkable_cell(self, test_name, table, table_type, item, validator):
         column = item.column()
         row = item.row()
         checkable_widget = QtWidgets.QLineEdit()
         checkable_widget.setText(item.text())
 
-        checkable_widget.setValidator(self.positive_float_validator)
+        checkable_widget.setValidator(validator)
 
         table.setCellWidget(row, column, checkable_widget)
         checkable_widget.editingFinished.connect(lambda row=row, column=column,
                                                  checkable_widget=checkable_widget, table=table,
                                                  table_type=table_type:
-                                                 self._edit_cell_done(table, table_type, checkable_widget, row, column))
+                                                 self._edit_cell_done(test_name, table, table_type, checkable_widget, row, column))
 
-    def _edit_cell_done(self, table, table_type, checkable_widget, row, column):
-        param_type = table.item(row, 0).text()
-        value = float(checkable_widget.text())
-
-        if not len(self.selectedTests.selectedItems()):
-            return
-
-        test_name = self.selectedTests.selectedItems()[0].text()
-
-        if table_type == 'input':
-            self._validate_input_parameter(test_name, value, param_type)
+    def _edit_cell_done(self, test_name, table, table_type, checkable_widget, row, column):
+        if table_type == 'description':
+            self.selectedTests.item(row, column).setText(str(checkable_widget.text()))
+            self._update_test_description(row, checkable_widget.text())
+            self._update_row(row)
         else:
-            self._validate_output_parameter(test_name, value, param_type, column)
+            param_type = table.item(row, 0).text()
+            value = float(checkable_widget.text())
+            if table_type == 'input':
+                self._validate_input_parameter(test_name, value, param_type)
+            else:
+                self._validate_output_parameter(test_name, value, param_type, column)
+
+    def _update_test_description(self, test_row, new_description):
+        self.selected_tests[test_row]['description'] = new_description
+
+    def _update_row(self, row):
+        test_name = self.selectedTests.item(row, 0).text()
+        test_description = self.selectedTests.item(row, 1).text()
+
+        self.selectedTests.removeRow(row)
+        self.selectedTests.insertRow(row)
+        self._insert_test_tuple_items(row, test_name, test_description)
 
     def _validate_output_parameter(self, test_name, value, param_type, column):
         limits = (self.output_parameters[param_type]['LSL'], self.output_parameters[param_type]['USL'])
@@ -591,7 +813,7 @@ class TestProgramWizard(QtWidgets.QDialog):
         import numpy as np
 
         if str(self.output_parameters[param_type]['UTL']) == str(np.nan) and limit != 'UTL' or \
-           str(self.output_parameters[param_type]['LTL']) == str(np.nan) and limut != 'LTL':
+           str(self.output_parameters[param_type]['LTL']) == str(np.nan) and limit != 'LTL':
             return True
 
         if limit == 'LTL':
@@ -629,24 +851,9 @@ class TestProgramWizard(QtWidgets.QDialog):
 
         return float(left_limit) <= value <= float(right_limit)
 
-    @property
-    def _selected_tests_list(self):
-        selected_tests = []
-        for index in range(self.selectedTests.count()):
-            selected_tests.append(self.selectedTests.item(index).text())
-
-        return selected_tests
-
-    def _remove_test(self, item):
-        index = self._get_test_index(item.text())
-        if index == -1:
-            return
-
-        self.selected_tests.pop(index)
-
-    def _generate_test_struct(self, test_name):
-        sturct = {test_name: {'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}}}
-        parameters = self.project_info.get_test_definiton(test_name)
+    def _generate_test_struct(self, test_name, test_description):
+        sturct = {'name': test_name, 'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}, 'description': test_description, 'is_valid': True}
+        parameters = self.project_info.get_test_definiton(self._extract_base_test_name(test_name))
         inputs = {}
         outputs = {}
         for key, value in parameters['input_parameters'].items():
@@ -655,36 +862,129 @@ class TestProgramWizard(QtWidgets.QDialog):
         for key, value in parameters['output_parameters'].items():
             outputs[key] = {'LTL': value['LTL'], 'UTL': value['UTL']}
 
-        sturct[test_name].update({'input_parameters': inputs})
-        sturct[test_name].update({'output_parameters': outputs})
+        sturct.update({'input_parameters': inputs})
+        sturct.update({'output_parameters': outputs})
         return sturct
-
-    def _get_test_index(self, test_name):
-        for index, test in enumerate(self.selected_tests):
-            test_tuple = list(test.items())
-            if test_tuple[0][0] == test_name:
-                return index
-
-        return -1
 
     def _update_selected_tests_parameters(self, test_name, type, parameter_name, value, limit=''):
         index = self.selectedTests.currentRow()
+        element = {}
+        try:
+            element = self.selected_tests[index][type][parameter_name]
+        except KeyError:
+            self._create_new_params(parameter_name, limit, type, index, test_name, value, limit)
+
         if not limit:
-            self.selected_tests[index][test_name][type][parameter_name] = value
+            element = value
         else:
-            self.selected_tests[index][test_name][type][parameter_name][limit] = value
+            element[limit] = value
+
+        self.selected_tests[index][type][parameter_name] = element
+
+    def _create_new_params(self, parameter_name, limit, type, index, test_name, value, limit_type=''):
+        if not limit_type:
+            self.selected_tests[index][type][parameter_name] = value
+        else:
+            self.selected_tests[index][type][parameter_name] = {'UTL': '', 'LTL': ''}
+            self.selected_tests[index][type][parameter_name][limit] = value
+
+    def _clear_test_list_table(self):
+        if not self.selectedTests.rowCount():
+            return
+
+        for row in range(self.selectedTests.rowCount()):
+            self.selectedTests.removeRow(row)
+
+    def _update_test_list_table(self):
+        self._clear_test_list_table()
+        self.selectedTests.setRowCount(len(self.selected_tests))
+        count = 0
+        for test in self.selected_tests:
+            test_name = test['name']
+            item_name = self._generate_test_name_item(test_name)
+            item_description = self._generate_test_description_item(test['description'])
+            temps = self._get_temps()
+            which_range = self._is_temperature_in_range(self._extract_base_test_name(test_name), temps)
+            if which_range == Range.Out_Of_Range():
+                self._item_out_of_range(item_name, RED)
+                self._item_out_of_range(item_description, RED)
+
+            if which_range == Range.Limited_Range():
+                self._item_out_of_range(item_name, ORANGE)
+                self._item_out_of_range(item_description, ORANGE)
+
+            self.selectedTests.setItem(count, 0, item_name)
+            self.selectedTests.setItem(count, 1, item_description)
+            count += 1
+
+        self._verify()
+
+    def _get_temps(self):
+        if self.sequencer_type == Sequencer.Static():
+            if not len(self.temperature.text()):
+                temps = []
+            else:
+                temps = [int(self.temperature.text())]
+        else:
+            temps = self._get_dynamic_temp(self.temperature.text())
+            temps.sort()
+
+        return temps
+
+    def _generate_selected_test_name(self, test_name):
+        count = 1
+        for test in self.selected_tests:
+            if test_name in test['name']:
+                count += 1
+
+        return f"{test_name}_{count}"
+
+    def _add_test_tuple_items(self, test_name):
+        indexed_test = self._generate_selected_test_name(test_name)
+        self.selected_tests.append(self._generate_test_struct(test_name, indexed_test))
+
+    def _insert_test_tuple_items(self, row, test_name, test_description):
+        self.selectedTests.setItem(row, 0, self._generate_test_name_item(test_name))
+        self.selectedTests.setItem(row, 1, self._generate_test_description_item(test_description))
+
+    def _generate_test_description_item(self, text):
+        description_item = QtWidgets.QTableWidgetItem(text)
+        description_item.setFlags(QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        return description_item
+
+    def _generate_test_name_item(self, text):
+        name_item = QtWidgets.QTableWidgetItem(text)
+        # name should not be editable
+        name_item.setFlags(QtCore.Qt.NoItemFlags | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+        return name_item
+
+    # ToDo: This function creates a suffix.
+    # ToDo: This should be integrated into the program_name propery (the latter returns an invalid value not containing
+    #       the actual program name.
+    def _generate_target_prefix(self):
+        count = self.project_info.get_program_owner_element_count(self.owner) + 1
+        prefix = self.owner[0].upper()
+        return f"{self.target.currentText()}_{prefix}_{str(count)}"
 
     def _get_configuration(self):
-        configuration = {'name': f'Prog_{self.hardware.currentText()}_{self.base.currentText()}_{self.target.currentText()}_{self.usertext.text()}',
+        self.target_prefix = self._generate_target_prefix()
+        configuration = {'name': f'{self.hardware.currentText()}_{self.base.currentText()}_{self.target_prefix}',
                          'hardware': self.hardware.currentText(),
                          'base': self.base.currentText(),
                          'target': self.target.currentText(),
                          'usertext': self.usertext.text(),
                          'sequencer_type': self.sequencer_type,
-                         'temperature': self.temperature.text(),
+
+                         'temperature': self.temperature.text() if self.sequencer_type == Sequencer.Static()
+                                 else self._get_dynamic_temp(self.temperature.text()),
+
                          'sample': self.sample.suffix()}
 
-        definition = {'sequence': self.selected_tests}
+        definition = {'sequence': []}
+        for test in self.selected_tests:
+            # pop the "is_valid"-flag out, as it is not needed any more
+            test.pop('is_valid', None)
+            definition['sequence'].append(test)
 
         return configuration, definition
 
@@ -695,18 +995,26 @@ class TestProgramWizard(QtWidgets.QDialog):
             return
 
         if not self.read_only and self.edit_on:
+            self.prog_name = configuration['name']
             self.project_info.insert_program(configuration['name'], configuration['hardware'], configuration['base'], configuration['target'],
                                              configuration['usertext'], configuration['sequencer_type'], configuration['temperature'],
-                                             definition, self.owner, self.project_info.get_program_owner_element_count(self.owner))
+                                             definition, self.owner, self.project_info.get_program_owner_element_count(self.owner), self.target_prefix)
         else:
-            self.project_info.update_program(configuration['name'], configuration['hardware'], configuration['base'],
+            target_name = self.target.currentText() + '_' + self.owner[0].upper() + '_' + self.prog_name[-1]
+            self.project_info.update_program(self.prog_name, configuration['hardware'], configuration['base'],
                                              configuration['target'], configuration['usertext'], configuration['sequencer_type'],
-                                             configuration['temperature'], definition, self.owner)
+                                             configuration['temperature'], definition, self.owner, target_name)
+
+        self._generate_test_program(configuration)
 
         self.accept()
 
     def _cancel(self):
         self.reject()
+
+    def _generate_test_program(self, configuration):
+        from ATE.org.coding.generators import test_program_generator
+        test_program_generator(self.prog_name, self.project_info)
 
 
 def new_program_dialog(project_info, owner, parent):

@@ -1,18 +1,7 @@
+import { CommunicationService } from './../services/communication.service';
+import { SystemState } from './../system-status';
 import { CardConfiguration, CardStyle } from './../basic-ui-elements/card/card.component';
-import { Component, OnInit, Output, Input, EventEmitter, OnChanges } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status';
-import { ButtonConfiguration } from '../basic-ui-elements/button/button-config';
-import { InputConfiguration } from '../basic-ui-elements/input/input-config';
-
-enum TextLabel {
-  LoadLot = 'Load Lot',
-  UnloadLot = 'Unload Lot',
-  StartDutTest = 'Start DUT-Test',
-}
-export enum TextColor {
-  black = 'black',
-  blue = '#0046AD'
-}
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-system-control',
@@ -20,95 +9,32 @@ export enum TextColor {
   styleUrls: ['./system-control.component.scss']
 })
 
-export class SystemControlComponent implements OnInit, OnChanges {
+export class SystemControlComponent implements OnInit {
   systemControlCardConfiguration: CardConfiguration;
-  lotCardConfiguration: CardConfiguration;
-  loadLotCardConfiguration: CardConfiguration;
-  testExecutionControlCardConfiguration: CardConfiguration;
 
-  loadLotButtonConfig: ButtonConfiguration;
-  startDutTestButtonConfig: ButtonConfiguration;
-  unloadLotButtonConfig: ButtonConfiguration;
+  systemState: SystemState;
 
-  lotNumberInputConfig: InputConfiguration;
-
-  @Input() systemStatus: SystemStatus = new SystemStatus();
-
-  @Output() loadLotEvent: EventEmitter<string> = new EventEmitter<string>();
-  @Output() startDutTestEvent: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() unloadLotEvent: EventEmitter<boolean> = new EventEmitter<boolean>();
-
-  constructor() {
+  constructor(private readonly communicationService: CommunicationService) {
     this.systemControlCardConfiguration = new CardConfiguration();
-    this.lotCardConfiguration = new CardConfiguration();
-    this.loadLotCardConfiguration = new CardConfiguration();
-    this.testExecutionControlCardConfiguration = new CardConfiguration();
 
+    this.systemState = SystemState.connecting;
+    communicationService.message.subscribe(msg => this.handleServerMessage(msg));
+  }
 
-    this.loadLotButtonConfig = new ButtonConfiguration();
-    this.startDutTestButtonConfig = new ButtonConfiguration();
-    this.unloadLotButtonConfig = new ButtonConfiguration();
-
-    this.lotNumberInputConfig = new InputConfiguration();
+  private handleServerMessage(serverMessage: any) {
+    if (serverMessage.payload.state) {
+      if (this.systemState !== serverMessage.payload.state) {
+        this.systemState = serverMessage.payload.state;
+      }
+    }
   }
 
   ngOnInit() {
     this.systemControlCardConfiguration.cardStyle = CardStyle.ROW_STYLE;
     this.systemControlCardConfiguration.labelText = 'System Control';
-
-    this.lotCardConfiguration.cardStyle = CardStyle.COLUMN_STYLE;
-    this.lotCardConfiguration.labelText = 'Lot Handling';
-    this.lotCardConfiguration.shadow = true;
-
-    this.loadLotCardConfiguration.cardStyle = CardStyle.ROW_STYLE;
-    this.loadLotCardConfiguration.shadow = false;
-
-    this.testExecutionControlCardConfiguration.cardStyle = CardStyle.COLUMN_STYLE;
-    this.testExecutionControlCardConfiguration.labelText = 'Test Execution';
-    this.testExecutionControlCardConfiguration.shadow = true;
-
-    this.loadLotButtonConfig.labelText = TextLabel.LoadLot;
-    this.startDutTestButtonConfig.labelText = TextLabel.StartDutTest;
-    this.unloadLotButtonConfig.labelText = TextLabel.UnloadLot;
-
-    this.lotNumberInputConfig.placeholder = 'Lot Number ...';
-    this.lotNumberInputConfig.textColor = TextColor.black;
-  }
-
-  ngOnChanges(): void {
-    this.updateButtonConfigs();
-    this.updateInputConfigs();
-  }
-
-  private updateInputConfigs() {
-    this.lotNumberInputConfig.disabled = this.systemStatus.state !== SystemState.initialized;
-    this.lotNumberInputConfig = Object.assign({}, this.lotNumberInputConfig);
-  }
-
-  private updateButtonConfigs() {
-    this.loadLotButtonConfig.disabled = this.systemStatus.state !== SystemState.initialized;
-    this.loadLotButtonConfig = Object.assign({}, this.loadLotButtonConfig);
-
-    this.startDutTestButtonConfig.disabled = this.systemStatus.state !== SystemState.ready;
-    this.startDutTestButtonConfig = Object.assign({}, this.startDutTestButtonConfig);
-
-    this.unloadLotButtonConfig.disabled = this.systemStatus.state !== SystemState.ready;
-    this.unloadLotButtonConfig = Object.assign({}, this.unloadLotButtonConfig);
   }
 
   renderSystemControlComponent() {
-    return this.systemStatus.state !== SystemState.error;
-  }
-
-  loadLot(lotNumber : string) {
-    this.loadLotEvent.emit(lotNumber);
-  }
-
-  unloadLot() {
-    this.unloadLotEvent.emit(true);
-  }
-
-  startDutTest() {
-    this.startDutTestEvent.emit(true);
+    return this.systemState !== SystemState.error;
   }
 }

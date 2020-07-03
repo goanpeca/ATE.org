@@ -8,7 +8,4 @@ If you have the need to add things, add it to 'common.py' (which is including th
 
 BTW : YOU SHOULD **NOT** EVEN BE READING THIS !!!
 """
-from .. import __init__
-{% for line in imports %}
-{{ line }}
-{% endfor %}
+from . import __init__

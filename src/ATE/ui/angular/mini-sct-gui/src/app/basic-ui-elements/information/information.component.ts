@@ -1,12 +1,12 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges } from '@angular/core';
 import { InformationConfiguration } from './information-config';
 
 @Component({
-  selector: 'app-infomation',
-  templateUrl: './infomation.component.html',
-  styleUrls: ['./infomation.component.scss']
+  selector: 'app-information',
+  templateUrl: './information.component.html',
+  styleUrls: ['./information.component.scss']
 })
-export class InfomationComponent implements OnInit {
+export class InformationComponent implements OnInit, OnChanges {
   @Input() informationConfig: InformationConfiguration;
 
   constructor() {
@@ -14,6 +14,10 @@ export class InfomationComponent implements OnInit {
    }
 
   ngOnInit() {
+  }
+
+  ngOnChanges() {
+    console.log('Information component detected change');
   }
 
   typeOf(value: any) {

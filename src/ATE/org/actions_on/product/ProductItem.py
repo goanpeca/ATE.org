@@ -59,7 +59,13 @@ class ProductItemChild(StateItem):
         return [MenuActionTypes.Edit(),
                 MenuActionTypes.View(),
                 None,
-                MenuActionTypes.Obsolete()]
+                self._dependant_menu_type()]
+
+    # TODO: should we be able to delete product oder just make it obsolete,
+    # but how to say if the product not used at all
+    @property
+    def type(self):
+        return 'products'
 
     @property
     def dependency_list(self):

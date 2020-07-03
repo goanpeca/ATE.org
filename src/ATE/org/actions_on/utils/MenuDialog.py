@@ -1,24 +1,24 @@
-from PyQt5 import QtGui, QtCore, QtWidgets, uic
+from PyQt5 import QtGui, QtCore, QtWidgets
 import os
 import shutil
 import qtawesome as qta
+
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 
 DELETE_DIALOG = 'Delete.ui'
 RENAME_DIALOG = 'Rename.ui'
 
 
-class MenuDialog(QtWidgets.QDialog):
+class MenuDialog(BaseDialog):
     def __init__(self, ui_name, action):
-        super().__init__()
-        self.ui_name = ui_name
+        ui_file = os.path.join(os.path.dirname(__file__), ui_name)
+        super().__init__(ui_file)
         self.action = action
         for _ in self._steps():
             pass
 
     def _steps(self):
-        self._load_ui()
-        yield
         self._setup()
         yield
         self._connect_action_handler()
@@ -26,16 +26,8 @@ class MenuDialog(QtWidgets.QDialog):
     def show(self):
         return self.exec_()
 
-    def _load_ui(self):
-        current_dir = os.path.dirname(__file__)
-        uic.loadUi(os.path.join(current_dir, self.ui_name), self)
-
     def _setup(self):
         self.setWindowTitle(self.action)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
-        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on=False)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on=False)
         self.setFixedSize(self.size())
         self.ok_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
         self.cancel_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel)

@@ -22,7 +22,7 @@ import qtawesome as qta
 
 from ATE.org.navigation import ProjectNavigation
 from ATE.org.validation import is_ATE_project
-from SpyderMockUp.ScreenCasting.QtScreenCast import ScreenCastToolButton
+from ScreenCasting.QtScreenCast import ScreenCastToolButton
 
 show_workspace = False
 
@@ -231,6 +231,8 @@ if __name__ == '__main__':
     window = MainWindow(app)
     window.show()
     res = app.exec_()
-    window.model.doc_observer.stop_observer()
+    # TODO: there have to be another way to do this mybe move this inside the tree model itself, ?
+    if hasattr(window, 'model'):
+        window.model.doc_observer.stop_observer()
 
     sys.exit(res)

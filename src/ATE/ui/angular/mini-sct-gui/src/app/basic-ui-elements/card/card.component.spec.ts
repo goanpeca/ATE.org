@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { CardComponent, CardStyle } from './card.component';
-import { DebugElement } from '@angular/core';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 describe('CardComponent', () => {
@@ -10,7 +10,8 @@ describe('CardComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ CardComponent ]
+      declarations: [ CardComponent ],
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   }));
@@ -37,11 +38,9 @@ describe('CardComponent', () => {
     component.cardConfiguration.shadow = false;
     fixture.detectChanges();
 
-    // check that the class cardShadow has gone
     card = debugElement.query(By.css('.cardShadow'));
     expect(card).toBeFalsy();
 
-    // check that the card element has no set boxShadow
     card = debugElement.query(By.css('.card'));
     cardElement = card.nativeElement;
 
@@ -65,10 +64,8 @@ describe('CardComponent', () => {
     let card = debugElement.query(By.css('.card'));
     let cardElement = card.nativeElement;
 
-    // check that class attribute contains rowStyle
     expect(cardElement.getAttribute('class')).toContain(CardStyle.ROW_STYLE);
 
-    // check that css display is set to flex and flex directtion is set to row
     expect(getComputedStyle(cardElement).display).toBe('flex');
     expect(getComputedStyle(cardElement).flexDirection).toBe('row');
   });
@@ -80,10 +77,8 @@ describe('CardComponent', () => {
     let card = debugElement.query(By.css('.card'));
     let cardElement = card.nativeElement;
 
-    // check that class attribute contains columnStyle
     expect(cardElement.getAttribute('class')).toContain(CardStyle.COLUMN_STYLE);
 
-    // check that css display is set to flex and flex directtion is set to column
     expect(getComputedStyle(cardElement).display).toBe('flex');
     expect(getComputedStyle(cardElement).flexDirection).toBe('column');
   });

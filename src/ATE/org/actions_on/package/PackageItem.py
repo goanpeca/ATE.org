@@ -43,5 +43,9 @@ class PackageItemChild(StateItem):
         return self.project_info.get_package_state(self.text())
 
     @property
+    def type(self):
+        return 'packages'
+
+    @property
     def dependency_list(self):
         return self.project_info.get_dependant_objects_for_package(self.text())

@@ -1,27 +1,20 @@
-from PyQt5 import QtWidgets, QtCore, uic
+from PyQt5 import QtWidgets
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 import os
 
 
-class ItemTrace(QtWidgets.QDialog):
+class ItemTrace(BaseDialog):
     def __init__(self, dependency_list, name, message=''):
-        super().__init__()
+        ui_file = '.'.join(os.path.realpath(__file__).split('.')[:-1]) + '.ui'
+        super().__init__(ui_file)
         self.dependency_list = dependency_list
         self.name = name
         self.message = message
-        self._load_ui()
         self._setup()
-
-    def _load_ui(self):
-        ui_file = '.'.join(os.path.realpath(__file__).split('.')[:-1]) + '.ui'
-        uic.loadUi(ui_file, self)
 
     def _setup(self):
         self.setWindowTitle(self.name)
         self.setFixedSize(self.size())
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, on=False)
-        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on=False)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on=False)
         self.feedback.setText(self.message)
         self.feedback.setStyleSheet('color: orange')
         self.tree_view.setHeaderHidden(True)

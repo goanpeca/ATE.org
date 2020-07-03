@@ -16,4 +16,6 @@ FileIcons = {FileIconTypes.PDF.name: qta.icon('mdi.file-pdf-outline', color='ora
              FileIconTypes.TXT.name: qta.icon('mdi.note-text-outline', color='orange'),
              FileIconTypes.MD.name: qta.icon('mdi.file-outline', 'mdi.markdown', color='orange'),
              FileIconTypes.ZIP.name: qta.icon('mdi.folder-zip-outline', color='orange'),
-             FileIconTypes.FOLDER.name: qta.icon('mdi.folder-open', color='orange')}
+             FileIconTypes.PY.name: qta.icon('mdi.language-python', color='orange'),
+             FileIconTypes.FOLDER.name: qta.icon('mdi.folder-open', color='orange'),
+             FileIconTypes.VIRTUAL.name: qta.icon('mdi.standard-definition', color='orange')}

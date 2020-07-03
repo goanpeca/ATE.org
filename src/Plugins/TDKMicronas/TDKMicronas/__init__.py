@@ -24,45 +24,61 @@ class Plugin:
     @hookimpl
     def get_importer_names():
         return [
-            {"Display_name": "Dummy Importer",
+            {"display_name": "Dummy Importer",
              "version": "0.0",
              "name": "TDKMicronas.DummyImporter"}]
 
     @hookimpl
     def get_exporter_names():
         return [
-            {"Display_name": "Dummy Exporter",
+            {"display_name": "Dummy Exporter",
              "version": "0.0",
              "name": "TDKMicronas.DummyExporter"}]
 
     @hookimpl
     def get_equipment_names():
         return [
-            {"Display_name": "Dummy Equipment",
+            {"display_name": "Dummy Equipment",
              "version": "0.0",
              "name": "TDKMicronas.DummyEquipment"}]
 
     @hookimpl
     def get_devicepin_importer_names():
         return [
-            {"Display_name": "Dummy Pinimport",
+            {"display_name": "Dummy Pinimport",
              "version": "0.0",
              "name": "TDKMicronas.DummyPinimport"}]
 
     @hookimpl
     def get_actuator_names():
         return [
-            {"Display_name": "Dummy Actuator",
+            {"display_name": "Dummy Actuator",
              "version": "0.0",
              "capabilities": (),
-             "name": "TDKMicronas.DummyActuator"}]
+             "name": "TDKMicronas.DummyActuator"},
+
+             {"display_name": "Mag Field",
+             "version": "0.0",
+             "capabilities": (),
+             "name": "TDKMicronas.MagField"}]
 
     @hookimpl
     def get_instrument_names():
         return [
-            {"Display_name": "Dummy Instrument",
+            {"display_name": "Dummy Instrument",
              "version": "0.0",
-             "name": "TDKMicronas.DummyInstrument"}]
+             "manufacturer": "ACME International",
+             "name": "TDKMicronas.DummyInstrument"},
+
+            {"display_name": "Flux Compensator",
+             "version": "0.0",
+             "manufacturer": "ACME International",
+             "name": "TDKMicronas.FluxCompensator"},
+
+            {"display_name": "Blackhole Generator",
+             "version": "0.0",
+             "manufacturer": "CI Systems",
+             "name": "TDKMicronas.BlackholeGen"}]
 
     @hookimpl
     def get_importer(importer_name):

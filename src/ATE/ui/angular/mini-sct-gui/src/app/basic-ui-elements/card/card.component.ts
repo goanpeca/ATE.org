@@ -14,7 +14,8 @@ export class CardConfiguration {
 
 export enum CardStyle {
   ROW_STYLE = 'rowStyle',
-  COLUMN_STYLE = 'columnStyle'
+  COLUMN_STYLE = 'columnStyle',
+  ROW_STYLE_FOR_SYSTEM = 'rowStyleForSystemSites'
 }
 
 @Component({

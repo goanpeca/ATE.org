@@ -1,15 +1,14 @@
 <hr class="rounded" id="debugArea">
 <div class="row">
-    <div class="side">
-        <h2>Debug Area</h2>
-    </div>
-    <div class="main">
-        <label for="systemState"><h3>Change Webview:</h3></label>
+  <div class="side">
+    <h2>Debug Area</h2>
+  </div>
+  <div class="main">
+    <label for="systemState"><h3>Change Webview:</h3></label>
 
-        <!--surround the select box with a "select-webview" DIV element. Remember to set the width:-->
-        <select #systemState name="systemState" id="systemState" size="8" (change)="setSystemState(systemState.value)">
-            <option id="op1">Select Webview:</option>
-            <option *ngFor="let state of states" [value]="state.value">{{state.description}}</option>
+    <select #systemState name="systemState" id="systemState" size="8" (change)="setSystemState(systemState.value)">
+      <option id="op1">Select Webview:</option>
+      <option *ngFor="let state of STATES" [value]="state.value">{{state.description}}</option>
     </select>
-    </div>
+  </div>
 </div>

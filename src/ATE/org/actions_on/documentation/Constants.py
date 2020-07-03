@@ -17,6 +17,8 @@ class FileIconTypes(Enum):
     MD = ['.md']
     ZIP = ['.zip', '.xz', '.gz', '.bz2']
     FOLDER = ['.']
+    PY = ['.py']
+    VIRTUAL = ['']
 
     def __call__(self):
         return self.value

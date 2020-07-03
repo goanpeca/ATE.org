@@ -6,8 +6,6 @@ from ATE.org.actions_on.model.Constants import MenuActionTypes
 from ATE.org.actions_on.model.BaseItem import BaseItem
 from ATE.org.actions_on.utils.StateItem import StateItem
 
-from PyQt5 import QtCore
-
 
 class DieItem(BaseItem):
     def __init__(self, project_info, name, parent=None):
@@ -19,7 +17,6 @@ class DieItem(BaseItem):
 
     def _create_child(self, name, parent):
         return DieItemChild(self.project_info, name, parent)
-
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
 
@@ -36,6 +33,10 @@ class DieItemChild(StateItem):
 
     def display_item(self):
         display_die_settings_dialog(self.text(), self.project_info)
+
+    @property
+    def type(self):
+        return 'dies'
 
     @property
     def dependency_list(self):

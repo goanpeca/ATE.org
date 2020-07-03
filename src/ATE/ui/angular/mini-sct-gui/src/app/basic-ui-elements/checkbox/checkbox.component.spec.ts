@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { CheckboxComponent } from './checkbox.component';
-import { DebugElement, NO_ERRORS_SCHEMA, NgModule } from '@angular/core';
+import { DebugElement} from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 describe('CheckboxComponent', () => {
@@ -12,7 +12,7 @@ describe('CheckboxComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ CheckboxComponent ],
-      schemas: [NO_ERRORS_SCHEMA],
+      schemas: [],
       imports: [FormsModule]
     })
     .compileComponents();

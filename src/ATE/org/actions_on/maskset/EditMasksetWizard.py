@@ -1,7 +1,5 @@
-from PyQt5 import QtCore
 from ATE.org.actions_on.maskset.NewMasksetWizard import NewMasksetWizard
 from ATE.org.actions_on.maskset.ViewMasksetSettings import ViewMasksetSettings
-from ATE.org.actions_on.maskset.constants import DEFINITION
 
 import re
 import os

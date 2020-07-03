@@ -14,7 +14,9 @@ class EditProductWizard(NewProductWizard):
     def OKButtonPressed(self):
         configuration = self._get_actual_defintion()
         self.project_info.update_product(configuration['name'], configuration['device'],
-                                         configuration['hardware'])
+                                         configuration['hardware'], configuration['quality'],
+                                         configuration['grade'], configuration['grade_reference'],
+                                         configuration['type'], configuration['customer'])
         self.accept()
 
 

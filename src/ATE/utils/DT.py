@@ -284,7 +284,7 @@ class DT(object):
         self.time = datetime.time(self.hour, self.min, self.sec)
         utc_offset = (-self.tz*3600)+(self.dst*3600)
         self.QDateTime = QDateTime()
-        self.QDateTime.setOffsetFromUtc(utc_offset) # timezone + day light saving
+        self.QDateTime.setOffsetFromUtc(int(utc_offset)) # timezone + day light saving
         self.QDateTime.setSecsSinceEpoch(self.epoch)
         self.QDate = self.QDateTime.date()
         self.QTime = self.QDateTime.time()

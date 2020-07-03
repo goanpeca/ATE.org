@@ -18,6 +18,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.active_base = ''
         self.active_target = ''
         self.project_info = project_info
+
         self._setup()
 
     def __call__(self, project_info):
@@ -26,7 +27,6 @@ class ToolBar(QtWidgets.QToolBar):
         self._init_hardware()
         self._update_target()
 
-        self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
         self._connect_event_handler()
 
     def _setup(self):
@@ -113,8 +113,6 @@ class ToolBar(QtWidgets.QToolBar):
         self.settings_action.setCheckable(False)
         self.addAction(self.settings_action)
 
-        # self.show()
-
     def _connect_event_handler(self):
         self.tester_combo.currentTextChanged.connect(self._tester_changed)
         self.hardware_combo.currentTextChanged.connect(self._hardware_changed)
@@ -128,6 +126,19 @@ class ToolBar(QtWidgets.QToolBar):
         self.project_info.hardware_activated.connect(self._update_hardware)
         self.project_info.hardware_removed.connect(self._remove_hardware)
         self.project_info.update_target.connect(self._target_update)
+        self.project_info.select_target.connect(self._target_selected)
+        self.project_info.update_settings.connect(self._settings_update)
+
+    @QtCore.pyqtSlot(str)
+    def _target_selected(self, target):
+        self.target_combo.setCurrentText(target)
+        # self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
+
+    @QtCore.pyqtSlot(str, str, str)
+    def _settings_update(self, hardware, base, target):
+        self.hardware_combo.setCurrentText(hardware)
+        self.base_combo.setCurrentText(base)
+        self.target_combo.setCurrentText(target)
 
     @QtCore.pyqtSlot(str)
     def _add_new_hardware(self, hardware):
@@ -171,6 +182,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.project_info.active_hardware = selected_hardware
         self._update_target()
         self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
+        self.project_info.select_hardware.emit(selected_hardware)
 
     @QtCore.pyqtSlot(str)
     def _base_changed(self, selected_base):
@@ -180,6 +192,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.project_info.active_base = selected_base
         self._update_target()
 
+        self.project_info.select_base.emit(selected_base)
         self.project_info.update_toolbar_elements(self._get_hardware(), self._get_base(), self._get_target())
 
     @QtCore.pyqtSlot(str)
@@ -187,6 +200,7 @@ class ToolBar(QtWidgets.QToolBar):
         # the fact that we have a target to change to, means that there is a navigator ... no?
         self.active_target = selected_target
         self.project_info.active_target = selected_target
+        self.project_info.select_target.emit(selected_target)
 
         if self.active_target in self.project_info.get_devices_for_hardware(self.active_hardware):
             self.base_combo.blockSignals(True)

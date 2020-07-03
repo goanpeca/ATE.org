@@ -1,5 +1,7 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { SystemStatus, SystemState } from '../system-status';
+import { Component, OnInit } from '@angular/core';
+import { SystemState } from '../system-status';
+import { MockServerService } from '../services/mockserver.service';
+import * as constants from '../services/mockserver-constants';
 
 @Component({
   selector: 'app-debug',
@@ -9,8 +11,9 @@ import { SystemStatus, SystemState } from '../system-status';
 export class DebugComponent implements OnInit {
 
   mySystemState = SystemState;
+  state: any;
 
-  states: any = [
+  private readonly STATES: any = [
     {
       description: 'Connecting',
       value: this.mySystemState.connecting
@@ -41,15 +44,35 @@ export class DebugComponent implements OnInit {
     }
   ];
 
-  @Output() systemStateEvent: EventEmitter<SystemState> = new EventEmitter<SystemState>();
-
-  setSystemState(state: SystemState) {
-    this.systemStateEvent.emit(state);
+  constructor(private readonly mss: MockServerService) {
   }
-
-  constructor() { }
 
   ngOnInit() {
   }
 
+  setSystemState(state: SystemState) {
+    switch (state) {
+      case SystemState.connecting:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_CONNECTING]);
+        break;
+      case SystemState.initialized:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_INITIALIZED]);
+        break;
+      case SystemState.ready:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_READY]);
+        break;
+      case SystemState.loading:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_LOADING]);
+        break;
+      case SystemState.testing:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_TESTING]);
+        break;
+      case SystemState.error:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_ERROR]);
+        break;
+      case SystemState.unloading:
+        this.mss.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_UNLOADING]);
+        break;
+    }
+  }
 }

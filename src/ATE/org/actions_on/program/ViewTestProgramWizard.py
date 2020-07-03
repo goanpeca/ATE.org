@@ -30,23 +30,32 @@ class ViewTestProgramWizard(TestProgramWizard):
 
     @staticmethod
     def setup_view(dialog, name):
-        for test in dialog.project_info.get_tests_for_program(name, dialog.owner):
-            dialog.selectedTests.addItem(test)
+        # for test in dialog.project_info.get_tests_for_program(name, dialog.owner):
+        #     dialog.selectedTests.addItem(test)
 
         dialog.selected_tests = dialog.project_info.get_program_test_configuration(name, dialog.owner)
+        dialog._update_test_list_table()
         configuration = dialog.project_info.get_program_configuration_for_owner(dialog.owner, name)
         # TODO: can we edit any of the following property
         dialog.hardware.clear()
         dialog.base.clear()
         dialog.target.clear()
-        dialog.sequencerType.clear()
+        dialog.hardware.setEnabled(False)
+        dialog.base.setEnabled(False)
+        dialog.target.setEnabled(False)
+        dialog.sequencerType.setEnabled(False)
 
-        dialog.hardware.addItem(configuration[0])
-        dialog.base.addItem(configuration[1])
-        dialog.target.addItem(configuration[2])
-        dialog.usertext.setText(configuration[3])
-        dialog.sequencerType.addItem(configuration[4])
-        dialog.temperature.setText(configuration[5])
+        dialog.hardware.addItem(configuration['hardware'])
+        dialog.base.addItem(configuration['base'])
+        dialog.target.addItem(configuration['target'])
+        dialog.usertext.setText(configuration['usertext'])
+
+        dialog.sequencerType.blockSignals(True)
+        dialog.sequencerType.clear()
+        dialog.sequencerType.addItem(configuration['sequencer_type'])
+        dialog.sequencerType.blockSignals(False)
+
+        dialog.temperature.setText(configuration['temperature'])
 
         dialog._verify()
 

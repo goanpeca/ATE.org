@@ -8,24 +8,20 @@ import os
 import re
 
 from ATE.org.validation import valid_die_name_regex
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtGui
+
+from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 
 
-class DieWizard(QtWidgets.QDialog):
+class DieWizard(BaseDialog):
     def __init__(self, project_info, read_only=False):
-        super().__init__()
+        super().__init__(__file__)
         self.project_info = project_info
         self.read_only = read_only
-        self._load_ui()
         self._setup_ui()
         self._connect_event_handler()
 
-    def _load_ui(self):
-        my_ui = __file__.replace('.py', '.ui')
-        uic.loadUi(my_ui, self)
-
     def _setup_ui(self):
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         # hardware
@@ -75,7 +71,7 @@ class DieWizard(QtWidgets.QDialog):
                 if all_dies[die][2] == 'A':
                     reference_dies.append(die)
                 else:
-                    referenced_dies[all_dies[die]['grade']] = all_dies[die]['grade_reference']
+                    referenced_dies[all_dies[die][2]] = all_dies[die][3]
 
         for die in referenced_dies:
             if referenced_dies[die] == '':
@@ -149,62 +145,44 @@ class DieWizard(QtWidgets.QDialog):
         self._verify()
 
     def masksetChanged(self, SelectedMaskset):
-        if SelectedMaskset == '':
-            self.gradeLabel.setDisabled(True)
+        ASIC_masksets = self.project_info.get_ASIC_masksets()
+        if SelectedMaskset in ASIC_masksets:
+            self.gradeLabel.setDisabled(False)
             self.grade.blockSignals(True)
             self.grade.setCurrentText('A')
-            self.grade.setDisabled(True)
+            self.grade.setDisabled(False)
             self.grade.blockSignals(False)
             self.typeLabel.setDisabled(True)
             self.Type.blockSignals(True)
-            self.Type.setCurrentText('ASSP')
+            self.Type.setCurrentText('ASIC')
             self.Type.setDisabled(True)
+            self.Type.blockSignals(False)
+            self.customerLabel.setHidden(False)
+            self.customerLabel.setDisabled(True)
+            Customer = self.project_info.get_maskset_customer(SelectedMaskset)
+            self.customer.blockSignals(True)
+            self.customer.setText(Customer)
+            self.customer.setHidden(False)
+            self.customer.setDisabled(True)
+            self.customer.blockSignals(True)
+            self.isAGrade.setEnabled(True)
+        else:
+            self.gradeLabel.setDisabled(False)
+            self.grade.blockSignals(True)
+            self.grade.setCurrentText('A')
+            self.grade.setDisabled(False)
+            self.grade.blockSignals(False)
+            self.typeLabel.setDisabled(False)
+            self.Type.blockSignals(True)
+            self.Type.setCurrentText('ASSP')
+            self.Type.setDisabled(False)
             self.Type.blockSignals(False)
             self.customerLabel.setHidden(True)
             self.customer.blockSignals(True)
             self.customer.setText('')
             self.customer.setHidden(True)
             self.customer.blockSignals(True)
-            self.isAGrade.setEnabled(False)
-        else:
-            ASIC_masksets = self.project_info.get_ASIC_masksets()
-            if SelectedMaskset in ASIC_masksets:
-                self.gradeLabel.setDisabled(False)
-                self.grade.blockSignals(True)
-                self.grade.setCurrentText('A')
-                self.grade.setDisabled(False)
-                self.grade.blockSignals(False)
-                self.typeLabel.setDisabled(True)
-                self.Type.blockSignals(True)
-                self.Type.setCurrentText('ASIC')
-                self.Type.setDisabled(True)
-                self.Type.blockSignals(False)
-                self.customerLabel.setHidden(False)
-                self.customerLabel.setDisabled(True)
-                Customer = self.project_info.get_maskset_customer(SelectedMaskset)
-                self.customer.blockSignals(True)
-                self.customer.setText(Customer)
-                self.customer.setHidden(False)
-                self.customer.setDisabled(True)
-                self.customer.blockSignals(True)
-                self.isAGrade.setEnabled(True)
-            else:
-                self.gradeLabel.setDisabled(False)
-                self.grade.blockSignals(True)
-                self.grade.setCurrentText('A')
-                self.grade.setDisabled(False)
-                self.grade.blockSignals(False)
-                self.typeLabel.setDisabled(False)
-                self.Type.blockSignals(True)
-                self.Type.setCurrentText('ASSP')
-                self.Type.setDisabled(False)
-                self.Type.blockSignals(False)
-                self.customerLabel.setHidden(True)
-                self.customer.blockSignals(True)
-                self.customer.setText('')
-                self.customer.setHidden(True)
-                self.customer.blockSignals(True)
-                self.isAGrade.setEnabled(True)
+            self.isAGrade.setEnabled(True)
         self._verify()
 
     def isAGradeChanged(self, isAGrade):
@@ -272,14 +250,17 @@ class DieWizard(QtWidgets.QDialog):
                 if referenced_dies[item_text] != '':
                     self.grade.model().item(index).setEnabled(False)
                     self.grade.model().item(index).setToolTip(referenced_dies[item_text])
+
             self.grade.setCurrentText(first_free_grade)
             self.grade.setDisabled(False)
             self.grade.setHidden(False)
             self.grade.setVisible(True)
             self.grade.blockSignals(False)
 
+        self._verify()
+
     def referenceGradeChanged(self, SelectedReferenceGrade):
-        pass
+        self._verify()
 
     def gradeChanged(self, SelectedGrade):
         if SelectedGrade == 'A':
@@ -345,12 +326,15 @@ class DieWizard(QtWidgets.QDialog):
         if self.feedback.text() == '':
             if not self.isAGrade.isChecked():
                 if self.referenceGrade.currentText() == '':
-                    self.feedback.setText("A non-A-Grade die needs a reference grade (read: die), select one.")
+                    self.feedback.setText("A non-A-Grade product needs a reference grade, select one.")
 
     # Type & customer
         if self.feedback.text() == '':
             if self.Type.currentText() == "ASIC" and self.customer.text() == "":
                 self.feedback.setText("need a customer name for the ASIC")
+
+        if self.fromMaskset.currentText():
+            self.isAGrade.setEnabled(True)
 
     # Buttons
         if self.feedback.text() == '':
@@ -376,13 +360,14 @@ class DieWizard(QtWidgets.QDialog):
                 'quality': self.quality.currentText(),
                 'grade': grade,
                 'grade_reference': grade_reference,
+                'type': self.Type.currentText(),
                 'customer': customer}
 
     def OKButtonPressed(self):
         configuration = self._get_current_configuration()
         self.project_info.add_die(configuration['name'], configuration['hardware'], configuration['maskset'],
                                   configuration['quality'], configuration['grade'], configuration['grade_reference'],
-                                  configuration['customer'])
+                                  configuration['type'], configuration['customer'])
         self.accept()
 
     def CancelButtonPressed(self):

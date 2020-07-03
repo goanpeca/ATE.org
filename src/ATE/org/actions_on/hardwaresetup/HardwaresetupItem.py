@@ -28,9 +28,13 @@ class HardwaresetupItem(BaseItem):
 
 
 class HardwaresetupItemChild(StateItem):
-    def __init__(self, project_info, name, parent=None):
+    def __init__(self, project_info, name, parent):
         super().__init__(project_info, name, parent=parent)
         self.definition = self._get_definition()
+
+    @property
+    def type(self):
+        return 'hardwares'
 
     @property
     def dependency_list(self):
@@ -56,9 +60,6 @@ class HardwaresetupItemChild(StateItem):
         return enabled
 
     def _enabled_item_menu(self):
-        return [MenuActionTypes.Activate(),
-                MenuActionTypes.Edit(),
-                MenuActionTypes.View(),
-                MenuActionTypes.Trace(),
-                None,
-                MenuActionTypes.Obsolete()]
+        menu = super()._enabled_item_menu()
+        menu.insert(0, MenuActionTypes.Activate())
+        return menu
