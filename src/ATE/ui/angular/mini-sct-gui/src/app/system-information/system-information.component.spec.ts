@@ -5,28 +5,38 @@ import { SystemState, SystemStatus } from '../system-status';
 import { By } from '@angular/platform-browser';
 import { CardComponent } from '../basic-ui-elements/card/card.component';
 import { InformationComponent } from '../basic-ui-elements/information/information.component';
+import { MockServerService } from './../services/mockserver.service';
+import * as constants from '../services/mockserver-constants';
+import { waitUntil } from './../test-stuff/auxillary-test-functions';
+import { formatDate } from '@angular/common';
 
 describe('SystemInformationComponent', () => {
   let component: SystemInformationComponent;
   let fixture: ComponentFixture<SystemInformationComponent>;
   let debugElement: DebugElement;
   let systemStatus: SystemStatus;
+  let mockServerService: MockServerService;
+  let expectedLabelText = ['System', 'Number of Sites', 'Time', 'Environment', 'Handler'];
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       imports: [],
       declarations: [ SystemInformationComponent, CardComponent, InformationComponent ],
-      schemas: []
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
+    mockServerService = new MockServerService();
     fixture = TestBed.createComponent(SystemInformationComponent);
     component = fixture.componentInstance;
     debugElement = fixture.debugElement;
     systemStatus = new SystemStatus();
     fixture.detectChanges();
+  });
+
+  afterEach( () => {
+    document.getElementById(constants.MOCK_SEVER_SERVICE_NEVER_REMOVABLE_ID).remove();
   });
 
   it('should create status component', () => {
@@ -37,7 +47,7 @@ describe('SystemInformationComponent', () => {
     expect(component.informationCardConfiguration.labelText).toBe('System Information');
   });
 
-  it('should show error messages when system state is "error"', () => {
+  it('should show error messages when system state is ' + JSON.stringify(SystemState.error), () => {
     expect(component.showError()).toBeDefined();
 
     let errorMsg = 'system has error';
@@ -62,11 +72,11 @@ describe('SystemInformationComponent', () => {
     expect(cardElement.length).toBe(2);
   });
 
-  it('current system status is "connecting"', () => {
+  it('current system status is ' + JSON.stringify(SystemState.connecting), () => {
     expect(systemStatus.state).toBe('connecting');
   });
 
-  describe('When system state is "connecting"', () => {
+  describe('When system state is ' + JSON.stringify(SystemState.connecting), () => {
     it('should support heading', () => {
       let appCardBody = debugElement.query(By.css(('app-card app-card .card .body')));
       expect(appCardBody.nativeElement.textContent).toBe('Identifying Test System!');
@@ -78,57 +88,86 @@ describe('SystemInformationComponent', () => {
     });
   });
 
-  describe('When system state is neither "error" nor "connecting"', () => {
-    it('should contain 5 app-information tags', (done) => {
+  describe('When system state is neither ' + JSON.stringify(SystemState.connecting) + ' nor ' + JSON.stringify(SystemState.error), () => {
+    it('should contain 5 app-information tags', async () => {
+      function foundAPPInformation(): boolean {
+        let element = debugElement.queryAll(By.css('app-information'));
+        if (element.length === 5) {
+          return true;
+        }
+        return false;
+      }
 
-      // set system state to something different from error or connecting, i.e. to ready
-      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
-      fixture.detectChanges();
+      // send initialized message
+      mockServerService.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_INITIALIZED]);
 
-      let infoElement = debugElement.nativeElement.querySelectorAll('app-information');
-      expect(infoElement.length).toBe(5);
-      done();
+      let success = await waitUntil(
+        () => {
+          fixture.detectChanges();
+          component.ngOnInit();
+        },
+        foundAPPInformation,
+        300,
+        6000);
+
+      expect(success).toBeTruthy();
     });
 
-    it('should display label texts: "System", "Number of Sites", "Time", "Environment", "Handler"', (done) => {
+    it('should display label texts: ' + JSON.stringify(expectedLabelText), async () => {
       expect(component.infoContentCardConfiguration.labelText).toEqual('');
 
-      // set system state to something different from error or connecting, i.e. to ready
-      (component as any).handleServerMessage({payload: {state: SystemState.ready}});
-      fixture.detectChanges();
+      function foundLabeTexts(): boolean {
+        let element = debugElement.queryAll(By.css('app-information'));
+        return element.length === 5;
+      }
+      // send initialized message
+      mockServerService.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_INITIALIZED]);
+      let success = await waitUntil(
+        () => {
+          fixture.detectChanges();
+          component.ngOnInit();
+        },
+        foundLabeTexts,
+        300,
+        6000);
 
-      let lableElements = debugElement.queryAll(By.css('app-information h2'));
+      let labelElements = [];
+      debugElement.queryAll(By.css('app-information h2'))
+        .forEach(a => labelElements
+          .push(a.nativeElement.innerText));
 
-      let labelTexts = [];
-      lableElements.forEach( l => labelTexts.push(l.nativeElement.innerText));
-
-      expect(labelTexts).toEqual(jasmine.arrayWithExactContents(['System', 'Number of Sites', 'Time', 'Environment', 'Handler']));
-      done();
+      expect(success).toBeTruthy();
+      expect(labelElements).toEqual(jasmine.arrayWithExactContents(expectedLabelText));
     });
 
-    it('should display value of system information', (done) => {
+    it('should display value of system information', async () => {
       expect(component.systemInformationConfiguration.value).toEqual('');
 
-      // set system state to something different from error or connecting, i.e. to testing
-      (component as any).handleServerMessage(
-        {
-          payload: {
-            state: SystemState.testing,
-            device_id: 'Test-Id',
-            env: 'Test-Environment',
-            handler: 'Test-Handler',
-            sites: ['Test-Site-A', 'Test-Site-B'],
-            systemTime: 'Test-SystemTime'
-          }});
-      fixture.detectChanges();
-
-      let valueElements = debugElement.queryAll(By.css('app-information h3'));
+      function foundLabeTexts(): boolean {
+        let element = debugElement.queryAll(By.css('app-information'));
+        if (element.length === 5) {
+          return true;
+        }
+        return false;
+      }
+      // send testing message
+      mockServerService.setMessages([constants.MESSAGE_WHEN_SYSTEM_STATUS_TESTING]);
+      let success = await waitUntil(
+        () => {
+          fixture.detectChanges();
+          component.ngOnInit();
+        },
+        foundLabeTexts,
+        300,
+        6000);
+      expect(success).toBeTruthy();
 
       let valueTexts = [];
-      valueElements.forEach( v => valueTexts.push(v.nativeElement.innerText));
+      debugElement.queryAll(By.css('app-information h3'))
+        .forEach(a => valueTexts
+          .push(a.nativeElement.innerText));
 
-      expect(valueTexts).toEqual(jasmine.arrayWithExactContents(['Test-Id', 'Test-Environment', 'Test-Handler', 'Test-SystemTime']));
-      done();
+      expect(valueTexts).toEqual(['MiniSCT', formatDate(Date.now(), 'medium', 'en-US'), 'F1', 'invalid']);
     });
   });
 });

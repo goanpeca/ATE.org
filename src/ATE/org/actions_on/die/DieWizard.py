@@ -25,7 +25,7 @@ class DieWizard(BaseDialog):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         # hardware
-        self.existing_hardwares = self.project_info.get_available_hardwares()
+        self.existing_hardwares = self.project_info.get_active_hardware_names()
         self.withHardware.clear()
         self.withHardware.addItems(self.existing_hardwares)
         current_hardware = '' if len(self.existing_hardwares) == 0 else self.existing_hardwares[0]
@@ -38,13 +38,16 @@ class DieWizard(BaseDialog):
         self.dieName.setText("")
         self.dieName.setValidator(DieName_validator)
         self.dieName.textChanged.connect(self._verify)
-        self.existing_dies = self.project_info.get_dies()
+        self.existing_dies = self.project_info.get_active_die_names()
 
         # maskset
-        self.existing_masksets = self.project_info.get_available_masksets()
+        self.existing_masksets = self.project_info.get_available_maskset_names()
         self.fromMaskset.clear()
-        self.fromMaskset.addItems(sorted([''] + self.existing_masksets))
-        current_maskset = '' if len(self.existing_masksets) == 0 else self.existing_masksets[0]
+        #self.fromMaskset.addItems(sorted([''] + self.existing_masksets))
+        # ToDo: Sort !
+        for maskset in self.existing_masksets:
+            self.fromMaskset.addItem(maskset.name)
+        current_maskset = '' if len(self.existing_masksets) == 0 else self.existing_masksets[0].name
         self.fromMaskset.setCurrentText(current_maskset)
 
         # quality
@@ -61,17 +64,17 @@ class DieWizard(BaseDialog):
         self.referenceGradeLabel.setHidden(True)
         self.referenceGradeLabel.setVisible(False)
 
-        all_dies = self.project_info.get_dies_info()
-        reference_dies = ['']
+        all_dies = self.project_info.get_dies()
+        reference_dies = []
         referenced_dies = {i: '' for i in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']}
         free_grades = []
 
         for die in all_dies:
-            if all_dies[die][0] == self.withHardware.currentText() and all_dies[die][1] == self.fromMaskset.currentText():
-                if all_dies[die][2] == 'A':
-                    reference_dies.append(die)
+            if die.hardware == self.withHardware.currentText() and die.maskset == self.fromMaskset.currentText():
+                if die.grade == 'A':
+                    reference_dies.append(die.name)
                 else:
-                    referenced_dies[all_dies[die][2]] = all_dies[die][3]
+                    referenced_dies[die.grade] = die.grade_reference
 
         for die in referenced_dies:
             if referenced_dies[die] == '':
@@ -207,17 +210,17 @@ class DieWizard(BaseDialog):
             self.referenceGradeLabel.setHidden(False)
             self.referenceGradeLabel.setVisible(True)
 
-            all_dies = self.project_info.get_dies_info()
-            reference_dies = ['']
+            all_dies = self.project_info.get_dies()
+            reference_dies = []
             referenced_dies = {i: '' for i in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']}
             free_grades = []
 
             for die in all_dies:
-                if all_dies[die][0] == self.withHardware.currentText() and all_dies[die][1] == self.fromMaskset.currentText():
-                    if all_dies[die][2] == 'A':
-                        reference_dies.append(die)
+                if die.hardware == self.withHardware.currentText() and die.maskset == self.fromMaskset.currentText():
+                    if die.grade == 'A':
+                        reference_dies.append(die.name)
                     else:
-                        referenced_dies[all_dies[die][2]] = all_dies[die][3]
+                        referenced_dies[die.grade] = die.grade_reference
 
             for die in referenced_dies:
                 if referenced_dies[die] == '':

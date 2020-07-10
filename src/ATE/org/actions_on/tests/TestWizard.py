@@ -63,18 +63,18 @@ class NameDelegator(Delegator):
 
 
 class TestWizard(BaseDialog):
-    """Wizard to work with 'Test' definitions."""
+    """Wizard to work with 'Test' definition."""
 
-    def __init__(self, project_info, definition=None, read_only=False):
+    def __init__(self, project_info, test_content=None, read_only=False):
         super().__init__(__file__)
 
         self.read_only = read_only
         self.project_info = project_info
 
-        if definition is None:
-            definition = make_blank_definition(project_info)
+        if test_content is None:
+            test_content = make_blank_definition(project_info)
         else:
-            self.TestName.setText(definition['name'])
+            self.TestName.setText(test_content['name'])
             self.TestName.setEnabled(False)
 
         self.Feedback.setStyleSheet('color: orange')
@@ -88,20 +88,20 @@ class TestWizard(BaseDialog):
     # ForHardwareSetup
         self.ForHardwareSetup.setStyleSheet("font-weight: bold;")
         self.ForHardwareSetup.setText(self.project_info.active_hardware)
-        if definition['hardware'] != '':
-            self.ForHardwareSetup.setText(definition['hardware'])
+        if test_content['hardware'] != '':
+            self.ForHardwareSetup.setText(test_content['hardware'])
 
     # WithBase
         self.WithBase.setStyleSheet("font-weight: bold")
         self.WithBase.setText(self.project_info.active_base)
-        if definition['base'] != '':
-            self.WithBase.setText(definition['base'])
+        if test_content['base'] != '':
+            self.WithBase.setText(test_content['base'])
 
     # DescriptionTab
         self.description.clear()
         self.description.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)  # https://doc.qt.io/qt-5/qtextedit.html#LineWrapMode-enum
         # TODO: add a line at 80 characters (PEP8/E501) (https://stackoverflow.com/questions/30371613/draw-vertical-lines-on-qtextedit-in-pyqt)
-        self.description.setPlainText('\n'.join(definition['docstring']))
+        self.description.setPlainText('\n'.join(test_content['docstring']))
 
     # Delegators
         self.nameDelegator = Delegator(valid_test_parameter_name_regex, self)
@@ -153,7 +153,7 @@ class TestWizard(BaseDialog):
         self.inputParameterView.setItemDelegateForColumn(3, self.maxDelegator)
         self.inputParameterView.setItemDelegateForColumn(6, self.fmtDelegator)
 
-        self.setInputpParameters(definition['input_parameters'])
+        self.setInputpParameters(test_content['input_parameters'])
         self.inputParameterView.setColumnHidden(6, True)
         self.inputParameterSelectionChanged()
 
@@ -197,7 +197,7 @@ class TestWizard(BaseDialog):
         self.outputParameterView.setItemDelegateForColumn(5, self.USLDelegator)
 
         self.outputParameterView.setColumnHidden(8, True)
-        self.setOutputParameters(definition['output_parameters'])
+        self.setOutputParameters(test_content['output_parameters'])
         self.outputParameterSelectionChanged()
 
         # TODO: Idea:
@@ -1525,28 +1525,28 @@ class TestWizard(BaseDialog):
         return False
 
     def CancelButtonPressed(self):
-        self.definition = {}
+        self.test_content = {}
         self.reject()
 
     def OKButtonPressed(self):
-        self.definition = {}
-        self.definition['name'] = self.TestName.text()
-        self.definition['type'] = "custom"
-        self.definition['hardware'] = self.ForHardwareSetup.text()
-        self.definition['base'] = self.WithBase.text()
-        self.definition['docstring'] = self.description.toPlainText().split('\n')
-        self.definition['input_parameters'] = self.getInputParameters()
-        self.definition['output_parameters'] = self.getOutputParameters()
-        self.definition['dependencies'] = {}  # TODO: implement this
-        self.blob_definition = {}
-        self.blob_definition.update({'input_parameters': self.definition['input_parameters']})
-        self.blob_definition.update({'output_parameters': self.definition['output_parameters']})
-        self.blob_definition.update({'docstring': self.definition['docstring']})
+        self.test_content = {}
+        self.test_content['name'] = self.TestName.text()
+        self.test_content['type'] = "custom"
+        self.test_content['hardware'] = self.ForHardwareSetup.text()
+        self.test_content['base'] = self.WithBase.text()
+        self.test_content['docstring'] = self.description.toPlainText().split('\n')
+        self.test_content['input_parameters'] = self.getInputParameters()
+        self.test_content['output_parameters'] = self.getOutputParameters()
+        self.test_content['dependencies'] = {}  # TODO: implement this
+        self.blob_test_content = {}
+        self.blob_test_content.update({'input_parameters': self.test_content['input_parameters']})
+        self.blob_test_content.update({'output_parameters': self.test_content['output_parameters']})
+        self.blob_test_content.update({'docstring': self.test_content['docstring']})
         if not self.read_only:
-            self.project_info.add_custom_test(self.definition)
+            self.project_info.add_custom_test(self.test_content)
         else:
-            self.project_info.update_custom_test(self.definition['name'], self.definition['hardware'], self.definition['base'],
-                                                 self.definition['type'], self.blob_definition)
+            self.project_info.update_custom_test(self.test_content['name'], self.test_content['hardware'], self.test_content['base'],
+                                                 self.test_content['type'], self.blob_test_content)
         self.accept()
 
 
@@ -1579,8 +1579,8 @@ def new_test_dialog(project_info):
     del(newTestWizard)
 
 
-def edit_test_dialog(project_info, definition):
-    edit = TestWizard(project_info, definition=definition, read_only=True)
+def edit_test_dialog(project_info, test_content):
+    edit = TestWizard(project_info, test_content=test_content, read_only=True)
     edit.exec_()
     del(edit)
 

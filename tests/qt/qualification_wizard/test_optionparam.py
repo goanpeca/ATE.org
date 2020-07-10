@@ -1,9 +1,8 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from pytestqt.qt_compat import qt_api  # debug prints inside unittests
+from PyQt5 import QtWidgets
 import ATE.org.actions_on.flow.qualificationwizardbase.wizardbase
-import ATE.org.actions_on.flow.qualificationwizardbase
-import ATE.org.actions_on.flow.qualificationwizardbase.optionparam
-from  ATE.org.actions_on.flow.qualificationwizardbase import * 
+from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
+from ATE.org.actions_on.flow.qualificationwizardbase.optionparam import OptionParam
+from mock_db_object import MockDBObject
 
 
 class OptionParamWizard(wizardbase.wizardbase):
@@ -11,12 +10,12 @@ class OptionParamWizard(wizardbase.wizardbase):
         # self.parent = parent
         # Note: The init call needs to come after we setup this variable, in order for
         # it to exist when init calls _get_wizard_params
-        self.theParam = optionparam.OptionParam("Parameter1", ["ChoiceA", "ChoiceB", "ChoiceC"])
-        super().__init__({}, None)
+        self.theParam = OptionParam("Parameter1", ["ChoiceA", "ChoiceB", "ChoiceC"])
+        super().__init__(MockDBObject({}), None)
 
     def _get_wizard_parameters(self) -> list:
         return [self.theParam]
-        
+
     def _get_wizard_testprogram_slots(self) -> dict:
         return []
 
@@ -50,10 +49,11 @@ def test_textbox_param_line_edit_is_populated_from_inserted_data(window, qtbot):
     paramField = window.findChild(QtWidgets.QComboBox, "cbParameter1")
     assert(paramField.currentText() == "ChoiceB")
 
+
 @setup_method()
 def test_int_param_save_values_stores_value(window, qtbot):
     testParam = ATE.org.actions_on.flow.qualificationwizardbase.optionparam.OptionParam("Parameter32", ["A", "B", "C"])
-    d = {"Parameter32" : "C"}
+    d = {"Parameter32": "C"}
     testParam.load_values(d)
     d2 = dict()
     testParam.store_values(d2)

@@ -4,6 +4,8 @@ from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 
+from ATE.org.database.QualificationFlow import QualificationFlowDatum
+
 
 quali_flow_name = "qualification_ec_flow"
 quali_flow_listentry_name = "EC"
@@ -29,7 +31,7 @@ class ECWizard(wizardbase.wizardbase):
 
 
 def new_item(storage, product: str):
-    dialog = ECWizard({"product": product}, storage)
+    dialog = ECWizard(QualificationFlowDatum(product=product), storage)
     dialog.exec_()
     del(dialog)
 

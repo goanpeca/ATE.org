@@ -122,8 +122,8 @@ class TestItemChild(TestBaseItem):
         self.file_system_operator = FileSystemOperator(self.path)
 
     def edit_item(self):
-        definition = self.project_info.get_test_definition(self.text(), self.project_info.active_hardware, self.project_info.active_base)
-        edit_test_dialog(self.project_info, definition)
+        test_content = self.project_info.get_test_table_content(self.text(), self.project_info.active_hardware, self.project_info.active_base)
+        edit_test_dialog(self.project_info, test_content)
 
     def open_file_item(self):
         path = os.path.dirname(self.path)
@@ -148,25 +148,27 @@ class TestItemChild(TestBaseItem):
     @property
     def dependency_list(self):
         # hack each used test must start with a 1 as index
-        return self.project_info.get_dependant_objects_for_test(self.text() + '_1')
+        return self.project_info.get_dependant_objects_for_test(self.text())
 
     def is_enabled(self):
-        return self.project_info.get_test_state(self.text())
+        return self.project_info.get_test_state(self.text(), self.project_info.active_hardware, self.project_info.active_base)
 
     def _update_db_state(self, enabled):
         self.project_info.update_test_state(self.text(), enabled)
 
     def _are_dependencies_fulfilled(self):
         dependency_list = {}
+        active_hardware = self.project_info.active_hardware
+        # active_base = self.project_info.active_base
 
-        hw = self.project_info.get_test_hardware(self.text())
-        if not hw:
-            return dependency_list
+        # hw = self.project_info.get_test_hardware(self.text(), active_hardware, active_base)
+        # if not hw:
+        #     return dependency_list
 
-        hw_enabled = self.project_info.get_hardware_state(hw[0])
+        hw_enabled = self.project_info.get_hardware_state(active_hardware)
 
         if not hw_enabled:
-            dependency_list.update({'hardwares': hw})
+            dependency_list.update({'hardwares': active_hardware})
 
         return dependency_list
 

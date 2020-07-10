@@ -15,8 +15,8 @@ class PackageItem(BaseItem):
     def _get_children_names(self):
         return self.project_info.get_packages()
 
-    def _create_child(self, name, parent):
-        return PackageItemChild(self.project_info, name, parent)
+    def _create_child(self, package, parent):
+        return PackageItemChild(self.project_info, package.name, parent)
 
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]

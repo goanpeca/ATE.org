@@ -111,15 +111,18 @@ class BaseItem(QtGui.QStandardItem):
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def has_children(self):
-        count = 0
-        for child in self._get_children_names():
-            item = self.get_child(child)
-            if item is None:
-                continue
-
-            count += 1
-
-        return count > 0
+        # ToDo: _get_children_names queries all items
+        # of a given type resulting in the fact, that
+        # we actually have to use a nameproperty of 
+        # the culd here -> fix this. Also:
+        # check if _get_children_names ever returns
+        # none objects.
+        return len(self._get_children_names()) > 0
+        # for child in self._get_children_names():
+        #     item = self.get_child(child.name)
+        #     if item is not None:
+        #         return True
+        # return False
 
     def is_hidden(self):
         return self._is_hidden

@@ -78,7 +78,7 @@ class CloneWizard(QtWidgets.QDialog):
         self.TestName.textChanged.connect(self.verify)
 
     # ForHardwareSetup
-        existing_hardwares = self.project_info.get_hardwares()
+        existing_hardwares = self.project_info.get_hardware_names()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(existing_hardwares)

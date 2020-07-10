@@ -32,6 +32,7 @@ class TableWidgetItemDelegate(QtWidgets.QStyledItemDelegate):
         line_edit.setValidator(self.validator)
         return line_edit
 
+
 class TestWizard(QtWidgets.QDialog):
 
     def __init__(self, project_info, fixed=True):
@@ -47,7 +48,7 @@ class TestWizard(QtWidgets.QDialog):
         self.project_info = project_info
 
     # ForHardwareSetup
-        existing_hardwares = self.project_info.get_hardwares()
+        existing_hardwares = self.project_info.get_active_hardware_names()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(existing_hardwares)

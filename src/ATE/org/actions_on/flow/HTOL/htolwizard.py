@@ -4,6 +4,10 @@ from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
+
+from ATE.org.database.QualificationFlow import QualificationFlowDatum
+
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 quali_flow_name = "qualification_HTOL_flow"
@@ -35,14 +39,14 @@ class HTOLWizard(wizardbase.wizardbase):
         usedHtols = ["ZHM"]
         for htol in htols:
             if "name" in self.datasource.keys():
-                if htol[0] == self.datasource["name"]:
+                if htol.name == self.datasource["name"]:
                     continue
-            usedHtols.append(htol[0])
+            usedHtols.append(htol.name)
         return usedHtols
 
 
 def new_item(storage, product: str):
-    dialog = HTOLWizard({"product": product}, storage)
+    dialog = HTOLWizard(QualificationFlowDatum(product=product), storage)
     dialog.exec_()
     del(dialog)
 
@@ -65,8 +69,8 @@ def check_delete_constraints(storage, data):
     # No other HTOL entries may refer to it.
     htols = storage.get_data_for_qualification_flow(quali_flow_name, storage.active_target)
     for htol in htols:
-        if htol[3]["Reference Measurement"] == data["name"]:
-            dependencyName = data["name"]
+        if htol.get_definition()["Reference Measurement"] == data.name:
+            dependencyName = data.name
             from PyQt5.QtWidgets import QMessageBox
             msg = QMessageBox()
             msg.setWindowTitle("Error")

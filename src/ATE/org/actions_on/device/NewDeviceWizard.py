@@ -25,12 +25,12 @@ class NewDeviceWizard(BaseDialog):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
         # hardware
-        self.existing_hardwares = self.project_info.get_available_hardwares()
+        self.existing_hardwares = self.project_info.get_active_hardware_names()
         self.hardware.clear()
         self.hardware.addItems(self.existing_hardwares)
         self.hardware.setCurrentText(self.project_info.active_hardware)
 
-        self.existing_dies = self.project_info.get_dies_for_hardware(self.project_info.active_hardware)
+        self.existing_dies = self.project_info.get_active_die_names_for_hardware(self.project_info.active_hardware)
 
         rxDeviceName = QtCore.QRegExp(valid_device_name_regex)
         DeviceName_validator = QtGui.QRegExpValidator(rxDeviceName, self)
@@ -53,7 +53,7 @@ class NewDeviceWizard(BaseDialog):
         else:
             self.tabWidget.setEnabled(True)
             self.pins.setEnabled(False)
-            self.available_dies = self.project_info.get_dies_for_hardware(self.hardware.currentText())
+            self.available_dies = self.project_info.get_active_die_names_for_hardware(self.hardware.currentText())
         self.dies_in_device = []
 
         # available dies
@@ -118,7 +118,7 @@ class NewDeviceWizard(BaseDialog):
         self.project_info.hardware_activated.emit(self.hardware.currentText())
 
         self.diesInDevice.clear()
-        self.existing_dies = self.project_info.get_dies_for_hardware(self.project_info.active_hardware)
+        self.existing_dies = self.project_info.get_active_die_names_for_hardware(self.project_info.active_hardware)
         self.availableDies.blockSignals(True)
         self.availableDies.clear()
         self.availableDies.addItems(self.existing_dies)
@@ -139,7 +139,8 @@ class NewDeviceWizard(BaseDialog):
             self.pinsTable.setRowCount(0)
         else:  # normal package
             self.pins.setVisible(True)
-            packages_info = self.project_info.get_available_packages()
+            # Variable is never used!
+            # packages_info = self.project_info.get_available_packages()
             # TODO: what to do here
             # pins_in_package = packages_info[self.package.currentText()]
             # self.pinsTable.setRowCount(len(pins_in_package))

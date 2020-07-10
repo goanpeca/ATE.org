@@ -34,7 +34,6 @@ class NewPackageWizard(BaseDialog):
         # name
         rxPackageName = QtCore.QRegExp(valid_package_name_regex)
         PackageName_validator = QtGui.QRegExpValidator(rxPackageName, self)
-        self.existing_packages = self.project_info.get_packages()
         self.packageName.blockSignals(True)
         self.packageName.setValidator(PackageName_validator)
         self.packageName.textChanged.connect(self.validate)
@@ -102,7 +101,7 @@ class NewPackageWizard(BaseDialog):
             self.feedback.setText("Supply a name for the Package")
             self.drawingGroup.setVisible(False)
         else:
-            if not self.read_only and package_name in self.existing_packages:
+            if not self.read_only and self.project_info.does_package_name_exist(package_name):
                 self.feedback.setText("Package already defined")
             else:
                 self.drawingGroup.setVisible(True)

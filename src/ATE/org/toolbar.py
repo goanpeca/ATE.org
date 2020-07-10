@@ -77,8 +77,10 @@ class ToolBar(QtWidgets.QToolBar):
 
     def _init_hardware(self):
         self.hardware_combo.clear()
-        available_hardwares = self.project_info.get_available_hardwares()
+        available_hardwares = self.project_info.get_active_hardware_names()
         self.hardware_combo.addItems(available_hardwares)
+        # for hw in available_hardwares:
+        #     self.hardware_combo.addItem(hw.name)
         self.active_hardware = '' if len(available_hardwares) == 0 else available_hardwares[len(available_hardwares) - 1]
         self.hardware_combo.setCurrentIndex(0 if len(available_hardwares) == 0 else len(available_hardwares) - 1)
 
@@ -202,11 +204,11 @@ class ToolBar(QtWidgets.QToolBar):
         self.project_info.active_target = selected_target
         self.project_info.select_target.emit(selected_target)
 
-        if self.active_target in self.project_info.get_devices_for_hardware(self.active_hardware):
+        if self.active_target in self.project_info.get_active_device_names_for_hardware(self.active_hardware):
             self.base_combo.blockSignals(True)
             self.base_combo.setCurrentText('FT')
             self.base_combo.blockSignals(False)
-        elif self.active_target in self.project_info.get_dies_for_hardware(self.active_hardware):
+        elif self.active_target in self.project_info.get_active_die_names_for_hardware(self.active_hardware):
             self.base_combo.blockSignals(True)
             self.base_combo.setCurrentText('PR')
             self.base_combo.blockSignals(False)
@@ -220,14 +222,14 @@ class ToolBar(QtWidgets.QToolBar):
         self.target_combo.clear()
         self.target_combo.addItems([''])
         if self._get_base() == 'FT':
-            self.target_combo.addItems(self.project_info.get_devices_for_hardware(self.active_hardware))
+            self.target_combo.addItems(self.project_info.get_active_device_names_for_hardware(self.active_hardware))
 
         elif self._get_base() == 'PR':
-            self.target_combo.addItems(self.project_info.get_dies_for_hardware(self.active_hardware))
+            self.target_combo.addItems(self.project_info.get_active_die_names_for_hardware(self.active_hardware))
 
         else:
-            self.target_combo.addItems(self.project_info.get_devices_for_hardware(self.active_hardware)
-                                       + self.project_info.get_dies_for_hardware(self.active_hardware))
+            self.target_combo.addItems(self.project_info.get_active_device_names_for_hardware(self.active_hardware)
+                                       + self.project_info.get_active_die_names_for_hardware(self.active_hardware))
 
         self.target_combo.blockSignals(False)
 

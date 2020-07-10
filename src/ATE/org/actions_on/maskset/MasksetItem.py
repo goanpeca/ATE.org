@@ -13,7 +13,7 @@ class MasksetItem(BaseItem):
         self.child_set = self._get_children_names()
 
     def _get_children_names(self):
-        return self.project_info.get_masksets()
+        return self.project_info.get_maskset_names()
 
     def _create_child(self, name, parent):
         return MasksetItemChild(self.project_info, name, parent)
@@ -26,8 +26,8 @@ class MasksetItem(BaseItem):
 
 
 class MasksetItemChild(StateItem):
-    def __init__(self, project_info, name, parent=None):
-        super().__init__(project_info, name, parent=parent)
+    def __init__(self, project_info, maskset, parent=None):
+        super().__init__(project_info, maskset.name, parent=parent)
         self.definition = self._get_definition()
 
     @property

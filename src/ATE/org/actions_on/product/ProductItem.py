@@ -26,8 +26,8 @@ class ProductItem(BaseItem):
 
 
 class ProductItemChild(StateItem):
-    def __init__(self, project_info, name, parent=None):
-        super().__init__(project_info, name, parent=parent)
+    def __init__(self, project_info, productdata, parent=None):
+        super().__init__(project_info, productdata, parent=parent)
 
     def edit_item(self):
         edit_product_dialog(self.project_info, self.text())
@@ -45,8 +45,8 @@ class ProductItemChild(StateItem):
         dependency_list = {}
         hw = self.project_info.get_product_hardware(self.text())
         device = self.project_info.get_product_device(self.text())
-        hw_enabled = self.project_info.get_hardware_state(hw[0])
-        device_enabled = self.project_info.get_device_state(device[0])
+        hw_enabled = self.project_info.get_hardware_state(hw)
+        device_enabled = self.project_info.get_device_state(device)
 
         if not hw_enabled:
             dependency_list.update({'hardwares': hw})

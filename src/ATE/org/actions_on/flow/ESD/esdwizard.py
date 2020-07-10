@@ -3,6 +3,9 @@
 from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
+
+from ATE.org.database.QualificationFlow import QualificationFlowDatum
+
 from PyQt5 import QtWidgets
 
 
@@ -45,7 +48,7 @@ class ESDWizard(wizardbase.wizardbase):
         dst["name"] = self.modelChooser.get_selection()
 
     def _custom_load_data(self, src: dict):
-        self.modelChooser.load_values(src)
+        self.modelChooser.load_values(src.get_definition())
 
     def set_view_only(self):
         super().set_view_only()
@@ -62,7 +65,7 @@ def edit_item(storage, data):
 
 
 def new_item(storage, product: str):
-    dialog = ESDWizard({"product": product}, storage)
+    dialog = ESDWizard(QualificationFlowDatum(product=product), storage)
     dialog.exec_()
     del(dialog)
 

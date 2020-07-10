@@ -4,6 +4,9 @@ from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import intparam
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 
+from ATE.org.database.QualificationFlow import QualificationFlowDatum
+
+
 quali_flow_name = "qualification_HTSL_flow"
 quali_flow_listentry_name = "HTSL"
 quali_flow_tooltip = "High Temperature Storage Life"
@@ -29,7 +32,7 @@ class HTSLWizard(wizardbase.wizardbase):
 
 
 def new_item(storage, product: str):
-    dialog = HTSLWizard({"product": product}, storage)
+    dialog = HTSLWizard(QualificationFlowDatum(product=product), storage)
     dialog.exec_()
     del(dialog)
 

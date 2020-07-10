@@ -122,13 +122,17 @@ class TreeModel(QtGui.QStandardItemModel):
 
         self.flows.set_children_hidden(False)
 
+        self.production_flows = FlowItem.SimpleFlowItem(project_info, "checker")
+        self.flows.appendRow(self.production_flows)
+        self.production_flows = FlowItem.SimpleFlowItem(project_info, "maintenance")
+        self.flows.appendRow(self.production_flows)
         self.production_flows = FlowItem.SimpleFlowItem(project_info, "production")
         self.flows.appendRow(self.production_flows)
         self.engineering_flows = FlowItem.SimpleFlowItem(project_info, "engineering")
         self.flows.appendRow(self.engineering_flows)
         self.validation_flows = FlowItem.SimpleFlowItem(project_info, "validation")
         self.flows.appendRow(self.validation_flows)
-        self.characterisation_flows = FlowItem.SimpleFlowItem(project_info, "characterisation")
+        self.characterisation_flows = FlowItem.SimpleFlowItem(project_info, "quality")
         self.flows.appendRow(self.characterisation_flows)
 
         if self.base == "FT":
@@ -287,7 +291,7 @@ class TreeModel(QtGui.QStandardItemModel):
 
             for test_target_index in range(test_item.rowCount()):
                 test_target_item = test_item.child(test_target_index)
-                if target_name != test_target_item.text():
+                if test_target_item is None or target_name != test_target_item.text():
                     continue
 
                 test_target_item.clean_up()

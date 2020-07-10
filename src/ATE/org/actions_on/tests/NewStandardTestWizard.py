@@ -20,7 +20,7 @@ class NewStandardTestWizard(BaseDialog):
         self.project_info = project_info
 
     # ForHardwareSetup ComboBox
-        self.existing_hardwaresetups = self.project_info.get_available_hardwares()
+        self.existing_hardwaresetups = self.project_info.get_active_hardware_names()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(self.existing_hardwaresetups)

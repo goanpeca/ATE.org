@@ -1,6 +1,8 @@
 from ATE.org.actions_on.model.BaseItem import BaseItem as BaseItem
 from ATE.org.actions_on.model.Constants import MenuActionTypes
 
+flows = ['checker', 'maintenance', 'production', 'engineering', 'validation', 'quality']
+
 
 def generate_item_name(item):
     # construct a unique name for this item. Since SimpleItems
@@ -12,12 +14,20 @@ def generate_item_name(item):
     if None in [item.project_info.active_target, item.project_info.active_base]:
         return None
 
-    owner_name = item.text() + '_' + item.project_info.active_target.upper() + '_' + item.project_info.active_base.upper()
+    owner_name = item.project_info.active_hardware.upper() + '_' + item.project_info.active_base.upper() + '_' + item.project_info.active_target + '_' + get_prefix(item)
     return owner_name
 
 
-def get_index(element):
-    return element[1]
+def get_prefix(item):
+    if item.text() in flows:
+        prefix = item.text()[0].upper()
+    else:
+        if item.parent is not None:
+            prefix = item.parent.text() + '_' + item.text()
+        else:
+            prefix = item.text()
+
+    return prefix
 
 
 def append_test_program_nodes(item):
@@ -29,9 +39,8 @@ def append_test_program_nodes(item):
 
 
 def add_testprogram_impl(project_info, item):
-    import ATE.org.actions_on.program.TestProgramWizard as np
-    test_program_owner = generate_item_name(item)
-    np.new_program_dialog(project_info, test_program_owner, None)
+    import ATE.org.actions_on.program.TestProgramWizard as new_prog
+    new_prog.new_program_dialog(project_info, get_prefix(item), None)
 
 
 class FlowItem(BaseItem):
@@ -139,7 +148,7 @@ class MultiInstanceQualiFlowItem(QualiFlowItemBase):
 
     def _generate_sub_items(self):
         for subflow in self.project_info.get_data_for_qualification_flow(self.flowname, self.project_info.active_target):
-            self.appendRow(QualiFlowSubitemInstance(self.project_info, subflow[0], self.project_info.active_target, subflow[3], self.modname, self))
+            self.appendRow(QualiFlowSubitemInstance(self.project_info, subflow, self.project_info.active_target, subflow.get_definition(), self.modname, self))
 
     def _get_menu_items(self):
         return [MenuActionTypes.Add()]
@@ -150,12 +159,12 @@ class MultiInstanceQualiFlowItem(QualiFlowItemBase):
 
 
 class QualiFlowSubitemInstance(BaseItem):
-    def __init__(self, project_info, name, product, data, implmodule, parent):
-        super().__init__(project_info, name, parent)
+    def __init__(self, project_info, subflow, product, data, implmodule, parent):
+        super().__init__(project_info, subflow.name, parent)
         import importlib
         self.mod = importlib.import_module(implmodule)
         self.product = product
-        self.data = data
+        self.data = subflow
         self._generate_sub_items()
 
     def _get_menu_items(self):
@@ -178,7 +187,7 @@ class QualiFlowSubitemInstance(BaseItem):
         if constraint_func is not None:
             if constraint_func(self.project_info, self.data) is False:
                 return
-        self.project_info.delete_qualifiaction_flow_instance(self.data)
+        self.project_info.delete_qualification_flow_instance(self.data)
 
     def add_testprogram(self):
         add_testprogram_impl(self.project_info, self)
@@ -188,8 +197,8 @@ class QualiFlowSubitemInstance(BaseItem):
 
 
 class TestprogramTreeItem(BaseItem):
-    def __init__(self, project_info, name, owner, order):
-        super().__init__(project_info, name, None)
+    def __init__(self, project_info, program, owner, order):
+        super().__init__(project_info, program.prog_name, None)
         self.owner = owner
         self.order = order
 

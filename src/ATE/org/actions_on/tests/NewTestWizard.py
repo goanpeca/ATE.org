@@ -11,10 +11,9 @@ from ATE.org.validation import is_valid_test_name, is_valid_python_class_name, v
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-import qdarkstyle
-import qtawesome as qta
 
 minimal_description_length = 80
+
 
 class NewTestWizard(QtWidgets.QDialog):
 
@@ -31,7 +30,7 @@ class NewTestWizard(QtWidgets.QDialog):
         self.project_info = project_info
 
     # ForHardwareSetup
-        existing_hardwares = self.project_info.get_available_hardwares()
+        existing_hardwares = self.project_info.get_active_hardware_names()
         self.ForHardwareSetup.blockSignals(True)
         self.ForHardwareSetup.clear()
         self.ForHardwareSetup.addItems(existing_hardwares)
@@ -745,11 +744,11 @@ class NewTestWizard(QtWidgets.QDialog):
         name = self.TestName.text()
         hardware = self.ForHardwareSetup.currentText()
         base = self.WithBase.currentText()
-        test_data = {'input_parameters' : {},
-                     'output_parameters' : {}}
+        test_data = {'input_parameters': {},
+                     'output_parameters': {}}
         test_type = "custom"
 
-        self.project_info.add_test(name, hardware, base, test_type, test_data)        
+        self.project_info.add_test(name, hardware, base, test_type, test_data)
         self.accept()
 
 
@@ -757,15 +756,3 @@ def new_test_dialog(project_info):
     newTestWizard = NewTestWizard(project_info)
     newTestWizard.exec_()
     del(newTestWizard)
-
-
-if __name__ == '__main__':
-    import sys, qdarkstyle
-    from ATE.org.actions.dummy_main import DummyMainWindow
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    dummyMainWindow = DummyMainWindow()
-    dialog = NewTestWizard(dummyMainWindow)
-    dummyMainWindow.register_dialog(dialog)
-    sys.exit(app.exec_())
