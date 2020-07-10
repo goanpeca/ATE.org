@@ -13,7 +13,7 @@ class DeviceItem(BaseItem):
         self.child_set = self._get_children_names()
 
     def _get_children_names(self):
-        return self.project_info.get_devices()
+        return self.project_info.get_device_names()
 
     def _create_child(self, name, parent):
         return DeviceItemChild(self.project_info, name, parent)

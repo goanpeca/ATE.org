@@ -12,7 +12,8 @@ from ATE.org.actions_on.product.NewProductWizard import NewProductWizard
 from ATE.org.actions_on.flow.HTOL.htolwizard import HTOLWizard
 from ATE.org.actions_on.tests.TestWizard import TestWizard
 from ATE.org.actions_on.program.TestProgramWizard import TestProgramWizard
-from ATE.org.actions_on.program.EditTestProgramWizard import EditTestProgramWizard
+
+from tests.qt.qualification_wizard import mock_db_object
 
 import os
 import shutil
@@ -20,7 +21,7 @@ import shutil
 import pytest
 from pytestqt.qt_compat import qt_api
 
-from PyQt5 import QtCore, QtWidgets, QtTest
+from PyQt5 import QtCore, QtWidgets
 
 
 definitions = {'hardware': 'HW0',
@@ -232,7 +233,7 @@ def test_create_new_product_enter_name(product, qtbot):
 
 @pytest.fixture
 def flow(qtbot, mocker, project_navigation):
-    dialog = HTOLWizard({"product": definitions['product']}, project_navigation)
+    dialog = HTOLWizard(mock_db_object.MockDBObject({"product": definitions['product']}), project_navigation)
     qtbot.addWidget(dialog)
     return dialog
 

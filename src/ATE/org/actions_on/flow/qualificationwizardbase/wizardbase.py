@@ -9,7 +9,7 @@ from ATE.org.actions_on.utils.BaseDialog import BaseDialog
 # and storing
 class wizardbase(BaseDialog):
 
-    def __init__(self, datasource: dict, storage):
+    def __init__(self, datasource, storage):
         super().__init__(__file__)
 
         # The dialog always works on a given set of data.
@@ -20,7 +20,7 @@ class wizardbase(BaseDialog):
         # The dialog will modify the provided data, persisting
         # the data has to be done by the calling code that
         # generated the data in the first place.
-        self.datasource = datasource
+        self.datasource = datasource.get_definition()
         self.storage = storage
         self.enable_save = True
         self.setup_parameters()
@@ -42,7 +42,6 @@ class wizardbase(BaseDialog):
         saveButton.setEnabled(False)
         for p in self.wizard_parameters:
             p.disable_ui_components()
-
 
     def setup_parameters(self):
         self.wizard_parameters = self._get_wizard_parameters()

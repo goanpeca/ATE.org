@@ -29,6 +29,7 @@ class NewMasksetWizard(BaseDialog):
         self.plugin_names = []
         self.prev_item = None
 
+        self.is_table_enabled = False
         self.selected_cell = None
         self.read_only = read_only
         self.is_active = True
@@ -52,7 +53,7 @@ class NewMasksetWizard(BaseDialog):
         self.maskset_name_validator = QtGui.QRegExpValidator(rxMaskSetName, self)
 
     # maskset
-        self.existing_masksets = self.project_info.get_masksets()
+        self.existing_masksets = self.project_info.get_maskset_names()
 
         self.masksetName.setText("")
         self.masksetName.setValidator(self.maskset_name_validator)
@@ -185,6 +186,7 @@ class NewMasksetWizard(BaseDialog):
         for column in range(self.columns):
             item = QtWidgets.QTableWidgetItem(elements[column])
             self.bondpadTable.setItem(row, column, item)
+
             if column == 0:
                 item.setTextAlignment(int(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter))
             else:
@@ -192,8 +194,14 @@ class NewMasksetWizard(BaseDialog):
 
     def _bondpads_changed(self, Bondpads):
         if self.rows < Bondpads:
+            old_row_count = self.rows
             self.bondpadTable.setRowCount(Bondpads)
-            self._set_cells_content(Bondpads - 1, DEFAULT_ROW)
+            for row in range(old_row_count, Bondpads):
+                self._set_cells_content(row, DEFAULT_ROW)
+
+            if not self.is_table_enabled:
+                self._set_table_flags(QtCore.Qt.NoItemFlags)
+
         else:
             self.bondpadTable.removeRow(self.rows)
             self.bondpadTable.setRowCount(Bondpads)

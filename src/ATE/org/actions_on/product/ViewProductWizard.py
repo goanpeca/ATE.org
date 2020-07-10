@@ -32,11 +32,11 @@ class ViewProductWizard(NewProductWizard):
         configuration = dialog.project_info.get_product(name)
 
         dialog.ProductName.setText(name)
-        dialog.WithHardware.setCurrentText(configuration['hardware'])
-        dialog.FromDevice.setCurrentText(configuration['device'])
-        dialog.productQuality.setCurrentText(configuration['quality'])
-        dialog.isAGrade.setChecked(False if configuration['grade'] != 'A' else True)
-        if not configuration['grade'] == 'A':
+        dialog.WithHardware.setCurrentText(configuration.hardware)
+        dialog.FromDevice.setCurrentText(configuration.device)
+        dialog.productQuality.setCurrentText(configuration.quality)
+        dialog.isAGrade.setChecked(False if configuration.grade != 'A' else True)
+        if not configuration.grade == 'A':
             dialog.isAGrade.setChecked(False)
             dialog.grade.setHidden(False)
             dialog.gradeLabel.setHidden(False)
@@ -45,14 +45,14 @@ class ViewProductWizard(NewProductWizard):
             dialog.referenceGradeLabel.setHidden(False)
             dialog.referenceGradeLabel.setEnabled(True)
 
-        dialog.referenceGrade.setCurrentText(configuration['grade_reference'])
-        dialog.grade.setCurrentText(configuration['grade'])
+        dialog.referenceGrade.setCurrentText(configuration.grade_reference)
+        dialog.grade.setCurrentText(configuration.grade)
 
-        if configuration['type'] == 'ASSP':
+        if configuration.type == 'ASSP':
             dialog.Type.setCurrentText('ASSP')
         else:
-            dialog.Type.setCurrentText(configuration['type'])
-            dialog.customer.setText(configuration['customer'])
+            dialog.Type.setCurrentText(configuration.type)
+            dialog.customer.setText(configuration.customer)
             dialog.customer.setHidden(False)
             dialog.customerLabel.setHidden(False)
             dialog.customerLabel.setEnabled(True)

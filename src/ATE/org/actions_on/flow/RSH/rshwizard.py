@@ -4,6 +4,8 @@ from ATE.org.actions_on.flow.qualificationwizardbase import wizardbase
 from ATE.org.actions_on.flow.qualificationwizardbase import writeoncetextparam
 from ATE.org.actions_on.flow.qualificationwizardbase import optionparam
 
+from ATE.org.database.QualificationFlow import QualificationFlowDatum
+
 
 quali_flow_name = "qualification_RSH_flows"
 quali_flow_listentry_name = "RSH"
@@ -27,7 +29,7 @@ class RSHWizard(wizardbase.wizardbase):
 
 
 def new_item(storage, product: str):
-    dialog = RSHWizard({"product": product}, storage)
+    dialog = RSHWizard(QualificationFlowDatum(product=product), storage)
     dialog.exec_()
     del(dialog)
 

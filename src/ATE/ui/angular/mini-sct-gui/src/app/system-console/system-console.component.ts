@@ -15,16 +15,17 @@ export enum MessageTypes {
   Testresult = 'testresult'
 }
 
+let msgs: IConsoleData[] = [];
+
 @Component({
   selector: 'app-system-console',
   templateUrl: './system-console.component.html',
   styleUrls: ['./system-console.component.scss']
 })
-
 export class SystemConsoleComponent implements OnInit {
   clearConsoleButtonConfig: ButtonConfiguration;
 
-  private readonly msgs: IConsoleData[] = [];
+
 
   constructor(communicationService: CommunicationService) {
     this.clearConsoleButtonConfig = new ButtonConfiguration();
@@ -35,6 +36,10 @@ export class SystemConsoleComponent implements OnInit {
     this.retrieveData(serverMessage);
   }
 
+  getMessages() {
+    return msgs;
+  }
+
   ngOnInit() {
     this.clearConsoleButtonConfig.labelText = 'Clear';
     this.clearConsoleButtonConfig.disabled = false;
@@ -43,11 +48,16 @@ export class SystemConsoleComponent implements OnInit {
   private retrieveData(message) {
     if (!message) { return; }
 
-    const jsonMessage = JSON.parse(JSON.stringify(message));
+    let payload: any;
+    if (message.type === 'mqtt.onmessage') {
+      payload = message.payload.payload;
+    } else {
+      return;
+    }
 
-    const _STATE: string = jsonMessage.payload.state;
-    const _TOPIC: string = message.topic;
-    const mType: string = jsonMessage.payload.type;
+    const _STATE: string = payload.state;
+    const _TOPIC: string = message.payload.topic;
+    const mType: string = payload.type;
 
     if (!_STATE || !_TOPIC || !mType) {
       return;
@@ -57,15 +67,15 @@ export class SystemConsoleComponent implements OnInit {
     if (mType === MessageTypes.Status) {
       const description: string = mType + ':      ' + _STATE;
       data = this.generateMessage(description, _TOPIC);
-    } else if (jsonMessage.type === MessageTypes.Cmd) {
-      const description: string = mType + ':     ' + jsonMessage.command;
+    } else if (message.type === MessageTypes.Cmd) {
+      const description: string = mType + ':     ' + message.command;
       data = this.generateMessage(description, _TOPIC);
-    } else if (jsonMessage.type === MessageTypes.Testresult) {
-      const description: string = mType + ':     ' + jsonMessage.testdata;
+    } else if (message.type === MessageTypes.Testresult) {
+      const description: string = mType + ':     ' + message.testdata;
       data = this.generateMessage(description, _TOPIC);
     } else { return; }
 
-    this.msgs.push(data);
+    msgs.push(data);
   }
 
   generateMessage(description: string, topic: string): IConsoleData {
@@ -78,7 +88,7 @@ export class SystemConsoleComponent implements OnInit {
   }
 
   clearConsole() {
-    this.msgs.length = 0;
+    msgs.length = 0;
   }
 }
 

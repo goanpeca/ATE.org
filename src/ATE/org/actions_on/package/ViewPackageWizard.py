@@ -26,9 +26,9 @@ class ViewPackageWizard(NewPackageWizard):
             return
 
         dialog.packageName.setText(name)
-        dialog.leads.setValue(configuration[0])
+        dialog.leads.setValue(configuration.leads)
         dialog.feedback.setText("")
-        dialog.isNakedDie.setChecked(dialog.project_info.is_package_a_naked_die(name))
+        dialog.isNakedDie.setChecked(configuration.is_naked_die)
 
         dialog.OKButton.setEnabled(True)
         dialog.OKButton.clicked.connect(dialog.accept)

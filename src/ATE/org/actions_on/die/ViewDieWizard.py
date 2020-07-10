@@ -40,13 +40,11 @@ class ViewDieWizard(DieWizard):
     @staticmethod
     def _setup_dialog_fields(dialog, name):
         configuration = dialog.project_info.get_die(name)
-        if len(configuration) < 8:
-            dialog.feedback.setText(ErrorMessage.InvalidConfigurationElements())
 
         dialog.dieName.setText(name)
-        dialog.withHardware.setCurrentText(configuration[0])
-        dialog.fromMaskset.setCurrentText(configuration[1])
-        if not configuration[2] == 'A':
+        dialog.withHardware.setCurrentText(configuration.hardware)
+        dialog.fromMaskset.setCurrentText(configuration.maskset)
+        if not configuration.grade == 'A':
             dialog.isAGrade.setChecked(False)
             dialog.grade.setHidden(False)
             dialog.gradeLabel.setHidden(False)
@@ -55,15 +53,15 @@ class ViewDieWizard(DieWizard):
             dialog.referenceGradeLabel.setHidden(False)
             dialog.referenceGradeLabel.setEnabled(True)
 
-        dialog.grade.setCurrentText(configuration[2])
-        dialog.referenceGrade.setCurrentText(configuration[3])
-        dialog.quality.setCurrentText(configuration[4])
+        dialog.grade.setCurrentText(configuration.grade)
+        dialog.referenceGrade.setCurrentText(configuration.grade_reference)
+        dialog.quality.setCurrentText(configuration.quality)
 
-        if configuration[5] == 'ASSP':
+        if configuration.type == 'ASSP':
             dialog.Type.setCurrentText('ASSP')
         else:
-            dialog.Type.setCurrentText(configuration[5])
-            dialog.customer.setText(configuration[6])
+            dialog.Type.setCurrentText(configuration.type)
+            dialog.customer.setText(configuration.customer)
             dialog.customer.setHidden(False)
             dialog.customerLabel.setHidden(False)
             dialog.customerLabel.setEnabled(True)

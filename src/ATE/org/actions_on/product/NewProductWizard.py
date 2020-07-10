@@ -22,7 +22,7 @@ class NewProductWizard(BaseDialog):
     def _setup(self):
         self.setWindowTitle(' '.join(re.findall('.[^A-Z]*', os.path.basename(__file__).replace('.py', ''))))
 
-        self.existing_hardwares = self.project_info.get_available_hardwares()
+        self.existing_hardwares = self.project_info.get_active_hardware_names()
         if len(self.existing_hardwares) == 0:
             self.existing_hardwares = ['']
 
@@ -97,11 +97,11 @@ class NewProductWizard(BaseDialog):
         free_grades = []
 
         for product in all_products:
-            if all_products[product][0] == self.WithHardware.currentText() and all_products[product][1] == self.FromDevice.currentText():
-                if all_products[product][2] == 'A':
-                    reference_products.append(product)
+            if product.hardware == self.WithHardware.currentText() and product.device == self.FromDevice.currentText():
+                if product.grade == 'A':
+                    reference_products.append(product.name)
                 else:
-                    referenced_products[all_products[product][2]] = all_products[product][3]
+                    referenced_products[all_products[product.name]].grade = product.grade_reference
 
         for product in referenced_products:
             if referenced_products[product] == '':
@@ -115,8 +115,8 @@ class NewProductWizard(BaseDialog):
         return referenced_products, first_free_grade, reference_products
 
     def _update_device_list(self):
-        self.existing_devices = self.project_info.get_devices_for_hardware(self.project_info.active_hardware)
-        self.existing_products = self.project_info.get_products_for_hardwares()
+        self.existing_devices = self.project_info.get_active_device_names_for_hardware(self.project_info.active_hardware)
+        self.existing_products = self.project_info.get_products()
         self.FromDevice.clear()
         self.FromDevice.addItems(self.existing_devices)
         self.FromDevice.setCurrentText('' if not len(self.existing_devices) else self.existing_devices[0])

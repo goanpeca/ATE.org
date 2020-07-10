@@ -91,7 +91,7 @@ export const MESSAGE_WHEN_SYSTEM_STATUS_TESTING = {
   type: 'status',
   payload: {
     device_id: 'MiniSCT',
-    systemTime: formatDate(Date.now(), 'medium', 'en-US'),
+    systemTime: 'Jul 6, 2020, 12:29:21 PM',
     sites: ['0'],
     state: 'testing',
     error_message: '',
@@ -102,69 +102,50 @@ export const MESSAGE_WHEN_SYSTEM_STATUS_TESTING = {
 export const CONTROL_APP_MESSAGE_SITE_0_BUSY = {
   type: 'mqtt.onmessage',
   payload: {
-    type: 'status',
-    alive: 1,
-    interface_version: 1,
-    software_version: 1,
-    state: 'busy'
-  },
-  qos: 0,
-  retain: 0,
-  topic: 'ate/MiniSCT/Control/status/site0'
+    payload: {type: 'status', alive: 1, interface_version: 1, software_version: 1, state: 'busy'},
+    qos: 0,
+    retain: 0,
+    topic: 'ate/MiniSCT/Control/status/site0'
+  }
 };
 
 export const CONTROL_APP_MESSAGE_SITE_0_TESTING = {
   type: 'mqtt.onmessage',
   payload: {
-    type: 'status',
-    alive: 1,
-    interface_version: 1,
-    software_version: 1,
-    state: 'testing'
-  },
-  qos: 0,
-  retain: 0,
-  topic: 'ate/MiniSCT/Control/status/site0'
+    payload: {type: 'status', alive: 1, interface_version: 1, software_version: 1, state: 'testing'},
+    qos: 0,
+    retain: 0,
+    topic: 'ate/MiniSCT/Control/status/site0'
+  }
 };
 
 export const TEST_APP_MESSAGE_SITE_7_BUSY = {
   type: 'mqtt.onmessage',
   payload: {
-    type: 'status',
-    alive: 1,
-    interface_version: 1,
-    software_version: 1,
-    state: 'busy'
-  },
-  qos: 0,
-  retain: 0,
-  topic: 'ate/MiniSCT/TestApp/status/site7'
+    payload: {type: 'status', alive: 1, framework_version: 1, test_version: 'N/A', state: 'busy'},
+    qos: 0,
+    retain: 0,
+    topic: 'ate/MiniSCT/TestApp/status/site7'
+  }
 };
 
 export const TEST_APP_MESSAGE_SITE_7_TESTING = {
   type: 'mqtt.onmessage',
   payload: {
-    type: 'status',
-    alive: 1,
-    interface_version: 1,
-    software_version: 1,
-    state: 'testing'
-  },
-  qos: 0,
-  retain: 0,
-  topic: 'ate/MiniSCT/TestApp/status/site7'
+    payload: {type: 'status', alive: 1, framework_version: 1, test_version: 'N/A', state: 'testing'},
+    qos: 0,
+    retain: 0,
+    topic: 'ate/MiniSCT/TestApp/status/site7'
+  }
 };
 
 export const MASTER_APP_MESSAGE = {
   type: 'mqtt.onmessage',
   payload: {
-    type: 'status',
-    alive: 1,
-    interface_version: 1,
-    state: 'softerror'
-  },
-  qos: 0,
-  retain: 0,
-  topic: 'ate/MiniSCT/Master/status'
+    payload: {type: 'status', alive: 1, interface_version: 1, state: 'testing'},
+    qos: 0,
+    retain: 0,
+    topic: 'ate/MiniSCT/Master/status'
+  }
 };
 

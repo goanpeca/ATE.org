@@ -57,8 +57,8 @@ describe('SystemConsoleComponent', () => {
   it('should show message from server', async () => {
 
     const expectedEntry = [
-      constants.TEST_APP_MESSAGE_SITE_7_TESTING.topic,
-      'status: ' + constants.TEST_APP_MESSAGE_SITE_7_TESTING.payload.state
+      constants.TEST_APP_MESSAGE_SITE_7_TESTING.payload.topic,
+      'status: ' + constants.TEST_APP_MESSAGE_SITE_7_TESTING.payload.payload.state
     ];
 
     function entryFound(row: Array<string>): boolean {
@@ -94,7 +94,7 @@ describe('SystemConsoleComponent', () => {
       300,
       2000);
 
-    expect(success).toBeTruthy('Entry with "' + JSON.stringify(expectedEntry) + '" must be shown');
+    expect(success).toBeTruthy('Entry with ' + JSON.stringify(expectedEntry) + ' must be shown');
 
     // message handler funtion should have been called
     expect(spy).toHaveBeenCalled();

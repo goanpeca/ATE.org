@@ -12,6 +12,10 @@ class EventHandler(EventHandlerBase):
         if not self._is_python_file(path):
             return
 
+        # is test_program
+        if '_' in os.path.basename(path):
+            return
+
         base_name = os.path.basename(os.path.dirname(path))
         if self.section_root.get_child(base_name) is None:
             self.section_root.add_file_item(base_name, os.path.dirname(path))

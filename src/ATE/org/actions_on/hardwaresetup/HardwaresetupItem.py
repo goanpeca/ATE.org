@@ -15,7 +15,7 @@ class HardwaresetupItem(BaseItem):
         self.hidden_children = []
 
     def _get_children_names(self):
-        return self.project_info.get_hardwares()
+        return self.project_info.get_hardware_names()
 
     def _create_child(self, name, parent):
         return HardwaresetupItemChild(self.project_info, name, parent)
@@ -28,8 +28,8 @@ class HardwaresetupItem(BaseItem):
 
 
 class HardwaresetupItemChild(StateItem):
-    def __init__(self, project_info, name, parent):
-        super().__init__(project_info, name, parent=parent)
+    def __init__(self, project_info, hwrecord, parent):
+        super().__init__(project_info, hwrecord, parent=parent)
         self.definition = self._get_definition()
 
     @property

@@ -31,7 +31,7 @@ export class SystemInformationComponent implements OnInit {
   environmentInformationConfiguration: InformationConfiguration;
   handlerInformationConfiguration: InformationConfiguration;
 
-  constructor(communicationService: CommunicationService) {
+  constructor(private readonly communicationService: CommunicationService) {
     this.systemStatus = new SystemStatus();
     this.systemStatus.state = SystemState.connecting;
 
@@ -49,9 +49,14 @@ export class SystemInformationComponent implements OnInit {
   }
 
   handleServerMessage(serverMessage: any) {
-    if (serverMessage.payload.state) {
+    let currentDeviceId = this.systemStatus.deviceId;
+    if (serverMessage.payload.state && serverMessage.type === 'status') {
       this.systemStatus.update(serverMessage.payload);
       this.updateView();
+      // init mqtt proxy
+      if (currentDeviceId !== this.systemStatus.deviceId) {
+        this.communicationService.mqttSubscribe('ate/' + this.systemStatus.deviceId + '/#');
+      }
     }
   }
 

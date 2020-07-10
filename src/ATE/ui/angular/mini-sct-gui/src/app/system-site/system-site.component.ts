@@ -36,13 +36,14 @@ export class SystemSiteComponent implements OnInit {
     communicationService.message.subscribe(msg => this.handleServerMessage(msg));
   }
   private handleServerMessage(serverMessage: any) {
-    if ( serverMessage.topic && serverMessage.payload && serverMessage.payload.state && (serverMessage.type === 'mqtt.onmessage')) {
-      let id = this.extractId(serverMessage.topic);
-      if (id) {
-        if (serverMessage.topic.includes('TestApp')) {
-          this.updateTestApp(id, serverMessage.payload.state);
-        } else if (serverMessage.topic.includes('Control')) {
-          this.updateControl(id, serverMessage.payload.state);
+    if (serverMessage.payload && serverMessage.payload.payload && serverMessage.payload.topic && (serverMessage.type === 'mqtt.onmessage')) {
+      let id = this.extractId(serverMessage.payload.topic);
+      let payload = serverMessage.payload.payload;
+      if (id && (payload.type === 'status')) {
+        if (serverMessage.payload.topic.includes('TestApp')) {
+          this.updateTestApp(id, payload.state);
+        } else if (serverMessage.payload.topic.includes('Control')) {
+          this.updateControl(id, payload.state);
         }
       }
     }

@@ -169,7 +169,7 @@ class TestProgramWizard(BaseDialog):
         table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
     def _view(self):
-        self.existing_hardwares = self.project_info.get_hardwares()
+        self.existing_hardwares = self.project_info.get_active_hardware_names()
         self.hardware.addItems(self.existing_hardwares)
         current_hw_index = self.hardware.findText(self.project_info.active_hardware, QtCore.Qt.MatchExactly)
         self.hardware.setCurrentIndex(current_hw_index)
@@ -194,9 +194,9 @@ class TestProgramWizard(BaseDialog):
     def _update_target(self):
         self.target.clear()
         if self.base.currentText() == 'PR':
-            existing_targets = self.project_info.get_dies_for_hardware(self.hardware.currentText())
+            existing_targets = self.project_info.get_active_die_names_for_hardware(self.hardware.currentText())
         else:
-            existing_targets = self.project_info.get_devices_for_hardware(self.hardware.currentText())
+            existing_targets = self.project_info.get_active_device_names_for_hardware(self.hardware.currentText())
 
         self.target.addItems(existing_targets)
         current_target_index = self.target.findText(self.project_info.active_target, QtCore.Qt.MatchExactly)
@@ -278,7 +278,7 @@ class TestProgramWizard(BaseDialog):
     def _update_tables_parameters(self, the_test_name, test_instance_name, is_default=False):
         test_name = self._extract_base_test_name(the_test_name)
         self.current_selected_test = test_name
-        parameters = self.project_info.get_test_definiton(test_name)
+        parameters = self.project_info.get_test_table_content(test_name, self.hardware.currentText(), self.base.currentText())
         self.input_parameters = parameters['input_parameters']
         self.output_parameters = parameters['output_parameters']
 
@@ -349,10 +349,8 @@ class TestProgramWizard(BaseDialog):
         if row == 0:
             return
 
-        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
         index = row
         self._fit_test_sequence(index, index - 1)
-        self._rename_after_reorder(test_name, index, index - 1)
 
         self._update_test_list_table()
 
@@ -367,23 +365,6 @@ class TestProgramWizard(BaseDialog):
         self.selected_tests.insert(index, element2)
         del self.selected_tests[index + 1]
 
-    def _rename_after_reorder(self, name, index, new_index):
-        base_name = self._extract_base_test_name(name)
-
-        test_name1 = self.selected_tests[index]['description']
-        test_name2 = self.selected_tests[new_index]['description']
-        if not (base_name in test_name1 and base_name in test_name2):
-            return
-
-        clicked_item = self.selected_tests[index]
-        element = self.selected_tests[new_index]
-
-        if element['description'] == test_name2:
-            element['description'] = test_name1
-
-        if clicked_item['description'] == test_name1:
-            clicked_item['description'] = test_name2
-
     @QtCore.pyqtSlot()
     def _move_down(self):
         selected = self.selectedTests.selectedItems()
@@ -395,10 +376,8 @@ class TestProgramWizard(BaseDialog):
         if row == self.selectedTests.rowCount() - 1:
             return
 
-        test_name = self.selectedTests.item(self.selectedTests.currentRow(), 0).text()
         index = row
         self._fit_test_sequence(index, index + 1)
-        self._rename_after_reorder(test_name, index, index + 1)
 
         self._update_test_list_table()
 
@@ -453,11 +432,10 @@ class TestProgramWizard(BaseDialog):
 
     def _update_test_list(self):
         self.availableTests.clear()
-        availabe_tests = self._get_available_tests()
-        self.availableTests.addItems(availabe_tests)
-
-        for test in availabe_tests:
-            self.available_tests.append(self._generate_test_struct(test, test))
+        alltests = self._get_available_tests()
+        for t in alltests:
+            self.availableTests.addItem(t.name)
+            self.available_tests.append(self._generate_test_struct(t.name, t.name))
 
     def _validate_temperature_input(self, text, pattern):
         index = text.rfind(pattern)
@@ -496,6 +474,8 @@ class TestProgramWizard(BaseDialog):
         available_tests = []
         tests = self.project_info.get_tests_from_db(self.hardware.currentText(),
                                                     self.base.currentText())
+        if not self.temperature.text():
+            return tests
 
         if self.sequencerType.currentText() == Sequencer.Static():
             temps = [int(self.temperature.text())]
@@ -506,7 +486,7 @@ class TestProgramWizard(BaseDialog):
             return tests
 
         for test in tests:
-            min, max = self.project_info.get_test_temp_limits(test, self.project_info.active_hardware, self.project_info.active_base)
+            min, max = self.project_info.get_test_temp_limits(test.name, self.project_info.active_hardware, self.project_info.active_base)
             for temp in temps:
                 if temp > (min - 1) and temp < max + 1 and \
                    test not in available_tests:
@@ -599,17 +579,16 @@ class TestProgramWizard(BaseDialog):
     def _generate_color(self, color):
         return QtGui.QBrush(QtGui.QColor(color[0], color[1], color[2]))
 
-    # ToDo: Name this function better!
-    def _item_out_of_range(self, item, color):
+    def _set_widget_color(self, item, color):
         item.setBackground(self._generate_color(color))
         item.setForeground(QtCore.Qt.black)
 
     def _get_test_info(self, fmt):
+        if not len(self.temperature.text()):
+            return '', []
+
         if self.sequencer_type == Sequencer.Static():
-            if not len(self.temperature.text()):
-                temps = []
-            else:
-                temps = [int(self.temperature.text())]
+            temps = [int(self.temperature.text())]
             text = '' if not len(temps) else self._get_text(temps[0], fmt)
         else:
             temps = self._get_dynamic_temp(self.temperature.text())
@@ -620,14 +599,15 @@ class TestProgramWizard(BaseDialog):
 
     def _generate_temperature_item(self, fmt):
         text, temps = self._get_test_info(fmt)
+
         item = QtWidgets.QTableWidgetItem(text)
         if len(text):
             which_range = self._is_temperature_in_range(self.current_selected_test, temps)
             if which_range == Range.Out_Of_Range():
-                self._item_out_of_range(item, RED)
+                self._set_widget_color(item, RED)
 
             if which_range == Range.Limited_Range():
-                self._item_out_of_range(item, ORANGE)
+                self._set_widget_color(item, ORANGE)
 
         return item
 
@@ -853,7 +833,7 @@ class TestProgramWizard(BaseDialog):
 
     def _generate_test_struct(self, test_name, test_description):
         sturct = {'name': test_name, 'input_parameters': {'Value': None}, 'output_parameters': {'Out': {'UTL': '', 'LTL': ''}}, 'description': test_description, 'is_valid': True}
-        parameters = self.project_info.get_test_definiton(self._extract_base_test_name(test_name))
+        parameters = self.project_info.get_test_table_content(self._extract_base_test_name(test_name), self.hardware.currentText(), self.base.currentText())
         inputs = {}
         outputs = {}
         for key, value in parameters['input_parameters'].items():
@@ -906,12 +886,12 @@ class TestProgramWizard(BaseDialog):
             temps = self._get_temps()
             which_range = self._is_temperature_in_range(self._extract_base_test_name(test_name), temps)
             if which_range == Range.Out_Of_Range():
-                self._item_out_of_range(item_name, RED)
-                self._item_out_of_range(item_description, RED)
+                self._set_widget_color(item_name, RED)
+                self._set_widget_color(item_description, RED)
 
             if which_range == Range.Limited_Range():
-                self._item_out_of_range(item_name, ORANGE)
-                self._item_out_of_range(item_description, ORANGE)
+                self._set_widget_color(item_name, ORANGE)
+                self._set_widget_color(item_description, ORANGE)
 
             self.selectedTests.setItem(count, 0, item_name)
             self.selectedTests.setItem(count, 1, item_description)
@@ -958,17 +938,8 @@ class TestProgramWizard(BaseDialog):
         name_item.setFlags(QtCore.Qt.NoItemFlags | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         return name_item
 
-    # ToDo: This function creates a suffix.
-    # ToDo: This should be integrated into the program_name propery (the latter returns an invalid value not containing
-    #       the actual program name.
-    def _generate_target_prefix(self):
-        count = self.project_info.get_program_owner_element_count(self.owner) + 1
-        prefix = self.owner[0].upper()
-        return f"{self.target.currentText()}_{prefix}_{str(count)}"
-
     def _get_configuration(self):
-        self.target_prefix = self._generate_target_prefix()
-        configuration = {'name': f'{self.hardware.currentText()}_{self.base.currentText()}_{self.target_prefix}',
+        configuration = {'name': '',
                          'hardware': self.hardware.currentText(),
                          'base': self.base.currentText(),
                          'target': self.target.currentText(),
@@ -995,26 +966,48 @@ class TestProgramWizard(BaseDialog):
             return
 
         if not self.read_only and self.edit_on:
-            self.prog_name = configuration['name']
-            self.project_info.insert_program(configuration['name'], configuration['hardware'], configuration['base'], configuration['target'],
+            owner = f"{self.hardware.currentText()}_{self.base.currentText()}_{self.target.currentText()}_{self.owner}"
+            count = self.project_info.get_program_owner_element_count(owner) + 1
+            self.prog_name = f'{os.path.basename(self.project_info.project_directory)}_{owner}_{count}'
+
+            self.target_prefix = f"{self.target.currentText()}_{self.owner}_{count}"
+
+            self.project_info.insert_program(self.prog_name, configuration['hardware'], configuration['base'], configuration['target'],
                                              configuration['usertext'], configuration['sequencer_type'], configuration['temperature'],
-                                             definition, self.owner, self.project_info.get_program_owner_element_count(self.owner), self.target_prefix)
+                                             definition, owner, self.project_info.get_program_owner_element_count(owner), self.target_prefix)
         else:
-            target_name = self.target.currentText() + '_' + self.owner[0].upper() + '_' + self.prog_name[-1]
             self.project_info.update_program(self.prog_name, configuration['hardware'], configuration['base'],
                                              configuration['target'], configuration['usertext'], configuration['sequencer_type'],
-                                             configuration['temperature'], definition, self.owner, target_name)
+                                             configuration['temperature'], definition, self.owner, self._get_target_name())
 
-        self._generate_test_program(configuration)
+        self._generate_test_program(configuration, self.owner)
 
         self.accept()
+
+    def _get_target_name(self):
+        owner_split = self.owner.split('_')
+        index = -1
+        for i, text in enumerate(owner_split):
+            if not text == self.target.currentText():
+                continue
+
+            index = i
+            break
+
+        target_name = self.target.currentText()
+        for i in range(index + 1, len(owner_split)):
+            target_name += '_' + owner_split[i]
+
+        target_name += '_' + self.prog_name[-1]
+
+        return target_name
 
     def _cancel(self):
         self.reject()
 
-    def _generate_test_program(self, configuration):
+    def _generate_test_program(self, configuration, owner):
         from ATE.org.coding.generators import test_program_generator
-        test_program_generator(self.prog_name, self.project_info)
+        test_program_generator(self.prog_name, owner, self.project_info)
 
 
 def new_program_dialog(project_info, owner, parent):

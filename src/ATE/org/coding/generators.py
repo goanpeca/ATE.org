@@ -938,7 +938,7 @@ class test_program_generator(BaseGenerator):
         self.last_index = self.last_index + 1
         return self.last_index
 
-    def __init__(self, prog_name, datasource):
+    def __init__(self, prog_name, owner, datasource):
         self.datasource = datasource
         self.last_index = 0
         template_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
@@ -965,59 +965,51 @@ class test_program_generator(BaseGenerator):
         if os.path.exists(abs_path_to_file):
             os.remove(abs_path_to_file)
 
-        test_list = self.build_test_entry_list(datasource, prog_name)
+        test_list = self.build_test_entry_list(datasource, owner, prog_name)
 
         output = template.render(test_list=test_list)
 
         with open(abs_path_to_file, 'w', encoding='utf-8') as fd:
             fd.write(output)
 
-    def build_test_entry_list(self, datasource, prog_name):
+    def build_test_entry_list(self, datasource, owner, prog_name):
         # step 1: Get tests and test params in sequence
-        tests_in_program = datasource.get_tests_for_program(prog_name, "")
+        tests_in_program = datasource.get_tests_for_program(prog_name, owner)
         # step 2: Get all testtargets for progname
         test_targets = datasource.get_test_targets_for_program(prog_name)
 
         # step 3: Augment sequences with actual classnames
         test_list = []
         for program_entry in tests_in_program:
-            test_class = self.resolve_class_for_test(program_entry[0], test_targets)
-            testinstance_name = self.resolve_instancename_for_test(program_entry[0], test_targets)
-            test_module = self.resolve_module_for_test(program_entry[0], test_targets)
+            test_class = self.resolve_class_for_test(program_entry.test, test_targets)
+            test_module = self.resolve_module_for_test(program_entry.test, test_targets)
 
             import pickle
-            params = pickle.loads(program_entry[1])
-            test_list.append({"test_name": program_entry[0],
+            params = pickle.loads(program_entry.definition)
+            test_list.append({"test_name": program_entry.test,
                               "test_class": test_class,
                               "test_module": test_module,
-                              "instance_name": f"{testinstance_name}",
+                              "instance_name": params['description'],
                               "output_parameters": params['output_parameters'],
                               "input_parameters": params['input_parameters']})
+
         return test_list
 
     def resolve_class_for_test(self, test_name, test_targets):
         for target in test_targets:
-            if target[5] == test_name:
-                if target[6]:
+            if target.test == test_name:
+                if target.is_default:
                     return f"{test_name}"
-                return f"{target[1]}"
+                return f"{target.name}"
         raise Exception(f"Cannot resolve class for test {test_name}")
 
     def resolve_module_for_test(self, test_name, test_targets):
         for target in test_targets:
-            if target[5] == test_name:
-                if target[6]:
+            if target.test == test_name:
+                if target.is_default:
                     return f"{test_name}.{test_name}"
-                return f"{test_name}.{target[1]}"
+                return f"{test_name}.{target.name}"
         raise Exception(f"Cannot resolve module for test {test_name}")
-    
-    def resolve_instancename_for_test(self, test_name, test_targets):
-        for target in test_targets:
-            if target[5] == test_name:
-                if not target[6]:
-                    return f"{test_name}_{self.indexgen()}"
-                return f"{target[1]}_{self.indexgen()}"
-        raise Exception(f"Cannot resolve instancename for test {test_name}")
 
     def _generate_relative_path(self):
         hardware = self.datasource.active_hardware

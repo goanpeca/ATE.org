@@ -12,7 +12,7 @@
           <th>Topic</th>
           <th>Description</th>
         </tr>
-        <tr *ngFor='let member of msgs.reverse()'>
+        <tr *ngFor='let member of getMessages().reverse()'>
             <td class="date">{{ member.date }}</td>
             <td class="topic">{{ member.topic }}</td>
             <td class="description">{{ member.description }}</td>
